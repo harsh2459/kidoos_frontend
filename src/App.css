@@ -1,0 +1,39 @@
+/* === Buy Now button (theme-aware) === */
+.buy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: hsl(var(--brand));
+  outline: 3px hsl(var(--brand)) solid;
+  outline-offset: -3px;
+  transition: background .25s ease, color .25s ease, outline-color .25s ease;
+  color: hsl(var(--brand-foreground));
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+
+.buy-btn .text {
+  font-weight: 700;
+  font-size: .95rem;
+  line-height: 1;
+}
+
+.buy-btn svg path {
+  transition: fill .25s ease;
+  fill: hsl(var(--brand-foreground));
+}
+
+/* subtle outline-on-hover look */
+.buy-btn:hover {
+  background: transparent;
+  color: hsl(var(--brand));
+  outline-color: hsl(var(--brand));
+}
+
+.buy-btn:hover svg path {
+  fill: hsl(var(--brand));
+}

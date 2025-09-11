@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========== CLASSIC LIGHT THEME LAYERS ========== */
+
+/* ---------- BASE (global look & nicer inputs) ---------- */
+@layer base {
+
+  html,
+  body {
+    @apply bg-surface-subtle text-fg antialiased;
+  }
+
+  a {
+    @apply text-brand hover:text-brand/90 hover:underline;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+  }
+
+  /* Upgrade all form controls so they aren't plain */
+  input:not([type=checkbox]):not([type=radio]):not([type=file]),
+  select,
+  textarea {
+    @apply bg-surface rounded-xl px-3 py-2 outline-none transition border border-border focus:ring-2 focus:ring-brand/30 focus:border-brand/50;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-fg-subtle;
+  }
+}
+
+/* ---------- TOKENS / ALIASES (keep your old classes working) ---------- */
+@layer components {
+  .max-w-container {
+    @apply max-w-screen-xl;
+  }
+
+  .rounded-theme {
+    @apply rounded-xl;
+  }
+
+  .shadow-theme {
+    @apply shadow-sm;
+  }
+
+  .bg-card {
+    @apply bg-surface border border-border-subtle;
+  }
+
+  .bg-brand {
+    background-color: hsl(var(--brand));
+    color: hsl(var(--brand-foreground));
+  }
+
+  /* legacy safety */
+}
+
+/* ---------- BUTTONS (quiet primary + clear hierarchy) ---------- */
+@layer components {
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-3 font-medium bg-brand text-brand-foreground shadow-sm hover:bg-brand/90 active:bg-brand focus:outline-none focus:ring-2 focus:ring-brand/40;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-surface-subtle text-fg hover:bg-border-subtle/50 active:bg-border-subtle focus:outline-none focus:ring-2 focus:ring-brand/30;
+  }
+
+  .btn-muted {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 font-medium bg-surface text-fg-muted border border-border hover:bg-surface-subtle active:bg-surface-subtle focus:outline-none focus:ring-2 focus:ring-brand/30;
+  }
+
+  .btn-ghost {
+    @apply btn-base px-4 py-2 text-fg hover:bg-surface-subtle focus:ring-brand/30;
+  }
+
+  .btn-danger {
+    @apply btn-base px-4 py-2 bg-danger text-danger-foreground hover:bg-danger/90 focus:ring-danger/40;
+  }
+
+  .btn {
+    @apply btn-secondary;
+  }
+
+  .btn-tonal {
+    @apply btn-secondary;
+  }
+
+  .btn-link {
+    @apply btn-ghost;
+  }
+
+  .btn-brand {
+    @apply btn-primary;
+  }
+}
+
+/* ---------- CARDS & HOVER ELEVATION ---------- */
+@layer components {
+  .card {
+    @apply bg-surface border border-border-subtle rounded-xl p-4 shadow-sm;
+  }
+
+  .card-hover {
+    @apply transition duration-200 will-change-transform;
+  }
+
+  .card-hover:hover {
+    @apply shadow-md -translate-y-0.5;
+  }
+}
+
+/* ---------- BADGES / CHIPS ---------- */
+@layer components {
+  .badge {
+    @apply inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-surface-subtle text-fg;
+  }
+
+  .badge-soft {
+    @apply inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-accent/10 text-accent;
+  }
+
+  .badge-green {
+    @apply inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-success-soft text-success;
+  }
+}
+
+/* ---------- FIELD HELPERS (label + hint + icons) ---------- */
+@layer components {
+  .field {
+    @apply space-y-1;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-fg;
+  }
+
+  .field-hint {
+    @apply text-xs text-fg-subtle;
+  }
+
+  .with-icon {
+    @apply relative;
+  }
+
+  .with-icon>svg {
+    @apply absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle pointer-events-none;
+  }
+
+  .with-icon>input {
+    @apply pl-9;
+  }
+}
+
+/* ---------- TABLES ---------- */
+@layer components {
+  .table {
+    @apply w-full text-sm;
+  }
+
+  .table thead th {
+    @apply text-left text-fg-muted font-medium px-4 py-2 bg-surface-subtle border-b border-border;
+  }
+
+  .table tbody td {
+    @apply px-4 py-2 border-b border-border-subtle;
+  }
+
+  .table-zebra tbody tr:nth-child(2n) td {
+    @apply bg-surface-subtle;
+  }
+}
+
+/* ---------- EMPTY STATES & SKELETONS ---------- */
+@layer components {
+  .empty {
+    @apply border border-dashed border-border rounded-xl p-8 text-center text-fg-muted bg-surface;
+  }
+
+  .skeleton {
+    @apply animate-pulse bg-border-subtle rounded-md;
+  }
+}
+
+/* ---------- HERO WRAPPER (soft gradient band) ---------- */
+@layer components {
+  .hero {
+    @apply bg-gradient-to-b from-surface to-surface-subtle border border-border-subtle rounded-2xl shadow-sm;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg bg-surface-subtle text-fg-muted;
+  }
+}
