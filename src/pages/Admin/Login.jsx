@@ -88,10 +88,6 @@ export default function AdminLogin() {
               {loading ? "Logging in…" : "Login"}
             </button>
           </form>
-
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Having trouble? Contact your site administrator.
-          </div>
         </div>
       </div>
     </div>

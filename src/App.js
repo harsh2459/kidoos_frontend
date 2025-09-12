@@ -1,6 +1,7 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+// src/App.js
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
-import './styles/classic-light.css';         // <- simpler, works everywhere
+import './styles/classic-light.css';
 
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SiteProvider } from './contexts/SiteConfig';
@@ -26,43 +27,61 @@ import AdminOrders from './pages/Admin/Orders';
 import ApiUsers from './pages/Admin/ApiUsers';
 import WhiteThemeDemo from './pages/WhiteThemeDemo';
 
+import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
+import CustomerAuth from './pages/CustomerAuth';
+
 export default function App() {
+  function RequireCustomer({ children }) {
+    const { isCustomer } = useCustomer();
+    const loc = useLocation();
+    if (!isCustomer) return <Navigate to="/login" state={{ next: loc.pathname }} replace />;
+    return children;
+  }
+
   return (
     <SiteProvider>
-      <AuthProvider>                                {/* <-- added */}
-        <ThemeProvider>
-          <BrowserRouter>
-            <Navbar />
-            <main>
-              <Routes>
-                {/* public pages gated by Visibility */}
-                <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
-                <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
-                <Route path="/checkout" element={<PageGate page="catalog"><Checkout /></PageGate>} />
-                <Route path="/white" element={<PageGate page="catalog"><WhiteThemeDemo /></PageGate>} />
+      <AuthProvider> {/* admin */}
+        <CustomerProvider> {/* customer */}
+          <ThemeProvider>
+            <BrowserRouter>
+              <Navbar />
+              <main>
+                <Routes>
+                  {/* customer auth */}
+                  <Route path="/login" element={<CustomerAuth />} />
 
-                <Route path="/book/:slug" element={<BookDetail />} />
-                <Route path="/cart" element={<PageGate page="cart"><Cart /></PageGate>} />
+                  {/* public pages gated by Visibility */}
+                  <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
+                  <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
+                  <Route
+                    path="/checkout"
+                    element={<RequireCustomer><PageGate page="catalog"><Checkout /></PageGate></RequireCustomer>}
+                  />
+                  <Route path="/white" element={<PageGate page="catalog"><WhiteThemeDemo /></PageGate>} />
 
-                {/* admin auth pages */}
-                <Route path="/admin/login" element={<PageGate page="adminLogin"><AdminLogin /></PageGate>} />
-                <Route path="/admin/setup" element={<AdminSetup />} />
+                  <Route path="/book/:slug" element={<BookDetail />} />
+                  <Route path="/cart" element={<PageGate page="cart"><Cart /></PageGate>} />
 
-                {/* admin-only */}
-                <Route path="/admin/api-users" element={<AdminGuard><ApiUsers /></AdminGuard>} />
-                <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
-                <Route path="/admin/books" element={<AdminGuard><BooksAdmin /></AdminGuard>} />
-                <Route path="/admin/books/:slug/edit" element={<AdminGuard><EditBook /></AdminGuard>} />
-                <Route path="/admin/settings" element={<AdminGuard><SiteSettings /></AdminGuard>} />
-                <Route path="/admin/homepage" element={<AdminGuard><HomepageAdmin /></AdminGuard>} />
-                <Route path="/admin/payments" element={<AdminGuard><PaymentsAdmin /></AdminGuard>} />
-                <Route path="/admin/add-book" element={<AdminGuard><AddBook /></AdminGuard>} />
-                <Route path="/admin/visibility" element={<AdminGuard><VisibilityAdmin /></AdminGuard>} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-          </BrowserRouter>
-        </ThemeProvider>
+                  {/* admin auth pages */}
+                  <Route path="/admin/login" element={<PageGate page="adminLogin"><AdminLogin /></PageGate>} />
+                  <Route path="/admin/setup" element={<AdminSetup />} />
+
+                  {/* admin-only */}
+                  <Route path="/admin/api-users" element={<AdminGuard><ApiUsers /></AdminGuard>} />
+                  <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
+                  <Route path="/admin/books" element={<AdminGuard><BooksAdmin /></AdminGuard>} />
+                  <Route path="/admin/books/:slug/edit" element={<AdminGuard><EditBook /></AdminGuard>} />
+                  <Route path="/admin/settings" element={<AdminGuard><SiteSettings /></AdminGuard>} />
+                  <Route path="/admin/homepage" element={<AdminGuard><HomepageAdmin /></AdminGuard>} />
+                  <Route path="/admin/payments" element={<AdminGuard><PaymentsAdmin /></AdminGuard>} />
+                  <Route path="/admin/add-book" element={<AdminGuard><AddBook /></AdminGuard>} />
+                  <Route path="/admin/visibility" element={<AdminGuard><VisibilityAdmin /></AdminGuard>} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+            </BrowserRouter>
+          </ThemeProvider>
+        </CustomerProvider>
       </AuthProvider>
     </SiteProvider>
   );
