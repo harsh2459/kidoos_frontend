@@ -7,7 +7,8 @@ function resolveBaseURL() {
   let u =
     (typeof process !== "undefined" && process.env?.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "http://localhost:5050/api";
+    // "http://localhost:5050/api";
+    "https://kiddoos-backend.onrender.com/api";
 
   // trim whitespace + trailing slashes
   u = String(u).trim().replace(/\/+$/, "");
