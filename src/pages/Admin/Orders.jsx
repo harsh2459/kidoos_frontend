@@ -162,7 +162,7 @@ export default function AdminOrders() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-fg">
-              <tr>
+              <tr className="bg-[#e3e3e3]">
                 <th className="py-3 px-4 w-10">
                   <input type="checkbox"
                          checked={allOnPageIds.length>0 && allOnPageIds.every(id => selected.has(id))}

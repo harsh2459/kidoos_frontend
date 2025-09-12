@@ -57,6 +57,8 @@ export default function Navbar() {
                   <MenuLink to="/admin/settings" label="Settings" />
                   <MenuLink to="/admin/payments" label="Payments" />
                   <MenuLink to="/admin/api-users" label="API Users" />
+                  <MenuLink to="/admin/email-senders" label="Email Senders" />
+                  <MenuLink to="/admin/email-templates" label="Email Templates" />
                 </div>
               )}
             </div>

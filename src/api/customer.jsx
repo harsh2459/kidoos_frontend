@@ -4,32 +4,19 @@ import { api } from "./client";
 const AUTH_KEY = "customer_jwt";
 
 export const CustomerAPI = {
-  tokenKey: AUTH_KEY,
-
-  setAuthHeader(token) {
-    if (!token) return {};
-    return { headers: { Authorization: `Bearer ${token}` } };
-  },
-
   async register(payload) {
-    // { name, email?, phone?, password }
-    return api.post("/auth/register", payload);
+    return api.post("/customer/auth/register", payload);
   },
-
   async login(payload) {
-    // { email?, phone?, password }  (backend accepts either email or phone + password)
-    return api.post("/auth/login", payload);
+    return api.post("/customer/auth/login", payload);
   },
-
   async me(token) {
-    return api.get("/me", CustomerAPI.setAuthHeader(token));
+    return api.get("/customer/me", token ? { headers: { Authorization: `Bearer ${token}` } } : {});
   },
-
   async updateProfile(token, patch) {
-    return api.patch("/me", patch, CustomerAPI.setAuthHeader(token));
+    return api.patch("/customer/me", patch, { headers: { Authorization: `Bearer ${token}` } });
   },
-
   async getCart(token) {
-    return api.get("/cart", CustomerAPI.setAuthHeader(token));
+    return api.get("/customer/cart", { headers: { Authorization: `Bearer ${token}` } });
   },
 };

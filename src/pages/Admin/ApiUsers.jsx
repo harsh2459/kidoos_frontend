@@ -83,7 +83,7 @@ export default function ApiUsers() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-surface-subtle text-fg">
-              <tr>
+              <tr className="bg-[#e3e3e3]">
                 <th className="py-3 px-4">Label</th>
                 <th className="py-3 px-4">Email</th>
                 <th className="py-3 px-4">Pickup</th>

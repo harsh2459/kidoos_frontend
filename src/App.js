@@ -20,7 +20,6 @@ import HomepageAdmin from './pages/Admin/Homepage';
 import PaymentsAdmin from './pages/Admin/Payments';
 import AdminSetup from './pages/Admin/Setup';
 import { AdminGuard, PageGate } from './components/RouteGuard';
-import VisibilityAdmin from './pages/Admin/Visibility';
 import EditBook from './pages/Admin/EditBook';
 import BooksAdmin from './pages/Admin/Books';
 import AdminOrders from './pages/Admin/Orders';
@@ -29,6 +28,8 @@ import WhiteThemeDemo from './pages/WhiteThemeDemo';
 
 import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
 import CustomerAuth from './pages/CustomerAuth';
+import EmailSenders from './pages/Admin/EmailSenders';
+import EmailTemplates from './pages/Admin/EmailTemplates';
 
 export default function App() {
   function RequireCustomer({ children }) {
@@ -75,7 +76,8 @@ export default function App() {
                   <Route path="/admin/homepage" element={<AdminGuard><HomepageAdmin /></AdminGuard>} />
                   <Route path="/admin/payments" element={<AdminGuard><PaymentsAdmin /></AdminGuard>} />
                   <Route path="/admin/add-book" element={<AdminGuard><AddBook /></AdminGuard>} />
-                  <Route path="/admin/visibility" element={<AdminGuard><VisibilityAdmin /></AdminGuard>} />
+                  <Route path="/admin/email-senders" element={<AdminGuard><EmailSenders /></AdminGuard>} />
+                  <Route path="/admin/email-templates" element={<AdminGuard><EmailTemplates /></AdminGuard>} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
