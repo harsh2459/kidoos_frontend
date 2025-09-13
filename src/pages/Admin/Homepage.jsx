@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
+import { toRelativeFromPublic } from "../../api/asset";
 
 export default function HomepageAdmin() {
   const [token] = useState(localStorage.getItem("admin_jwt") || "");
@@ -14,7 +15,15 @@ export default function HomepageAdmin() {
 
   const addBlock = (type) => setBlocks(b => [...b, defaultBlock(type)]);
   const save = async () => {
-    await api.put("/settings/homepage", { blocks }, { headers: { Authorization: `Bearer ${token}` } });
+    const cleaned = blocks.map((b) => {
+      const nb = { ...b };
+      if (nb.image) nb.image = toRelativeFromPublic(nb.image);
+      if (nb.type === "hero") {
+        nb.image = toRelativeFromPublic(nb.image);
+      }
+      return nb;
+    });
+    await api.put("/settings/homepage", { blocks: cleaned }, { headers: { Authorization: `Bearer ${token}` } });
     alert("Homepage saved");
   };
 
@@ -63,7 +72,7 @@ function BlockEditor({ block, onChange }) {
         <div className="grid md:grid-cols-2 gap-3 mt-3">
           <Text label="Title" value={block.title} onChange={v => onChange({ ...block, title: v })} />
           <Text label="Subtitle" value={block.subtitle} onChange={v => onChange({ ...block, subtitle: v })} />
-          <Text label="Image URL" value={block.image} onChange={v => onChange({ ...block, image: v })} />
+          <Text label="Image URL" value={block.image} onChange={v => onChange({ ...block, image: toRelativeFromPublic(v) })} />
           <Text label="CTA Text" value={block.ctaText} onChange={v => onChange({ ...block, ctaText: v })} />
           <Text label="CTA Link" value={block.ctaHref} onChange={v => onChange({ ...block, ctaHref: v })} />
         </div>

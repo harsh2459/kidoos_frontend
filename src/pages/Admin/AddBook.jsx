@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import slugify from "slugify";
-import { assetUrl } from "../../api/asset";
+import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 
 export default function AddBook() {
   const { token } = useAuth();
@@ -28,7 +28,7 @@ export default function AddBook() {
     setUploadingCover(true);
     try {
       const res = await api.post("/uploads/image", fd, { ...auth, headers: { ...auth.headers, "Content-Type": "multipart/form-data" } });
-      setCoverUrl(res.data?.url || "");
+      setCoverUrl(res.data?.path || "");
     } finally { setUploadingCover(false); }
   }
 
@@ -44,14 +44,17 @@ export default function AddBook() {
       title: form.title.trim(),
       slug: slugify(form.title, { lower: true }),
       subtitle: form.subtitle || undefined,
-      authors: form.authors ? form.authors.split(",").map(s=>s.trim()).filter(Boolean) : [],
-      language: form.language, pages: Number(form.pages)||0, edition: form.edition || undefined, printType: form.printType,
-      mrp: Number(form.mrp)||0, price: Number(form.price)||0, discountPct: Number(form.discountPct)||0, taxRate: Number(form.taxRate)||0,
+      authors: form.authors ? form.authors.split(",").map(s => s.trim()).filter(Boolean) : [],
+      language: form.language, pages: Number(form.pages) || 0, edition: form.edition || undefined, printType: form.printType,
+      mrp: Number(form.mrp) || 0, price: Number(form.price) || 0, discountPct: Number(form.discountPct) || 0, taxRate: Number(form.taxRate) || 0,
       currency: form.currency,
-      inventory: { sku: form.sku || undefined, stock: Number(form.stock)||0, lowStockAlert: Number(form.lowStockAlert)||5 },
-      assets: { coverUrl: coverUrl || undefined, samplePdfUrl: form.samplePdfUrl || undefined },
-      categories: form.categories ? form.categories.split(",").map(s=>s.trim()).filter(Boolean) : [],
-      tags: form.tags ? form.tags.split(",").map(s=>s.trim()).filter(Boolean) : [],
+      inventory: { sku: form.sku || undefined, stock: Number(form.stock) || 0, lowStockAlert: Number(form.lowStockAlert) || 5 },
+      assets: {
+        coverUrl: toRelativeFromPublic(coverUrl) || undefined,
+        samplePdfUrl: toRelativeFromPublic(form.samplePdfUrl) || form.samplePdfUrl || undefined
+      },
+      categories: form.categories ? form.categories.split(",").map(s => s.trim()).filter(Boolean) : [],
+      tags: form.tags ? form.tags.split(",").map(s => s.trim()).filter(Boolean) : [],
       descriptionHtml: form.descriptionHtml || "",
       visibility: form.visibility
     };
@@ -59,7 +62,7 @@ export default function AddBook() {
     try {
       await api.post("/books", payload, auth);
       alert("Book created!");
-      setForm(f => ({ ...f, title:"", subtitle:"", authors:"", mrp:0, price:0 }));
+      setForm(f => ({ ...f, title: "", subtitle: "", authors: "", mrp: 0, price: 0 }));
       setCover(null); setCoverUrl("");
     } catch (err) {
       alert(err.response?.data?.error || "Failed to create book");
@@ -76,16 +79,16 @@ export default function AddBook() {
           <SectionTitle title="Basic Info" />
           <Field label="Title *" hint="Shown in catalog">
             <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.title} onChange={e=>set("title", e.target.value)} placeholder="e.g. Strategic Management MPA-011" />
+              value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Strategic Management MPA-011" />
           </Field>
           <div className="grid md:grid-cols-2 gap-3">
             <Field label="Subtitle">
               <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                     value={form.subtitle} onChange={e=>set("subtitle", e.target.value)} />
+                value={form.subtitle} onChange={e => set("subtitle", e.target.value)} />
             </Field>
             <Field label="Authors" hint="comma separated">
               <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                     value={form.authors} onChange={e=>set("authors", e.target.value)} />
+                value={form.authors} onChange={e => set("authors", e.target.value)} />
             </Field>
           </div>
         </div>
@@ -95,23 +98,23 @@ export default function AddBook() {
           <SectionTitle title="Details" />
           <div className="grid md:grid-cols-4 gap-3">
             <Field label="Language"><input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.language} onChange={e=>set("language", e.target.value)} /></Field>
+              value={form.language} onChange={e => set("language", e.target.value)} /></Field>
             <Field label="Edition"><input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.edition} onChange={e=>set("edition", e.target.value)} /></Field>
+              value={form.edition} onChange={e => set("edition", e.target.value)} /></Field>
             <Field label="Format">
               <select className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.printType} onChange={e=>set("printType", e.target.value)}>
+                value={form.printType} onChange={e => set("printType", e.target.value)}>
                 <option value="paperback">Paperback</option>
                 <option value="hardcover">Hardcover</option>
                 <option value="ebook">eBook (PDF/Kindle)</option>
               </select>
             </Field>
             <Field label="Pages"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.pages} onChange={e=>set("pages", e.target.value)} /></Field>
+              value={form.pages} onChange={e => set("pages", e.target.value)} /></Field>
           </div>
           <div className="grid md:grid-cols-2 gap-3 mt-2">
             <Field label="Sample PDF URL"><input type="url" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.samplePdfUrl} onChange={e=>set("samplePdfUrl", e.target.value)} placeholder="https://..." /></Field>
+              value={form.samplePdfUrl} onChange={e => set("samplePdfUrl", e.target.value)} placeholder="https://..." /></Field>
             <div />
           </div>
         </div>
@@ -121,13 +124,13 @@ export default function AddBook() {
           <SectionTitle title="Pricing" />
           <div className="grid md:grid-cols-4 gap-3">
             <Field label="MRP"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.mrp} onChange={e=>set("mrp", e.target.value)} /></Field>
+              value={form.mrp} onChange={e => set("mrp", e.target.value)} /></Field>
             <Field label="Sale price"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.price} onChange={e=>set("price", e.target.value)} /></Field>
+              value={form.price} onChange={e => set("price", e.target.value)} /></Field>
             <Field label="Discount %"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.discountPct} onChange={e=>set("discountPct", e.target.value)} /></Field>
+              value={form.discountPct} onChange={e => set("discountPct", e.target.value)} /></Field>
             <Field label="Tax %"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.taxRate} onChange={e=>set("taxRate", e.target.value)} /></Field>
+              value={form.taxRate} onChange={e => set("taxRate", e.target.value)} /></Field>
           </div>
         </div>
 
@@ -136,11 +139,11 @@ export default function AddBook() {
           <SectionTitle title="Inventory" />
           <div className="grid md:grid-cols-3 gap-3">
             <Field label="SKU"><input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.sku} onChange={e=>set("sku", e.target.value)} /></Field>
+              value={form.sku} onChange={e => set("sku", e.target.value)} /></Field>
             <Field label="Stock"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.stock} onChange={e=>set("stock", e.target.value)} /></Field>
+              value={form.stock} onChange={e => set("stock", e.target.value)} /></Field>
             <Field label="Low stock alert"><input type="number" className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.lowStockAlert} onChange={e=>set("lowStockAlert", e.target.value)} /></Field>
+              value={form.lowStockAlert} onChange={e => set("lowStockAlert", e.target.value)} /></Field>
           </div>
         </div>
 
@@ -150,16 +153,16 @@ export default function AddBook() {
           <div className="grid md:grid-cols-2 gap-3">
             <Field label="Categories" hint="comma separated">
               <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.categories} onChange={e=>set("categories", e.target.value)} />
+                value={form.categories} onChange={e => set("categories", e.target.value)} />
             </Field>
             <Field label="Tags" hint="comma separated">
               <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.tags} onChange={e=>set("tags", e.target.value)} />
+                value={form.tags} onChange={e => set("tags", e.target.value)} />
             </Field>
           </div>
           <Field label="Description">
             <textarea className="w-full bg-surface border border-border rounded-lg px-3 py-2 h-32"
-              value={form.descriptionHtml} onChange={e=>set("descriptionHtml", e.target.value)} />
+              value={form.descriptionHtml} onChange={e => set("descriptionHtml", e.target.value)} />
           </Field>
         </div>
 
@@ -169,7 +172,7 @@ export default function AddBook() {
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex items-center gap-3">
               <input type="file" accept="image/*"
-                onChange={(e)=>{ const f=e.target.files?.[0]; setCover(f||null); if (f) uploadImage(f);} } />
+                onChange={(e) => { const f = e.target.files?.[0]; setCover(f || null); if (f) uploadImage(f); }} />
               {uploadingCover && <span className="text-xs text-fg-subtle">Uploading…</span>}
               {coverUrl && <img src={assetUrl(coverUrl)} alt="cover" className="h-16 w-12 object-cover rounded-md" />}
             </div>
@@ -177,7 +180,7 @@ export default function AddBook() {
             <div className="flex items-center gap-3">
               <label className="text-sm">Visibility</label>
               <select className="bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.visibility} onChange={e=>set("visibility", e.target.value)}>
+                value={form.visibility} onChange={e => set("visibility", e.target.value)}>
                 <option value="public">Public</option>
                 <option value="draft">Draft</option>
               </select>
