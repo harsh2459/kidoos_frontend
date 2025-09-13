@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
-import { assetUrl, toRelativeFromPublic } from "../../api/assetUrl";
+import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 
 export default function SiteSettings(){
   const token = localStorage.getItem("admin_jwt") || "";

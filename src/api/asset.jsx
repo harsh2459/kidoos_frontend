@@ -1,5 +1,5 @@
 // src/api/assetUrl.js
-import { api } from "../../api/client";
+import { api } from "./client";
 
 function apiOrigin() {
   // api.defaults.baseURL is like "https://kiddoos-backend.onrender.com/api"
