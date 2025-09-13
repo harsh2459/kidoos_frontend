@@ -1,6 +1,6 @@
 import React from "react";
 
-function SeaCap({ tagline = "Reading minds grow beyond screens™" }) {
+function SeaCap({ tagline = "Reading minds grow beyond screens" }) {
   const H = 160; // wave canvas height
   return (
     <div className="relative w-full bg-black">
@@ -248,16 +248,3 @@ export default function Footer({ contact, links }) {
     </footer>
   );
 }
-
-Footer.defaultProps = {
-  contact: {
-    email: "hello@kiddosintellect.com",
-    phone: "+91 98796 20138",
-    hours: "Mon–Sat, 10am–6pm IST",
-  },
-  links: [
-    { label: "Privacy", href: "/privacy" },
-    { label: "Returns", href: "/returns" },
-    { label: "Shipping", href: "/shipping" },
-  ],
-};

@@ -84,7 +84,7 @@ export default function App() {
               </main>
               <Footer
                 contact={{
-                  email: "hello@kiddosintellect.com",
+                  email: "kiddosintellect@gmail.com",
                   phone: "+91 98796 20138",
                   hours: "Mon–Sat, 10am–6pm IST",
                 }}
