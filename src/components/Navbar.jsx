@@ -25,11 +25,11 @@ export default function Navbar() {
         {/* Brand */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           {site?.logoUrl ? (
-            <img src={assetUrl(site.logoUrl)} alt="logo" className="h-8 w-auto object-contain" />
+            <img src={assetUrl(site.logoUrl)} alt="logo" className="h-[4rem] w-auto object-contain" />
           ) : (
             <div className="h-8 w-8 rounded-md bg-surface-subtle grid place-items-center text-xs text-fg-subtle">logo</div>
           )}
-          <div className="font-semibold hidden sm:block">{site?.title || "Kiddos intellect"}</div>
+          {/* <div className="font-semibold hidden sm:block">{site?.title || "Kiddos intellect"}</div> */}
         </Link>
 
         {/* Left nav */}

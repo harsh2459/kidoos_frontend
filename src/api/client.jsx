@@ -1,21 +1,27 @@
 // src/api/client.js
 import axios from "axios";
 
-// Resolve baseURL once. Always end at /api (strip anything after /api).
+/** Resolve API base once. Normalize to ".../api" */
 function resolveBaseURL() {
-  // priority: env -> window -> default
+  // Priority: Vite env -> CRA env -> window -> default
   let u =
-    (typeof process !== "undefined" && process.env?.REACT_APP_API_BASE) ||
+    (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
+    (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    // "http://localhost:5050/api";
-    "https://kiddoos-backend.onrender.com/api";
+    "https://kiddoos-backend.onrender.com/api"; // fallback
 
-  // trim whitespace + trailing slashes
-  u = String(u).trim().replace(/\/+$/, "");
+  u = String(u).trim();
 
-  // normalize to ".../api"
+  // If someone passed the origin only, add /api
+  // If they passed ".../api/anything", normalize to just ".../api"
+  // If they passed ".../api", keep it
+  // Remove trailing slashes first
+  u = u.replace(/\/+$/, "");
   const m = u.match(/^(.*?\/api)(?:\/.*)?$/i);
-  return m ? m[1] : u; // if someone gave ".../api/auth", becomes ".../api"
+  if (m) u = m[1];
+  else if (!/\/api$/i.test(u)) u = u + "/api";
+
+  return u;
 }
 
 const baseURL = resolveBaseURL();
@@ -26,7 +32,7 @@ export const api = axios.create({
   validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
 });
 
-// Attach tokens: only to the matching namespaces
+// Attach tokens to the right namespaces
 api.interceptors.request.use((config) => {
   const url = String(config.url || "");
   const isCustomer = url.startsWith("/customer/");
