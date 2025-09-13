@@ -21,7 +21,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 bg-surface border-b border-border-subtle">
-      <div className="mx-auto max-w-container px-4 h-14 flex items-center gap-4">
+      <div className="mx-auto max-w-container px-4 h-14 flex items-center gap-4 h-[68px]">
         {/* Brand */}
         <Link to="/" className="flex items-center gap-3 shrink-0">
           {site?.logoUrl ? (

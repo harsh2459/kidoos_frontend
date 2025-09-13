@@ -31,14 +31,14 @@ function Block({ block }) {
             </Link>
           )}
         </div>
-        {block.image && <img src={block.image} alt="" className="w-full h-72 md:h-full object-cover" />}
+        {block.image && <img src={assetUrl(block.image)} alt="" className="w-full h-72 md:h-full object-cover" />}
       </section>
     );
   }
   if (block.type === "banner") {
     return (
       <a href={block.href || "#"} className="block rounded-theme overflow-hidden shadow-theme">
-        <img src={block.image} alt={block.alt || ""} className="w-full object-cover" />
+        <img src={assetUrl(block.image)} alt={block.alt || ""} className="w-full object-cover" />
       </a>
     );
   }
