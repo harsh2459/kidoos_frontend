@@ -12,7 +12,8 @@ export default function Navbar() {
 
   const { site, visibility } = useSite();
   const nav = useMemo(() => visibility?.publicNav || ["catalog", "cart"], [visibility]);
-
+  console.log(site);
+  
   const { isAdmin, admin, logout: logoutAdmin } = useAuth();
   const { isCustomer, customer, logout: logoutCustomer } = useCustomer();
 

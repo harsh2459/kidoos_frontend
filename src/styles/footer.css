@@ -1,0 +1,20 @@
+/* Wave shape above the footer */
+.custom-shape-divider-top {
+  position: absolute;
+  top: -1px;           /* tucks the wave right into the section above */
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: 0;          /* sits behind footer content */
+}
+
+.custom-shape-divider-top svg {
+  display: block;
+  width: calc(151% + 1.3px);
+  height: 100px;       /* adjust to make the wave taller/shorter */
+}
+
+.custom-shape-divider-top .shape-fill {
+  fill: #ffffff;       /* matches footer background */
+}

@@ -30,6 +30,7 @@ import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
 import CustomerAuth from './pages/CustomerAuth';
 import EmailSenders from './pages/Admin/EmailSenders';
 import EmailTemplates from './pages/Admin/EmailTemplates';
+import Footer from './components/Footer';
 
 export default function App() {
   function RequireCustomer({ children }) {
@@ -81,6 +82,18 @@ export default function App() {
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
+              <Footer
+                contact={{
+                  email: "hello@kiddosintellect.com",
+                  phone: "+91 98796 20138",
+                  hours: "Mon–Sat, 10am–6pm IST",
+                }}
+                links={[
+                  { label: "Privacy", href: "/privacy" },
+                  { label: "Returns", href: "/returns" },
+                  { label: "Shipping", href: "/shipping" },
+                ]}
+              />
             </BrowserRouter>
           </ThemeProvider>
         </CustomerProvider>
