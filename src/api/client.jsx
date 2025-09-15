@@ -6,7 +6,8 @@ function resolveBaseURL() {
   let u =
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
-    (typeof window !== "undefined" && window.API_BASE) || "https://kiddoos-backend.onrender.com/api" ||
+    (typeof window !== "undefined" && window.API_BASE) || 
+    // "https://kiddoos-backend.onrender.com/api" ||
     "http://localhost:5050/api"; // fallback
 
   u = String(u).trim();
