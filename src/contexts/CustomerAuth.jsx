@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 
-const LS_KEY = "cust_jwt";
+const LS_KEY = "customer_jwt";
 
 // MUST match your backend mount: app.use("/api/customer", customerRoutes)
 const CUST_PREFIX =
@@ -19,10 +19,10 @@ export const useCustomer = () =>
     customer: null,
     isCustomer: false,
     loading: false,
-    login: async () => {},
-    register: async () => {},
-    logout: () => {},
-    setCustomer: () => {},
+    login: async () => { },
+    register: async () => { },
+    logout: () => { },
+    setCustomer: () => { },
   };
 
 // Try a few paths so it works whether your routes are /auth/login or /login
@@ -87,8 +87,14 @@ export default function CustomerProvider({ children }) {
     return data;
   }
 
-  async function register({ name, email, phone, password }) {
-    const body = { name, email: email || undefined, phone: phone || undefined, password };
+  async function register({ name, email, phone, password, emailOtpTicket }) {
+    const body = {
+      name,
+      email: email || undefined,
+      phone: phone || undefined,
+      password,
+      emailOtpTicket,              // <-- forward the short-lived ticket
+    };
     const { data } = await postWithFallback(["/auth/register", "/register"], body);
     if (!data?.token) throw new Error(data?.error || "Registration failed");
     localStorage.setItem(LS_KEY, data.token);

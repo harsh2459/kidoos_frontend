@@ -1,7 +1,4 @@
-// Simple helper for customer endpoints
 import { api } from "./client";
-
-const AUTH_KEY = "customer_jwt";
 
 export const CustomerAPI = {
   async register(payload) {
@@ -18,5 +15,14 @@ export const CustomerAPI = {
   },
   async getCart(token) {
     return api.get("/customer/cart", { headers: { Authorization: `Bearer ${token}` } });
+  },
+};
+
+export const CustomerOTPAPI = {
+  start(email) {
+    return api.post("/customer/auth/email-otp/start", { email });
+  },
+  verify(email, otp) {
+    return api.post("/customer/auth/email-otp/verify", { email, otp });
   },
 };

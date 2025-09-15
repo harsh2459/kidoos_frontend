@@ -1,4 +1,3 @@
-// src/api/client.js
 import axios from "axios";
 
 /** Resolve API base once. Normalize to ".../api" */
@@ -8,15 +7,13 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "https://kiddoos-backend.onrender.com/api"; // fallback
+    "http://localhost:5050/api"; // fallback
 
   u = String(u).trim();
-
-  // If someone passed the origin only, add /api
-  // If they passed ".../api/anything", normalize to just ".../api"
-  // If they passed ".../api", keep it
-  // Remove trailing slashes first
+  
+  // Remove trailing slashes
   u = u.replace(/\/+$/, "");
+  // If someone passed ".../api/anything", normalize to just ".../api"
   const m = u.match(/^(.*?\/api)(?:\/.*)?$/i);
   if (m) u = m[1];
   else if (!/\/api$/i.test(u)) u = u + "/api";

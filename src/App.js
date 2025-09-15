@@ -1,4 +1,3 @@
-// src/App.js
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
 import './styles/classic-light.css';
@@ -32,68 +31,86 @@ import EmailSenders from './pages/Admin/EmailSenders';
 import EmailTemplates from './pages/Admin/EmailTemplates';
 import Footer from './components/Footer';
 
-export default function App() {
+function InnerApp() {
+  const loc = useLocation();
+  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog';
+
   function RequireCustomer({ children }) {
     const { isCustomer } = useCustomer();
-    const loc = useLocation();
-    if (!isCustomer) return <Navigate to="/login" state={{ next: loc.pathname }} replace />;
+    const here = useLocation();
+    if (!isCustomer) return <Navigate to="/login" state={{ next: here.pathname }} replace />;
     return children;
   }
 
   return (
+    <>
+      <Navbar />
+      <main>
+        <Routes>
+          {/* customer auth */}
+          <Route path="/login" element={<CustomerAuth />} />
+
+          {/* public pages gated by Visibility */}
+          <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
+          <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
+          <Route
+            path="/checkout"
+            element={
+              <RequireCustomer>
+                <PageGate page="catalog"><Checkout /></PageGate>
+              </RequireCustomer>
+            }
+          />
+          <Route path="/white" element={<PageGate page="catalog"><WhiteThemeDemo /></PageGate>} />
+
+          <Route path="/book/:slug" element={<BookDetail />} />
+          <Route path="/cart" element={<PageGate page="cart"><Cart /></PageGate>} />
+
+          {/* admin auth pages */}
+          <Route path="/admin/login" element={<PageGate page="adminLogin"><AdminLogin /></PageGate>} />
+          <Route path="/admin/setup" element={<AdminSetup />} />
+
+          {/* admin-only */}
+          <Route path="/admin/api-users" element={<AdminGuard><ApiUsers /></AdminGuard>} />
+          <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
+          <Route path="/admin/books" element={<AdminGuard><BooksAdmin /></AdminGuard>} />
+          <Route path="/admin/books/:slug/edit" element={<AdminGuard><EditBook /></AdminGuard>} />
+          <Route path="/admin/settings" element={<AdminGuard><SiteSettings /></AdminGuard>} />
+          <Route path="/admin/homepage" element={<AdminGuard><HomepageAdmin /></AdminGuard>} />
+          <Route path="/admin/payments" element={<AdminGuard><PaymentsAdmin /></AdminGuard>} />
+          <Route path="/admin/add-book" element={<AdminGuard><AddBook /></AdminGuard>} />
+          <Route path="/admin/email-senders" element={<AdminGuard><EmailSenders /></AdminGuard>} />
+          <Route path="/admin/email-templates" element={<AdminGuard><EmailTemplates /></AdminGuard>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      {showFooter && (
+        <Footer
+          contact={{
+            email: "kiddosintellect@gmail.com",
+            phone: "+91 98796 20138",
+            hours: "Mon–Sat, 10am–6pm IST",
+          }}
+          links={[
+            { label: "Privacy", href: "/privacy" },
+            { label: "Returns", href: "/returns" },
+            { label: "Shipping", href: "/shipping" },
+          ]}
+        />
+      )}
+    </>
+  );
+}
+
+export default function App() {
+  return (
     <SiteProvider>
-      <AuthProvider> {/* admin */}
-        <CustomerProvider> {/* customer */}
+      <AuthProvider>
+        <CustomerProvider>
           <ThemeProvider>
             <BrowserRouter>
-              <Navbar />
-              <main>
-                <Routes>
-                  {/* customer auth */}
-                  <Route path="/login" element={<CustomerAuth />} />
-
-                  {/* public pages gated by Visibility */}
-                  <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
-                  <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
-                  <Route
-                    path="/checkout"
-                    element={<RequireCustomer><PageGate page="catalog"><Checkout /></PageGate></RequireCustomer>}
-                  />
-                  <Route path="/white" element={<PageGate page="catalog"><WhiteThemeDemo /></PageGate>} />
-
-                  <Route path="/book/:slug" element={<BookDetail />} />
-                  <Route path="/cart" element={<PageGate page="cart"><Cart /></PageGate>} />
-
-                  {/* admin auth pages */}
-                  <Route path="/admin/login" element={<PageGate page="adminLogin"><AdminLogin /></PageGate>} />
-                  <Route path="/admin/setup" element={<AdminSetup />} />
-
-                  {/* admin-only */}
-                  <Route path="/admin/api-users" element={<AdminGuard><ApiUsers /></AdminGuard>} />
-                  <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
-                  <Route path="/admin/books" element={<AdminGuard><BooksAdmin /></AdminGuard>} />
-                  <Route path="/admin/books/:slug/edit" element={<AdminGuard><EditBook /></AdminGuard>} />
-                  <Route path="/admin/settings" element={<AdminGuard><SiteSettings /></AdminGuard>} />
-                  <Route path="/admin/homepage" element={<AdminGuard><HomepageAdmin /></AdminGuard>} />
-                  <Route path="/admin/payments" element={<AdminGuard><PaymentsAdmin /></AdminGuard>} />
-                  <Route path="/admin/add-book" element={<AdminGuard><AddBook /></AdminGuard>} />
-                  <Route path="/admin/email-senders" element={<AdminGuard><EmailSenders /></AdminGuard>} />
-                  <Route path="/admin/email-templates" element={<AdminGuard><EmailTemplates /></AdminGuard>} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </main>
-              <Footer
-                contact={{
-                  email: "kiddosintellect@gmail.com",
-                  phone: "+91 98796 20138",
-                  hours: "Mon–Sat, 10am–6pm IST",
-                }}
-                links={[
-                  { label: "Privacy", href: "/privacy" },
-                  { label: "Returns", href: "/returns" },
-                  { label: "Shipping", href: "/shipping" },
-                ]}
-              />
+              <InnerApp />
             </BrowserRouter>
           </ThemeProvider>
         </CustomerProvider>
