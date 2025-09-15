@@ -5,7 +5,7 @@ import { useCart } from "../contexts/CartStore";
 import { assetUrl } from "../api/asset";
 import { useSite } from "../contexts/SiteConfig";
 
-// Load Razorpay script once on demand
+/* ------------ Razorpay loader ------------ */
 function loadRzp() {
   return new Promise((resolve, reject) => {
     if (window.Razorpay) return resolve();
@@ -26,6 +26,7 @@ export default function Checkout() {
   const { payments } = useSite();
   const pollTimer = useRef(null);
 
+  /* ------------ Totals ------------ */
   const totals = useMemo(() => {
     const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
     const tax = 0;
@@ -33,6 +34,7 @@ export default function Checkout() {
     return { sub, tax, ship, grand: sub + tax + ship };
   }, [items]);
 
+  /* ------------ Customer / Shipping ------------ */
   const [cust, setCust] = useState({
     name: "",
     email: "",
@@ -43,10 +45,58 @@ export default function Checkout() {
     pin: "",
     country: "India",
   });
+  const set = (k, v) => setCust((p) => ({ ...p, [k]: v }));
+
+  /* ------------ PIN → auto-fill state ------------ */
+  const [pinStatus, setPinStatus] = useState(""); // "", "Looking up…", "Not found", "OK"
+  const [offices, setOffices] = useState([]);     // PostOffice[]
+  const [locality, setLocality] = useState("");   // selected office name
+  const pinDebounce = useRef(null);
+
+  async function lookupPin(pin) {
+    if (!/^\d{6}$/.test(pin)) { setPinStatus(""); setOffices([]); return; }
+    try {
+      setPinStatus("Looking up…");
+
+      // If you created a backend proxy, call: const res = await api.get(`/geo/pin/${pin}`);
+      // Public India Post API:
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await res.json();
+      const entry = Array.isArray(data) ? data[0] : null;
+
+      if (!entry || entry.Status !== "Success" || !Array.isArray(entry.PostOffice) || entry.PostOffice.length === 0) {
+        setPinStatus("Not found");
+        setOffices([]);
+        return;
+      }
+
+      const list = entry.PostOffice;
+      setOffices(list);
+      setLocality(list[0]?.Name || "");
+      set("city", (list[0]?.District || "").trim());
+      set("state", (list[0]?.State || "").trim());
+      setPinStatus("OK");
+    } catch {
+      setPinStatus("Not found");
+      setOffices([]);
+    }
+  }
+
+  function onPinChange(v) {
+    const onlyDigits = v.replace(/\D/g, "").slice(0, 6);
+    set("pin", onlyDigits);
+    clearTimeout(pinDebounce.current);
+    if (/^\d{6}$/.test(onlyDigits)) {
+      pinDebounce.current = setTimeout(() => lookupPin(onlyDigits), 250);
+    } else {
+      setPinStatus("");
+      setOffices([]);
+    }
+  }
+
+  /* ------------ Order placement ------------ */
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(null); // { orderId }
-
-  const set = (k, v) => setCust((p) => ({ ...p, [k]: v }));
 
   const hasOnlinePay = (payments?.providers || []).some(
     (p) => p.id === "razorpay" && p.enabled
@@ -56,6 +106,10 @@ export default function Checkout() {
     if (items.length === 0) { navigate("/cart"); return false; }
     if (!cust.name || !cust.phone || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
       alert("Please fill shipping details.");
+      return false;
+    }
+    if (!/^\d{6}$/.test(cust.pin)) {
+      alert("Please enter a valid 6-digit PIN.");
       return false;
     }
     return true;
@@ -71,8 +125,12 @@ export default function Checkout() {
       })),
       customer: { name: cust.name, email: cust.email, phone: cust.phone },
       shipping: {
-        address1: cust.line1, city: cust.city, state: cust.state,
-        postalCode: cust.pin, country: cust.country,
+        address1: cust.line1,
+        city: cust.city,
+        state: cust.state,
+        postalCode: cust.pin,
+        country: cust.country,
+        locality: locality || undefined, // optional
       },
       amount: totals.grand,
       currency: "INR",
@@ -86,7 +144,7 @@ export default function Checkout() {
   }
 
   async function pollOrderUntilPaid(orderId) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const check = async () => {
         try {
           const { data } = await api.get(`/orders/${orderId}`);
@@ -95,16 +153,13 @@ export default function Checkout() {
             clearInterval(pollTimer.current);
             pollTimer.current = null;
             resolve(true);
-            return;
           }
-        } catch (e) {
-          // ignore transient errors; keep polling
+        } catch {
+          // ignore transient
         }
       };
       pollTimer.current = setInterval(check, 2000);
-      // Also do an immediate first check
       check();
-      // Safety timeout (90s)
       setTimeout(() => {
         if (pollTimer.current) {
           clearInterval(pollTimer.current);
@@ -119,25 +174,22 @@ export default function Checkout() {
     if (!validateShipping()) return;
     setPlacing(true);
     try {
-      // 1) Create local order with method=razorpay
       const orderId = await createLocalOrder("razorpay", "created");
 
-      // 2) Get Razorpay order + key from backend
       const { data } = await api.post("/payments/razorpay/order", {
         amountInRupees: totals.grand,
         receipt: `web_${orderId}`,
-        orderId
+        orderId,
       });
       const { order, key } = data || {};
       if (!order?.id || !key) throw new Error("Payment init failed");
 
-      // 3) Ensure script and open checkout
       await loadRzp();
 
       const rzp = new window.Razorpay({
         key,
-        amount: order.amount,       // paise
-        currency: order.currency,   // INR
+        amount: order.amount,
+        currency: order.currency,
         name: "Your Store",
         description: `Order ${orderId}`,
         order_id: order.id,
@@ -148,22 +200,16 @@ export default function Checkout() {
         },
         notes: { ourOrderId: orderId },
         handler: async function () {
-          // We rely on webhook to mark paid; show confirming and poll
           setPlaced({ orderId });
-          // Poll until webhook marks paid
           const paid = await pollOrderUntilPaid(orderId);
           if (!paid) {
             alert("Payment captured, awaiting confirmation. If not updated soon, contact support with your Order ID.");
           } else {
-            clear(); // success
+            clear();
           }
         },
-        modal: {
-          ondismiss: function () {
-            // User closed without paying
-          }
-        },
-        theme: { color: "#3399cc" }
+        modal: { ondismiss: function () {} },
+        theme: { color: "#3399cc" },
       });
 
       rzp.open();
@@ -188,6 +234,7 @@ export default function Checkout() {
     }
   }
 
+  /* ------------ Thank-you page ------------ */
   if (placed) {
     return (
       <div className="mx-auto max-w-screen-xl px-4 py-8">
@@ -203,24 +250,94 @@ export default function Checkout() {
     );
   }
 
+  /* ------------ Checkout UI ------------ */
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8 grid lg:grid-cols-3 gap-6">
       {/* Shipping form */}
       <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-3">
         <h1 className="text-xl font-semibold mb-2">Shipping details</h1>
+
         <Row>
-          <Input label="Full name" value={cust.name} onChange={(e) => set("name", e.target.value)} />
+          <Input
+            label="Full name"
+            value={cust.name}
+            onChange={(e) => set("name", e.target.value)}
+          />
         </Row>
+
         <div className="grid md:grid-cols-2 gap-3">
-          <Input label="Email (optional)" value={cust.email} onChange={(e) => set("email", e.target.value)} />
-          <Input label="Phone" value={cust.phone} onChange={(e) => set("phone", e.target.value)} />
+          <Input
+            label="Email (optional)"
+            value={cust.email}
+            onChange={(e) => set("email", e.target.value)}
+          />
+          <Input
+            label="Phone"
+            value={cust.phone}
+            onChange={(e) => set("phone", e.target.value)}
+          />
         </div>
-        <Input label="Address" value={cust.line1} onChange={(e) => set("line1", e.target.value)} />
+
+        <Input
+          label="Address"
+          value={cust.line1}
+          onChange={(e) => set("line1", e.target.value)}
+        />
+
         <div className="grid md:grid-cols-3 gap-3">
-          <Input label="City" value={cust.city} onChange={(e) => set("city", e.target.value)} />
-          <Input label="State" value={cust.state} onChange={(e) => set("state", e.target.value)} />
-          <Input label="PIN code" value={cust.pin} onChange={(e) => set("pin", e.target.value)} />
+          <Input
+            label="City"
+            value={cust.city}
+            onChange={(e) => set("city", e.target.value)}
+          />
+          <Input
+            label="State"
+            value={cust.state}
+            onChange={(e) => set("state", e.target.value)}
+          />
+          <Input
+            label="PIN code"
+            value={cust.pin}
+            onChange={(e) => onPinChange(e.target.value)}
+          />
         </div>
+
+        {/* Locality + PIN status */}
+        {(offices.length > 1 || pinStatus) && (
+          <div className="grid md:grid-cols-3 gap-3 mt-2">
+            {offices.length > 1 && (
+              <div>
+                <label className="block text-sm mb-1">Locality / Post Office</label>
+                <select
+                  className="w-full bg-white border border-gray-300 rounded-theme px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  value={locality}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setLocality(val);
+                    const sel = offices.find((o) => o.Name === val);
+                    if (sel) {
+                      set("city", (sel.District || "").trim());
+                      set("state", (sel.State || "").trim());
+                    }
+                  }}
+                >
+                  {offices.map((o) => (
+                    <option key={o.Name} value={o.Name}>
+                      {o.Name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex items-end text-sm text-gray-600">
+              {pinStatus === "Looking up…" && <span>Looking up PIN…</span>}
+              {pinStatus === "Not found" && (
+                <span className="text-red-600">PIN not found. Please check.</span>
+              )}
+              {pinStatus === "OK" && <span>Auto-filled from PIN.</span>}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Order summary */}
@@ -229,16 +346,27 @@ export default function Checkout() {
         <div className="space-y-3">
           {items.map((i) => (
             <div key={(i._id || i.id) + String(i.qty)} className="flex gap-3">
-              <img src={assetUrl(i.assets?.coverUrl)} alt={i.title} className="h-14 w-10 object-cover rounded-md" />
+              <img
+                src={assetUrl(i.assets?.coverUrl)}
+                alt={i.title}
+                className="h-14 w-10 object-cover rounded-md"
+              />
               <div className="flex-1">
                 <div className="font-medium">{i.title}</div>
                 <div className="text-gray-600 text-sm">Qty: {i.qty}</div>
               </div>
               <div>₹{i.price * i.qty}</div>
-              <button className="text-red-600 text-sm" onClick={() => remove(i._id || i.id)}>Remove</button>
+              <button
+                className="text-red-600 text-sm"
+                onClick={() => remove(i._id || i.id)}
+              >
+                Remove
+              </button>
             </div>
           ))}
-          {items.length === 0 && <div className="text-gray-600">Your cart is empty.</div>}
+          {items.length === 0 && (
+            <div className="text-gray-600">Your cart is empty.</div>
+          )}
         </div>
 
         <div className="border-t border-gray-200 mt-4 pt-4 space-y-1">
@@ -271,7 +399,10 @@ export default function Checkout() {
   );
 }
 
-function Row({ children }) { return <div className="mb-3">{children}</div>; }
+/* ------------ UI helpers ------------ */
+function Row({ children }) {
+  return <div className="mb-3">{children}</div>;
+}
 
 function Input({ label, ...rest }) {
   return (
