@@ -4,6 +4,7 @@
 
 /* ========== CLASSIC LIGHT THEME LAYERS ========== */
 
+
 /* ---------- BASE (global look & nicer inputs) ---------- */
 @layer base {
 
@@ -61,6 +62,31 @@
 
   /* legacy safety */
 }
+
+@font-face {
+  font-family: 'NeueHaasGrotesk';
+  src: url('../../assets/fonts/NeueHaasGrotDisp-55Roman-Trial.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'NeueHaasGrotesk';
+  src: url('../../assets/fonts/NeueHaasGrotDisp-65Medium-Trial.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'NeueHaasGrotesk';
+  src: url('../../assets/fonts/NeueHaasGrotDisp-75Bold-Trial.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* body {
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+} */
 
 /* ---------- BUTTONS (quiet primary + clear hierarchy) ---------- */
 @layer components {

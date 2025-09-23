@@ -38,10 +38,13 @@ function SeaCap() {
 }
 
 export default function Footer({ contact, links }) {
+    <style>
+        a:hover
+    </style>
 
     return (
         // no bottom padding so the bottom links touch the edge
-        <footer className="relative bg-black text-white mt-[50px] pb-[1rem]">
+        <footer className="footer-scope relative bg-black text-white mt-[50px] pb-[1rem]">
             {/* Wave */}
             <SeaCap />
 
@@ -79,7 +82,7 @@ export default function Footer({ contact, links }) {
                     >
                         <div>
                             <div className="font-semibold text-white">Shop</div>
-                            <ul className="mt-3 space-y-2 text-sm">
+                            <ul className="mt-3 space-y-2 text-sm ">
                                 <li>
                                     <Link to="/catalog" className="text-white hover:opacity-80 hover:underline">
                                         Catalog

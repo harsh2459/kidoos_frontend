@@ -24,12 +24,13 @@ import BooksAdmin from './pages/Admin/Books';
 import AdminOrders from './pages/Admin/Orders';
 import ApiUsers from './pages/Admin/ApiUsers';
 import WhiteThemeDemo from './pages/WhiteThemeDemo';
-
 import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
 import CustomerAuth from './pages/CustomerAuth';
 import EmailSenders from './pages/Admin/EmailSenders';
 import EmailTemplates from './pages/Admin/EmailTemplates';
 import Footer from './components/Footer';
+import AdminLayout from './components/AdminLayout';
+
 
 function InnerApp() {
   const loc = useLocation();
@@ -49,7 +50,6 @@ function InnerApp() {
         <Routes>
           {/* customer auth */}
           <Route path="/login" element={<CustomerAuth />} />
-
           {/* public pages gated by Visibility */}
           <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
           <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
@@ -64,23 +64,60 @@ function InnerApp() {
           <Route path="/white" element={<PageGate page="catalog"><WhiteThemeDemo /></PageGate>} />
 
           <Route path="/book/:slug" element={<BookDetail />} />
-          <Route path="/cart" element={<PageGate page="cart"><Cart /></PageGate>} />
+          <Route
+            path="/cart"
+            element={
+              <RequireCustomer>
+                <PageGate page="cart"><Cart /></PageGate>
+              </RequireCustomer>
+            }
+          />
 
           {/* admin auth pages */}
           <Route path="/admin/login" element={<PageGate page="adminLogin"><AdminLogin /></PageGate>} />
           <Route path="/admin/setup" element={<AdminSetup />} />
 
           {/* admin-only */}
-          <Route path="/admin/api-users" element={<AdminGuard><ApiUsers /></AdminGuard>} />
-          <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
-          <Route path="/admin/books" element={<AdminGuard><BooksAdmin /></AdminGuard>} />
-          <Route path="/admin/books/:slug/edit" element={<AdminGuard><EditBook /></AdminGuard>} />
-          <Route path="/admin/settings" element={<AdminGuard><SiteSettings /></AdminGuard>} />
-          <Route path="/admin/homepage" element={<AdminGuard><HomepageAdmin /></AdminGuard>} />
-          <Route path="/admin/payments" element={<AdminGuard><PaymentsAdmin /></AdminGuard>} />
-          <Route path="/admin/add-book" element={<AdminGuard><AddBook /></AdminGuard>} />
-          <Route path="/admin/email-senders" element={<AdminGuard><EmailSenders /></AdminGuard>} />
-          <Route path="/admin/email-templates" element={<AdminGuard><EmailTemplates /></AdminGuard>} />
+          <Route
+            path="/admin/api-users"
+            element={<AdminGuard><AdminLayout><ApiUsers /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/orders"
+            element={<AdminGuard><AdminLayout><AdminOrders /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/books"
+            element={<AdminGuard><AdminLayout><BooksAdmin /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/books/:slug/edit"
+            element={<AdminGuard><AdminLayout><EditBook /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/settings"
+            element={<AdminGuard><AdminLayout><SiteSettings /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/homepage"
+            element={<AdminGuard><AdminLayout><HomepageAdmin /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/payments"
+            element={<AdminGuard><AdminLayout><PaymentsAdmin /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/add-book"
+            element={<AdminGuard><AdminLayout><AddBook /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/email-senders"
+            element={<AdminGuard><AdminLayout><EmailSenders /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/email-templates"
+            element={<AdminGuard><AdminLayout><EmailTemplates /></AdminLayout></AdminGuard>}
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

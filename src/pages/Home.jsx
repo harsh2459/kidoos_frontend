@@ -1,11 +1,12 @@
+// src/pages/Home.jsx
 import { useEffect, useState } from "react";
 import { useSite } from "../contexts/SiteConfig";
 import { api } from "../api/client";
 import ProductCard from "../components/ProductCard";
 import { Link } from "react-router-dom";
-import { useCart } from "../contexts/CartStore";
 import { assetUrl } from "../api/asset";
 
+/* ----------------------------- Page ------------------------------ */
 export default function Home() {
   const { homepage } = useSite();
   return (
@@ -15,6 +16,7 @@ export default function Home() {
   );
 }
 
+/* ----------------------------- Blocks ---------------------------- */
 function Block({ block }) {
   if (block.type === "hero") {
     return (
@@ -23,18 +25,18 @@ function Block({ block }) {
           <h2 className="text-3xl font-bold">{block.title}</h2>
           <p className="text-fg-muted mt-2">{block.subtitle}</p>
           {block.ctaText && (
-            <Link
-              to={block.ctaHref || "/catalog"}
-              className="inline-block mt-4 px-5 py-3 rounded-theme btn-primary"
-            >
+            <Link to={block.ctaHref || "/catalog"} className="inline-block mt-4 px-5 py-3 rounded-theme btn-primary">
               {block.ctaText}
             </Link>
           )}
         </div>
-        {block.image && <img src={assetUrl(block.image)} alt="" className="w-full h-72 md:h-full object-cover" />}
+        {block.image && (
+          <img src={assetUrl(block.image)} alt="" className="w-full h-72 md:h-full object-cover" />
+        )}
       </section>
     );
   }
+
   if (block.type === "banner") {
     return (
       <a href={block.href || "#"} className="block rounded-theme overflow-hidden shadow-theme">
@@ -42,52 +44,81 @@ function Block({ block }) {
       </a>
     );
   }
-  if (block.type === "grid") return <GridSection title={block.title} query={block.query} />;
-  if (block.type === "html") return <section className="prose max-w-none" dangerouslySetInnerHTML={{ __html: block.html }} />;
+
+  if (block.type === "grid") {
+    return <GridSection title={block.title} query={block.query} />;
+  }
+
+  if (block.type === "html") {
+    return (
+      <section className="prose max-w-none" dangerouslySetInnerHTML={{ __html: block.html }} />
+    );
+  }
+
   return null;
 }
 
+/* ------------------------- Showcase Grid ------------------------- */
+/**
+ * Static grid (no scrolling):
+ * - 2 cols on small, 3 on md, 4 on lg
+ * - `layout === "classic"` -> ProductCard (includes Add to Cart)
+ * - otherwise -> compact card without Add
+ */
 function GridSection({ title, query }) {
   const [items, setItems] = useState([]);
   const layout = query?.layout || "classic";
-  const cols = Number(query?.cols || 4);
+  const limit  = Number(query?.limit || 12); // optional cap
 
   useEffect(() => {
     (async () => {
-      const { data } = await api.get("/books", { params: query || { limit: 8 } });
-      setItems(data.items || []);
+      const { data } = await api.get("/books", { params: query || { limit } });
+      setItems((data.items || []).slice(0, limit));
     })();
-  }, [JSON.stringify(query)]);
-
-  const gridClass =
-    cols === 2 ? "grid-cols-2" :
-      cols === 3 ? "grid-cols-2 md:grid-cols-3" :
-        cols === 5 ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-5" :
-          cols === 6 ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-6" :
-            "grid-cols-2 md:grid-cols-4";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(query), limit]);
 
   return (
     <section>
       {title && <h3 className="text-xl font-semibold mb-4">{title}</h3>}
-      <div className={`grid ${gridClass} gap-5`}>
-        {items.map(b =>
-          layout === "white"
-            ? <WhiteMiniCard key={b._id} book={b} />
-            : <ProductCard key={b._id} book={b} />
-        )}
-      </div>
+
+      {!items.length ? (
+        <div className="rounded-2xl border border-border-subtle bg-surface p-6 text-fg-subtle">
+          No items found.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((b) =>
+            layout === "classic" ? (
+              // Full card with Add to Cart (your existing component)
+              <div key={b._id || b.id} className="h-full">
+                <ProductCard book={b} />
+              </div>
+            ) : (
+              // Simple, no-Add variant
+              <SimpleShowcaseCard key={b._id || b.id} book={b} />
+            )
+          )}
+        </div>
+      )}
     </section>
   );
 }
 
-/* compact white variant for homepage only */
-function WhiteMiniCard({ book }) {
-  const { items, add, inc, dec } = useCart.getState();
-  const inCart = (items || []).find(i => (i._id || i.id) === (book._id || book.id));
-  const d = { mrp: Number(book.mrp) || 0, price: Number(book.price) || 0 };
+/* --------------------- Simple (no Add) card ---------------------- */
+function SimpleShowcaseCard({ book }) {
+  const mrp   = Number(book.mrp)   || 0;
+  const price = Number(book.price) || 0;
+  const off   = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
-    <article className="bg-white rounded-xl shadow-md border border-gray-100 p-3 flex flex-col">
+    <article
+      className="
+        h-full bg-white rounded-2xl border border-gray-200 p-3
+        shadow-sm hover:shadow-md hover:-translate-y-0.5 transition
+        flex flex-col
+      "
+    >
       <Link
         to={`/book/${book.slug}`}
         className="aspect-[3/4] rounded-lg overflow-hidden bg-gray-50 grid place-items-center p-4"
@@ -96,28 +127,25 @@ function WhiteMiniCard({ book }) {
           src={assetUrl(book.assets?.coverUrl)}
           alt={book.title}
           className="max-h-[88%] max-w-[88%] object-contain"
+          loading="lazy"
         />
       </Link>
-      <Link to={`/book/${book.slug}`} className="mt-3 font-medium line-clamp-2">{book.title}</Link>
-      <div className="text-gray-500 text-sm">{(book.authors || []).join(", ")}</div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-baseline gap-2">
-          <div className="font-semibold">₹{d.price}</div>
-          {d.mrp > d.price && <div className="line-through text-sm text-gray-400">₹{d.mrp}</div>}
-        </div>
+      <Link to={`/book/${book.slug}`} className="mt-3 font-medium leading-snug line-clamp-2">
+        {book.title}
+      </Link>
 
-        {!inCart ? (
-          <button onClick={() => add(book, 1)} className="btn-secondary px-3 py-1.5 rounded-theme">Add</button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button onClick={() => dec(book._id || book.id)} className="btn-secondary px-2 py-1 rounded-theme">–</button>
-            <div className="w-8 text-center">{inCart.qty}</div>
-            <button onClick={() => inc(book._id || book.id)} className="btn-secondary px-2 py-1 rounded-theme">+</button>
-          </div>
+      <div className="mt-1 flex items-center gap-2">
+        <div className="font-semibold">₹{price}</div>
+        {off > 0 && (
+          <>
+            <div className="line-through text-xs text-fg-subtle">₹{mrp}</div>
+            <span className="text-[10px] text-green-700 bg-green-100 rounded-full px-2 py-0.5 border">
+              -{off}%
+            </span>
+          </>
         )}
       </div>
     </article>
   );
 }
-

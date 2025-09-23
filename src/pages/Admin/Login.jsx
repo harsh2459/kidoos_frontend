@@ -21,7 +21,7 @@ export default function AdminLogin() {
         localStorage.setItem("admin_jwt", data.token);
         alert("✅ Logged in as Admin");
         setAuth(data.token, data.role);
-        window.location.href = "/";
+        window.location.href = "/admin/orders";
       } else {
         setError("Invalid login");
       }

@@ -16,6 +16,18 @@ export const CustomerAPI = {
   async getCart(token) {
     return api.get("/customer/cart", { headers: { Authorization: `Bearer ${token}` } });
   },
+  async addToCart(token, { bookId, qty }) {
+    return api.post("/customer/cart/add", { bookId, qty }, { headers: { Authorization: `Bearer ${token}` } });
+  },
+  async setCartQty(token, { bookId, qty }) {
+    return api.patch("/customer/cart/qty", { itemId: bookId, qty }, { headers: { Authorization: `Bearer ${token}` } });
+  },
+  async removeCartItem(token, itemId) {
+    return api.delete(`/customer/cart/item/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });
+  },
+  async clearCart(token) {
+    return api.delete("/customer/cart/clear", { headers: { Authorization: `Bearer ${token}` } });
+  },
 };
 
 export const CustomerOTPAPI = {

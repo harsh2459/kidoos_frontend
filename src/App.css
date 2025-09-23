@@ -37,3 +37,7 @@
 .buy-btn:hover svg path {
   fill: hsl(var(--brand));
 }
+
+.footer-scope a:hover{
+  color: #fff;
+}
