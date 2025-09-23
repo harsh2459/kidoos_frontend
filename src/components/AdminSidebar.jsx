@@ -29,7 +29,7 @@ export default function AdminSidebar() {
 
       {/* Nav sections */}
       <nav className="flex-1 overflow-y-auto p-2">
-        <Section title="Dashboard">
+        <Section>
           <Item to="/admin/orders"   active={loc.pathname.startsWith("/admin/orders")}>Orders</Item>
           <Item to="/admin/books"    active={loc.pathname.startsWith("/admin/books")}>Books</Item>
           <Item to="/admin/add-book" active={loc.pathname.startsWith("/admin/add-book")}>Add Book</Item>

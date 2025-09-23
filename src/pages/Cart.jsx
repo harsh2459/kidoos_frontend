@@ -1,65 +1,110 @@
 // src/pages/Cart.jsx
-import { useCart } from "../contexts/CartStore";
-import { assetUrl } from "../api/asset";
+import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { assetUrl } from "../api/asset";
+import { useCart } from "../contexts/CartStore";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
+import { t } from "../lib/toast";
 
 export default function Cart() {
   const navigate = useNavigate();
   const { isCustomer, token } = useCustomer();
 
-  const items       = useCart((s) => s.items);
-  const inc         = useCart((s) => s.inc);
-  const dec         = useCart((s) => s.dec);
-  const removeLocal = useCart((s) => s.remove);
-  const clearLocal  = useCart((s) => s.clear);
-  const setQtyLocal = useCart((s) => s.setQty);
+  const items      = useCart((s) => s.items);
+  const inc        = useCart((s) => s.inc);
+  const dec        = useCart((s) => s.dec);
+  const setQtyLocal= useCart((s) => s.setQty);
+  const removeLocal= useCart((s) => s.remove);
+  const clearLocal = useCart((s) => s.clear);
+  const replaceAll = useCart((s) => s.replaceAll);
 
-  // Server expects { itemId, qty } (NOT bookId)
+  // --- Hydrate from server when logged in (server is source of truth) ---
+  useEffect(() => {
+    if (!isCustomer) return;
+    (async () => {
+      try {
+        const res = await CustomerAPI.getCart(token);  // axios response
+        replaceAll(res?.data?.cart?.items || []);
+      } catch (e) {
+        console.error("getCart failed:", e);
+      }
+    })();
+  }, [isCustomer, token, replaceAll]);
+
+  // --- Qty change (server-first when logged in; local-only for guest) ---
   const syncQty = async (itemId, nextQty) => {
-    setQtyLocal(itemId, nextQty); // optimistic local update
-    if (isCustomer) {
+    if (!isCustomer) {
+      setQtyLocal(itemId, nextQty);  // guest cart
+      return;
+    }
+    try {
+      const res = await CustomerAPI.setCartQty(token, { itemId, qty: nextQty });
+      replaceAll(res?.data?.cart?.items || []);
+      t.ok("Quantity updated");
+    } catch (e) {
+      console.error("setCartQty failed:", e);
+      t.err("Failed to update quantity");
+      // Best effort re-sync
       try {
-        await CustomerAPI.setCartQty(token, { itemId, qty: nextQty });
-      } catch (e) {
-        console.error("setCartQty failed:", e);
-      }
+        const fresh = await CustomerAPI.getCart(token);
+        replaceAll(fresh?.data?.cart?.items || []);
+      } catch {}
     }
   };
 
-  // Server route: DELETE /customer/cart/item/:itemId
+  // --- Remove line (server-first; 404 treated as success) ---
   const removeItem = async (itemId) => {
-    removeLocal(itemId); // optimistic
-    if (isCustomer) {
-      try {
-        await CustomerAPI.removeCartItem(token, itemId);
-      } catch (e) {
-        console.error("removeCartItem failed:", e);
+    if (!isCustomer) {
+      removeLocal(itemId);    // guest cart
+      t.ok("Item removed");
+      return;
+    }
+    try {
+      const res = await CustomerAPI.removeCartItem(token, itemId);
+      replaceAll(res?.data?.cart?.items || []);
+      t.ok("Item removed");
+    } catch (e) {
+      const status = e?.response?.status;
+      if (status === 404) {
+        // Already removed/stale id — treat as success
+        try {
+          const fresh = await CustomerAPI.getCart(token);
+          replaceAll(fresh?.data?.cart?.items || []);
+        } catch {}
+        t.info("Item was already removed");
+        return;
       }
+      console.error("removeCartItem failed:", e);
+      t.err("Failed to remove item");
     }
   };
 
+  // --- Clear all (server-first for logged in) ---
   const clearAll = async () => {
-    clearLocal(); // optimistic
-    if (isCustomer) {
-      try {
-        await CustomerAPI.clearCart(token);
-      } catch (e) {
-        console.error("clearCart failed:", e);
-      }
+    if (!isCustomer) {
+      clearLocal();
+      t.ok("Cart cleared");
+      return;
+    }
+    try {
+      const res = await CustomerAPI.clearCart(token);
+      replaceAll(res?.data?.cart?.items || []); // may be []
+      t.ok("Cart cleared");
+    } catch (e) {
+      console.error("clearCart failed:", e);
+      t.err("Failed to clear cart");
     }
   };
 
-  // Totals (no coupon, no tax rules yet)
+  // --- Totals ---
   const totals = useMemo(() => {
     const subtotal = (items || []).reduce((sum, it) => {
       const price = Number(it.price ?? it.pric ?? 0);
       const qty   = Number(it.qty ?? 1);
       return sum + price * qty;
     }, 0);
-    const shipping = subtotal > 0 ? 0 : 0; // placeholder until backend rule exists
+    const shipping = subtotal > 0 ? 0 : 0; // placeholder for future rule
     const grand = subtotal + shipping;
     return { subtotal, shipping, grand };
   }, [items]);
@@ -98,13 +143,11 @@ export default function Cart() {
         {/* LEFT: Items */}
         <section className="md:col-span-2 space-y-4">
           {items.map((it) => {
-            // IMPORTANT: this is the cart line id (itemId), not bookId
-            const itemId = it._id || it.id;
-
-            const price = Number(it.price ?? it.pric ?? 0);
-            const mrp   = Number(it.mrp   ?? it.mrpPrice ?? price);
-            const off   = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
-            const qty   = Number(it.qty ?? 1);
+            const itemId   = it._id || it.id;   // cart line id (NOT bookId)
+            const price    = Number(it.price ?? it.pric ?? 0);
+            const mrp      = Number(it.mrp   ?? it.mrpPrice ?? price);
+            const off      = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+            const qty      = Number(it.qty ?? 1);
             const subtotal = price * qty;
 
             return (
@@ -136,7 +179,7 @@ export default function Cart() {
                           {(it.authors || []).join(", ")}
                         </p>
                       )}
-                      {/* price stack (mobile) */}
+                      {/* price (mobile) */}
                       <div className="mt-1 flex items-baseline gap-2 md:hidden">
                         <div className="font-semibold">{fmt(price)}</div>
                         {mrp > price && (
@@ -150,7 +193,7 @@ export default function Cart() {
                       </div>
                     </div>
 
-                    {/* price stack (desktop) */}
+                    {/* price (desktop) */}
                     <div className="hidden md:flex items-baseline gap-2">
                       <div className="font-semibold">{fmt(price)}</div>
                       {mrp > price && (
@@ -172,7 +215,7 @@ export default function Cart() {
                         onClick={() => {
                           const next = Math.max(1, qty - 1);
                           syncQty(itemId, next);
-                          dec?.(itemId); // keep local UI snappy
+                          dec?.(itemId); // optional optimistic for guest
                         }}
                         aria-label="Decrease quantity"
                       >
@@ -186,14 +229,14 @@ export default function Cart() {
                         onChange={(e) => {
                           const next = Math.max(1, Number(e.target.value) || 1);
                           syncQty(itemId, next);
-                          setQtyLocal?.(itemId, next);
+                          setQtyLocal?.(itemId, next); // guest local
                         }}
                       />
                       <button
                         className="h-9 w-9 rounded-full border hover:bg-muted"
                         onClick={() => {
                           syncQty(itemId, qty + 1);
-                          inc?.(itemId);
+                          inc?.(itemId); // guest local
                         }}
                         aria-label="Increase quantity"
                       >
@@ -213,7 +256,7 @@ export default function Cart() {
                   </div>
                 </div>
 
-                {/* per-item subtotal (desktop right) */}
+                {/* per-item subtotal (desktop) */}
                 <div className="hidden md:flex flex-col items-end">
                   <div className="text-xs text-fg-subtle">Subtotal</div>
                   <div className="font-semibold">{fmt(subtotal)}</div>

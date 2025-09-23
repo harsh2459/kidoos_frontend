@@ -5,13 +5,14 @@ import { useCart } from "../contexts/CartStore";
 import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
+import { t } from "../lib/toast";
 
 export default function ProductCard({ book }) {
   const d = dealFn(book);
 
   // cart state
   const items = useCart((s) => s.items);
-  const add   = useCart((s) => s.add);
+  const add = useCart((s) => s.add);
 
   // auth + routing
   const navigate = useNavigate();
@@ -24,12 +25,14 @@ export default function ProductCard({ book }) {
   const handleClick = async () => {
     // Guest: go login, then land in cart
     if (!isCustomer) {
+      t.info("Please login to add items to your cart");
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
 
     // Already in cart: just open cart
     if (inCart) {
+      t.info("Already in your cart");
       navigate("/cart");
       return;
     }
@@ -37,8 +40,9 @@ export default function ProductCard({ book }) {
     // Logged in + not in cart: try server add, always mirror locally, go to cart
     try {
       await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+      t.ok("Added to cart");
     } catch (e) {
-      console.error("addToCart failed; falling back to local:", e);
+      t.err("Could not add to cart. Please try again.");
       // proceed anyway; UI should still update via local cart
     } finally {
       add(book, 1);

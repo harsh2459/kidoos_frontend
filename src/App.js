@@ -1,4 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import './styles/classic-light.css';
 
@@ -148,6 +150,16 @@ export default function App() {
           <ThemeProvider>
             <BrowserRouter>
               <InnerApp />
+              <ToastContainer
+                position="top-right"
+                autoClose={2500}
+                hideProgressBar
+                newestOnTop
+                closeOnClick
+                draggable
+                pauseOnHover
+                closeButton={false}
+              />
             </BrowserRouter>
           </ThemeProvider>
         </CustomerProvider>
