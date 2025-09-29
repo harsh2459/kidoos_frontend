@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerOTPAPI } from "../api/customer"; // keep exact path/name
-
 export default function CustomerAuth() {
   const { login, register } = useCustomer();
   const nav = useNavigate();

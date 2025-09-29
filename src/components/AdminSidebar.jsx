@@ -30,13 +30,14 @@ export default function AdminSidebar() {
       {/* Nav sections */}
       <nav className="flex-1 overflow-y-auto p-2">
         <Section>
-          <Item to="/admin/orders"   active={loc.pathname.startsWith("/admin/orders")}>Orders</Item>
-          <Item to="/admin/books"    active={loc.pathname.startsWith("/admin/books")}>Books</Item>
+          <Item to="/admin/orders" active={loc.pathname.startsWith("/admin/orders")}>Orders</Item>
+          <Item to="/admin/books" active={loc.pathname.startsWith("/admin/books")}>Books</Item>
           <Item to="/admin/add-book" active={loc.pathname.startsWith("/admin/add-book")}>Add Book</Item>
           <Item to="/admin/payments" active={loc.pathname.startsWith("/admin/payments")}>Payments</Item>
           <Item to="/admin/settings" active={loc.pathname.startsWith("/admin/settings")}>Settings</Item>
           <Item to="/admin/api-users" active={loc.pathname.startsWith("/admin/api-users")}>API Users</Item>
           <Item to="/admin/homepage" active={loc.pathname.startsWith("/admin/homepage")}>Homepage</Item>
+          <Item to="/admin/setup" active={loc.pathname.startsWith("/admin/setup")}>Add Admin</Item>
         </Section>
       </nav>
 

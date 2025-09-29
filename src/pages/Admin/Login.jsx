@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
+import { t } from "../../lib/toast";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function AdminLogin() {
       const { data } = await api.post("/auth/login", { email, password });
       if (data.ok && data.token) {
         localStorage.setItem("admin_jwt", data.token);
-        alert("✅ Logged in as Admin");
+        t.ok(" Logged in as Admin");
         setAuth(data.token, data.role);
         window.location.href = "/admin/orders";
       } else {

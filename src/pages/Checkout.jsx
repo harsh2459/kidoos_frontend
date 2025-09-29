@@ -4,7 +4,7 @@ import { api } from "../api/client";
 import { useCart } from "../contexts/CartStore";
 import { assetUrl } from "../api/asset";
 import { useSite } from "../contexts/SiteConfig";
-
+import { t } from "../lib/toast";
 /* ------------ Razorpay loader ------------ */
 function loadRzp() {
   return new Promise((resolve, reject) => {
@@ -105,11 +105,11 @@ export default function Checkout() {
   function validateShipping() {
     if (items.length === 0) { navigate("/cart"); return false; }
     if (!cust.name || !cust.phone || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
-      alert("Please fill shipping details.");
+      t.info("Please fill shipping details.");
       return false;
     }
     if (!/^\d{6}$/.test(cust.pin)) {
-      alert("Please enter a valid 6-digit PIN.");
+      t.info("Please enter a valid 6-digit PIN.");
       return false;
     }
     return true;
@@ -203,7 +203,7 @@ export default function Checkout() {
           setPlaced({ orderId });
           const paid = await pollOrderUntilPaid(orderId);
           if (!paid) {
-            alert("Payment captured, awaiting confirmation. If not updated soon, contact support with your Order ID.");
+            t.info("Payment captured, awaiting confirmation. If not updated soon, contact support with your Order ID.");
           } else {
             clear();
           }
@@ -214,7 +214,7 @@ export default function Checkout() {
 
       rzp.open();
     } catch (e) {
-      alert(e?.response?.data?.error || e.message || "Payment failed to start");
+      t.err(e?.response?.data?.error || e.message || "Payment failed to start");
     } finally {
       setPlacing(false);
     }
@@ -228,7 +228,7 @@ export default function Checkout() {
       setPlaced({ orderId });
       clear();
     } catch (e) {
-      alert(e?.response?.data?.error || e.message || "Failed to place order");
+      t.err(e?.response?.data?.error || e.message || "Failed to place order");
     } finally {
       setPlacing(false);
     }

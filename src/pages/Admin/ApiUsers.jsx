@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import AdminTabs from "../../components/AdminTabs";
+import { t } from "../../lib/toast";
 
 export default function ApiUsers() {
   const { token } = useAuth();
@@ -63,7 +64,7 @@ export default function ApiUsers() {
   async function remove(id) { if (!window.confirm("Remove this profile?")) return; await api.delete(`/shiprocket/profiles/${id}`, auth); await load(); }
   async function refresh() {
     const active = list.find(p => p.active);
-    if (!active?._id) return alert("No active profile.");
+    if (!active?._id) return t.info("No active profile.");
     await api.post(`/shiprocket/profiles/${active._id}/refresh-token`, null, auth);
     await load();
   }

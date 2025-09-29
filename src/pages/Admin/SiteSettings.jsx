@@ -1,40 +1,44 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
+import { t } from "../../lib/toast";
+import FancyButton from "../../components/button/button";
 
-export default function SiteSettings(){
+export default function SiteSettings() {
   const token = localStorage.getItem("admin_jwt") || "";
   const auth = { headers: { Authorization: `Bearer ${token}` } };
 
-  const [form, setForm] = useState({ title:"", logoUrl:"", faviconUrl:"" });
+  const [form, setForm] = useState({ title: "", logoUrl: "", faviconUrl: "" });
   const [saving, setSaving] = useState(false);
   const [upLogo, setUpLogo] = useState(false);
   const [upFavi, setUpFavi] = useState(false);
 
-  useEffect(()=>{ (async()=>{
-    const { data } = await api.get("/settings", auth);
-    if (data.ok && data.site) {
-      // store relative if server sent absolute
-      setForm({
-        title: data.site.title || "",
-        logoUrl: toRelativeFromPublic(data.site.logoUrl || ""),
-        faviconUrl: toRelativeFromPublic(data.site.faviconUrl || ""),
-      });
-    }
-  })(); }, []); // eslint-disable-line
+  useEffect(() => {
+    (async () => {
+      const { data } = await api.get("/settings", auth);
+      if (data.ok && data.site) {
+        // store relative if server sent absolute
+        setForm({
+          title: data.site.title || "",
+          logoUrl: toRelativeFromPublic(data.site.logoUrl || ""),
+          faviconUrl: toRelativeFromPublic(data.site.faviconUrl || ""),
+        });
+      }
+    })();
+  }, []); // eslint-disable-line
 
-  async function uploadImage(file){
+  async function uploadImage(file) {
     const fd = new FormData();
     fd.append("file", file);
     const res = await api.post("/uploads/image", fd, {
       ...auth,
-      headers: { ...auth.headers, "Content-Type":"multipart/form-data" }
+      headers: { ...auth.headers, "Content-Type": "multipart/form-data" }
     });
     // backend returns: { ok, path: "/public/uploads/...", previewUrl: "https://..." }
     return { path: res.data.path, previewUrl: res.data.previewUrl };
   }
 
-  async function onPickLogo(e){
+  async function onPickLogo(e) {
     const file = e.target.files?.[0]; if (!file) return;
     setUpLogo(true);
     try {
@@ -43,7 +47,7 @@ export default function SiteSettings(){
     } finally { setUpLogo(false); }
   }
 
-  async function onPickFavicon(e){
+  async function onPickFavicon(e) {
     const file = e.target.files?.[0]; if (!file) return;
     setUpFavi(true);
     try {
@@ -52,7 +56,7 @@ export default function SiteSettings(){
     } finally { setUpFavi(false); }
   }
 
-  async function save(e){
+  async function save(e) {
     e.preventDefault();
     setSaving(true);
     // ensure relative before send (covers manual pasted URLs)
@@ -62,14 +66,14 @@ export default function SiteSettings(){
       faviconUrl: toRelativeFromPublic(form.faviconUrl || ""),
     };
     await api.put("/settings/site", payload, auth);
-    alert("Saved");
+    t.ok("Saved");
     setSaving(false);
 
     // Update favicon + title in browser immediately (use absolute for href)
     if (form.faviconUrl) {
       const absFavi = assetUrl(form.faviconUrl);
       let link = document.querySelector("link[rel='icon']");
-      if (!link) { link = document.createElement("link"); link.rel="icon"; document.head.appendChild(link); }
+      if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
       link.href = absFavi;
     }
     if (form.title) document.title = form.title;
@@ -87,7 +91,7 @@ export default function SiteSettings(){
             <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
               placeholder="Your brand name"
               value={form.title || ""}
-              onChange={e=>setForm({ ...form, title:e.target.value })}/>
+              onChange={e => setForm({ ...form, title: e.target.value })} />
           </div>
 
           <div>
@@ -103,7 +107,7 @@ export default function SiteSettings(){
               className="w-full mt-2 bg-surface border border-border rounded-lg px-3 py-2"
               placeholder="or paste Logo URL"
               value={form.logoUrl || ""}
-              onChange={e=>setForm({ ...form, logoUrl: toRelativeFromPublic(e.target.value) })}
+              onChange={e => setForm({ ...form, logoUrl: toRelativeFromPublic(e.target.value) })}
             />
             <div className="mt-2 text-xs text-fg-subtle">
               Stored as: <code>{form.logoUrl || "(none)"}</code>
@@ -123,16 +127,16 @@ export default function SiteSettings(){
               className="w-full mt-2 bg-surface border border-border rounded-lg px-3 py-2"
               placeholder="or paste Favicon URL"
               value={form.faviconUrl || ""}
-              onChange={e=>setForm({ ...form, faviconUrl: toRelativeFromPublic(e.target.value) })}
+              onChange={e => setForm({ ...form, faviconUrl: toRelativeFromPublic(e.target.value) })}
             />
             <div className="mt-2 text-xs text-fg-subtle">
               Stored as: <code>{form.faviconUrl || "(none)"}</code>
             </div>
           </div>
 
-          <button className="px-5 py-2.5 rounded-lg bg-brand font-semibold hover:brightness-110"
+          <button
             disabled={saving || upLogo || upFavi}>
-            {saving ? "Saving…" : "Save"}
+            <FancyButton text={saving ? "Saving…" : "Save"} />
           </button>
         </div>
 
@@ -149,7 +153,7 @@ export default function SiteSettings(){
             <div className="mt-4 text-fg-subtle text-sm">Favicon:</div>
             <div className="mt-1 h-8 w-8 border border-border-subtle rounded grid place-items-center overflow-hidden">
               {form.faviconUrl
-                ? <img src={assetUrl(form.faviconUrl)} alt="favicon" className="max-w-full max-h-full"/>
+                ? <img src={assetUrl(form.faviconUrl)} alt="favicon" className="max-w-full max-h-full" />
                 : <span className="text-fg-subtle text-xs">none</span>}
             </div>
           </div>

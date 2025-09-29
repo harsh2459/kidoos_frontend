@@ -1,65 +1,83 @@
+// src/api/client.jsx
 import axios from "axios";
 
-/** Resolve API base once. Normalize to ".../api" */
+/** Resolve base URL and normalize to ".../api" */
 function resolveBaseURL() {
-  // Priority: Vite env -> CRA env -> window -> default
   let u =
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
-    (typeof window !== "undefined" && window.API_BASE) || 
-    // "https://kiddoos-backend.onrender.com/api" ||
-    "http://localhost:5050/api"; // fallback
+    (typeof window !== "undefined" && window.API_BASE) ||
+    "http://localhost:5050/api";
 
-  u = String(u).trim();
-
-  // Remove trailing slashes
-  u = u.replace(/\/+$/, "");
-  // If someone passed ".../api/anything", normalize to just ".../api"
-  const m = u.match(/^(.*?\/api)(?:\/.*)?$/i);
-  if (m) u = m[1];
-  else if (!/\/api$/i.test(u)) u = u + "/api";
-
+  u = String(u || "").trim().replace(/\/+$/, "");
+  const apiIdx = u.toLowerCase().lastIndexOf("/api");
+  if (apiIdx === -1) u = `${u}/api`;
+  else if (apiIdx !== u.length - 4) u = u.slice(0, apiIdx + 4);
   return u;
 }
 
-const baseURL = resolveBaseURL();
-console.log("[api] baseURL =", baseURL);
-
-export const api = axios.create({
-  baseURL,
-  validateStatus: (s) => (s >= 200 && s < 300) || s === 304,
+const BASE_URL = resolveBaseURL();
+const api = axios.create({
+  baseURL: BASE_URL,
+  timeout: 20000,
+  headers: { "Content-Type": "application/json", Accept: "application/json" },
+  validateStatus: (s) => (s >= 200 && s < 300) || s === 304 || s === 400 || s === 401 || s === 422,
 });
 
-// Attach tokens to the right namespaces
-api.interceptors.request.use((config) => {
-  const url = String(config.url || "");
-  const isCustomer = url.startsWith("/customer/");
-  const isAdmin = url.startsWith("/admin/") || url.startsWith("/auth/");
-  if (isCustomer) {
-    const t = localStorage.getItem("customer_jwt");
-    if (t) config.headers.Authorization = `Bearer ${t}`;
+function getTokens() {
+  try {
+    return {
+      admin: localStorage.getItem("admin_jwt") || "",
+      customer: localStorage.getItem("customer_jwt") || "",
+    };
+  } catch {
+    return { admin: "", customer: "" };
   }
-  if (isAdmin) {
-    const t = localStorage.getItem("admin_jwt");
-    if (t) config.headers.Authorization = `Bearer ${t}`;
+}
+
+/** Attach admin token for /books, /admin, /auth; customer for /customer */
+api.interceptors.request.use((config) => {
+  const url = String(config?.url || "");
+  const metaAuth = config?.meta?.auth;
+  let token = "";
+
+  if (metaAuth === "admin" || metaAuth === "customer") token = getTokens()[metaAuth];
+  else if (metaAuth === "none") token = "";
+  else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books"))
+    token = getTokens().admin;
+  else if (url.startsWith("/customer/")) token = getTokens().customer;
+
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
 api.interceptors.response.use(
-  (r) => r,
+  (res) => res,
   (err) => {
+    const status = err?.response?.status;
     const url = String(err?.config?.url || "");
-    if (err?.response?.status === 401) {
-      if (url.startsWith("/admin/") || url.startsWith("/auth/")) {
-        localStorage.removeItem("admin_jwt");
-        if (window.location.pathname !== "/admin/login") window.location.href = "/admin/login";
-      } else if (url.startsWith("/customer/")) {
-        localStorage.removeItem("customer_jwt");
-        localStorage.removeItem("customer_profile");
-        if (window.location.pathname !== "/login") window.location.href = "/login";
-      }
+    if (status === 401) {
+      try {
+        if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
+          localStorage.removeItem("admin_jwt");
+          if (typeof window !== "undefined" && window.location.pathname !== "/admin/login") {
+            window.location.href = "/admin/login";
+          }
+        } else if (url.startsWith("/customer/")) {
+          localStorage.removeItem("customer_jwt");
+          localStorage.removeItem("customer_profile");
+          if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
+        }
+      } catch {}
     }
     return Promise.reject(err);
   }
 );
+
+export default api;
+export { api, BASE_URL };

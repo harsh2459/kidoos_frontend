@@ -1,5 +1,6 @@
 // src/components/ProductCard.jsx
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
 import { deal as dealFn } from "../lib/Price";
@@ -7,72 +8,105 @@ import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
 
+function CartIcon({ className = "" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </svg>
+  );
+}
+
 export default function ProductCard({ book }) {
   const d = dealFn(book);
-
-  // cart state
-  const items = useCart((s) => s.items);
-  const add = useCart((s) => s.add);
-
-  // auth + routing
-  const navigate = useNavigate();
   const location = useLocation();
-  const { isCustomer, token } = useCustomer();
+  const navigate = useNavigate();
+
+  const items = useCart((s) => s.items);
+  const replaceAll = useCart((s) => s.replaceAll);
+  const addLocal = useCart((s) => s.add);
 
   const id = book._id || book.id;
-  const inCart = Array.isArray(items) && items.some((i) => (i._id || i.id) === id);
+  const inCart = items.some((i) => (i._id || i.id) === id);
 
-  const handleClick = async () => {
-    // Guest: go login, then land in cart
+  const { isCustomer, token } = useCustomer();
+  const [pop, setPop] = useState(false);
+
+  const addToCart = async () => {
+    setPop(true);
+    setTimeout(() => setPop(false), 600);
+    window.dispatchEvent(new Event("cart:add"));
+
     if (!isCustomer) {
       t.info("Please login to add items to your cart");
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
 
-    // Already in cart: just open cart
-    if (inCart) {
-      t.info("Already in your cart");
-      navigate("/cart");
-      return;
-    }
-
-    // Logged in + not in cart: try server add, always mirror locally, go to cart
     try {
-      await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+      const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+      replaceAll(res?.data?.cart?.items || []);
       t.ok("Added to cart");
+      navigate("/cart");
     } catch (e) {
-      t.err("Could not add to cart. Please try again.");
-      // proceed anyway; UI should still update via local cart
-    } finally {
-      add(book, 1);
+      console.error(e);
+      // Fallback local add if server failed
+      addLocal(book, 1);
+      t.ok("Added to cart");
       navigate("/cart");
     }
   };
+  console.log(book);
 
+  const goToCart = () => {
+    t.info("Already in your cart");
+    navigate("/cart");
+  };
+  const cover = book?.assets?.coverUrl[0];
   return (
-    <article className="card card-hover p-4 flex flex-col h-full relative">
-      {/* Cover */}
+    <article className="card card-hover p-4 flex flex-col h-full">
+      {/* Image area — ONLY this hovers */}
       <Link
         to={`/book/${book.slug}`}
-        className="relative block rounded-lg overflow-hidden bg-white border border-slate-100"
         title={book.title}
+        className="
+          group relative block rounded-xl overflow-hidden bg-white border border-slate-100
+          transition-all duration-300 ease-out focus:outline-none focus-visible:outline-none
+        "
       >
-        <div className="aspect-[3/4] w-full grid place-items-center p-4 bg-white">
+        <div className="aspect-[3/4] w-full grid place-items-center p-4 bg-white overflow-hidden">
+
           <img
-            src={assetUrl(book.assets?.coverUrl)}
+            src={assetUrl(cover)}
             alt={book.title}
             loading="lazy"
-            className="max-h-[88%] max-w-[88%] object-contain"
             draggable={false}
+            className="
+              max-h-[88%] max-w-[88%] object-contain
+              transition-transform duration-300 ease-out
+              group-hover:scale-[1.05]
+            "
           />
         </div>
-        {d.off > 0 && (
-          <span className="badge-green absolute top-2 left-2">-{d.off}% OFF</span>
-        )}
+        <div
+          className="
+            pointer-events-none absolute inset-0
+            bg-white/0 group-hover:bg-primary/5
+            transition-colors duration-300
+          "
+        />
       </Link>
 
-      {/* Text block */}
+      {/* Text */}
       <Link
         to={`/book/${book.slug}`}
         className="mt-3 font-medium text-fg leading-tight line-clamp-2"
@@ -83,7 +117,7 @@ export default function ProductCard({ book }) {
         {(book.authors || []).join(", ")}
       </div>
 
-      {/* Price + Button */}
+      {/* Price + CTA */}
       <div className="mt-auto pt-3 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">
           <div className="font-semibold">₹{d.price}</div>
@@ -92,14 +126,72 @@ export default function ProductCard({ book }) {
           )}
         </div>
 
-        <button
-          onClick={handleClick}
-          className="btn-primary px-4 py-2 rounded-theme"
-          title={inCart ? "Go to cart" : (isCustomer ? "Add to cart" : "Login to add")}
-        >
-          {inCart ? "Go to Cart" : "Add to Cart"}
-        </button>
+        {/* ============ CTA ============ */}
+        {!inCart ? (
+          <button
+            onClick={addToCart}
+            className="
+      group relative
+      h-[44px] w-[52px]           /* icon-only size */
+      hover:w-40                 
+      -mr-1
+      rounded-full bg-slate-900 text-white
+      shadow-sm hover:shadow-md
+      transition-all duration-300
+      overflow-hidden
+      flex items-center
+      focus:outline-none focus-visible:outline-none
+    "
+            title="Add to cart"
+            aria-label="Add to cart"
+          >
+            <span
+              className="
+        flex items-center justify-center
+        h-[44px] w-[52px] shrink-0
+        transition-transform duration-300
+        group-hover:-translate-x-1
+      "
+            >
+              <CartIcon className="h-5 w-5" />
+            </span>
+
+            <span
+              className="
+        pr-4                     /* was pr-5 -> a bit tighter */
+        text-[0.95rem] whitespace-nowrap
+        opacity-0 translate-x-2
+        transition-all duration-300
+        group-hover:opacity-100 group-hover:translate-x-0
+      "
+            >
+              Add to Cart
+            </span>
+          </button>
+        ) : (
+          <button
+            onClick={goToCart}
+            className="
+      inline-flex items-center justify-center gap-2
+      h-[44px] w-40              /* match hover width */
+      -mr-1
+      rounded-full bg-slate-900 text-white
+      shadow-sm hover:shadow-md transition-all duration-300
+      focus:outline-none focus-visible:outline-none
+    "
+            title="Go to cart"
+          >
+            <CartIcon className="h-5 w-5" />
+            <span className="text-[0.95rem]">Go to Cart</span>
+          </button>
+        )}
       </div>
+
+      <style>{`
+        @media (prefers-reduced-motion: reduce) {
+          .group:hover img { transform: none !important; }
+        }
+      `}</style>
     </article>
   );
 }

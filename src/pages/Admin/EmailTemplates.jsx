@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { EmailAPI } from "../../api/emails";
 import AdminTabs from "../../components/AdminTabs";
+import { t } from "../../lib/toast";
 
 function cx(...a) { return a.filter(Boolean).join(" "); }
 
@@ -70,10 +71,22 @@ export default function EmailTemplates() {
       const payload = { ...editing };
       if (payload.category !== "abandoned_cart") payload.abandonedDay = null;
       // REQUIRED fields guard
-      if (!payload.slug?.trim()) { alert("Slug is required"); return; }
-      if (!payload.subject?.trim()) { alert("Subject is required"); return; }
-      if (!payload.html?.trim() && !payload.text?.trim()) { alert("HTML or Text body is required"); return; }
-      if (!payload.mailSender) { alert("Please select a Mail Sender"); return; }
+      if (!payload.slug?.trim()) {
+        t.err("Slug is required");
+        return;
+      }
+      if (!payload.subject?.trim()) {
+        t.err("Subject is required");
+        return;
+      }
+      if (!payload.html?.trim() && !payload.text?.trim()) {
+        t.err("HTML or Text body is required");
+        return;
+      }
+      if (!payload.mailSender) {
+        t.err("Please select a Mail Sender");
+        return;
+      }
 
       if (!payload.text) delete payload.text;
       if (!payload.fromEmail) delete payload.fromEmail;
@@ -91,132 +104,138 @@ export default function EmailTemplates() {
       setEditing(null);
       await load();
     } finally { setSaving(false); }
- 
-}
 
-async function remove(idOrSlug) {
-  if (!window.confirm("Delete this template?")) return;
-  await EmailAPI.deleteTemplate(idOrSlug);
-  await load();
-}
+  }
 
-// quick test form
-const [testTo, setTestTo] = useState("");
-const [testCtx, setTestCtx] = useState('{"name":"Nirav","order_id":"123","amount":499}');
-const [testingSlug, setTestingSlug] = useState("");
+  async function remove(idOrSlug) {
+    if (!window.confirm("Delete this template?")) return;
+    await EmailAPI.deleteTemplate(idOrSlug);
+    await load();
+  }
 
-async function test(slug) {
-  if (!testTo.trim()) { alert("Enter a test recipient (To)"); return; }
-  let ctx;
-  try { ctx = testCtx ? JSON.parse(testCtx) : {}; }
-  catch { alert("Context must be valid JSON"); return; }
-  setTestingSlug(slug);
-  try {
-    await EmailAPI.testTemplate(slug, { to: testTo, ctx });
-    alert("Test email queued/sent (check inbox).");
-  } catch (e) {
-    alert(e?.response?.data?.error || "Test failed");
-  } finally { setTestingSlug(""); }
-}
+  // quick test form
+  const [testTo, setTestTo] = useState("");
+  const [testCtx, setTestCtx] = useState('{"name":"Nirav","order_id":"123","amount":499}');
+  const [testingSlug, setTestingSlug] = useState("");
 
-const filtered = useMemo(() => {
-  if (!filter) return templates;
-  return templates.filter(t =>
-    [t.slug, t.title, t.category, t.subject].join(" ").toLowerCase().includes(filter.toLowerCase())
-  );
-}, [templates, filter]);
+  async function test(slug) {
+    if (!testTo.trim()) {
+      t.info("Enter a test recipient (To)");
+      return;
+    }
+    let ctx;
+    try { ctx = testCtx ? JSON.parse(testCtx) : {}; }
+    catch {
+      t.err("Context must be valid JSON");
+      return;
+    }
+    setTestingSlug(slug);
+    try {
+      await EmailAPI.testTemplate(slug, { to: testTo, ctx });
+      t.ok("Test email queued/sent (check inbox).");
+    } catch (e) {
+      t.err(e?.response?.data?.error || "Test failed");
+    } finally { setTestingSlug(""); }
+  }
 
-return (
-  <div className="mx-auto max-w-screen-xl px-4 py-8">
-    <AdminTabs />
+  const filtered = useMemo(() => {
+    if (!filter) return templates;
+    return templates.filter(t =>
+      [t.slug, t.title, t.category, t.subject].join(" ").toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [templates, filter]);
 
-    <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
-      <h1 className="text-2xl font-bold">Email Templates</h1>
-      <button onClick={newTpl} className="px-3 py-2 rounded-lg bg-brand font-semibold">+ Add</button>
-    </div>
+  return (
+    <div className="mx-auto max-w-screen-xl px-4 py-8">
+      <AdminTabs />
 
-    {/* Quick test bar */}
-    <div className="bg-surface border border-border-subtle rounded-xl p-3 mb-4 shadow-sm">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-        <input placeholder="Send test to" className="w-full min-w-0" value={testTo} onChange={e => setTestTo(e.target.value)} />
-        <input placeholder="Filter templates…" className="w-full min-w-0" value={filter} onChange={e => setFilter(e.target.value)} />
-        <textarea
-          className="w-full h-[42px] min-h-[42px] resize-y min-w-0"
-          placeholder='JSON context (e.g., {"name":"Nirav"})'
-          value={testCtx} onChange={e => setTestCtx(e.target.value)}
-        />
+      <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
+        <h1 className="text-2xl font-bold">Email Templates</h1>
+        <button onClick={newTpl} className="px-3 py-2 rounded-lg bg-brand font-semibold">+ Add</button>
       </div>
-    </div>
 
-    <div className="bg-surface border border-border-subtle rounded-xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-surface-subtle">
-            <tr className="bg-[#e3e3e3]">
-              <th className="py-3 px-4">#</th>
-              <th className="py-3 px-4">Slug</th>
-              <th className="py-3 px-4">Title</th>
-              <th className="py-3 px-4 hidden sm:table-cell">Category</th>
-              <th className="py-3 px-4 hidden lg:table-cell">Day</th>
-              <th className="py-3 px-4">Subject</th>
-              <th className="py-3 px-4 hidden md:table-cell">Sender</th>
-              <th className="py-3 px-4 hidden sm:table-cell">Active</th>
-              <th className="py-3 px-4 w-[280px] sm:w-[360px]">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={9} className="py-10 text-center text-fg-subtle">Loading…</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={9} className="py-10 text-center text-fg-subtle">No templates.</td></tr>
-            ) : filtered.map((t, i) => (
-              <tr key={t._id || t.slug || i} className={i % 2 ? "bg-surface-subtle/60" : "bg-surface"}>
-                <td className="py-2 px-4 font-mono">{i + 1}</td>
-                <td className="py-2 px-4 font-mono">{t.slug}</td>
-                <td className="py-2 px-4 font-medium">{t.title}</td>
-                <td className="py-2 px-4 hidden sm:table-cell">{t.category}</td>
-                <td className="py-2 px-4 hidden lg:table-cell">{t.abandonedDay ?? "—"}</td>
-                <td className="py-2 px-4 truncate max-w-[240px] sm:max-w-[280px]">{t.subject}</td>
-                <td className="py-2 px-4 hidden md:table-cell">
-                  {(senders.find(s => String(s._id) === String(t.mailSender))?.label) || "—"}
-                </td>
-                <td className="py-2 px-4 hidden sm:table-cell">
-                  {t.isActive ? <span className="badge-green">Active</span> : <span className="badge">—</span>}
-                </td>
-                <td className="py-2 px-4">
-                  <div className="flex flex-col sm:flex-row flex-wrap gap-2">
-                    <button onClick={() => setEditing(t)} className="px-3 py-1.5 rounded-lg border bg-surface hover:bg-surface-subtle">Edit</button>
-                    <button
-                      disabled={!!testingSlug}
-                      onClick={() => test(t.slug)}
-                      className={cx("px-3 py-1.5 rounded-lg btn-muted", testingSlug === t.slug && "opacity-60")}
-                    >
-                      {testingSlug === t.slug ? "Testing…" : "Send test"}
-                    </button>
-                    <button onClick={() => remove(t._id || t.slug)} className="px-3 py-1.5 rounded-lg bg-danger/10 text-danger hover:bg-danger/20">
-                      Delete
-                    </button>
-                  </div>
-                </td>
+      {/* Quick test bar */}
+      <div className="bg-surface border border-border-subtle rounded-xl p-3 mb-4 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <input placeholder="Send test to" className="w-full min-w-0" value={testTo} onChange={e => setTestTo(e.target.value)} />
+          <input placeholder="Filter templates…" className="w-full min-w-0" value={filter} onChange={e => setFilter(e.target.value)} />
+          <textarea
+            className="w-full h-[42px] min-h-[42px] resize-y min-w-0"
+            placeholder='JSON context (e.g., {"name":"Nirav"})'
+            value={testCtx} onChange={e => setTestCtx(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="bg-surface border border-border-subtle rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-subtle">
+              <tr className="bg-[#e3e3e3]">
+                <th className="py-3 px-4">#</th>
+                <th className="py-3 px-4">Slug</th>
+                <th className="py-3 px-4">Title</th>
+                <th className="py-3 px-4 hidden sm:table-cell">Category</th>
+                <th className="py-3 px-4 hidden lg:table-cell">Day</th>
+                <th className="py-3 px-4">Subject</th>
+                <th className="py-3 px-4 hidden md:table-cell">Sender</th>
+                <th className="py-3 px-4 hidden sm:table-cell">Active</th>
+                <th className="py-3 px-4 w-[280px] sm:w-[360px]">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={9} className="py-10 text-center text-fg-subtle">Loading…</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={9} className="py-10 text-center text-fg-subtle">No templates.</td></tr>
+              ) : filtered.map((t, i) => (
+                <tr key={t._id || t.slug || i} className={i % 2 ? "bg-surface-subtle/60" : "bg-surface"}>
+                  <td className="py-2 px-4 font-mono">{i + 1}</td>
+                  <td className="py-2 px-4 font-mono">{t.slug}</td>
+                  <td className="py-2 px-4 font-medium">{t.title}</td>
+                  <td className="py-2 px-4 hidden sm:table-cell">{t.category}</td>
+                  <td className="py-2 px-4 hidden lg:table-cell">{t.abandonedDay ?? "—"}</td>
+                  <td className="py-2 px-4 truncate max-w-[240px] sm:max-w-[280px]">{t.subject}</td>
+                  <td className="py-2 px-4 hidden md:table-cell">
+                    {(senders.find(s => String(s._id) === String(t.mailSender))?.label) || "—"}
+                  </td>
+                  <td className="py-2 px-4 hidden sm:table-cell">
+                    {t.isActive ? <span className="badge-green">Active</span> : <span className="badge">—</span>}
+                  </td>
+                  <td className="py-2 px-4">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                      <button onClick={() => setEditing(t)} className="px-3 py-1.5 rounded-lg border bg-surface hover:bg-surface-subtle">Edit</button>
+                      <button
+                        disabled={!!testingSlug}
+                        onClick={() => test(t.slug)}
+                        className={cx("px-3 py-1.5 rounded-lg btn-muted", testingSlug === t.slug && "opacity-60")}
+                      >
+                        {testingSlug === t.slug ? "Testing…" : "Send test"}
+                      </button>
+                      <button onClick={() => remove(t._id || t.slug)} className="px-3 py-1.5 rounded-lg bg-danger/10 text-danger hover:bg-danger/20">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    {editing && (
-      <Editor
-        tpl={editing}
-        senders={senders}
-        onClose={() => setEditing(null)}
-        onChange={setEditing}
-        onSave={save}
-        saving={saving}
-      />
-    )}
-  </div>
-);
+      {editing && (
+        <Editor
+          tpl={editing}
+          senders={senders}
+          onClose={() => setEditing(null)}
+          onChange={setEditing}
+          onSave={save}
+          saving={saving}
+        />
+      )}
+    </div>
+  );
 }
 
 function Editor({ tpl, senders, onClose, onChange, onSave, saving }) {

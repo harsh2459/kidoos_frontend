@@ -11,20 +11,20 @@ export default function Cart() {
   const navigate = useNavigate();
   const { isCustomer, token } = useCustomer();
 
-  const items      = useCart((s) => s.items);
-  const inc        = useCart((s) => s.inc);
-  const dec        = useCart((s) => s.dec);
-  const setQtyLocal= useCart((s) => s.setQty);
-  const removeLocal= useCart((s) => s.remove);
-  const clearLocal = useCart((s) => s.clear);
-  const replaceAll = useCart((s) => s.replaceAll);
+  const items       = useCart((s) => s.items);
+  const inc         = useCart((s) => s.inc);
+  const dec         = useCart((s) => s.dec);
+  const setQtyLocal = useCart((s) => s.setQty);
+  const removeLocal = useCart((s) => s.remove);
+  const clearLocal  = useCart((s) => s.clear);
+  const replaceAll  = useCart((s) => s.replaceAll);
 
   // --- Hydrate from server when logged in (server is source of truth) ---
   useEffect(() => {
     if (!isCustomer) return;
     (async () => {
       try {
-        const res = await CustomerAPI.getCart(token);  // axios response
+        const res = await CustomerAPI.getCart(token); // axios response
         replaceAll(res?.data?.cart?.items || []);
       } catch (e) {
         console.error("getCart failed:", e);
@@ -33,13 +33,13 @@ export default function Cart() {
   }, [isCustomer, token, replaceAll]);
 
   // --- Qty change (server-first when logged in; local-only for guest) ---
-  const syncQty = async (itemId, nextQty) => {
+  const syncQty = async (lineId, nextQty) => {
     if (!isCustomer) {
-      setQtyLocal(itemId, nextQty);  // guest cart
+      // handled per-item with setQtyLocal(bookId, nextQty)
       return;
     }
     try {
-      const res = await CustomerAPI.setCartQty(token, { itemId, qty: nextQty });
+      const res = await CustomerAPI.setCartQty(token, { itemId: lineId, qty: nextQty });
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Quantity updated");
     } catch (e) {
@@ -54,20 +54,21 @@ export default function Cart() {
   };
 
   // --- Remove line (server-first; 404 treated as success) ---
-  const removeItem = async (itemId) => {
+  const removeItem = async (idForCurrentMode) => {
     if (!isCustomer) {
-      removeLocal(itemId);    // guest cart
+      // In guest mode, this id is the bookId
+      removeLocal(idForCurrentMode);
       t.ok("Item removed");
       return;
     }
+    // In logged-in mode, this id is the server lineId
     try {
-      const res = await CustomerAPI.removeCartItem(token, itemId);
+      const res = await CustomerAPI.removeCartItem(token, idForCurrentMode);
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Item removed");
     } catch (e) {
       const status = e?.response?.status;
       if (status === 404) {
-        // Already removed/stale id — treat as success
         try {
           const fresh = await CustomerAPI.getCart(token);
           replaceAll(fresh?.data?.cart?.items || []);
@@ -143,7 +144,10 @@ export default function Cart() {
         {/* LEFT: Items */}
         <section className="md:col-span-2 space-y-4">
           {items.map((it) => {
-            const itemId   = it._id || it.id;   // cart line id (NOT bookId)
+            // Server cart item id (line id) vs product id (book id)
+            const lineId = it._id || it.lineId || it.itemId;                 // server line id
+            const bookId = it.bookId || it.book?._id || it.id;               // product id (guest/local)
+
             const price    = Number(it.price ?? it.pric ?? 0);
             const mrp      = Number(it.mrp   ?? it.mrpPrice ?? price);
             const off      = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
@@ -152,13 +156,13 @@ export default function Cart() {
 
             return (
               <article
-                key={itemId}
+                key={lineId || bookId}
                 className="bg-surface border rounded-2xl p-4 flex items-start gap-4 shadow-sm"
               >
                 <div className="relative">
                   <img
-                    src={assetUrl(it.assets?.coverUrl)}
-                    alt={it.title}
+                    src={assetUrl(it.assets?.coverUrl || it.book?.assets?.coverUrl)}
+                    alt={it.title || it.book?.title}
                     className="w-[72px] h-[96px] object-contain rounded-lg border bg-white"
                   />
                   {off > 0 && (
@@ -214,8 +218,11 @@ export default function Cart() {
                         className="h-9 w-9 rounded-full border hover:bg-muted"
                         onClick={() => {
                           const next = Math.max(1, qty - 1);
-                          syncQty(itemId, next);
-                          dec?.(itemId); // optional optimistic for guest
+                          if (isCustomer && lineId) {
+                            syncQty(lineId, next);      // server
+                          }
+                          setQtyLocal?.(bookId, next);  // guest/local (no-op if store ignores when logged-in)
+                          dec?.(bookId);                // keep local UI optimistic for guests
                         }}
                         aria-label="Decrease quantity"
                       >
@@ -228,15 +235,21 @@ export default function Cart() {
                         value={qty}
                         onChange={(e) => {
                           const next = Math.max(1, Number(e.target.value) || 1);
-                          syncQty(itemId, next);
-                          setQtyLocal?.(itemId, next); // guest local
+                          if (isCustomer && lineId) {
+                            syncQty(lineId, next);      // server
+                          }
+                          setQtyLocal?.(bookId, next);  // guest/local
                         }}
                       />
                       <button
                         className="h-9 w-9 rounded-full border hover:bg-muted"
                         onClick={() => {
-                          syncQty(itemId, qty + 1);
-                          inc?.(itemId); // guest local
+                          const next = qty + 1;
+                          if (isCustomer && lineId) {
+                            syncQty(lineId, next);      // server
+                          }
+                          setQtyLocal?.(bookId, next);  // guest/local
+                          inc?.(bookId);                // guest optimistic
                         }}
                         aria-label="Increase quantity"
                       >
@@ -245,7 +258,7 @@ export default function Cart() {
                     </div>
 
                     <button
-                      onClick={() => removeItem(itemId)}
+                      onClick={() => removeItem(isCustomer ? lineId : bookId)}
                       className="text-sm text-danger hover:underline"
                     >
                       Remove

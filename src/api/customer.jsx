@@ -19,8 +19,12 @@ export const CustomerAPI = {
   async addToCart(token, { bookId, qty }) {
     return api.post("/customer/cart/add", { bookId, qty }, { headers: { Authorization: `Bearer ${token}` } });
   },
-  async setCartQty(token, { bookId, qty }) {
-    return api.patch("/customer/cart/qty", { itemId: bookId, qty }, { headers: { Authorization: `Bearer ${token}` } });
+  async setCartQty(token, { itemId, qty }) {
+    return api.patch(
+      "/customer/cart/qty",
+      { itemId, qty },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
   },
   async removeCartItem(token, itemId) {
     return api.delete(`/customer/cart/item/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });

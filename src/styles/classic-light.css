@@ -14,7 +14,7 @@
   }
 
   a {
-    @apply text-brand hover:text-brand/90 hover:underline;
+    @apply text-brand hover:text-brand/90;
   }
 
   h1,

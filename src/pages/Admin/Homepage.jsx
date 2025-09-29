@@ -1,6 +1,8 @@
+// src/pages/admin/Homepage.jsx
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { toRelativeFromPublic } from "../../api/asset";
+import { t } from "../../lib/toast";
 
 export default function HomepageAdmin() {
   const [token] = useState(localStorage.getItem("admin_jwt") || "");
@@ -24,8 +26,24 @@ export default function HomepageAdmin() {
       return nb;
     });
     await api.put("/settings/homepage", { blocks: cleaned }, { headers: { Authorization: `Bearer ${token}` } });
-    alert("Homepage saved");
+    t.ok("Homepage saved");
   };
+
+  // ---- NEW: reordering helpers (minimal) ----
+  const move = (from, to) => {
+    setBlocks(prev => {
+      const arr = [...prev];
+      if (from < 0 || from >= arr.length) return arr;
+      if (to   < 0) to = 0;
+      if (to   > arr.length - 1) to = arr.length - 1;
+      if (from === to) return arr;
+      const [it] = arr.splice(from, 1);
+      arr.splice(to, 0, it);
+      return arr;
+    });
+  };
+  const moveUp   = (i) => move(i, i - 1);
+  const moveDown = (i) => move(i, i + 1);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
@@ -42,10 +60,48 @@ export default function HomepageAdmin() {
       <div className="space-y-4">
         {blocks.map((b, i) => (
           <div key={i} className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="font-semibold">{b.type.toUpperCase()}</div>
-              <button onClick={() => setBlocks(blocks.filter((_, x) => x !== i))} className="text-red-600 hover:text-red-700">Remove</button>
+
+              {/* ---- NEW: simple position controls ---- */}
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500">Position</label>
+                <select
+                  value={i}
+                  onChange={(e) => move(i, Number(e.target.value))}
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  {blocks.map((_, idx) => (
+                    <option key={idx} value={idx}>{idx + 1}</option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={() => moveUp(i)}
+                  className="px-2 py-1 rounded border bg-white hover:bg-gray-50 text-sm"
+                  disabled={i === 0}
+                  title="Move up"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => moveDown(i)}
+                  className="px-2 py-1 rounded border bg-white hover:bg-gray-50 text-sm"
+                  disabled={i === blocks.length - 1}
+                  title="Move down"
+                >
+                  ↓
+                </button>
+
+                <button
+                  onClick={() => setBlocks(blocks.filter((_, x) => x !== i))}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
+
             <BlockEditor block={b} onChange={(nb) => setBlocks(blocks.map((x, idx) => idx === i ? nb : x))} />
           </div>
         ))}
@@ -129,6 +185,7 @@ function BlockEditor({ block, onChange }) {
     default: return null;
   }
 }
+
 function Text({ label, value, onChange }) {
   return (
     <div>

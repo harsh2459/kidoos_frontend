@@ -1,22 +1,21 @@
-// src/api/assetUrl.js
+// src/api/asset.js
 import { api } from "./client";
 
-function apiOrigin() {
-  // api.defaults.baseURL is like "https://kiddoos-backend.onrender.com/api"
-  return (api.defaults.baseURL || "").replace(/\/+api\/?$/i, "");
+/** If we get a full URL, reduce to "/public/..." . If already relative, keep it. */
+export function toRelativeFromPublic(input) {
+  if (!input) return "";
+  const s = String(input);
+  const idx = s.indexOf("/public/");
+  return idx >= 0 ? s.slice(idx) : s.startsWith("/") ? s : `/public/${s.replace(/^public\/?/, "")}`;
 }
 
-export function assetUrl(u) {
-  if (!u) return "";
-  if (/^https?:\/\//i.test(u)) return u; // already absolute
-  const origin = apiOrigin().replace(/\/+$/, "");
-  const path = String(u).startsWith("/") ? u : `/${u}`;
-  return `${origin}${path}`;
-}
-
-/** Extract "/public/..." from any absolute/relative URL */
-export function toRelativeFromPublic(u) {
-  if (!u) return u;
-  const m = String(u).match(/\/public\/.+$/);
-  return m ? m[0] : u; // if it doesn’t contain /public/, leave as-is
+/** Build a full img URL from a stored relative "/public/..." path */
+export function assetUrl(relativePath) {
+  const rel = toRelativeFromPublic(relativePath);
+  // derive origin from axios base (remove trailing "/api")
+  let base = api.defaults.baseURL || "";
+  base = String(base).replace(/\/+$/, "");
+  const apiIdx = base.toLowerCase().lastIndexOf("/api");
+  const origin = apiIdx === -1 ? base : base.slice(0, apiIdx);
+  return `${origin}${rel}`;
 }

@@ -2,9 +2,30 @@
 import { Link, useLocation } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useSite } from "../contexts/SiteConfig";
-import { useAuth } from "../contexts/Auth";                // admin auth
-import { useCustomer } from "../contexts/CustomerAuth";    // customer hook
+import { useAuth } from "../contexts/Auth";
+import { useCustomer } from "../contexts/CustomerAuth";
 import { assetUrl } from "../api/asset";
+import { useCart } from "../contexts/CartStore";
+
+/* simple cart icon */
+function CartIcon({ className = "" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </svg>
+  );
+}
 
 export default function Navbar() {
   const loc = useLocation();
@@ -13,49 +34,92 @@ export default function Navbar() {
   const { site, visibility } = useSite();
   const nav = useMemo(() => visibility?.publicNav || ["catalog", "cart"], [visibility]);
 
-  // ---- auth state
   const { isAdmin, admin, logout: logoutAdmin } = useAuth();
   const { isCustomer, customer, logout: logoutCustomer } = useCustomer();
 
-  // ---- UI state
+  // cart count badge
+  const cartCount = useCart((s) =>
+    (s.items || []).reduce((sum, it) => sum + Number(it.qty ?? 1), 0)
+  );
+
   const [openCustomer, setOpenCustomer] = useState(false);
 
-  // ---- visibility rules
-  // Hide shopper nav when admin is logged in OR on /admin/*
-  const showCustomerNav = !isAdmin && !onAdminPage;
-  // Hide Login button when admin is logged in (or when a customer is already logged in)
-  const showLogin = !isAdmin && !isCustomer && !onAdminPage;
+  // shopper UI rules
+  const showShopUI = !isAdmin && !onAdminPage;      // show catalog + cart
+  const showLogin  = !isAdmin && !isCustomer && !onAdminPage;
+
+  // brand visibility: hide logo whenever an admin is logged in
+  const showBrand = !isAdmin;
 
   return (
     <header className="sticky top-0 z-40 bg-surface border-b border-border-subtle">
-      <div className="mx-auto max-w-container px-4 h-[68px] flex items-center gap-4">
-        {/* Brand */}
-        <Link to="/" className="flex items-center gap-3 shrink-0">
-          {site?.logoUrl ? (
-            <img src={assetUrl(site.logoUrl)} alt="logo" className="h-[4rem] w-auto object-contain" />
-          ) : (
-            <div className="h-8 w-8 rounded-md bg-surface-subtle grid place-items-center text-xs text-fg-subtle">
-              logo
-            </div>
-          )}
-          {/* <div className="font-semibold hidden sm:block">{site?.title || "Kiddos intellect"}</div> */}
-        </Link>
+      <div className="relative mx-auto max-w-container px-4 h-[68px] flex items-center">
+        {/* LEFT: Brand (hidden for admin) */}
+        {showBrand && (
+          <Link to="/" className="flex items-center gap-3 shrink-0">
+            {site?.logoUrl ? (
+              <img
+                src={assetUrl(site.logoUrl)}
+                alt="logo"
+                className="h-[4rem] w-auto object-contain"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-md bg-surface-subtle grid place-items-center text-xs text-fg-subtle">
+                logo
+              </div>
+            )}
+          </Link>
+        )}
 
-        {/* Left nav (Catalog / Cart) — hidden for admin and on /admin/* */}
-        {showCustomerNav && (
-          <nav className="ml-2 flex items-center gap-6 text-sm">
-            {nav.includes("catalog") && <Link to="/catalog">Catalog</Link>}
-            {nav.includes("cart") && <Link to="/cart">Cart</Link>}
+        {/* CENTER: CATALOG (centered regardless of left/right widths) */}
+        {showShopUI && nav.includes("catalog") && (
+          <nav
+            className="
+              pointer-events-auto
+              absolute left-1/2 -translate-x-1/2
+            "
+          >
+            <Link
+              to="/catalog"
+              className="
+                relative tracking-[0.25em] text-sm
+                after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
+                after:block after:h-[2px] after:w-full after:bg-current/80
+                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
+                hover:after:scale-x-100
+              "
+            >
+              CATALOG
+            </Link>
           </nav>
         )}
 
-        {/* Right side */}
-        <div className="ml-auto flex items-center gap-3">
-          {/* Customer profile (hidden for admin and on /admin/*) */}
+        {/* RIGHT: Cart icon + profile/login/admin chip */}
+        <div className="ml-auto flex items-center gap-4">
+          {/* CART ICON (right side) */}
+          {showShopUI && nav.includes("cart") && (
+            <Link to="/cart" className="relative inline-flex items-center">
+              <CartIcon className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span
+                  className="
+                    absolute -top-2 -right-2 min-w-[18px] h-[18px]
+                    rounded-full bg-red-600 text-white text-[10px] leading-none
+                    px-1 flex items-center justify-center font-medium shadow
+                  "
+                  aria-label={`${cartCount} items in cart`}
+                >
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          )}
+
+          {/* CUSTOMER CHIP */}
           {!isAdmin && !onAdminPage && isCustomer && (
             <div className="relative">
               <button
-                onClick={() => setOpenCustomer(v => !v)}
+                onClick={() => setOpenCustomer((v) => !v)}
                 onBlur={() => setTimeout(() => setOpenCustomer(false), 150)}
                 className="px-3 py-1.5 rounded-lg bg-surface-subtle border border-border-subtle"
               >
@@ -63,26 +127,23 @@ export default function Navbar() {
               </button>
               {openCustomer && (
                 <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-subtle rounded-xl shadow-theme p-1">
-                  <MenuButton
-                    onClick={() => {
-                      logoutCustomer();          // clears cust_jwt and state
-                      // window.location.href = "/"; // optional hard refresh
-                    }}
-                    label="Logout"
-                  />
+                  <MenuButton onClick={() => logoutCustomer()} label="Logout" />
                 </div>
               )}
             </div>
           )}
 
-          {/* Login (hidden for admin, hidden if customer already logged in, and hidden on /admin/*) */}
+          {/* LOGIN */}
           {showLogin && (
-            <Link to="/login" className="px-3 py-1.5 rounded-lg border bg-surface hover:bg-surface-subtle">
+            <Link
+              to="/login"
+              className="px-3 py-1.5 rounded-lg border bg-surface hover:bg-surface-subtle"
+            >
               Login
             </Link>
           )}
 
-          {/* Admin profile chip (always visible when admin logged in) */}
+          {/* ADMIN CHIP */}
           {isAdmin && (
             <div className="relative">
               <details className="group">
@@ -93,13 +154,7 @@ export default function Navbar() {
                   </span>
                 </summary>
                 <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-subtle rounded-xl shadow-theme p-1">
-                  <MenuButton
-                    onClick={() => {
-                      logoutAdmin();             // clears admin_jwt and state
-                      // window.location.href = "/admin/login"; // optional redirect
-                    }}
-                    label="Logout"
-                  />
+                  <MenuButton onClick={() => logoutAdmin()} label="Logout" />
                 </div>
               </details>
             </div>
@@ -110,10 +165,12 @@ export default function Navbar() {
   );
 }
 
-/* Utilities */
 function MenuButton({ onClick, label }) {
   return (
-    <button onClick={onClick} className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-subtle">
+    <button
+      onClick={onClick}
+      className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-subtle"
+    >
       {label}
     </button>
   );

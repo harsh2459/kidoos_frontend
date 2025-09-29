@@ -5,6 +5,8 @@ import { api } from "../api/client";
 import ProductCard from "../components/ProductCard";
 import { Link } from "react-router-dom";
 import { assetUrl } from "../api/asset";
+import '../styles/style-button.css';
+import FancyButton from "../components/button/button";
 
 /* ----------------------------- Page ------------------------------ */
 export default function Home() {
@@ -25,9 +27,7 @@ function Block({ block }) {
           <h2 className="text-3xl font-bold">{block.title}</h2>
           <p className="text-fg-muted mt-2">{block.subtitle}</p>
           {block.ctaText && (
-            <Link to={block.ctaHref || "/catalog"} className="inline-block mt-4 px-5 py-3 rounded-theme btn-primary">
-              {block.ctaText}
-            </Link>
+            <FancyButton to={block.ctaHref || "/catalog"} text={block.ctaText} />
           )}
         </div>
         {block.image && (
@@ -67,16 +67,40 @@ function Block({ block }) {
  */
 function GridSection({ title, query }) {
   const [items, setItems] = useState([]);
+
   const layout = query?.layout || "classic";
-  const limit  = Number(query?.limit || 12); // optional cap
+  const limit = Number(query?.limit || 12);
+  const q = query?.q || "";
+  const sort = query?.sort || "new";
+
+  // normalize "Category" field (CSV -> array, lowercase)
+  const categories = (query?.category || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(s => s.toLowerCase());
 
   useEffect(() => {
     (async () => {
-      const { data } = await api.get("/books", { params: query || { limit } });
-      setItems((data.items || []).slice(0, limit));
+      // send only the fields the API should use
+      const params = { q, sort, limit };
+      if (categories.length) params.categories = categories; // preferred key for backend
+
+      const { data } = await api.get("/books", { params });
+      let list = Array.isArray(data.items) ? data.items : [];
+
+      // client-side guard: keep only books that match ANY of the chosen categories
+      if (categories.length) {
+        list = list.filter(b => {
+          const bookCats = (b?.categories || []).map(c => String(c).toLowerCase().trim());
+          return categories.some(c => bookCats.includes(c));
+        });
+      }
+
+      setItems(list.slice(0, limit));
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(query), limit]);
+  }, [q, sort, limit, JSON.stringify(categories)]);
 
   return (
     <section>
@@ -90,12 +114,10 @@ function GridSection({ title, query }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map((b) =>
             layout === "classic" ? (
-              // Full card with Add to Cart (your existing component)
               <div key={b._id || b.id} className="h-full">
                 <ProductCard book={b} />
               </div>
             ) : (
-              // Simple, no-Add variant
               <SimpleShowcaseCard key={b._id || b.id} book={b} />
             )
           )}
@@ -107,9 +129,9 @@ function GridSection({ title, query }) {
 
 /* --------------------- Simple (no Add) card ---------------------- */
 function SimpleShowcaseCard({ book }) {
-  const mrp   = Number(book.mrp)   || 0;
+  const mrp = Number(book.mrp) || 0;
   const price = Number(book.price) || 0;
-  const off   = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+  const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
     <article

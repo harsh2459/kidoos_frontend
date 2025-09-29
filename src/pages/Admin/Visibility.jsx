@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
+import { t } from "../../lib/toast";
 
 export default function VisibilityAdmin(){
   const token = localStorage.getItem("admin_jwt") || "";
@@ -20,7 +21,7 @@ export default function VisibilityAdmin(){
 
   const save = async () => {
     await api.put("/settings/visibility", { publicNav, pages }, { headers:{ Authorization:`Bearer ${token}` }});
-    alert("Saved");
+    t.ok("Saved");
   };
 
   return (
