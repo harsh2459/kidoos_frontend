@@ -119,16 +119,7 @@ export default function Footer({ contact, links }) {
                                         Contact
                                     </Link>
                                 </li>
-                                <li>
-                                    <Link to="/blog" className="text-white hover:opacity-80 hover:underline">
-                                        Blog
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link to="/careers" className="text-white hover:opacity-80 hover:underline">
-                                        Careers
-                                    </Link>
-                                </li>
+                                
                             </ul>
                         </div>
 

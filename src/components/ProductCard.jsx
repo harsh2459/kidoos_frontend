@@ -27,7 +27,8 @@ function CartIcon({ className = "" }) {
 }
 
 export default function ProductCard({ book }) {
-  const d = dealFn(book);
+  const d = dealFn(book); // { mrp, price, off, save }
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -36,7 +37,7 @@ export default function ProductCard({ book }) {
   const addLocal = useCart((s) => s.add);
 
   const id = book._id || book.id;
-  const inCart = items.some((i) => (i._id || i.id) === id);
+  const inCart = items.some((i) => (i._id || i.id || i.bookId) === id);
 
   const { isCustomer, token } = useCustomer();
   const [pop, setPop] = useState(false);
@@ -59,22 +60,27 @@ export default function ProductCard({ book }) {
       navigate("/cart");
     } catch (e) {
       console.error(e);
-      // Fallback local add if server failed
+      // Fallback: still add locally so UX is smooth
       addLocal(book, 1);
       t.ok("Added to cart");
       navigate("/cart");
     }
   };
-  console.log(book);
 
   const goToCart = () => {
     t.info("Already in your cart");
     navigate("/cart");
   };
-  const cover = book?.assets?.coverUrl[0];
+
+  // Prefer first image as cover (your current rule)
+  const cover =
+    (Array.isArray(book?.assets?.coverUrl)
+      ? book.assets.coverUrl[0]
+      : book?.assets?.coverUrl) || "/uploads/placeholder.png";
+
   return (
     <article className="card card-hover p-4 flex flex-col h-full">
-      {/* Image area — ONLY this hovers */}
+      {/* Image */}
       <Link
         to={`/book/${book.slug}`}
         title={book.title}
@@ -84,7 +90,6 @@ export default function ProductCard({ book }) {
         "
       >
         <div className="aspect-[3/4] w-full grid place-items-center p-4 bg-white overflow-hidden">
-
           <img
             src={assetUrl(cover)}
             alt={book.title}
@@ -106,7 +111,7 @@ export default function ProductCard({ book }) {
         />
       </Link>
 
-      {/* Text */}
+      {/* Title & authors */}
       <Link
         to={`/book/${book.slug}`}
         className="mt-3 font-medium text-fg leading-tight line-clamp-2"
@@ -117,53 +122,60 @@ export default function ProductCard({ book }) {
         {(book.authors || []).join(", ")}
       </div>
 
-      {/* Price + CTA */}
+      {/* Pricing + CTA */}
       <div className="mt-auto pt-3 flex items-center justify-between gap-3">
+        {/* Pricing block: Price, MRP (struck), Discount badge */}
         <div className="flex items-baseline gap-2">
           <div className="font-semibold">₹{d.price}</div>
           {d.mrp > d.price && (
-            <div className="line-through text-sm text-fg-subtle">₹{d.mrp}</div>
+            <>
+              <div className="line-through text-sm text-fg-subtle">₹{d.mrp}</div>
+              {d.off > 0 && (
+                <span className="text-[10px] text-green-700 bg-green-100 rounded-full px-2 py-0.5 border">
+                  -{d.off}%
+                </span>
+              )}
+            </>
           )}
         </div>
 
-        {/* ============ CTA ============ */}
+        {/* CTA */}
         {!inCart ? (
           <button
             onClick={addToCart}
             className="
-      group relative
-      h-[44px] w-[52px]           /* icon-only size */
-      hover:w-40                 
-      -mr-1
-      rounded-full bg-slate-900 text-white
-      shadow-sm hover:shadow-md
-      transition-all duration-300
-      overflow-hidden
-      flex items-center
-      focus:outline-none focus-visible:outline-none
-    "
+              group relative
+              h-[44px] w-[52px]
+              hover:w-40
+              -mr-1
+              rounded-full bg-slate-900 text-white
+              shadow-sm hover:shadow-md
+              transition-all duration-300
+              overflow-hidden
+              flex items-center
+              focus:outline-none focus-visible:outline-none
+            "
             title="Add to cart"
             aria-label="Add to cart"
           >
             <span
               className="
-        flex items-center justify-center
-        h-[44px] w-[52px] shrink-0
-        transition-transform duration-300
-        group-hover:-translate-x-1
-      "
+                flex items-center justify-center
+                h-[44px] w-[52px] shrink-0
+                transition-transform duration-300
+                group-hover:-translate-x-1
+              "
             >
               <CartIcon className="h-5 w-5" />
             </span>
-
             <span
               className="
-        pr-4                     /* was pr-5 -> a bit tighter */
-        text-[0.95rem] whitespace-nowrap
-        opacity-0 translate-x-2
-        transition-all duration-300
-        group-hover:opacity-100 group-hover:translate-x-0
-      "
+                pr-4
+                text-[0.95rem] whitespace-nowrap
+                opacity-0 translate-x-2
+                transition-all duration-300
+                group-hover:opacity-100 group-hover:translate-x-0
+              "
             >
               Add to Cart
             </span>
@@ -172,13 +184,13 @@ export default function ProductCard({ book }) {
           <button
             onClick={goToCart}
             className="
-      inline-flex items-center justify-center gap-2
-      h-[44px] w-40              /* match hover width */
-      -mr-1
-      rounded-full bg-slate-900 text-white
-      shadow-sm hover:shadow-md transition-all duration-300
-      focus:outline-none focus-visible:outline-none
-    "
+              inline-flex items-center justify-center gap-2
+              h-[44px] w-40
+              -mr-1
+              rounded-full bg-slate-900 text-white
+              shadow-sm hover:shadow-md transition-all duration-300
+              focus:outline-none focus-visible:outline-none
+            "
             title="Go to cart"
           >
             <CartIcon className="h-5 w-5" />

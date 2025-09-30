@@ -15,7 +15,7 @@ export default function EditBook() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // text versions so commas are allowed while typing
+  // free-text versions so commas are allowed while typing
   const [authorsText, setAuthorsText] = useState("");
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
@@ -43,9 +43,10 @@ export default function EditBook() {
 
   if (!book) return <div className="mx-auto max-w-screen-xl px-4 py-8">Loading…</div>;
 
-  const set = (k, v) => setBook(prev => ({ ...prev, [k]: v }));
-  const setInv = (k, v) => setBook(prev => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
-  const setAssets = (k, v) => setBook(prev => ({ ...prev, assets: { ...(prev.assets || {}), [k]: v } }));
+  // ---------- safe setters ----------
+  const setField  = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
+  const setInv    = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
+  const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...(prev.assets || {}), [k]: v } }));
 
   /* ---------------- Images (multiple) ---------------- */
   async function uploadImages(files) {
@@ -84,7 +85,7 @@ export default function EditBook() {
   }
 
   function setAsCover(i) {
-    setAssets("coverUrl", (arr => {
+    setAssets("coverUrl", ((arr) => {
       const list = [...(arr || [])];
       if (i <= 0 || i >= list.length) return list;
       const [picked] = list.splice(i, 1);
@@ -101,7 +102,7 @@ export default function EditBook() {
     setSaving(true);
     try {
       const payload = {
-        title: book.title?.trim(),
+        title: (book.title || "").trim(),
         subtitle: book.subtitle,
         authors: splitCsv(authorsText),
         language: book.language,
@@ -116,7 +117,6 @@ export default function EditBook() {
         currency: book.currency || "INR",
 
         inventory: {
-          // sku kept in payload to preserve existing value on server
           sku: book.inventory?.sku,
           stock: Number(book.inventory?.stock) || 0,
           lowStockAlert: Number(book.inventory?.lowStockAlert) || 5,
@@ -142,6 +142,49 @@ export default function EditBook() {
     }
   }
 
+  /* ---------------- Pricing: bi-directional auto calc ---------------- */
+  const toNum = (v) => (v === "" || v === null || v === undefined ? NaN : Number(v));
+
+  function calcDiscountPct(mrp, price) {
+    const M = toNum(mrp), P = toNum(price);
+    if (!isFinite(M) || M <= 0 || !isFinite(P)) return "";
+    const pct = Math.round(((M - P) / M) * 100);
+    return String(Math.min(100, Math.max(0, pct)));
+  }
+  function calcPriceFromDiscount(mrp, discountPct) {
+    const M = toNum(mrp), D = toNum(discountPct);
+    if (!isFinite(M) || M <= 0 || !isFinite(D)) return "";
+    const price = Math.round(M * (1 - Math.min(100, Math.max(0, D)) / 100));
+    return String(Math.max(0, price));
+  }
+
+  /** unified handler: every change recomputes both derived values */
+  function handlePriceChange(field) {
+    return (e) => {
+      const raw = e.target.value;
+      setBook((prev) => {
+        const next = { ...prev, [field]: raw };
+
+        const mrp   = field === "mrp"         ? raw : (prev.mrp ?? "");
+        const price = field === "price"       ? raw : (prev.price ?? "");
+        const disc  = field === "discountPct" ? raw : (prev.discountPct ?? "");
+
+        // Always recompute discount from current mrp/price (or typed price)
+        const newDiscount = calcDiscountPct(mrp, price);
+        next.discountPct = newDiscount;
+
+        // Recompute price when user changed mrp or discount (don't override while typing price)
+        if (field === "mrp") {
+          next.price = calcPriceFromDiscount(raw, newDiscount);
+        } else if (field === "discountPct") {
+          next.price = calcPriceFromDiscount(mrp, disc);
+        }
+
+        return next;
+      });
+    };
+  }
+
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Edit Book</h1>
@@ -154,7 +197,7 @@ export default function EditBook() {
               className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
               placeholder="e.g. Strategic Management MPA-011"
               value={book.title || ""}
-              onChange={e => set("title", e.target.value)}
+              onChange={(e) => setField("title", e.target.value)}
             />
           </Row>
 
@@ -163,14 +206,14 @@ export default function EditBook() {
               <input
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={book.subtitle || ""}
-                onChange={e => set("subtitle", e.target.value)}
+                onChange={(e) => setField("subtitle", e.target.value)}
               />
             </Row>
             <Row label="Authors" hintRight="comma separated">
               <input
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={authorsText}
-                onChange={e => setAuthorsText(e.target.value)}
+                onChange={(e) => setAuthorsText(e.target.value)}
               />
             </Row>
           </div>
@@ -183,21 +226,21 @@ export default function EditBook() {
               <input
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={book.language || ""}
-                onChange={e => set("language", e.target.value)}
+                onChange={(e) => setField("language", e.target.value)}
               />
             </Row>
             <Row label="Edition">
               <input
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={book.edition || ""}
-                onChange={e => set("edition", e.target.value)}
+                onChange={(e) => setField("edition", e.target.value)}
               />
             </Row>
             <Row label="Format">
               <select
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={book.printType || "paperback"}
-                onChange={e => set("printType", e.target.value)}
+                onChange={(e) => setField("printType", e.target.value)}
               >
                 <option value="paperback">Paperback</option>
                 <option value="hardcover">Hardcover</option>
@@ -208,8 +251,9 @@ export default function EditBook() {
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.pages || 0}
-                onChange={e => set("pages", Number(e.target.value) || 0)}
+                value={book.pages ?? ""}
+                onChange={(e) => setField("pages", e.target.value)}
+                placeholder="0"
               />
             </Row>
           </div>
@@ -222,32 +266,36 @@ export default function EditBook() {
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.mrp || 0}
-                onChange={e => set("mrp", Number(e.target.value) || 0)}
+                value={book.mrp ?? ""}
+                onChange={handlePriceChange("mrp")}
+                placeholder="0"
               />
             </Row>
             <Row label="Sale price">
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.price || 0}
-                onChange={e => set("price", Number(e.target.value) || 0)}
+                value={book.price ?? ""}
+                onChange={handlePriceChange("price")}
+                placeholder="0"
               />
             </Row>
             <Row label="Discount %">
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.discountPct || 0}
-                onChange={e => set("discountPct", Number(e.target.value) || 0)}
+                value={book.discountPct ?? ""}
+                onChange={handlePriceChange("discountPct")}
+                placeholder="0"
               />
             </Row>
             <Row label="Tax %">
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.taxRate || 0}
-                onChange={e => set("taxRate", Number(e.target.value) || 0)}
+                value={book.taxRate ?? ""}
+                onChange={(e) => setField("taxRate", e.target.value)}
+                placeholder="0"
               />
             </Row>
           </div>
@@ -260,16 +308,18 @@ export default function EditBook() {
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.inventory?.stock || 0}
-                onChange={e => setInv("stock", Number(e.target.value) || 0)}
+                value={book.inventory?.stock ?? ""}
+                onChange={(e) => setInv("stock", e.target.value)}
+                placeholder="0"
               />
             </Row>
             <Row label="Low stock alert">
               <input
                 type="number"
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.inventory?.lowStockAlert || 5}
-                onChange={e => setInv("lowStockAlert", Number(e.target.value) || 5)}
+                value={book.inventory?.lowStockAlert ?? ""}
+                onChange={(e) => setInv("lowStockAlert", e.target.value)}
+                placeholder="5"
               />
             </Row>
           </div>
@@ -282,15 +332,14 @@ export default function EditBook() {
               <input
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={categoriesText}
-                onChange={e => setCategoriesText(e.target.value)}
+                onChange={(e) => setCategoriesText(e.target.value)}
               />
             </Row>
-
             <Row label="Tags" hintRight="comma separated">
               <input
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={tagsText}
-                onChange={e => setTagsText(e.target.value)}
+                onChange={(e) => setTagsText(e.target.value)}
               />
             </Row>
           </div>
@@ -299,7 +348,7 @@ export default function EditBook() {
             <textarea
               className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 h-32"
               value={book.descriptionHtml || ""}
-              onChange={e => set("descriptionHtml", e.target.value)}
+              onChange={(e) => setField("descriptionHtml", e.target.value)}
             />
           </Row>
         </Card>
@@ -348,7 +397,7 @@ export default function EditBook() {
             <select
               className="bg-white border border-gray-300 rounded-lg px-3 py-2"
               value={book.visibility || "public"}
-              onChange={e => set("visibility", e.target.value)}
+              onChange={(e) => setField("visibility", e.target.value)}
             >
               <option value="public">Public</option>
               <option value="draft">Draft</option>
