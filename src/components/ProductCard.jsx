@@ -27,7 +27,7 @@ function CartIcon({ className = "" }) {
 }
 
 export default function ProductCard({ book }) {
-  const d = dealFn(book); // { mrp, price, off, save }
+  const d = dealFn(book);
 
   const location = useLocation();
   const navigate = useNavigate();
