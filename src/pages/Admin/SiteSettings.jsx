@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api } from "../../api/client";
+import { useState, useEffect } from 'react';
+import { api } from '../../api/client'; // Your API call
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
 import FancyButton from "../../components/button/button";
@@ -27,53 +27,75 @@ export default function SiteSettings() {
     })();
   }, []); // eslint-disable-line
 
+  // Upload image logic
   async function uploadImage(file) {
     const fd = new FormData();
-    fd.append("file", file);
-    const res = await api.post("/uploads/image", fd, {
-      ...auth,
-      headers: { ...auth.headers, "Content-Type": "multipart/form-data" }
-    });
-    // backend returns: { ok, path: "/public/uploads/...", previewUrl: "https://..." }
-    return { path: res.data.path, previewUrl: res.data.previewUrl };
+    fd.append("files", file); // Using "files" field as required by backend
+    try {
+      const res = await api.post("/uploads/image", fd, {
+        ...auth,
+        headers: { ...auth.headers, "Content-Type": "multipart/form-data" }
+      });
+      return { path: res.data.images[0].path, previewUrl: res.data.images[0].previewUrl };  // Ensure correct data structure from response
+    } catch (error) {
+      t.err("Error uploading image.");
+      console.error(error);
+      return {};
+    }
   }
 
+  // Handle logo upload
   async function onPickLogo(e) {
-    const file = e.target.files?.[0]; if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUpLogo(true);
     try {
-      const { path } = await uploadImage(file);
-      setForm(f => ({ ...f, logoUrl: path })); // store RELATIVE path
+      const { path, previewUrl } = await uploadImage(file);
+      setForm(f => ({ ...f, logoUrl: path }));
+      // Preview the image after upload
+      document.getElementById("logo-preview").src = previewUrl;
     } finally { setUpLogo(false); }
   }
 
+  // Handle favicon upload
   async function onPickFavicon(e) {
-    const file = e.target.files?.[0]; if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     setUpFavi(true);
     try {
-      const { path } = await uploadImage(file);
-      setForm(f => ({ ...f, faviconUrl: path })); // store RELATIVE path
+      const { path, previewUrl } = await uploadImage(file);
+      setForm(f => ({ ...f, faviconUrl: path }));
+      // Preview the favicon after upload
+      document.getElementById("favicon-preview").src = previewUrl;
     } finally { setUpFavi(false); }
   }
 
+  // Save site settings
   async function save(e) {
     e.preventDefault();
     setSaving(true);
-    // ensure relative before send (covers manual pasted URLs)
+
+    // Ensure relative paths before sending to the backend
     const payload = {
       title: form.title || "",
       logoUrl: toRelativeFromPublic(form.logoUrl || ""),
       faviconUrl: toRelativeFromPublic(form.faviconUrl || ""),
     };
+
+    // Save settings
     await api.put("/settings/site", payload, auth);
     t.ok("Saved");
     setSaving(false);
 
-    // Update favicon + title in browser immediately (use absolute for href)
+    // Update favicon + title in browser immediately (using absolute path for href)
     if (form.faviconUrl) {
       const absFavi = assetUrl(form.faviconUrl);
       let link = document.querySelector("link[rel='icon']");
-      if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
       link.href = absFavi;
     }
     if (form.title) document.title = form.title;
@@ -88,10 +110,12 @@ export default function SiteSettings() {
         <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5 space-y-5">
           <div>
             <label className="block text-sm mb-1">Site name</label>
-            <input className="w-full bg-surface border border-border rounded-lg px-3 py-2"
+            <input
+              className="w-full bg-surface border border-border rounded-lg px-3 py-2"
               placeholder="Your brand name"
               value={form.title || ""}
-              onChange={e => setForm({ ...form, title: e.target.value })} />
+              onChange={e => setForm({ ...form, title: e.target.value })}
+            />
           </div>
 
           <div>
@@ -112,6 +136,8 @@ export default function SiteSettings() {
             <div className="mt-2 text-xs text-fg-subtle">
               Stored as: <code>{form.logoUrl || "(none)"}</code>
             </div>
+            {/* Display uploaded logo preview */}
+            <img id="logo-preview" src={assetUrl(form.logoUrl)} alt="logo" className="mt-2 h-12" />
           </div>
 
           <div>
@@ -132,6 +158,8 @@ export default function SiteSettings() {
             <div className="mt-2 text-xs text-fg-subtle">
               Stored as: <code>{form.faviconUrl || "(none)"}</code>
             </div>
+            {/* Display uploaded favicon preview */}
+            <img id="favicon-preview" src={assetUrl(form.faviconUrl)} alt="favicon" className="mt-2 h-8 w-8" />
           </div>
 
           <button
