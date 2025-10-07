@@ -61,7 +61,12 @@ export default function ProductCard({ book }) {
     } catch (e) {
       console.error(e);
       // Fallback: still add locally so UX is smooth
-      addLocal(book, 1);
+      addLocal({
+        ...book,
+        price: book.price || book.pric || book.mrp, // ensure price is set
+        mrp: book.mrp || book.price || book.pric,   // ensure mrp is set (for discount display)
+        qty: 1
+      });
       t.ok("Added to cart");
       navigate("/cart");
     }

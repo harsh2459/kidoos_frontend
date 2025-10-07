@@ -10,14 +10,14 @@ import { t } from "../lib/toast";
 export default function Cart() {
   const navigate = useNavigate();
   const { isCustomer, token } = useCustomer();
-
-  const items       = useCart((s) => s.items);
-  const inc         = useCart((s) => s.inc);
-  const dec         = useCart((s) => s.dec);
+  
+  const items = useCart((s) => s.items);
+  const inc = useCart((s) => s.inc);
+  const dec = useCart((s) => s.dec);
   const setQtyLocal = useCart((s) => s.setQty);
   const removeLocal = useCart((s) => s.remove);
-  const clearLocal  = useCart((s) => s.clear);
-  const replaceAll  = useCart((s) => s.replaceAll);
+  const clearLocal = useCart((s) => s.clear);
+  const replaceAll = useCart((s) => s.replaceAll);
 
   // --- Hydrate from server when logged in (server is source of truth) ---
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function Cart() {
       try {
         const fresh = await CustomerAPI.getCart(token);
         replaceAll(fresh?.data?.cart?.items || []);
-      } catch {}
+      } catch { }
     }
   };
 
@@ -72,7 +72,7 @@ export default function Cart() {
         try {
           const fresh = await CustomerAPI.getCart(token);
           replaceAll(fresh?.data?.cart?.items || []);
-        } catch {}
+        } catch { }
         t.info("Item was already removed");
         return;
       }
@@ -100,9 +100,9 @@ export default function Cart() {
 
   // --- Totals ---
   const totals = useMemo(() => {
-    const subtotal = (items || []).reduce((sum, it) => {
-      const price = Number(it.price ?? it.pric ?? 0);
-      const qty   = Number(it.qty ?? 1);
+    const subtotal = items.reduce((sum, it) => {
+      const price = Number(it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0);
+      const qty = Number(it.qty ?? 1);
       return sum + price * qty;
     }, 0);
     const shipping = subtotal > 0 ? 0 : 0; // placeholder for future rule
@@ -148,10 +148,10 @@ export default function Cart() {
             const lineId = it._id || it.lineId || it.itemId;                 // server line id
             const bookId = it.bookId || it.book?._id || it.id;               // product id (guest/local)
 
-            const price    = Number(it.price ?? it.pric ?? 0);
-            const mrp      = Number(it.mrp   ?? it.mrpPrice ?? price);
-            const off      = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
-            const qty      = Number(it.qty ?? 1);
+            const price = Number(it.price ?? it.pric ?? 0);
+            const mrp = Number(it.mrp ?? it.mrpPrice ?? price);
+            const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+            const qty = Number(it.qty ?? 1);
             const subtotal = price * qty;
 
             return (
@@ -185,7 +185,7 @@ export default function Cart() {
                       )}
                       {/* price (mobile) */}
                       <div className="mt-1 flex items-baseline gap-2 md:hidden">
-                        <div className="font-semibold">{fmt(price)}</div>
+                        <div className="font-semibold">{fmt(it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0)}</div>
                         {mrp > price && (
                           <>
                             <div className="line-through text-xs text-fg-subtle">{fmt(mrp)}</div>
@@ -199,7 +199,7 @@ export default function Cart() {
 
                     {/* price (desktop) */}
                     <div className="hidden md:flex items-baseline gap-2">
-                      <div className="font-semibold">{fmt(price)}</div>
+                      <div className="font-semibold">{fmt(it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0)}</div>
                       {mrp > price && (
                         <>
                           <div className="line-through text-sm text-fg-subtle">{fmt(mrp)}</div>
@@ -265,14 +265,14 @@ export default function Cart() {
                     </button>
 
                     {/* per-item subtotal (mobile) */}
-                    <div className="md:hidden ml-auto font-medium">{fmt(subtotal)}</div>
+                    <div className="md:hidden ml-auto font-medium">{fmt((it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0) * (it.qty ?? 1))}</div>
                   </div>
                 </div>
 
                 {/* per-item subtotal (desktop) */}
                 <div className="hidden md:flex flex-col items-end">
                   <div className="text-xs text-fg-subtle">Subtotal</div>
-                  <div className="font-semibold">{fmt(subtotal)}</div>
+                  <div className="font-semibold"> {fmt((it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0) * (it.qty ?? 1))}</div>
                 </div>
               </article>
             );

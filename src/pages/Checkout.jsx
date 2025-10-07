@@ -26,13 +26,28 @@ export default function Checkout() {
   const { payments } = useSite();
   const pollTimer = useRef(null);
 
+  // --- PAYMENT OPTION SELECTION ---
+  const [paymentOption, setPaymentOption] = useState("full_online");
+
   /* ------------ Totals ------------ */
   const totals = useMemo(() => {
-    const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const sub = items.reduce((sum, i) => {
+      const price = Number(i.unitPriceSnapshot ?? i.price ?? i.bookId?.price ?? 0);
+      const qty = Number(i.qty ?? 1);
+      return sum + price * qty;
+    }, 0);
     const tax = 0;
     const ship = 0;
     return { sub, tax, ship, grand: sub + tax + ship };
   }, [items]);
+
+  /* ------------ fmt ------------ */
+  const fmt = (n) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(n);
 
   /* ------------ Customer / Shipping ------------ */
   const [cust, setCust] = useState({
@@ -48,28 +63,23 @@ export default function Checkout() {
   const set = (k, v) => setCust((p) => ({ ...p, [k]: v }));
 
   /* ------------ PIN → auto-fill state ------------ */
-  const [pinStatus, setPinStatus] = useState(""); // "", "Looking up…", "Not found", "OK"
-  const [offices, setOffices] = useState([]);     // PostOffice[]
-  const [locality, setLocality] = useState("");   // selected office name
+  const [pinStatus, setPinStatus] = useState("");
+  const [offices, setOffices] = useState([]);
+  const [locality, setLocality] = useState("");
   const pinDebounce = useRef(null);
 
   async function lookupPin(pin) {
     if (!/^\d{6}$/.test(pin)) { setPinStatus(""); setOffices([]); return; }
     try {
       setPinStatus("Looking up…");
-
-      // If you created a backend proxy, call: const res = await api.get(`/geo/pin/${pin}`);
-      // Public India Post API:
       const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
       const data = await res.json();
       const entry = Array.isArray(data) ? data[0] : null;
-
       if (!entry || entry.Status !== "Success" || !Array.isArray(entry.PostOffice) || entry.PostOffice.length === 0) {
         setPinStatus("Not found");
         setOffices([]);
         return;
       }
-
       const list = entry.PostOffice;
       setOffices(list);
       setLocality(list[0]?.Name || "");
@@ -96,7 +106,7 @@ export default function Checkout() {
 
   /* ------------ Order placement ------------ */
   const [placing, setPlacing] = useState(false);
-  const [placed, setPlaced] = useState(null); // { orderId }
+  const [placed, setPlaced] = useState(null);
 
   const hasOnlinePay = (payments?.providers || []).some(
     (p) => p.id === "razorpay" && p.enabled
@@ -130,7 +140,7 @@ export default function Checkout() {
         state: cust.state,
         postalCode: cust.pin,
         country: cust.country,
-        locality: locality || undefined, // optional
+        locality: locality || undefined,
       },
       amount: totals.grand,
       currency: "INR",
@@ -143,49 +153,20 @@ export default function Checkout() {
     return newId;
   }
 
-  async function pollOrderUntilPaid(orderId) {
-    return new Promise((resolve) => {
-      const check = async () => {
-        try {
-          const { data } = await api.get(`/orders/${orderId}`);
-          const status = data?.order?.payment?.status || data?.order?.status;
-          if (status === "paid") {
-            clearInterval(pollTimer.current);
-            pollTimer.current = null;
-            resolve(true);
-          }
-        } catch {
-          // ignore transient
-        }
-      };
-      pollTimer.current = setInterval(check, 2000);
-      check();
-      setTimeout(() => {
-        if (pollTimer.current) {
-          clearInterval(pollTimer.current);
-          pollTimer.current = null;
-        }
-        resolve(false);
-      }, 90000);
-    });
-  }
-
   async function placeWithRazorpay() {
     if (!validateShipping()) return;
     setPlacing(true);
     try {
       const orderId = await createLocalOrder("razorpay", "created");
-
       const { data } = await api.post("/payments/razorpay/order", {
         amountInRupees: totals.grand,
         receipt: `web_${orderId}`,
         orderId,
+        paymentType: paymentOption // Send correct paymentType
       });
-      const { order, key } = data || {};
-      if (!order?.id || !key) throw new Error("Payment init failed");
-
+      const { order, key, paymentId } = data || {};
+      if (!order?.id || !key || !paymentId) throw new Error("Payment init failed");
       await loadRzp();
-
       const rzp = new window.Razorpay({
         key,
         amount: order.amount,
@@ -199,19 +180,39 @@ export default function Checkout() {
           contact: cust.phone || "",
         },
         notes: { ourOrderId: orderId },
-        handler: async function () {
-          setPlaced({ orderId });
-          const paid = await pollOrderUntilPaid(orderId);
-          if (!paid) {
-            t.info("Payment captured, awaiting confirmation. If not updated soon, contact support with your Order ID.");
-          } else {
-            clear();
+        handler: async function (response) {
+          // Robust: verify payment _with_ paymentId!
+          try {
+            const verifyRes = await api.post("/payments/razorpay/verify", {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              paymentId // critical to link the record!
+            });
+            if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
+              setPlaced({ orderId });
+              clear();
+              t.success("Payment successful and verified!");
+            } else {
+              t.err("Payment verification failed");
+            }
+          } catch (e) {
+            t.err("Error verifying payment");
           }
         },
-        modal: { ondismiss: function () {} },
-        theme: { color: "#3399cc" },
+        modal: {
+          ondismiss: async function () {
+            t.info("Payment cancelled.");
+            try {
+              await api.delete(`/orders/${orderId}`);
+              t.info("Order was deleted since payment was not completed.");
+            } catch (err) {
+              t.err("Could not delete order after payment cancel.");
+            }
+          }
+        },
+        theme: { color: "#3399cc" }
       });
-
       rzp.open();
     } catch (e) {
       t.err(e?.response?.data?.error || e.message || "Payment failed to start");
@@ -220,19 +221,7 @@ export default function Checkout() {
     }
   }
 
-  async function placeWithoutPayment() {
-    if (!validateShipping()) return;
-    setPlacing(true);
-    try {
-      const orderId = await createLocalOrder("cod", "pending");
-      setPlaced({ orderId });
-      clear();
-    } catch (e) {
-      t.err(e?.response?.data?.error || e.message || "Failed to place order");
-    } finally {
-      setPlacing(false);
-    }
-  }
+  // -- No COD. Remove placeWithoutPayment logic and button! --
 
   /* ------------ Thank-you page ------------ */
   if (placed) {
@@ -256,7 +245,6 @@ export default function Checkout() {
       {/* Shipping form */}
       <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-3">
         <h1 className="text-xl font-semibold mb-2">Shipping details</h1>
-
         <Row>
           <Input
             label="Full name"
@@ -264,7 +252,6 @@ export default function Checkout() {
             onChange={(e) => set("name", e.target.value)}
           />
         </Row>
-
         <div className="grid md:grid-cols-2 gap-3">
           <Input
             label="Email (optional)"
@@ -277,13 +264,11 @@ export default function Checkout() {
             onChange={(e) => set("phone", e.target.value)}
           />
         </div>
-
         <Input
           label="Address"
           value={cust.line1}
           onChange={(e) => set("line1", e.target.value)}
         />
-
         <div className="grid md:grid-cols-3 gap-3">
           <Input
             label="City"
@@ -301,7 +286,6 @@ export default function Checkout() {
             onChange={(e) => onPinChange(e.target.value)}
           />
         </div>
-
         {/* Locality + PIN status */}
         {(offices.length > 1 || pinStatus) && (
           <div className="grid md:grid-cols-3 gap-3 mt-2">
@@ -322,9 +306,7 @@ export default function Checkout() {
                   }}
                 >
                   {offices.map((o) => (
-                    <option key={o.Name} value={o.Name}>
-                      {o.Name}
-                    </option>
+                    <option key={o.Name} value={o.Name}>{o.Name}</option>
                   ))}
                 </select>
               </div>
@@ -339,7 +321,6 @@ export default function Checkout() {
           </div>
         )}
       </div>
-
       {/* Order summary */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-3">Order summary</h2>
@@ -355,7 +336,7 @@ export default function Checkout() {
                 <div className="font-medium">{i.title}</div>
                 <div className="text-gray-600 text-sm">Qty: {i.qty}</div>
               </div>
-              <div>₹{i.price * i.qty}</div>
+              <div>{fmt((Number(i.unitPriceSnapshot ?? i.price ?? i.bookId?.price ?? 0) * Number(i.qty ?? 1)))}</div>
               <button
                 className="text-red-600 text-sm"
                 onClick={() => remove(i._id || i.id)}
@@ -368,14 +349,32 @@ export default function Checkout() {
             <div className="text-gray-600">Your cart is empty.</div>
           )}
         </div>
-
         <div className="border-t border-gray-200 mt-4 pt-4 space-y-1">
           <Line label="Subtotal" value={`₹${totals.sub}`} />
           <Line label="Tax" value={`₹${totals.tax}`} />
           <Line label="Shipping" value={totals.ship ? `₹${totals.ship}` : "Free"} />
           <Line label="Total" value={<strong>₹{totals.grand}</strong>} />
         </div>
-
+        {/* --- PAYMENT OPTION UI --- */}
+        <div className="mt-4">
+          <div className="mb-2 font-medium">Select payment option:</div>
+          <label className="mr-4">
+            <input
+              type="radio"
+              checked={paymentOption === "full_online"}
+              onChange={() => setPaymentOption("full_online")}
+            />{" "}
+            Pay Full Online
+          </label>
+          <label>
+            <input
+              type="radio"
+              checked={paymentOption === "half_online_half_cod"}
+              onChange={() => setPaymentOption("half_online_half_cod")}
+            />{" "}
+            Pay Half Online, Half on Delivery
+          </label>
+        </div>
         <div className="mt-4 space-y-2">
           {hasOnlinePay && (
             <button
@@ -383,16 +382,13 @@ export default function Checkout() {
               disabled={placing || items.length === 0}
               className="w-full btn-primary"
             >
-              {placing ? "Starting payment…" : "Pay Online (Razorpay)"}
+              {placing
+                ? "Starting payment…"
+                : paymentOption === "full_online"
+                  ? "Pay Full Online"
+                  : "Pay Half Online, Half on Delivery"}
             </button>
           )}
-          <button
-            onClick={placeWithoutPayment}
-            disabled={placing || items.length === 0}
-            className="w-full btn-muted"
-          >
-            {placing ? "Placing…" : "Place Order (No Payment)"}
-          </button>
         </div>
       </div>
     </div>
