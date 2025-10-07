@@ -286,7 +286,7 @@ export default function Checkout() {
             onChange={(e) => onPinChange(e.target.value)}
           />
         </div>
-        {/* Locality + PIN status */}
+        {/* Locality + PIN status */  }
         {(offices.length > 1 || pinStatus) && (
           <div className="grid md:grid-cols-3 gap-3 mt-2">
             {offices.length > 1 && (

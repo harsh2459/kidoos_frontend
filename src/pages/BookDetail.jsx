@@ -55,11 +55,7 @@ export default function BookDetail() {
 
   // Default the active image to the LAST image whenever images change
   useEffect(() => {
-    if (images.length) {
-      setActive(Math.max(0, images.length - 1));
-    } else {
-      setActive(0);
-    }
+    setActive(0);
   }, [images.length]);
 
   // Keyboard navigation (←/→)
@@ -94,6 +90,8 @@ export default function BookDetail() {
 
   // Build safe main image src
   const mainSrc = images.length ? assetUrl(images[active]) : "";
+
+
 
   async function handleAddToCart() {
     try {
@@ -138,7 +136,7 @@ export default function BookDetail() {
             />
           ) : (
             <img
-              src="/placeholder.png" // frontend /public/placeholder.png
+              src="/placeholder.png"
               alt={book.title}
               className="absolute inset-0 h-full w-full object-contain opacity-80"
               draggable={false}
@@ -173,8 +171,8 @@ export default function BookDetail() {
 
         {/* Thumbnails (reversed order) */}
         {images.length > 1 && (
-          <div className="mt-3 grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2">
-            {([...images].reverse()).map((p, idx) => {
+          <div className="mt-3 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+            {([...images]).map((p, idx) => {
               // map back to the original index
               const origIndex = images.length - 1 - idx;
               const src = assetUrl(p);
