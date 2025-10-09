@@ -23,7 +23,7 @@ export default function BlueDartProfiles() {
 
   async function load() {
     try {
-      const { data } = await api.get("/bluedart/profiles", auth);
+      const { data } = await api.get("/bluedart-profile", auth);
       setList(data.profiles || []);
     } catch (e) {
       t.err("Failed to load profiles");
@@ -67,7 +67,7 @@ export default function BlueDartProfiles() {
 
     setSaving(true);
     try {
-      await api.post("/bluedart/profiles", {
+      await api.post("/bluedart-profile", {
         _id: form.id || undefined,
         label: form.label,
         clientName: form.clientName,
@@ -90,7 +90,7 @@ export default function BlueDartProfiles() {
   async function remove(id) {
     if (!window.confirm("Delete this BlueDart profile?")) return;
     try {
-      await api.delete(`/bluedart/profiles/${id}`, auth);
+      await api.delete(`/bluedart-profile/${id}`, auth);
       t.ok("Profile deleted");
       await load();
     } catch (e) {
