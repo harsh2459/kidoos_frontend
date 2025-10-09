@@ -59,7 +59,7 @@ export default function ProductCard({ book }) {
       t.ok("Added to cart");
       navigate("/cart");
     } catch (e) {
-      console.error(e);
+      
       // Fallback: still add locally so UX is smooth
       addLocal({
         ...book,

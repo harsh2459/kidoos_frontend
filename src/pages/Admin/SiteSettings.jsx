@@ -39,7 +39,7 @@ export default function SiteSettings() {
       return { path: res.data.images[0].path, previewUrl: res.data.images[0].previewUrl };  // Ensure correct data structure from response
     } catch (error) {
       t.err("Error uploading image.");
-      console.error(error);
+      
       return {};
     }
   }

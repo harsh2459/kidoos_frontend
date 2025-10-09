@@ -101,7 +101,7 @@ export default function BookDetail() {
       }
       t.ok("Added to cart");
     } catch (e) {
-      console.error("addToCart error:", e);
+      
       t.err("Could not add to cart");
     }
   }

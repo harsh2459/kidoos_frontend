@@ -91,7 +91,7 @@ export default function BooksAdmin() {
 
     // If no file was selected, show an error message
     if (!file) {
-      console.error("No file selected.");
+    
       t.err("Please select a file to import.");
       return;
     }
@@ -116,7 +116,7 @@ export default function BooksAdmin() {
       })
       .catch(error => {
         t.err("Error importing books");
-        console.error(error);
+        
       });
   };
 
@@ -129,7 +129,7 @@ export default function BooksAdmin() {
       })
       .catch(error => {
         t.err("Error exporting books");
-        console.error(error);
+      
       });
   };
 

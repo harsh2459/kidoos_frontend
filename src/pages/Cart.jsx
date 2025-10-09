@@ -27,7 +27,7 @@ export default function Cart() {
         const res = await CustomerAPI.getCart(token); // axios response
         replaceAll(res?.data?.cart?.items || []);
       } catch (e) {
-        console.error("getCart failed:", e);
+       
       }
     })();
   }, [isCustomer, token, replaceAll]);
@@ -43,7 +43,7 @@ export default function Cart() {
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Quantity updated");
     } catch (e) {
-      console.error("setCartQty failed:", e);
+      
       t.err("Failed to update quantity");
       // Best effort re-sync
       try {
@@ -76,7 +76,7 @@ export default function Cart() {
         t.info("Item was already removed");
         return;
       }
-      console.error("removeCartItem failed:", e);
+      
       t.err("Failed to remove item");
     }
   };
@@ -93,7 +93,7 @@ export default function Cart() {
       replaceAll(res?.data?.cart?.items || []); // may be []
       t.ok("Cart cleared");
     } catch (e) {
-      console.error("clearCart failed:", e);
+ 
       t.err("Failed to clear cart");
     }
   };

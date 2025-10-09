@@ -9,6 +9,23 @@ export default function AdminTabs() {
       <NavLink to="/admin/api-users" className={link}>API Users</NavLink>
       <NavLink to="/admin/email-senders" className={link}>Email Senders</NavLink>
       <NavLink to="/admin/email-templates" className={link}>Email Templates</NavLink>
+      <NavLink to="/admin/payments" className={({ isActive }) =>
+        `${link} ${isActive ? "bg-white/20" : ""}`
+      }>
+        Payments
+      </NavLink>
+      <NavLink
+        to="/admin/books"
+        className={({ isActive }) => `${link} ${isActive ? "bg-brand text-brand-foreground" : "text-fg-muted hover:text-fg"}`}
+      >
+        Books
+      </NavLink>
+      <NavLink
+        to="/admin/setup"
+        className={({ isActive }) => `${link} ${isActive ? "bg-brand text-brand-foreground" : "text-fg-muted hover:text-fg"}`}
+      >
+        Setup
+      </NavLink>
     </div>
   );
 }

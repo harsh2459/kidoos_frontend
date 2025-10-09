@@ -164,8 +164,10 @@ export default function Checkout() {
         orderId,
         paymentType: paymentOption // Send correct paymentType
       });
+
       const { order, key, paymentId } = data || {};
       if (!order?.id || !key || !paymentId) throw new Error("Payment init failed");
+
       await loadRzp();
       const rzp = new window.Razorpay({
         key,
@@ -181,7 +183,6 @@ export default function Checkout() {
         },
         notes: { ourOrderId: orderId },
         handler: async function (response) {
-          // Robust: verify payment _with_ paymentId!
           try {
             const verifyRes = await api.post("/payments/razorpay/verify", {
               razorpay_order_id: response.razorpay_order_id,
@@ -189,10 +190,13 @@ export default function Checkout() {
               razorpay_signature: response.razorpay_signature,
               paymentId // critical to link the record!
             });
+
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
               setPlaced({ orderId });
               clear();
               t.success("Payment successful and verified!");
+              // Redirect to order confirmation page:
+              navigate('/order-confirmed', { state: { orderId } });
             } else {
               t.err("Payment verification failed");
             }
@@ -286,7 +290,7 @@ export default function Checkout() {
             onChange={(e) => onPinChange(e.target.value)}
           />
         </div>
-        {/* Locality + PIN status */  }
+        {/* Locality + PIN status */}
         {(offices.length > 1 || pinStatus) && (
           <div className="grid md:grid-cols-3 gap-3 mt-2">
             {offices.length > 1 && (

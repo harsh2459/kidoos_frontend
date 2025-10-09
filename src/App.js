@@ -32,6 +32,7 @@ import EmailSenders from './pages/Admin/EmailSenders';
 import EmailTemplates from './pages/Admin/EmailTemplates';
 import Footer from './components/Footer';
 import AdminLayout from './components/AdminLayout';
+import BlueDartProfiles from './pages/Admin/BlueDartProfiles';
 
 
 function InnerApp() {
@@ -92,6 +93,13 @@ function InnerApp() {
             path="/admin/books"
             element={<AdminGuard><AdminLayout><BooksAdmin /></AdminLayout></AdminGuard>}
           />
+          <Route path="/admin/bluedart-profiles" element={
+            <AdminGuard>
+              <AdminLayout>
+                <BlueDartProfiles />
+              </AdminLayout>
+            </AdminGuard>
+          } />
           <Route
             path="/admin/books/:slug/edit"
             element={<AdminGuard><AdminLayout><EditBook /></AdminLayout></AdminGuard>}

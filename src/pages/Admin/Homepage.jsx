@@ -194,7 +194,7 @@ function ImageUpload({ label, value, onChange }) {
         }
       } catch (error) {
         t.err("Error uploading image");
-        console.error(error);
+      
       }
     }
   };
