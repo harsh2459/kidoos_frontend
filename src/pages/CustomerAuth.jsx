@@ -240,7 +240,7 @@ export default function CustomerAuth() {
 
             <div>
               <label className="block text-sm mb-1">
-                Email <span className="text-fg-subtle">(or leave blank and use phone)</span>
+                Email 
               </label>
 
               {/* Email + Verify/Resend button inline */}
@@ -306,7 +306,7 @@ export default function CustomerAuth() {
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Phone (optional)</label>
+              <label className="block text-sm mb-1">Phone</label>
               <input
                 className="w-full"
                 placeholder="99999 99999"

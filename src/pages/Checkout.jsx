@@ -25,7 +25,8 @@ export default function Checkout() {
   const remove = useCart((s) => s.remove);
   const { payments } = useSite();
   const pollTimer = useRef(null);
-
+  console.log(assetUrl);
+  
   // --- PAYMENT OPTION SELECTION ---
   const [paymentOption, setPaymentOption] = useState("full_online");
 
@@ -332,7 +333,7 @@ export default function Checkout() {
           {items.map((i) => (
             <div key={(i._id || i.id) + String(i.qty)} className="flex gap-3">
               <img
-                src={assetUrl(i.assets?.coverUrl)}
+                src={assetUrl(i.assets?.coverUrl || '/public/default-image.jpg')}
                 alt={i.title}
                 className="h-14 w-10 object-cover rounded-md"
               />

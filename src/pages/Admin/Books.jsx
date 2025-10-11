@@ -10,7 +10,6 @@ import { t } from "../../lib/toast"; // Import toast utility
 export default function BooksAdmin() {
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
-
   const [q, setQ] = useState(""); // Search query
   const [vis, setVis] = useState("all"); // Visibility filter
   const [items, setItems] = useState([]); // Books list

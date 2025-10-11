@@ -288,7 +288,7 @@ function Editor({ tpl, senders, onClose, onChange, onSave, saving }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Row label="HTML (supports {{placeholders}})"><textarea className="w-full h-48 min-w-0" value={tpl.html} onChange={e => onChange({ ...tpl, html: e.target.value })} /></Row>
-            <Row label="Text (optional)"><textarea className="w-full h-48 min-w-0" value={tpl.text || ""} onChange={e => onChange({ ...tpl, text: e.target.value })} /></Row>
+            <Row label="Text"><textarea className="w-full h-48 min-w-0" value={tpl.text || ""} onChange={e => onChange({ ...tpl, text: e.target.value })} /></Row>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

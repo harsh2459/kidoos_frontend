@@ -3,11 +3,9 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import './styles/classic-light.css';
-
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SiteProvider } from './contexts/SiteConfig';
 import { AuthProvider } from './contexts/Auth';
-
 import Navbar from './components/Navbar';
 import Catalog from './pages/Catalog';
 import BookDetail from './pages/BookDetail';
@@ -25,7 +23,6 @@ import EditBook from './pages/Admin/EditBook';
 import BooksAdmin from './pages/Admin/Books';
 import AdminOrders from './pages/Admin/Orders';
 import ApiUsers from './pages/Admin/ApiUsers';
-import WhiteThemeDemo from './pages/WhiteThemeDemo';
 import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
 import CustomerAuth from './pages/CustomerAuth';
 import EmailSenders from './pages/Admin/EmailSenders';
@@ -64,9 +61,7 @@ function InnerApp() {
               </RequireCustomer>
             }
           />
-          <Route path="/white" element={<PageGate page="catalog"><WhiteThemeDemo /></PageGate>} />
-
-          <Route path="/book/:slug" element={<BookDetail />} />
+                    <Route path="/book/:slug" element={<BookDetail />} />
           <Route
             path="/cart"
             element={
@@ -93,13 +88,7 @@ function InnerApp() {
             path="/admin/books"
             element={<AdminGuard><AdminLayout><BooksAdmin /></AdminLayout></AdminGuard>}
           />
-          <Route path="/admin/bluedart-profiles" element={
-            <AdminGuard>
-              <AdminLayout>
-                <BlueDartProfiles />
-              </AdminLayout>
-            </AdminGuard>
-          } />
+          <Route path="/admin/bluedart-profiles" element={<AdminGuard><AdminLayout><BlueDartProfiles /></AdminLayout></AdminGuard>} />
           <Route
             path="/admin/books/:slug/edit"
             element={<AdminGuard><AdminLayout><EditBook /></AdminLayout></AdminGuard>}

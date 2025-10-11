@@ -10,7 +10,8 @@ import { t } from "../lib/toast";
 export default function Cart() {
   const navigate = useNavigate();
   const { isCustomer, token } = useCustomer();
-  
+  console.log(assetUrl);
+    
   const items = useCart((s) => s.items);
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);

@@ -13,7 +13,7 @@
   outline-offset: -3px;
   transition: background .25s ease, color .25s ease, outline-color .25s ease;
   color: hsl(var(--brand-foreground));
-  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
 }
 
 .buy-btn .text {
@@ -38,6 +38,25 @@
   fill: hsl(var(--brand));
 }
 
-.footer-scope a:hover{
+.footer-scope a:hover {
   color: #fff;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  -ms-overflow-style: none;
+  /* Internet Explorer and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+body {
+  -ms-overflow-style: none;
+  /* Internet Explorer and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
