@@ -240,8 +240,7 @@ export default function EditBook() {
               <select
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={book.printType || "paperback"}
-                onChange={(e) => setField("printType", e.target.value)}
-              >
+                onChange={(e) => setField("printType", e.target.value)}>
                 <option value="paperback">Paperback</option>
                 <option value="hardcover">Hardcover</option>
                 <option value="ebook">eBook (PDF/Kindle)</option>
@@ -427,6 +426,7 @@ function Card({ title, children }) {
     </div>
   );
 }
+
 function Row({ label, hintRight, children }) {
   return (
     <div className="mb-3 last:mb-0">

@@ -75,10 +75,12 @@ export default function EmailTemplates() {
         t.err("Slug is required");
         return;
       }
+      
       if (!payload.subject?.trim()) {
         t.err("Subject is required");
         return;
       }
+
       if (!payload.html?.trim() && !payload.text?.trim()) {
         t.err("HTML or Text body is required");
         return;

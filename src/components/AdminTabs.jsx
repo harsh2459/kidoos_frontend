@@ -12,7 +12,7 @@ export default function AdminTabs() {
       <NavLink to="/admin/payments" className={({ isActive }) =>
         `${link} ${isActive ? "bg-white/20" : ""}`
       }>
-        Payments
+      Payments
       </NavLink>
       <NavLink
         to="/admin/books"
@@ -29,3 +29,4 @@ export default function AdminTabs() {
     </div>
   );
 }
+

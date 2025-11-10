@@ -9,4 +9,3 @@ export const ShipAPI = {
     pickup: (orderIds, pickup_date, auth) => api.post("/shiprocket/pickup", { orderIds, pickup_date }, auth),
     cancel:    (shipment_id, auth) => api.post("/shiprocket/cancel", { shipment_id }, auth),
 };
- 

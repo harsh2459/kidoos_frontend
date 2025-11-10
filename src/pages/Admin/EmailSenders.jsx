@@ -86,7 +86,6 @@ export default function EmailSenders() {
         <h1 className="text-2xl font-bold">Email Senders</h1>
         <button onClick={newSender} className="px-3 py-2 rounded-lg bg-brand font-semibold">+ Add</button>
       </div>
-
       <div className="bg-surface border border-border-subtle rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -130,7 +129,6 @@ export default function EmailSenders() {
           </table>
         </div>
       </div>
-
       {/* Drawer / Modal */}
       {editing && (
         <div className="fixed inset-0 bg-black/40 grid place-items-center z-50">
@@ -139,19 +137,16 @@ export default function EmailSenders() {
               <h2 className="text-lg font-semibold">{editing._id ? "Edit Sender" : "Add Sender"}</h2>
               <button onClick={() => setEditing(null)} className="text-fg-subtle hover:text-fg">✕</button>
             </div>
-
             <div className="p-5 space-y-3">
               <Row label="Label">
                 <input className="w-full" value={editing.label} onChange={e => setEditing({ ...editing, label: e.target.value })} />
               </Row>
-
               <Row label="Type">
                 <select className="w-full" value={editing.type} onChange={e => setEditing({ ...editing, type: e.target.value })}>
                   <option value="gmail">Gmail (App Password)</option>
                   {/* <option value="smtp">SMTP</option> */}
                 </select>
               </Row>
-
               <div className="grid md:grid-cols-2 gap-3">
                 <Row label="From name">
                   <input className="w-full" value={editing.fromName || ""} onChange={e => setEditing({ ...editing, fromName: e.target.value })} />

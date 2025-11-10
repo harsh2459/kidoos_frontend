@@ -51,7 +51,7 @@ export default function AdminOrders() {
         return keep;
       });
     } catch (error) {
-      
+
       t.err("Failed to load orders");
     } finally {
       setLoading(false);
@@ -67,7 +67,7 @@ export default function AdminOrders() {
         setSelectedProfile(defaultProfile._id);
       }
     } catch (error) {
-    
+
       // Don't show error toast for profiles as it's not critical
     }
   }
@@ -128,10 +128,11 @@ export default function AdminOrders() {
       if (data.success?.length) {
         t.success(`Created ${data.success.length} BlueDart shipment${data.success.length > 1 ? 's' : ''}`);
       }
+
       if (data.failed?.length) {
         t.err(`Failed to create ${data.failed.length} shipment${data.failed.length > 1 ? 's' : ''}`);
-        
       }
+
       if (!data.success?.length && !data.failed?.length) {
         t.info("No shipments were created");
       }
@@ -139,7 +140,7 @@ export default function AdminOrders() {
       await load();
       setSelected(new Set());
     } catch (error) {
-      
+
       t.err("Failed to create BlueDart shipments. Please try again.");
     } finally {
       setActionLoading(false);
@@ -159,7 +160,7 @@ export default function AdminOrders() {
       console.log("Tracking data:", data);
       await load();
     } catch (error) {
-      
+
       t.err("Failed to update tracking information");
     }
   }
@@ -183,7 +184,7 @@ export default function AdminOrders() {
       await load();
       setSelected(new Set());
     } catch (error) {
-   
+
       t.err("Failed to schedule pickup");
     } finally {
       setActionLoading(false);
@@ -214,7 +215,7 @@ export default function AdminOrders() {
         t.info("No shipments were cancelled");
       }
     } catch (error) {
-   
+
       t.err("Failed to cancel shipments");
     } finally {
       setActionLoading(false);
@@ -327,7 +328,6 @@ export default function AdminOrders() {
             </button>
           </div>
         </div>
-
         {/* Bulk Actions */}
         {hasSelection && (
           <div className="card bg-accent/5 border-accent/20 mb-4">

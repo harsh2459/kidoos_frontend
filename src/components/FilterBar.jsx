@@ -22,7 +22,6 @@ export default function FilterBar({ q, setQ, sort, setSort }) {
         <option value="priceDesc">Price: High to Low</option>
       </select>
 
-
       <a href="#top" className="text-[0.875rem] font-medium">Back to top</a>
     </div>
   );

@@ -119,7 +119,7 @@ export default function Footer({ contact, links }) {
                                         Contact
                                     </Link>
                                 </li>
-                                
+
                             </ul>
                         </div>
 
