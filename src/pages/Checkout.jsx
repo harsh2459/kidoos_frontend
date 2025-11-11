@@ -380,6 +380,7 @@ export default function Checkout() {
             Pay Half Online, Half on Delivery
           </label>
         </div>
+        
         <div className="mt-4 space-y-2">
           {hasOnlinePay && (
             <button

@@ -29,29 +29,106 @@ const handleApiCall = async (apiCall) => {
 };
 
 export const BlueDartAPI = {
-  // Shipment Operations
+  // Create single shipment
+  createShipment: (orderId, profileId, auth) =>
+    handleApiCall(() => 
+      api.post("/bluedart/shipment/create", { orderId, profileId }, auth)
+    ),
+
+  // Create multiple shipments (BULK)
   createShipments: (orderIds, profileId, auth) =>
-    handleApiCall(() => api.post("/shipments/create", { orderIds, profileId }, auth)),
+    handleApiCall(() => 
+      api.post("/bluedart/shipment/bulk-create", { orderIds, profileId }, auth)
+    ),
 
-  trackAwb: (awb, auth) =>
-    handleApiCall(() => api.get(`/shipments/track/${awb}`, auth)),
+  // Track shipment by AWB number
+  trackAwb: (awbNo, auth) =>
+    handleApiCall(() => 
+      api.get(`/bluedart/shipment/track/${awbNo}`, auth)
+    ),
 
-  schedulePickup: (orderIds, pickupDate, pickupAddress, auth) =>
-    handleApiCall(() => api.post("/shipments/pickup", { orderIds, pickupDate, pickupAddress }, auth)),
+  // Schedule pickup
+  schedulePickup: (data, auth) =>
+    handleApiCall(() => 
+      api.post("/bluedart/pickup/schedule", data, auth)
+    ),
 
-  cancelShipment: (orderIds, auth) =>
-    handleApiCall(() => api.post("/shipments/cancel", { orderIds }, auth)),
+  // Cancel pickup
+  cancelPickup: (confirmationNumber, reason, orderIds, auth) =>
+    handleApiCall(() => 
+      api.post("/bluedart/pickup/cancel", { confirmationNumber, reason, orderIds }, auth)
+    ),
 
-  // Profile Management
+  // Cancel shipment/waybill
+  cancelShipment: (awbNumber, reason, orderId, auth) =>
+    handleApiCall(() => 
+      api.post("/bluedart/shipment/cancel", { awbNumber, reason, orderId }, auth)
+    ),
+
+  // Generate shipping label PDF
+  generateLabel: (orderId, auth) =>
+    handleApiCall(() => 
+      api.post(`/labels/generate/${orderId}`, {}, auth)
+    ),
+
+  // Get download URL for label
+  downloadLabel: (fileName) =>
+    `/api/labels/download/${fileName}`,
+
+  // Get label metadata
+  getLabelInfo: (fileName, auth) =>
+    handleApiCall(() => 
+      api.get(`/labels/info/${fileName}`, auth)
+    ),
+
+  // Delete label file
+  deleteLabel: (fileName, auth) =>
+    handleApiCall(() => 
+      api.delete(`/labels/${fileName}`, auth)
+    ),
+
+  // List all BlueDart profiles
   listProfiles: (auth) =>
-    handleApiCall(() => api.get("/bluedart-profile", auth)),
+    handleApiCall(() => 
+      api.get("/bluedart-profile", auth)
+    ),
 
+  // Get single profile by ID
   getProfile: (id, auth) =>
-    handleApiCall(() => api.get(`/bluedart-profile/${id}`, auth)),
+    handleApiCall(() => 
+      api.get(`/bluedart-profile/${id}`, auth)
+    ),
 
+  // Create or update profile
   saveProfile: (profile, auth) =>
-    handleApiCall(() => api.post("/bluedart-profile", profile, auth)),
+    handleApiCall(() => 
+      api.post("/bluedart-profile", profile, auth)
+    ),
 
+  // Delete profile
   deleteProfile: (id, auth) =>
-    handleApiCall(() => api.delete(`/bluedart-profile/${id}`, auth)),
+    handleApiCall(() => 
+      api.delete(`/bluedart-profile/${id}`, auth)
+    ),
+
+  // Get orders ready for shipment
+  getOrdersForShipment: (auth) =>
+    handleApiCall(() => 
+      api.get("/bluedart/orders-for-shipment", auth)
+    ),
+
+  // Check if pincode is serviceable
+  checkPincode: (pincode, auth) =>
+    handleApiCall(() => 
+      api.get(`/bluedart/check-pincode/${pincode}`, auth)
+    ),
+
+  // Get estimated transit time
+  getTransitTime: (fromPincode, toPincode, productCode, pickupDate, auth) =>
+    handleApiCall(() => 
+      api.get("/bluedart/transit-time", {
+        params: { fromPincode, toPincode, productCode, pickupDate },
+        ...auth
+      })
+    ),
 };

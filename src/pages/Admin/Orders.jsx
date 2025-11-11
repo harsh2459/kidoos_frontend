@@ -121,27 +121,50 @@ export default function AdminOrders() {
     const ids = ensureSome();
     if (!ids) return;
 
+    // ✅ CRITICAL: Validate profile selection
+    if (!selectedProfile) {
+      t.err("Please select a BlueDart profile first");
+      return;
+    }
+
     setActionLoading(true);
     try {
+      console.log('📦 Creating shipments for orders:', ids);
+      console.log('📦 Using profile:', selectedProfile);
+
+      // ✅ FIXED: Use correct API method
       const { data } = await BlueDartAPI.createShipments(ids, selectedProfile, auth);
 
-      if (data.success?.length) {
-        t.success(`Created ${data.success.length} BlueDart shipment${data.success.length > 1 ? 's' : ''}`);
-      }
+      console.log('📦 Response:', data);
 
-      if (data.failed?.length) {
-        t.err(`Failed to create ${data.failed.length} shipment${data.failed.length > 1 ? 's' : ''}`);
-      }
+      // ✅ FIXED: Handle correct response structure
+      if (data.ok) {
+        const results = data.data || {};
+        const successCount = results.success?.length || 0;
+        const failedCount = results.failed?.length || 0;
 
-      if (!data.success?.length && !data.failed?.length) {
-        t.info("No shipments were created");
+        if (successCount > 0) {
+          t.success(`✅ Created ${successCount} shipment${successCount > 1 ? 's' : ''}`);
+          console.log('✅ Success:', results.success);
+        }
+
+        if (failedCount > 0) {
+          t.warn(`⚠️ Failed: ${failedCount} shipment${failedCount > 1 ? 's' : ''}`);
+          console.error('❌ Failed:', results.failed);
+        }
+
+        if (successCount === 0 && failedCount === 0) {
+          t.info("No shipments were created");
+        }
+      } else {
+        t.err(data.error || "Failed to create shipments");
       }
 
       await load();
       setSelected(new Set());
     } catch (error) {
-
-      t.err("Failed to create BlueDart shipments. Please try again.");
+      console.error('❌ Shipment creation error:', error);
+      t.err(error?.message || "Failed to create shipments. Please try again.");
     } finally {
       setActionLoading(false);
     }
@@ -169,27 +192,56 @@ export default function AdminOrders() {
     const ids = ensureSome();
     if (!ids) return;
 
+    // ✅ CRITICAL: Validate profile selection
+    if (!selectedProfile) {
+      t.err("Please select a BlueDart profile first");
+      return;
+    }
+
     const pickupDate = new Date();
     pickupDate.setDate(pickupDate.getDate() + 1); // Tomorrow
+    const formattedDate = pickupDate.toISOString().split('T')[0];
 
     setActionLoading(true);
     try {
+      console.log('📦 Scheduling pickup for orders:', ids);
+
       const { data } = await BlueDartAPI.schedulePickup(
-        ids,
-        pickupDate.toISOString().split('T')[0],
-        null,
+        {
+          orderIds: ids,
+          profileId: selectedProfile,
+          pickupDate: formattedDate,
+          pickupTime: "1400", // 2:00 PM
+          mode: "SURFACE",
+          numberOfPieces: ids.length,
+          weight: ids.length * 0.5 // Estimate
+        },
         auth
       );
-      t.success(`Pickup scheduled for ${data.scheduledAwbs?.length || 0} order${data.scheduledAwbs?.length !== 1 ? 's' : ''}`);
-      await load();
-      setSelected(new Set());
-    } catch (error) {
 
+      if (data.ok) {
+        const ordersCount = data.data?.ordersCount || ids.length;
+        const confirmationNumber = data.data?.confirmationNumber;
+
+        t.success(`Pickup scheduled for ${ordersCount} order${ordersCount > 1 ? 's' : ''}`);
+
+        if (confirmationNumber) {
+          t.info(`Confirmation: ${confirmationNumber}`);
+        }
+
+        await load();
+        setSelected(new Set());
+      } else {
+        t.err(data.error || "Failed to schedule pickup");
+      }
+    } catch (error) {
+      console.error('❌ Schedule pickup error:', error);
       t.err("Failed to schedule pickup");
     } finally {
       setActionLoading(false);
     }
   }
+
 
   // FIXED: Replace confirm with state-managed dialog
   function handleCancelShipments() {
@@ -204,18 +256,64 @@ export default function AdminOrders() {
 
     setShowConfirm(null);
     setActionLoading(true);
-    try {
-      const { data } = await BlueDartAPI.cancelShipment(ids, auth);
-      const successful = data.results?.filter(r => r.ok)?.length || 0;
-      if (successful > 0) {
-        t.success(`Cancelled ${successful} shipment${successful > 1 ? 's' : ''}`);
-        await load();
-        setSelected(new Set());
-      } else {
-        t.info("No shipments were cancelled");
-      }
-    } catch (error) {
 
+    try {
+      console.log('❌ Cancelling shipments for orders:', ids);
+
+      // Get orders to cancel
+      const ordersToCancel = items.filter(o => ids.includes(String(o._id)));
+
+      let successCount = 0;
+      let failedCount = 0;
+      const failedOrders = [];
+
+      for (const order of ordersToCancel) {
+        const awb = order?.shipping?.bd?.awbNumber;
+
+        if (!awb) {
+          console.warn('⚠️ No AWB for order:', order._id);
+          failedCount++;
+          failedOrders.push({ orderId: order._id, reason: 'No AWB number' });
+          continue;
+        }
+
+        try {
+          const { data } = await BlueDartAPI.cancelShipment(
+            awb,
+            "User requested cancellation",
+            order._id,
+            auth
+          );
+
+          if (data.ok) {
+            console.log('✅ Cancelled AWB:', awb);
+            successCount++;
+          } else {
+            console.error('❌ Failed to cancel AWB:', awb, data.error);
+            failedCount++;
+            failedOrders.push({ orderId: order._id, awb, reason: data.error });
+          }
+        } catch (error) {
+          console.error('❌ Cancel error for AWB:', awb, error);
+          failedCount++;
+          failedOrders.push({ orderId: order._id, awb, reason: error.message });
+        }
+      }
+
+      // Show results
+      if (successCount > 0) {
+        t.success(`Cancelled ${successCount} shipment${successCount > 1 ? 's' : ''}`);
+      }
+
+      if (failedCount > 0) {
+        t.warn(`Failed to cancel ${failedCount} shipment${failedCount > 1 ? 's' : ''}`);
+        console.error('Failed cancellations:', failedOrders);
+      }
+
+      await load();
+      setSelected(new Set());
+    } catch (error) {
+      console.error('❌ Cancel shipments error:', error);
       t.err("Failed to cancel shipments");
     } finally {
       setActionLoading(false);
@@ -225,7 +323,6 @@ export default function AdminOrders() {
   return (
     <div className="p-6 bg-surface-subtle min-h-screen">
       <AdminTabs />
-
       {/* FIXED: Custom confirmation modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

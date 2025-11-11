@@ -106,7 +106,6 @@ export default function EmailTemplates() {
       setEditing(null);
       await load();
     } finally { setSaving(false); }
-
   }
 
   async function remove(idOrSlug) {
