@@ -14,6 +14,7 @@ export default function EditBook() {
   const [book, setBook] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // free-text versions so commas are allowed while typing
   const [authorsText, setAuthorsText] = useState("");
@@ -22,26 +23,58 @@ export default function EditBook() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await api.get(`/books/${slug}`);
-      const b = data?.book || null;
+      try {
+        setLoading(true);
+        
+        // ✅ FIX: Use admin route directly with slug - it handles both ID and slug
+        const { data } = await api.get(`/books/admin/${slug}`, auth);
+        const b = data?.book || null;
 
-      // normalize images to array of relative paths
-      const coverArr = Array.isArray(b?.assets?.coverUrl)
-        ? b.assets.coverUrl
-        : (b?.assets?.coverUrl ? [b.assets.coverUrl] : []);
-      const normalizedCovers = coverArr.map(toRelativeFromPublic);
+        if (!b) {
+          t.err("Book not found");
+          return;
+        }
 
-      setBook(b ? { ...b, assets: { ...(b.assets || {}), coverUrl: normalizedCovers } } : null);
+        // normalize images to array of relative paths
+        const coverArr = Array.isArray(b?.assets?.coverUrl)
+          ? b.assets.coverUrl
+          : (b?.assets?.coverUrl ? [b.assets.coverUrl] : []);
+        const normalizedCovers = coverArr.map(toRelativeFromPublic);
 
-      if (b) {
+        setBook({ ...b, assets: { ...(b.assets || {}), coverUrl: normalizedCovers } });
+
         setAuthorsText((b.authors || []).join(", "));
         setCategoriesText((b.categories || []).join(", "));
         setTagsText((b.tags || []).join(", "));
+      } catch (error) {
+        console.error("❌ Error loading book:", error);
+        t.err(error?.response?.data?.error || "Failed to load book");
+      } finally {
+        setLoading(false);
       }
     })();
   }, [slug]);
 
-  if (!book) return <div className="mx-auto max-w-screen-xl px-4 py-8">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-screen-xl px-4 py-8">
+        <div className="text-center py-10">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <p className="mt-2 text-gray-600">Loading book...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="mx-auto max-w-screen-xl px-4 py-8">
+        <div className="text-center py-10 text-red-600">
+          Book not found
+        </div>
+      </div>
+    );
+  }
 
   // ---------- safe setters ----------
   const setField  = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
@@ -52,7 +85,7 @@ export default function EditBook() {
   async function uploadImages(files) {
     if (!files?.length) return [];
     const fd = new FormData();
-    Array.from(files).forEach(f => fd.append("files", f)); // backend expects "files"
+    Array.from(files).forEach(f => fd.append("files", f));
     setUploading(true);
     try {
       const res = await api.post("/uploads/image", fd, {
@@ -134,7 +167,7 @@ export default function EditBook() {
       };
 
       await api.patch(`/books/${book._id}`, payload, auth);
-      t.ok("Saved");
+      t.ok("Saved successfully!");
     } catch (e) {
       t.err(e.response?.data?.error || "Save failed");
     } finally {
@@ -158,7 +191,6 @@ export default function EditBook() {
     return String(Math.max(0, price));
   }
 
-  /** unified handler: every change recomputes both derived values */
   function handlePriceChange(field) {
     return (e) => {
       const raw = e.target.value;
@@ -169,11 +201,9 @@ export default function EditBook() {
         const price = field === "price"       ? raw : (prev.price ?? "");
         const disc  = field === "discountPct" ? raw : (prev.discountPct ?? "");
 
-        // Always recompute discount from current mrp/price (or typed price)
         const newDiscount = calcDiscountPct(mrp, price);
         next.discountPct = newDiscount;
 
-        // Recompute price when user changed mrp or discount (don't override while typing price)
         if (field === "mrp") {
           next.price = calcPriceFromDiscount(raw, newDiscount);
         } else if (field === "discountPct") {
@@ -187,7 +217,16 @@ export default function EditBook() {
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Edit Book</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Edit Book</h1>
+        <span className={`px-3 py-1 rounded-full text-sm border ${
+          book.visibility === "public"
+            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+            : "bg-gray-100 text-gray-700 border-gray-200"
+        }`}>
+          {book.visibility || "draft"}
+        </span>
+      </div>
 
       <form onSubmit={save} className="space-y-6">
         {/* Basic Info */}
@@ -407,9 +446,9 @@ export default function EditBook() {
         <div className="flex justify-end">
           <button
             disabled={saving || uploading}
-            className="px-5 py-2.5 rounded-lg bg-brand font-semibold hover:brightness-110 disabled:opacity-60"
+            className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </form>

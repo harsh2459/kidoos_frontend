@@ -1,4 +1,4 @@
-// src/api/bluedart.jsx
+// src/api/bluedart.jsx - FIXED endpoint paths
 import { api } from "./client";
 
 const handleApiCall = async (apiCall) => {
@@ -87,28 +87,28 @@ export const BlueDartAPI = {
       api.delete(`/labels/${fileName}`, auth)
     ),
 
-  // List all BlueDart profiles
+  // ✅ FIXED: List all BlueDart profiles - correct endpoint
   listProfiles: (auth) =>
     handleApiCall(() => 
-      api.get("/bluedart-profile", auth)
+      api.get("/bluedart-profiles", auth)
     ),
 
-  // Get single profile by ID
+  // ✅ FIXED: Get single profile by ID
   getProfile: (id, auth) =>
     handleApiCall(() => 
-      api.get(`/bluedart-profile/${id}`, auth)
+      api.get(`/bluedart-profiles/${id}`, auth)
     ),
 
-  // Create or update profile
+  // ✅ FIXED: Create or update profile
   saveProfile: (profile, auth) =>
     handleApiCall(() => 
-      api.post("/bluedart-profile", profile, auth)
+      api.post("/bluedart-profiles", profile, auth)
     ),
 
-  // Delete profile
+  // ✅ FIXED: Delete profile
   deleteProfile: (id, auth) =>
     handleApiCall(() => 
-      api.delete(`/bluedart-profile/${id}`, auth)
+      api.delete(`/bluedart-profiles/${id}`, auth)
     ),
 
   // Get orders ready for shipment

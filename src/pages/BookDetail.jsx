@@ -1,6 +1,6 @@
-// src/pages/BookDetail.jsx
+// src/pages/BookDetail.jsx - REDESIGNED
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useCart } from "../contexts/CartStore";
 import { assetUrl } from "../api/asset";
@@ -15,7 +15,6 @@ const addEmojiSpaces = (s = "") =>
 const looksLikeHtml = (s = "") => /<\/?[a-z][\s\S]*>/i.test(s);
 const escapeHtml = (s = "") =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-/** If text has 3+ non-empty lines, render as a bullet list */
 const textToBulletHtml = (raw = "") => {
   const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length < 3) return null;
@@ -25,40 +24,45 @@ const textToBulletHtml = (raw = "") => {
 
 export default function BookDetail() {
   const { slug } = useParams();
+  const navigate = useNavigate();
 
-  // ---------------- State ----------------
   const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Gallery images derived from book (safe even when book is null)
+  // Gallery
   const images = useMemo(
     () => (Array.isArray(book?.assets?.coverUrl) ? book.assets.coverUrl.filter(Boolean) : []),
     [book]
   );
-  const [active, setActive] = useState(0); // index in images
+  const [active, setActive] = useState(0);
 
-  // Cart hooks
+  // Cart
   const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
-
   const { isCustomer, token } = useCustomer();
 
-  // ---------------- Effects ----------------
   // Fetch book
   useEffect(() => {
     (async () => {
-      const { data } = await api.get(`/books/${slug}`);
-      setBook(data.book);
+      try {
+        setLoading(true);
+        const { data } = await api.get(`/books/${slug}`);
+        setBook(data.book);
+      } catch (error) {
+        console.error("Failed to load book:", error);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [slug]);
 
-  // Default the active image to the LAST image whenever images change
   useEffect(() => {
     setActive(0);
   }, [images.length]);
 
-  // Keyboard navigation (←/→)
+  // Keyboard navigation
   const next = useCallback(() => {
     if (!images.length) return;
     setActive((i) => (i + 1) % images.length);
@@ -78,218 +82,307 @@ export default function BookDetail() {
     return () => window.removeEventListener("keydown", onKey);
   }, [next, prev]);
 
-  // ---------------- Early loading UI (after hooks) ----------------
-  if (!book) {
-    return <div className="mx-auto max-w-screen-xl px-4 py-10">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-screen-xl px-4 py-20">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
+          <p className="text-fg-muted">Loading book details...</p>
+        </div>
+      </div>
+    );
   }
 
-  // ---------------- Derived values ----------------
-  const id = book._id || book.id; // bookId
-  const inCart = items.find((i) => (i.bookId || i.book?._id || i.id) === id);
-  const d = deal(book); // { mrp, price, off, save }
+  if (!book) {
+    return (
+      <div className="mx-auto max-w-screen-xl px-4 py-20 text-center">
+        <p className="text-fg-muted text-lg">Book not found</p>
+      </div>
+    );
+  }
 
-  // Build safe main image src
+  const id = book._id || book.id;
+  const inCart = items.find((i) => (i.bookId || i.book?._id || i.id) === id);
+  const d = deal(book);
   const mainSrc = images.length ? assetUrl(images[active]) : "";
 
-
-
   async function handleAddToCart() {
+    if (!isCustomer) {
+      t.info("Please login to add to cart");
+      navigate("/login");
+      return;
+    }
+
     try {
-      add({ ...book, id, assets: { ...book.assets } }, 1); // local first
+      add({ ...book, id, assets: { ...book.assets } }, 1);
       if (isCustomer) {
         await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
       }
       t.ok("Added to cart");
     } catch (e) {
-      
       t.err("Could not add to cart");
     }
   }
 
-  /* ---- choose description source (whichever has content) ---- */
   const primary = (book.descriptionHtml ?? "").trim();
   const fallback = (book.description ?? "").trim();
   const rawDesc = primary || fallback;
 
   let finalHtml = null;
   if (rawDesc && looksLikeHtml(rawDesc)) {
-    finalHtml = rawDesc; // assume sanitized by backend
+    finalHtml = rawDesc;
   } else if (rawDesc) {
     finalHtml = textToBulletHtml(rawDesc);
   }
   const fallbackPlain = addEmojiSpaces(rawDesc);
 
-  // ---------------- Render ----------------
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-6 grid md:grid-cols-2 gap-6 lg:gap-8">
-      {/* GALLERY */}
-      <div className="w-full max-w-[520px] mx-auto md:mx-0 md:sticky md:top-20">
-        <div className="relative rounded-theme overflow-hidden bg-surface aspect-[3/4] max-h-[78vh] border border-border-subtle">
-          {mainSrc ? (
-            <img
-              src={mainSrc}
-              alt={book.title}
-              className="absolute inset-0 h-full w-full object-contain"
-              onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
-              draggable={false}
-              loading="lazy"
-            />
-          ) : (
-            <img
-              src="/placeholder.png"
-              alt={book.title}
-              className="absolute inset-0 h-full w-full object-contain opacity-80"
-              draggable={false}
-            />
-          )}
-
-          {d.off > 0 && (
-            <span className="absolute -top-2 -left-2 px-2 py-1 rounded-theme bg-success text-success-foreground text-xs font-semibold shadow">
-              -{d.off}% OFF
-            </span>
-          )}
-
-          {images.length > 1 && (
-            <>
-              <button
-                aria-label="Previous image"
-                onClick={prev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2"
-              >
-                ‹
-              </button>
-              <button
-                aria-label="Next image"
-                onClick={next}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white shadow p-2"
-              >
-                ›
-              </button>
-            </>
-          )}
+    <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
+      <div className="mx-auto max-w-screen-xl px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-fg-muted mb-6">
+          <button onClick={() => navigate("/catalog")} className="hover:text-fg transition-colors">
+            Catalog
+          </button>
+          <span>›</span>
+          <span className="text-fg">{book.title}</span>
         </div>
 
-        {/* Thumbnails (reversed order) */}
-        {images.length > 1 && (
-          <div className="mt-3 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-            {([...images]).map((p, idx) => {
-              // map back to the original index
-              const origIndex = images.length - 1 - idx;
-              const src = assetUrl(p);
-              const isActive = origIndex === active;
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* LEFT: GALLERY */}
+          <div className="lg:sticky lg:top-24 self-start">
+            {/* Main Image */}
+            <div className="relative rounded-2xl overflow-hidden bg-white shadow-xl border border-gray-100 aspect-[3/4]">
+              {mainSrc ? (
+                <img
+                  src={mainSrc}
+                  alt={book.title}
+                  className="absolute inset-0 h-full w-full object-contain p-6"
+                  onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                  draggable={false}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                  <span className="text-gray-400">No image</span>
+                </div>
+              )}
 
-              return (
-                <button
-                  key={`${p}-${idx}`}
-                  onClick={() => setActive(origIndex)}
-                  className={[
-                    "relative border rounded-md overflow-hidden h-16 bg-white",
-                    isActive ? "ring-2 ring-primary border-primary" : "border-border-subtle",
-                  ].join(" ")}
-                  aria-label={`Image ${origIndex + 1}`}
-                >
-                  {src ? (
-                    <img
-                      src={src}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
-                      draggable={false}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-gray-100" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              {/* Discount Badge */}
+              {d.off > 0 && (
+                <div className="absolute top-4 left-4 px-3 py-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold shadow-lg">
+                  {d.off}% OFF
+                </div>
+              )}
 
-      {/* DETAILS */}
-      <div>
-        <h1 className="text-3xl font-bold">{book.title}</h1>
-        <p className="text-fg-muted mt-1.5">{(book.authors || []).join(", ")}</p>
+              {/* Navigation Arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={prev}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                    aria-label="Previous"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={next}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                    aria-label="Next"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
 
-        {(book.categories?.length || book.tags?.length) ? (
-          <div className="mt-2 space-y-1.5">
-            {book.categories?.length ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-fg-muted text-sm">Categories:</span>
-                {book.categories.map((c) => (
-                  <span key={c} className="badge">{c}</span>
-                ))}
-              </div>
-            ) : null}
-            {book.tags?.length ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-fg-muted text-sm">Tags:</span>
-                {book.tags.map((tg) => (
-                  <span key={tg} className="badge-soft">#{tg}</span>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* Pricing */}
-        <div className="flex items-baseline gap-2.5 mt-3">
-          <span className="text-2xl font-bold">₹{d.price}</span>
-          {d.mrp > d.price && (
-            <span className="text-sm line-through text-fg-subtle">₹{d.mrp}</span>
-          )}
-          {d.off > 0 && (
-            <span className="px-2 py-0.5 rounded-theme bg-success-soft text-success text-[11px] font-semibold">
-              -{d.off}%
-            </span>
-          )}
-        </div>
-        {d.save > 0 && (
-          <div className="text-success text-sm mt-0.5">You save ₹{d.save}</div>
-        )}
-
-        {/* CTA */}
-        <div className="mt-3">
-          {!inCart ? (
-            <button
-              onClick={handleAddToCart}
-              className="px-4 py-2.5 rounded-theme btn-primary transition"
-            >
-              Add to Cart
-            </button>
-          ) : (
-            <div className="flex items-center gap-2.5">
-              <button onClick={() => dec(id)} className="px-3 py-2 rounded-theme btn-secondary">–</button>
-              <div className="w-9 text-center">{inCart.qty}</div>
-              <button onClick={() => inc(id)} className="px-3 py-2 rounded-theme btn-muted">+</button>
+              {/* Image Counter */}
+              {images.length > 1 && (
+                <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-black/70 text-white text-xs font-medium">
+                  {active + 1} / {images.length}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Description */}
-        {finalHtml ? (
-          <div
-            className={[
-              "prose mt-4 max-w-none",
-              "[&_p]:my-2 [&_ul]:my-3 [&_li]:my-1",
-              "[&_p]:leading-relaxed [&_li]:leading-relaxed",
-              "[&_ul]:pl-5",
-            ].join(" ")}
-            dangerouslySetInnerHTML={{ __html: finalHtml }}
-          />
-        ) : (
-          <div
-            className={[
-              "prose mt-4 max-w-none whitespace-pre-line",
-              "[&_p]:my-2 [&_ul]:my-3 [&_li]:my-1",
-              "[&_p]:leading-relaxed [&_li]:leading-relaxed",
-              "[&_ul]:pl-5",
-            ].join(" ")}
-          >
-            {fallbackPlain}
+            {/* Thumbnail Gallery */}
+            {images.length > 1 && (
+              <div className="mt-4 grid grid-cols-6 gap-2">
+                {images.map((p, idx) => {
+                  const src = assetUrl(p);
+                  const isActive = idx === active;
+                  return (
+                    <button
+                      key={`${p}-${idx}`}
+                      onClick={() => setActive(idx)}
+                      className={`
+                        relative rounded-lg overflow-hidden aspect-square bg-white border-2 transition-all
+                        ${isActive
+                          ? "border-black shadow-lg scale-105"
+                          : "border-gray-200 hover:border-gray-400 hover:scale-105"
+                        }
+                      `}
+                    >
+                      {src ? (
+                        <img
+                          src={src}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                          draggable={false}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gray-100" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* RIGHT: DETAILS */}
+          <div>
+            {/* Title & Author */}
+            <div className="mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-3">
+                {book.title}
+              </h1>
+              <p className="text-lg text-gray-600 flex items-center gap-2">
+                <span className="text-sm text-gray-500">by</span>
+                <span className="font-medium">{(book.authors || []).join(", ")}</span>
+              </p>
+            </div>
+
+            {/* Categories & Tags */}
+            {(book.categories?.length || book.tags?.length) ? (
+              <div className="mb-6 space-y-3">
+                {book.categories?.length ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Categories:</span>
+                    {book.categories.map((c) => (
+                      <span key={c} className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {book.tags?.length ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Tags:</span>
+                    {book.tags.map((tg) => (
+                      <span key={tg} className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm">
+                        #{tg}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            {/* Pricing Card */}
+            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 shadow-sm mb-6">
+              <div className="flex items-end gap-3 mb-2">
+                <span className="text-4xl font-bold text-gray-900">₹{d.price}</span>
+                {d.mrp > d.price && (
+                  <>
+                    <span className="text-xl line-through text-gray-400 mb-1">₹{d.mrp}</span>
+                    <span className="px-2 py-1 rounded-lg bg-green-100 text-green-700 text-sm font-bold mb-1">
+                      Save ₹{d.save}
+                    </span>
+                  </>
+                )}
+              </div>
+              {d.save > 0 && (
+                <p className="text-green-600 font-medium">You save ₹{d.save} ({d.off}% off)</p>
+              )}
+
+              {/* Stock Status */}
+              <div className="mt-4 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-sm text-gray-600">In Stock</span>
+              </div>
+            </div>
+
+            {/* Add to Cart */}
+            <div className="mb-8">
+              {!inCart ? (
+                <button
+                  onClick={handleAddToCart}
+                  className="w-full py-4 rounded-xl bg-black text-white font-semibold text-lg hover:bg-gray-800 transition-all hover:shadow-xl flex items-center justify-center gap-2 group"
+                >
+                  <svg className="w-6 h-6 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Add to Cart
+                </button>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 bg-gray-100 rounded-xl p-2 flex-1">
+                    <button
+                      onClick={() => dec(id)}
+                      className="w-10 h-10 rounded-lg bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
+                    >
+                      −
+                    </button>
+                    <span className="flex-1 text-center text-xl font-bold">{inCart.qty}</span>
+                    <button
+                      onClick={() => inc(id)}
+                      className="w-10 h-10 rounded-lg bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => navigate("/cart")}
+                    className="px-6 py-3 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
+                  >
+                    Go to Cart
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-200">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">About this book</h2>
+              {finalHtml ? (
+                <div
+                  className="prose prose-gray max-w-none [&_p]:my-3 [&_ul]:my-4 [&_li]:my-2 [&_p]:leading-relaxed [&_li]:leading-relaxed [&_ul]:pl-5 [&_li]:text-gray-700"
+                  dangerouslySetInnerHTML={{ __html: finalHtml }}
+                />
+              ) : (
+                <div className="prose prose-gray max-w-none whitespace-pre-line text-gray-700 leading-relaxed">
+                  {fallbackPlain || "No description available."}
+                </div>
+              )}
+            </div>
+            {/* Additional Info */}
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              {book.language && (
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Language</p>
+                  <p className="font-semibold text-gray-900">{book.language}</p>
+                </div>
+              )}
+              {book.printType && (
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Format</p>
+                  <p className="font-semibold text-gray-900 capitalize">{book.printType}</p>
+                </div>
+              )}
+              {book.pages > 0 && (
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Pages</p>
+                  <p className="font-semibold text-gray-900">{book.pages}</p>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

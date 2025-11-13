@@ -7,7 +7,7 @@ export default function FilterBar({ q, setQ, sort, setSort }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search books, authors, tags…"
-          className="w-full bg-transparent outline-none border-border-subtle"
+          className="w-full bg-transparent outline-none border-border-subtle px-3 py-2 rounded-lg"
         />
       </div>
 
@@ -21,8 +21,6 @@ export default function FilterBar({ q, setQ, sort, setSort }) {
         <option value="priceAsc">Price: Low to High</option>
         <option value="priceDesc">Price: High to Low</option>
       </select>
-
-      <a href="#top" className="text-[0.875rem] font-medium">Back to top</a>
     </div>
   );
 }

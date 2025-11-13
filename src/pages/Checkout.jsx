@@ -5,6 +5,7 @@ import { useCart } from "../contexts/CartStore";
 import { assetUrl } from "../api/asset";
 import { useSite } from "../contexts/SiteConfig";
 import { t } from "../lib/toast";
+
 /* ------------ Razorpay loader ------------ */
 function loadRzp() {
   return new Promise((resolve, reject) => {
@@ -25,8 +26,9 @@ export default function Checkout() {
   const remove = useCart((s) => s.remove);
   const { payments } = useSite();
   const pollTimer = useRef(null);
+
   console.log(assetUrl);
-  
+
   // --- PAYMENT OPTION SELECTION ---
   const [paymentOption, setPaymentOption] = useState("full_online");
 
@@ -70,13 +72,22 @@ export default function Checkout() {
   const pinDebounce = useRef(null);
 
   async function lookupPin(pin) {
-    if (!/^\d{6}$/.test(pin)) { setPinStatus(""); setOffices([]); return; }
+    if (!/^\d{6}$/.test(pin)) {
+      setPinStatus("");
+      setOffices([]);
+      return;
+    }
     try {
       setPinStatus("Looking up…");
       const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
       const data = await res.json();
       const entry = Array.isArray(data) ? data[0] : null;
-      if (!entry || entry.Status !== "Success" || !Array.isArray(entry.PostOffice) || entry.PostOffice.length === 0) {
+      if (
+        !entry ||
+        entry.Status !== "Success" ||
+        !Array.isArray(entry.PostOffice) ||
+        entry.PostOffice.length === 0
+      ) {
         setPinStatus("Not found");
         setOffices([]);
         return;
@@ -114,8 +125,18 @@ export default function Checkout() {
   );
 
   function validateShipping() {
-    if (items.length === 0) { navigate("/cart"); return false; }
-    if (!cust.name || !cust.phone || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
+    if (items.length === 0) {
+      navigate("/cart");
+      return false;
+    }
+    if (
+      !cust.name ||
+      !cust.phone ||
+      !cust.line1 ||
+      !cust.city ||
+      !cust.state ||
+      !cust.pin
+    ) {
       t.info("Please fill shipping details.");
       return false;
     }
@@ -134,7 +155,11 @@ export default function Checkout() {
         price: i.price,
         qty: i.qty,
       })),
-      customer: { name: cust.name, email: cust.email, phone: cust.phone },
+      customer: {
+        name: cust.name,
+        email: cust.email,
+        phone: cust.phone,
+      },
       shipping: {
         address1: cust.line1,
         city: cust.city,
@@ -145,7 +170,10 @@ export default function Checkout() {
       },
       amount: totals.grand,
       currency: "INR",
-      payment: { method: paymentMethod, status: paymentStatus },
+      payment: {
+        method: paymentMethod,
+        status: paymentStatus,
+      },
     };
     const { data } = await api.post("/orders", payload);
     if (!data?.ok) throw new Error(data?.error || "Failed to create order");
@@ -159,20 +187,23 @@ export default function Checkout() {
     setPlacing(true);
     try {
       const orderId = await createLocalOrder("razorpay", "created");
+
+      // ✅ ALWAYS SEND FULL AMOUNT - Backend will calculate half if needed
       const { data } = await api.post("/payments/razorpay/order", {
-        amountInRupees: totals.grand,
+        amountInRupees: totals.grand,  // ✅ Send full ₹10,000
         receipt: `web_${orderId}`,
         orderId,
-        paymentType: paymentOption // Send correct paymentType
+        paymentType: paymentOption,  // "half_online_half_cod" or "full_online"
       });
 
       const { order, key, paymentId } = data || {};
-      if (!order?.id || !key || !paymentId) throw new Error("Payment init failed");
+      if (!order?.id || !key || !paymentId)
+        throw new Error("Payment init failed");
 
       await loadRzp();
       const rzp = new window.Razorpay({
         key,
-        amount: order.amount,
+        amount: order.amount,  // Backend returns ₹5,000 (in paise) for half_online_half_cod
         currency: order.currency,
         name: "Your Store",
         description: `Order ${orderId}`,
@@ -182,22 +213,22 @@ export default function Checkout() {
           email: cust.email || "",
           contact: cust.phone || "",
         },
-        notes: { ourOrderId: orderId },
+        notes: {
+          ourOrderId: orderId,
+        },
         handler: async function (response) {
           try {
             const verifyRes = await api.post("/payments/razorpay/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              paymentId // critical to link the record!
+              paymentId,
             });
-
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
               setPlaced({ orderId });
               clear();
               t.success("Payment successful and verified!");
-              // Redirect to order confirmation page:
-              navigate('/order-confirmed', { state: { orderId } });
+              navigate("/order-confirmed", { state: { orderId } });
             } else {
               t.err("Payment verification failed");
             }
@@ -214,215 +245,310 @@ export default function Checkout() {
             } catch (err) {
               t.err("Could not delete order after payment cancel.");
             }
-          }
+          },
         },
-        theme: { color: "#3399cc" }
+        theme: {
+          color: "#3399cc",
+        },
       });
       rzp.open();
     } catch (e) {
-      t.err(e?.response?.data?.error || e.message || "Payment failed to start");
+      t.err(
+        e?.response?.data?.error || e.message || "Payment failed to start"
+      );
     } finally {
       setPlacing(false);
     }
   }
 
-  // -- No COD. Remove placeWithoutPayment logic and button! --
+
 
   /* ------------ Thank-you page ------------ */
   if (placed) {
     return (
-      <div className="mx-auto max-w-screen-xl px-4 py-8">
-        <h1 className="text-2xl font-bold mb-2">Thank you!</h1>
-        <p className="text-gray-600">Your order has been placed.</p>
-        <p className="text-gray-600 mt-1">
+      <div className="container mx-auto p-6 text-center">
+        <h2 className="text-2xl font-bold text-green-600 mb-4">
+          ✓ Order Placed Successfully!
+        </h2>
+        <p className="text-lg mb-2">
           <strong>Order ID:</strong> {placed.orderId}
         </p>
-        <button onClick={() => navigate("/catalog")} className="mt-6 btn-primary">
-          Continue browsing
+        <p className="text-gray-600 mb-6">
+          Thank you for your purchase! You will receive a confirmation email shortly.
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+        >
+          Continue Shopping
         </button>
       </div>
     );
   }
 
-  /* ------------ Checkout UI ------------ */
+  /* ------------ MAIN CHECKOUT FORM ------------ */
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8 grid lg:grid-cols-3 gap-6">
-      {/* Shipping form */}
-      <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-3">
-        <h1 className="text-xl font-semibold mb-2">Shipping details</h1>
-        <Row>
-          <Input
-            label="Full name"
-            value={cust.name}
-            onChange={(e) => set("name", e.target.value)}
-          />
-        </Row>
-        <div className="grid md:grid-cols-2 gap-3">
-          <Input
-            label="Email (optional)"
-            value={cust.email}
-            onChange={(e) => set("email", e.target.value)}
-          />
-          <Input
-            label="Phone"
-            value={cust.phone}
-            onChange={(e) => set("phone", e.target.value)}
-          />
-        </div>
-        <Input
-          label="Address"
-          value={cust.line1}
-          onChange={(e) => set("line1", e.target.value)}
-        />
-        <div className="grid md:grid-cols-3 gap-3">
-          <Input
-            label="City"
-            value={cust.city}
-            onChange={(e) => set("city", e.target.value)}
-          />
-          <Input
-            label="State"
-            value={cust.state}
-            onChange={(e) => set("state", e.target.value)}
-          />
-          <Input
-            label="PIN code"
-            value={cust.pin}
-            onChange={(e) => onPinChange(e.target.value)}
-          />
-        </div>
-        {/* Locality + PIN status */}
-        {(offices.length > 1 || pinStatus) && (
-          <div className="grid md:grid-cols-3 gap-3 mt-2">
-            {offices.length > 1 && (
+    <div className="container mx-auto p-6 max-w-6xl">
+      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* LEFT SIDE - FORM */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Customer Information */}
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm mb-1">Locality / Post Office</label>
-                <select
-                  className="w-full bg-white border border-gray-300 rounded-theme px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                  value={locality}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setLocality(val);
-                    const sel = offices.find((o) => o.Name === val);
-                    if (sel) {
-                      set("city", (sel.District || "").trim());
-                      set("state", (sel.State || "").trim());
-                    }
-                  }}
-                >
-                  {offices.map((o) => (
-                    <option key={o.Name} value={o.Name}>{o.Name}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={cust.name}
+                  onChange={(e) => set("name", e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Your full name"
+                />
               </div>
-            )}
-            <div className="flex items-end text-sm text-gray-600">
-              {pinStatus === "Looking up…" && <span>Looking up PIN…</span>}
-              {pinStatus === "Not found" && (
-                <span className="text-red-600">PIN not found. Please check.</span>
-              )}
-              {pinStatus === "OK" && <span>Auto-filled from PIN.</span>}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Phone <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={cust.phone}
+                  onChange={(e) => set("phone", e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="10-digit mobile"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={cust.email}
+                  onChange={(e) => set("email", e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="your@email.com"
+                />
+              </div>
             </div>
           </div>
-        )}
-      </div>
-      {/* Order summary */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-3">Order summary</h2>
-        <div className="space-y-3">
-          {items.map((i) => (
-            <div key={(i._id || i.id) + String(i.qty)} className="flex gap-3">
-              <img
-                src={assetUrl(i.assets?.coverUrl || '/public/default-image.jpg')}
-                alt={i.title}
-                className="h-14 w-10 object-cover rounded-md"
-              />
-              <div className="flex-1">
-                <div className="font-medium">{i.title}</div>
-                <div className="text-gray-600 text-sm">Qty: {i.qty}</div>
+
+          {/* Shipping Address */}
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Address Line 1 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={cust.line1}
+                  onChange={(e) => set("line1", e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Street address"
+                />
               </div>
-              <div>{fmt((Number(i.unitPriceSnapshot ?? i.price ?? i.bookId?.price ?? 0) * Number(i.qty ?? 1)))}</div>
-              <button
-                className="text-red-600 text-sm"
-                onClick={() => remove(i._id || i.id)}
-              >
-                Remove
-              </button>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    PIN Code <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cust.pin}
+                    onChange={(e) => onPinChange(e.target.value)}
+                    maxLength="6"
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="6-digit PIN"
+                  />
+                  {pinStatus && (
+                    <p
+                      className={`text-xs mt-1 ${pinStatus === "OK"
+                          ? "text-green-600"
+                          : pinStatus === "Looking up…"
+                            ? "text-blue-600"
+                            : "text-red-600"
+                        }`}
+                    >
+                      {pinStatus}
+                    </p>
+                  )}
+                </div>
+
+                {offices.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Locality
+                    </label>
+                    <select
+                      value={locality}
+                      onChange={(e) => setLocality(e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    >
+                      {offices.map((o, i) => (
+                        <option key={i} value={o.Name}>
+                          {o.Name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cust.city}
+                    onChange={(e) => set("city", e.target.value)}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    State <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={cust.state}
+                    onChange={(e) => set("state", e.target.value)}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Country</label>
+                <input
+                  type="text"
+                  value={cust.country}
+                  className="w-full border rounded px-3 py-2 bg-gray-100"
+                  disabled
+                />
+              </div>
             </div>
-          ))}
-          {items.length === 0 && (
-            <div className="text-gray-600">Your cart is empty.</div>
-          )}
+          </div>
+
+          {/* Payment Options */}
+          <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paymentOption"
+                  value="full_online"
+                  checked={paymentOption === "full_online"}
+                  onChange={(e) => setPaymentOption(e.target.value)}
+                  className="w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm font-medium">
+                  Pay Full Amount Online
+                </span>
+              </label>
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paymentOption"
+                  value="half_cod_half_online"
+                  checked={paymentOption === "half_cod_half_online"}
+                  onChange={(e) => setPaymentOption(e.target.value)}
+                  className="w-4 h-4 cursor-pointer"
+                />
+                <span className="text-sm font-medium">
+                  Pay 50% Online + 50% Cash on Delivery
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
-        <div className="border-t border-gray-200 mt-4 pt-4 space-y-1">
-          <Line label="Subtotal" value={`₹${totals.sub}`} />
-          <Line label="Tax" value={`₹${totals.tax}`} />
-          <Line label="Shipping" value={totals.ship ? `₹${totals.ship}` : "Free"} />
-          <Line label="Total" value={<strong>₹{totals.grand}</strong>} />
-        </div>
-        {/* --- PAYMENT OPTION UI --- */}
-        <div className="mt-4">
-          <div className="mb-2 font-medium">Select payment option:</div>
-          <label className="mr-4">
-            <input
-              type="radio"
-              checked={paymentOption === "full_online"}
-              onChange={() => setPaymentOption("full_online")}
-            />{" "}
-            Pay Full Online
-          </label>
-          <label>
-            <input
-              type="radio"
-              checked={paymentOption === "half_online_half_cod"}
-              onChange={() => setPaymentOption("half_online_half_cod")}
-            />{" "}
-            Pay Half Online, Half on Delivery
-          </label>
-        </div>
-        
-        <div className="mt-4 space-y-2">
-          {hasOnlinePay && (
+
+        {/* RIGHT SIDE - ORDER SUMMARY */}
+        <div className="lg:col-span-1">
+          <div className="bg-white border rounded-lg p-6 shadow-sm sticky top-6">
+            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+
+            {/* Cart Items */}
+            <div className="space-y-2 mb-4 max-h-64 overflow-y-auto border-b pb-4">
+              {items.map((item, idx) => (
+                <div key={idx} className="flex justify-between text-sm">
+                  <span className="text-gray-700">
+                    {item.title} x {item.qty}
+                  </span>
+                  <span className="font-medium">
+                    {fmt(
+                      (item.unitPriceSnapshot ?? item.price ?? 0) * item.qty
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Totals */}
+            <div className="space-y-2 mb-6">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span>{fmt(totals.sub)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax:</span>
+                <span>{fmt(totals.tax)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Shipping:</span>
+                <span>{fmt(totals.ship)}</span>
+              </div>
+              <div className="flex justify-between text-lg font-bold border-t pt-2">
+                <span>Total:</span>
+                <span>{fmt(totals.grand)}</span>
+              </div>
+
+              {/* Payment Amount Breakdown */}
+              {paymentOption === "half_cod_half_online" && (
+                <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3 text-xs">
+                  <p>Pay Now: <strong>{fmt(totals.grand / 2)}</strong></p>
+                  <p>Pay on Delivery: <strong>{fmt(totals.grand / 2)}</strong></p>
+                </div>
+              )}
+            </div>
+
+            {/* ============ PAYMENT BUTTON ============ */}
             <button
               onClick={placeWithRazorpay}
-              disabled={placing || items.length === 0}
-              className="w-full btn-primary"
+              disabled={placing || !hasOnlinePay}
+              className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${placing || !hasOnlinePay
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                }`}
             >
-              {placing
-                ? "Starting payment…"
-                : paymentOption === "full_online"
-                  ? "Pay Full Online"
-                  : "Pay Half Online, Half on Delivery"}
+              {placing ? (
+                <span className="flex items-center justify-center space-x-2">
+                  <span>Processing...</span>
+                </span>
+              ) : (
+                `Proceed to Payment (${fmt(
+                  paymentOption === "half_cod_half_online"
+                    ? totals.grand / 2
+                    : totals.grand
+                )})`
+              )}
             </button>
-          )}
+
+            {!hasOnlinePay && (
+              <p className="text-red-500 text-xs mt-3 text-center">
+                ⚠️ Online payment is currently unavailable
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ------------ UI helpers ------------ */
-function Row({ children }) {
-  return <div className="mb-3">{children}</div>;
-}
-
-function Input({ label, ...rest }) {
-  return (
-    <div>
-      <label className="block text-sm mb-1">{label}</label>
-      <input
-        className="w-full bg-white border border-gray-300 rounded-theme px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400"
-        {...rest}
-      />
-    </div>
-  );
-}
-
-function Line({ label, value }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-gray-600">{label}</span>
-      <span>{value}</span>
     </div>
   );
 }

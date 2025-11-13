@@ -28,16 +28,85 @@ export default function AdminOrders() {
   const [selectedProfile, setSelectedProfile] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(null); // FIXED: Replace confirm dialog
-
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState("");
   const hasSelection = selected.size > 0;
+
+  const getDateRange = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (dateFilter) {
+      case "today": {
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+        return {
+          startDate: today.toISOString(),
+          endDate: endOfDay.toISOString()
+        };
+      }
+
+      case "yesterday": {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const endOfYesterday = new Date(yesterday);
+        endOfYesterday.setHours(23, 59, 59, 999);
+        return {
+          startDate: yesterday.toISOString(),
+          endDate: endOfYesterday.toISOString()
+        };
+      }
+
+      case "tomorrow": {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const endOfTomorrow = new Date(tomorrow);
+        endOfTomorrow.setHours(23, 59, 59, 999);
+        return {
+          startDate: tomorrow.toISOString(),
+          endDate: endOfTomorrow.toISOString()
+        };
+      }
+
+      case "custom": {
+        if (!customDate) return null;
+        const selectedDate = new Date(customDate);
+        selectedDate.setHours(0, 0, 0, 0);
+        const endOfSelected = new Date(selectedDate);
+        endOfSelected.setHours(23, 59, 59, 999);
+        return {
+          startDate: selectedDate.toISOString(),
+          endDate: endOfSelected.toISOString()
+        };
+      }
+
+      default:
+        return null;
+    }
+  };
 
   async function load() {
     setLoading(true);
     try {
+      const params = {
+        q,
+        status,
+        page,
+        limit: 20
+      };
+
+      // Add date range if filter is active
+      const dateRange = getDateRange();
+      if (dateRange) {
+        params.startDate = dateRange.startDate;
+        params.endDate = dateRange.endDate;
+      }
+
       const { data } = await api.get("/orders", {
-        params: { q, status, page, limit: 20 },
+        params,
         ...auth
       });
+
       setItems(data.items || data.orders || []);
       setTotal(data.total || 0);
       setSelected(prev => {
@@ -51,7 +120,7 @@ export default function AdminOrders() {
         return keep;
       });
     } catch (error) {
-
+      console.error("Load error:", error);
       t.err("Failed to load orders");
     } finally {
       setLoading(false);
@@ -75,7 +144,7 @@ export default function AdminOrders() {
   useEffect(() => {
     load();
     loadProfiles();
-  }, [status, page]);
+  }, [status, page, dateFilter, customDate]);
 
   useEffect(() => {
     const timer = setTimeout(load, 300);
@@ -381,48 +450,136 @@ export default function AdminOrders() {
 
         {/* Controls */}
         <div className="card mb-4">
-          <div className="flex flex-wrap gap-4">
-            <input
-              type="text"
-              placeholder="Search orders by ID, customer, email..."
-              className="flex-1 min-w-64"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
+          <div className="space-y-3">
+            {/* Row 1: Search and Status */}
+            <div className="flex flex-wrap gap-4">
+              <input
+                type="text"
+                placeholder="Search orders by ID, customer, email..."
+                className="flex-1 min-w-64"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
 
-            <select
-              className="min-w-32"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+              <select
+                className="min-w-32"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
 
-            <select
-              className="min-w-40"
-              value={selectedProfile}
-              onChange={(e) => setSelectedProfile(e.target.value)}
-            >
-              <option value="">Default Profile</option>
-              {profiles.map(p => (
-                <option key={p._id} value={p._id}>
-                  {p.name} {p.isDefault ? "(Default)" : ""}
-                </option>
-              ))}
-            </select>
+              <select
+                className="min-w-40"
+                value={selectedProfile}
+                onChange={(e) => setSelectedProfile(e.target.value)}
+              >
+                <option value="">Default Profile</option>
+                {profiles.map(p => (
+                  <option key={p._id} value={p._id}>
+                    {p.label} {p.isDefault ? "(Default)" : ""}
+                  </option>
+                ))}
+              </select>
 
-            <button
-              onClick={() => load()}
-              disabled={loading}
-              className="btn-secondary"
-            >
-              {loading ? "Loading..." : "Refresh"}
-            </button>
+              <button
+                onClick={() => load()}
+                disabled={loading}
+                className="btn-secondary"
+              >
+                {loading ? "Loading..." : "Refresh"}
+              </button>
+            </div>
+
+            {/* Row 2: Date Filters */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-600">Filter by date:</span>
+
+              <button
+                onClick={() => {
+                  setDateFilter("all");
+                  setCustomDate("");
+                }}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${dateFilter === "all"
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                All Dates
+              </button>
+
+              <button
+                onClick={() => {
+                  setDateFilter("today");
+                  setCustomDate("");
+                }}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${dateFilter === "today"
+                  ? "bg-green-500 text-white border-green-500"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                Today
+              </button>
+
+              <button
+                onClick={() => {
+                  setDateFilter("yesterday");
+                  setCustomDate("");
+                }}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${dateFilter === "yesterday"
+                  ? "bg-yellow-500 text-white border-yellow-500"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                Yesterday
+              </button>
+
+              <button
+                onClick={() => {
+                  setDateFilter("tomorrow");
+                  setCustomDate("");
+                }}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${dateFilter === "tomorrow"
+                  ? "bg-purple-500 text-white border-purple-500"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+              >
+                Tomorrow
+              </button>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Custom:</span>
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => {
+                    setCustomDate(e.target.value);
+                    setDateFilter("custom");
+                  }}
+                  className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${dateFilter === "custom"
+                    ? "border-orange-500 ring-2 ring-orange-200"
+                    : "border-gray-300"
+                    }`}
+                />
+                {customDate && (
+                  <button
+                    onClick={() => {
+                      setCustomDate("");
+                      setDateFilter("all");
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                    title="Clear date"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         {/* Bulk Actions */}

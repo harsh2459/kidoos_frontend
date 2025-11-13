@@ -1,4 +1,4 @@
-// src/api/client.jsx
+// src/api/client.jsx - COMPLETE FIXED VERSION
 import axios from "axios";
 
 /** Resolve base URL and normalize to ".../api" */
@@ -17,10 +17,15 @@ function resolveBaseURL() {
 }
 
 const BASE_URL = resolveBaseURL();
+
+// ✅ DON'T set default Content-Type for the instance
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 20000,
-  headers: { "Content-Type": "application/json", Accept: "application/json" },
+  headers: { 
+    Accept: "application/json" 
+    // ❌ DON'T set Content-Type here - it breaks FormData
+  },
   validateStatus: (s) => (s >= 200 && s < 300) || s === 304 || s === 400 || s === 401 || s === 422,
 });
 
@@ -47,10 +52,27 @@ api.interceptors.request.use((config) => {
     token = getTokens().admin;
   else if (url.startsWith("/customer/")) token = getTokens().customer;
 
+  // Initialize headers if not exists
+  if (!config.headers) {
+    config.headers = {};
+  }
+
+  // Add authorization token
   if (token) {
-    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // ✅ CRITICAL: Handle Content-Type correctly
+  if (config.data instanceof FormData) {
+    // For FormData, completely remove Content-Type
+    // Browser will auto-set it with boundary
+    delete config.headers["Content-Type"];
+    delete config.headers["content-type"];
+  } else if (!config.headers["Content-Type"] && !config.headers["content-type"]) {
+    // For non-FormData, set JSON as default
+    config.headers["Content-Type"] = "application/json";
+  }
+
   return config;
 });
 
