@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCustomer } from "../contexts/CustomerAuth";
-import { CustomerOTPAPI } from "../api/customer"; // keep exact path/name
+import { CustomerOTPAPI } from "../api/customer";
+
 export default function CustomerAuth() {
   const { login, register } = useCustomer();
   const nav = useNavigate();
@@ -30,14 +31,66 @@ export default function CustomerAuth() {
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
 
-  // resend countdown state
-  const RESEND_SECONDS = 45; // keep in sync with your backend RESEND_GAP_S
+  const RESEND_SECONDS = 45;
   const [cooldown, setCooldown] = useState(0);
   const timerRef = useRef(null);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[0-9]{10}$/;
+
+  // Function to check if phone number is fake/invalid
+  function isValidRealPhone(phone) {
+    const p = phone.trim();
+    
+    // Must be exactly 10 digits
+    if (!phoneRegex.test(p)) return false;
+    
+    // Indian phone numbers must start with 6, 7, 8, or 9
+    if (!['6', '7', '8', '9'].includes(p[0])) return false;
+    
+    // Check for all same digits (0000000000, 1111111111, etc.)
+    if (/^(\d)\1{9}$/.test(p)) return false;
+    
+    // Check for obvious sequential patterns
+    const sequences = [
+      '0123456789', '1234567890', '9876543210', '0987654321',
+      '1111111111', '2222222222', '3333333333', '4444444444',
+      '5555555555', '6666666666', '7777777777', '8888888888',
+      '9999999999', '0000000000'
+    ];
+    if (sequences.includes(p)) return false;
+    
+    // Check if too few unique digits (less than 5 unique digits is suspicious)
+    const uniqueDigits = new Set(p.split(''));
+    if (uniqueDigits.size < 5) return false;
+    
+    // Check for repeated pairs (6677889900, 1122334455)
+    // Must have at least 4 pairs to be considered fake
+    const pairs = p.match(/(\d)\1/g) || [];
+    if (pairs.length >= 4) return false;
+    
+    // Check for consecutive triples in sequence (like 666777888)
+    if (/(\d)\1{2}(\d)\2{2}/.test(p)) return false;
+    
+    // Check for 4+ consecutive same digits (like 6666 or 7777)
+    if (/(\d)\1{3,}/.test(p)) return false;
+    
+    // Check for ascending/descending sequences of 5+ digits
+    let ascending = 0, descending = 0;
+    for (let i = 1; i < p.length; i++) {
+      if (parseInt(p[i]) === parseInt(p[i-1]) + 1) ascending++;
+      else ascending = 0;
+      
+      if (parseInt(p[i]) === parseInt(p[i-1]) - 1) descending++;
+      else descending = 0;
+      
+      if (ascending >= 4 || descending >= 4) return false;
+    }
+    
+    return true;
+  }
 
   function normalizeForm(f) {
     return {
@@ -52,7 +105,6 @@ export default function CustomerAuth() {
     };
   }
 
-  // cooldown tick
   useEffect(() => {
     if (cooldown <= 0) return;
     timerRef.current = setTimeout(() => setCooldown((c) => c - 1), 1000);
@@ -70,7 +122,6 @@ export default function CustomerAuth() {
 
   function onEmailChange(v) {
     set("email", v);
-    // any edit to email invalidates previous ticket
     resetOtpFlow();
   }
 
@@ -91,6 +142,10 @@ export default function CustomerAuth() {
   }
 
   const emailValid = useMemo(() => emailRegex.test((form.email || "").trim()), [form.email]);
+  const phoneValid = useMemo(() => {
+    const p = (form.phone || "").trim();
+    return phoneRegex.test(p) && isValidRealPhone(p);
+  }, [form.phone]);
 
   async function sendEmailOtp() {
     try {
@@ -123,7 +178,7 @@ export default function CustomerAuth() {
       if (data?.ticket) {
         set("emailOtpTicket", data.ticket);
         setEmailVerified(true);
-        setInfo("Email verified ✔");
+        setInfo("Email verified ✓");
       } else {
         setErr("Verification failed");
       }
@@ -154,35 +209,52 @@ export default function CustomerAuth() {
           nav(next, { replace: true });
         }
       } else {
-        // SIGNUP
-        if (!f.name || !f.password || (!f.email && !f.phone)) {
-          setErr("Name, Password and either Email or Phone are required");
+        // SIGNUP - Both Email and Phone are REQUIRED
+        if (!f.name || !f.password || !f.email || !f.phone) {
+          setErr("Name, Email, Phone number and Password are all required");
           setLoading(false);
           return;
         }
+        
+        // Validate email format
+        if (!emailValid) {
+          setErr("Please enter a valid email address");
+          setLoading(false);
+          return;
+        }
+        
+        // Validate phone number format
+        if (!phoneValid) {
+          setErr("Please enter a valid Indian mobile number (starting with 6, 7, 8, or 9)");
+          setLoading(false);
+          return;
+        }
+
+        // Email must be verified for signup
+        if (!emailVerified) {
+          setErr("Please verify your email before creating the account");
+          setLoading(false);
+          return;
+        }
+
         if (f.password.length < 6) {
           setErr("Password must be at least 6 characters");
           setLoading(false);
           return;
         }
+        
         if (f.password !== f.confirmPassword) {
           setErr("Passwords do not match");
-          setLoading(false);
-          return;
-        }
-        // If using email, it MUST be verified and must include a ticket
-        if (f.email && !emailVerified) {
-          setErr("Please verify your email before creating the account");
           setLoading(false);
           return;
         }
 
         await register({
           name: f.name,
-          email: f.email || undefined,
-          phone: f.phone || undefined,
+          email: f.email,
+          phone: f.phone,
           password: f.password,
-          emailOtpTicket: f.email ? f.emailOtpTicket : undefined, // pass ticket when email signup
+          emailOtpTicket: f.emailOtpTicket,
         });
         nav(next, { replace: true });
       }
@@ -227,23 +299,25 @@ export default function CustomerAuth() {
           <form onSubmit={submit} className="space-y-4">
             {mode === "signup" && (
               <div>
-                <label className="block text-sm mb-1">Name</label>
+                <label className="block text-sm mb-1 font-medium">
+                  Name <span className="text-danger">*</span>
+                </label>
                 <input
                   className="w-full"
                   placeholder="Your name"
                   value={form.name}
                   onChange={(e) => set("name", e.target.value)}
                   autoFocus
+                  required={mode === "signup"}
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm mb-1">
-                Email 
+              <label className="block text-sm mb-1 font-medium">
+                Email {mode === "signup" && <span className="text-danger">*</span>}
               </label>
 
-              {/* Email + Verify/Resend button inline */}
               <div className="relative">
                 <input
                   type="email"
@@ -252,6 +326,7 @@ export default function CustomerAuth() {
                   disabled={emailVerified}
                   value={form.email}
                   onChange={(e) => onEmailChange(e.target.value)}
+                  required={mode === "signup"}
                 />
                 {mode === "signup" && (
                   <button
@@ -263,7 +338,7 @@ export default function CustomerAuth() {
                       !emailValid ||
                       cooldown > 0
                     }
-                    className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-3 py-1 rounded-md border bg-surface hover:bg-surface-subtle"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-3 py-1 rounded-md border bg-surface hover:bg-surface-subtle disabled:opacity-50"
                     title={!emailValid ? "Enter a valid email" : ""}
                   >
                     {emailVerified
@@ -277,7 +352,6 @@ export default function CustomerAuth() {
                 )}
               </div>
 
-              {/* OTP input appears after we send and until verified */}
               {mode === "signup" && emailOtpSent && !emailVerified && (
                 <div className="mt-2 flex gap-2">
                   <input
@@ -290,33 +364,49 @@ export default function CustomerAuth() {
                     type="button"
                     onClick={verifyEmailOtp}
                     disabled={otpVerifying || !form.emailOtp.trim()}
-                    className="px-3 py-2 rounded-md border bg-surface hover:bg-surface-subtle"
+                    className="px-3 py-2 rounded-md border bg-surface hover:bg-surface-subtle disabled:opacity-50"
                   >
                     {otpVerifying ? "Checking…" : "Submit OTP"}
                   </button>
                 </div>
               )}
 
-              {/* Inline info */}
               {info && (
-                <div className="mt-2 text-xs text-fg-subtle">
+                <div className="mt-2 text-xs text-success">
                   {info}
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Phone</label>
+              <label className="block text-sm mb-1 font-medium">
+                Phone Number {mode === "signup" && <span className="text-danger">*</span>}
+              </label>
               <input
+                type="tel"
                 className="w-full"
-                placeholder="99999 99999"
+                placeholder="9999999999"
                 value={form.phone}
-                onChange={(e) => set("phone", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  set("phone", value);
+                }}
+                maxLength="10"
+                required={mode === "signup"}
               />
+              {mode === "signup" && form.phone && !phoneValid && (
+                <p className="text-xs text-danger mt-1">
+                  {form.phone.length === 10 
+                    ? "Invalid phone number. Please enter a real mobile number starting with 6, 7, 8, or 9"
+                    : "Please enter a valid 10-digit phone number"}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Password</label>
+              <label className="block text-sm mb-1 font-medium">
+                Password <span className="text-danger">*</span>
+              </label>
               <div className="relative">
                 <input
                   type={showPwd ? "text" : "password"}
@@ -324,6 +414,7 @@ export default function CustomerAuth() {
                   placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => set("password", e.target.value)}
+                  required
                 />
                 <button
                   type="button"
@@ -333,11 +424,16 @@ export default function CustomerAuth() {
                   {showPwd ? "Hide" : "Show"}
                 </button>
               </div>
+              {mode === "signup" && (
+                <p className="text-xs text-fg-subtle mt-1">Minimum 6 characters</p>
+              )}
             </div>
 
             {mode === "signup" && (
               <div>
-                <label className="block text-sm mb-1">Confirm password</label>
+                <label className="block text-sm mb-1 font-medium">
+                  Confirm Password <span className="text-danger">*</span>
+                </label>
                 <div className="relative">
                   <input
                     type={showPwd2 ? "text" : "password"}
@@ -345,6 +441,7 @@ export default function CustomerAuth() {
                     placeholder="••••••••"
                     value={form.confirmPassword}
                     onChange={(e) => set("confirmPassword", e.target.value)}
+                    required
                   />
                   <button
                     type="button"
@@ -367,10 +464,6 @@ export default function CustomerAuth() {
               {loading ? "Please wait…" : mode === "login" ? "Login" : "Create account"}
             </button>
           </form>
-
-          <div className="mt-4 text-xs text-fg-subtle text-center">
-            By continuing you agree to our terms & privacy policy.
-          </div>
         </div>
       </div>
     </div>

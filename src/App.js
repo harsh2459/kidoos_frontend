@@ -30,11 +30,12 @@ import EmailTemplates from './pages/Admin/EmailTemplates';
 import Footer from './components/Footer';
 import AdminLayout from './components/AdminLayout';
 import BlueDartProfiles from './pages/Admin/BlueDartProfiles';
-
+import AboutUs from './pages/AboutUs';
+import WhatsAppButton from './components/WhatsAppButton';
 
 function InnerApp() {
   const loc = useLocation();
-  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog';
+  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus';
 
   function RequireCustomer({ children }) {
     const { isCustomer } = useCustomer();
@@ -53,6 +54,7 @@ function InnerApp() {
           {/* public pages gated by Visibility */}
           <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
           <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
+          <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
           <Route
             path="/checkout"
             element={
@@ -61,7 +63,7 @@ function InnerApp() {
               </RequireCustomer>
             }
           />
-                    <Route path="/book/:slug" element={<BookDetail />} />
+          <Route path="/book/:slug" element={<BookDetail />} />
           <Route
             path="/cart"
             element={
@@ -120,12 +122,12 @@ function InnerApp() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-
+      <WhatsAppButton initial={{ x: 20, y: 220 }} phone="919879857529" />
       {showFooter && (
         <Footer
           contact={{
             email: "kiddosintellect@gmail.com",
-            phone: "+91 98796 20138",
+            phone: "+91 98798 57529",
             hours: "Mon–Sat, 10am–6pm IST",
           }}
           links={[

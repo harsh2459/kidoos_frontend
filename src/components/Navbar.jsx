@@ -46,7 +46,7 @@ export default function Navbar() {
 
   // shopper UI rules
   const showShopUI = !isAdmin && !onAdminPage;      // show catalog + cart
-  const showLogin  = !isAdmin && !isCustomer && !onAdminPage;
+  const showLogin = !isAdmin && !isCustomer && !onAdminPage;
 
   // brand visibility: hide logo whenever an admin is logged in
   const showBrand = !isAdmin;
@@ -82,6 +82,7 @@ export default function Navbar() {
             <Link
               to="/catalog"
               className="
+                mr-3
                 relative tracking-[0.25em] text-sm
                 after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
                 after:block after:h-[2px] after:w-full after:bg-current/80
@@ -90,6 +91,19 @@ export default function Navbar() {
               "
             >
               CATALOG
+            </Link>
+            <Link
+              to="/aboutus"
+              className="
+              ml-3
+                relative tracking-[0.25em] text-sm
+                after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
+                after:block after:h-[2px] after:w-full after:bg-current/80
+                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
+                hover:after:scale-x-100
+              "
+            >
+              ABOUT US
             </Link>
           </nav>
         )}

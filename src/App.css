@@ -60,3 +60,13 @@ body {
   scrollbar-width: none;
   /* Firefox */
 }
+
+::selection {
+  background: #000;   /* black highlight */
+  color: #fff;        /* white text when selected */
+}
+
+::-moz-selection {
+  background: #000;
+  color: #fff;
+}

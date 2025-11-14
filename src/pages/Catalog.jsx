@@ -100,6 +100,7 @@ export default function Catalog() {
       if (page <= 3) {
         end = Math.min(totalPages - 1, 5);
       }
+      
       // Adjust if we're near the end
       if (page >= totalPages - 2) {
         start = Math.max(2, totalPages - 4);
