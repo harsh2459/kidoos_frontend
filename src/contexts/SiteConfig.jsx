@@ -5,12 +5,12 @@ const SiteCtx = createContext(null);
 
 export function SiteProvider({ children }) {
   const [loaded, setLoaded] = useState(false);
-  const [site, setSite] = useState({ title: "Catalogue", logoUrl: "", faviconUrl: "" });
+  const [site, setSite] = useState({ title: "kiddos intellect", logoUrl: "", faviconUrl: "" });
   const [theme, setTheme] = useState({});
   const [homepage, setHomepage] = useState({ blocks: [] });
   const [payments, setPayments] = useState({ providers: [] });
   const [visibility, setVisibility] = useState({             // <-- NEW
-    publicNav: ["catalog","theme","admin","cart"],
+    publicNav: ["kiddos intellect","theme","admin","cart"],
     pages: {}
   });
 

@@ -71,7 +71,7 @@ export default function Footer({ contact, links }) {
 
                         <p className="mt-4 text-sm leading-6 text-white">
                             Hand-picked children’s books and learning materials for curious
-                            minds. Fast shipping across India.
+                            minds. Fast shipping across India.                            
                         </p>
                     </div>
 

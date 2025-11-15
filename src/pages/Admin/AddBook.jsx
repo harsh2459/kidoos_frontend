@@ -15,7 +15,7 @@ export default function AddBook() {
   const [uploading, setUploading] = useState(false);
 
   // MULTI images
-  const [coverUrls, setCoverUrls] = useState([]); // string[] relative "/public/..."
+  const [coverUrls, setCoverUrls] = useState([]); // string[] relative..."
 
   const [form, setForm] = useState({
     title: "", subtitle: "", authors: "",

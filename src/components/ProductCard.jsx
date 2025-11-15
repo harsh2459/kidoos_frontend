@@ -1,11 +1,11 @@
 // src/components/ProductCard.jsx
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
 import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
-import { CustomerAPI } from "../api/customer";
+import { CustomerAPI } from "../api/customer"; // ✅ Removed debugCustomerAuth
 import { t } from "../lib/toast";
 
 function CartIcon({ className = "" }) {
@@ -28,8 +28,6 @@ function CartIcon({ className = "" }) {
 
 export default function ProductCard({ book }) {
   const d = dealFn(book);
-
-  const location = useLocation();
   const navigate = useNavigate();
 
   const items = useCart((s) => s.items);
@@ -47,27 +45,69 @@ export default function ProductCard({ book }) {
     setTimeout(() => setPop(false), 600);
     window.dispatchEvent(new Event("cart:add"));
 
+    // Check if customer is logged in
     if (!isCustomer) {
+      console.warn("⚠️ User not logged in, redirecting to login");
       t.info("Please login to add items to your cart");
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
 
+    // ✅ Simple token check (no external function needed)
     try {
+      const hasToken = !!localStorage.getItem("customer_jwt");
+      if (!hasToken) {
+        console.error("❌ No customer token found!");
+        t.err("Session expired, please login again");
+        navigate("/login", { state: { next: "/cart" } });
+        return;
+      }
+
+      console.log("🛒 Adding to cart:", {
+        bookId: id,
+        bookTitle: book.title,
+        isCustomer,
+        hasToken,
+        assets: book.assets,
+      });
+
+      // Call API with token (interceptor will attach it)
       const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+
+      console.log("✅ Cart updated successfully:", res.data);
+
+      // Update local cart state
       replaceAll(res?.data?.cart?.items || []);
+
       t.ok("Added to cart");
       navigate("/cart");
+
     } catch (e) {
-      
-      // Fallback: still add locally so UX is smooth
+      console.error("❌ Add to cart failed:", {
+        status: e?.response?.status,
+        error: e?.response?.data,
+        message: e.message
+      });
+
+      // Handle 401 specifically
+      if (e?.response?.status === 401) {
+        t.err("Session expired, please login again");
+        localStorage.removeItem("customer_jwt");
+        localStorage.removeItem("customer_profile");
+        navigate("/login", { state: { next: "/cart" } });
+        return;
+      }
+
+      // Fallback: Add locally for better UX
+      console.log("ℹ️ Falling back to local cart");
       addLocal({
         ...book,
-        price: book.price || book.pric || book.mrp, // ensure price is set
-        mrp: book.mrp || book.price || book.pric,   // ensure mrp is set (for discount display)
+        price: book.price || book.pric || book.mrp,
+        mrp: book.mrp || book.price || book.pric,
         qty: 1
       });
-      t.ok("Added to cart");
+
+      t.warn("Added to local cart (sync with server failed)");
       navigate("/cart");
     }
   };
@@ -77,7 +117,6 @@ export default function ProductCard({ book }) {
     navigate("/cart");
   };
 
-  // Prefer first image as cover (your current rule)
   const cover =
     (Array.isArray(book?.assets?.coverUrl)
       ? book.assets.coverUrl[0]
@@ -85,7 +124,6 @@ export default function ProductCard({ book }) {
 
   return (
     <article className="card card-hover p-4 flex flex-col h-full">
-      {/* Image */}
       <Link
         to={`/book/${book.slug}`}
         title={book.title}
@@ -116,7 +154,6 @@ export default function ProductCard({ book }) {
         />
       </Link>
 
-      {/* Title & authors */}
       <Link
         to={`/book/${book.slug}`}
         className="mt-3 font-medium text-fg leading-tight line-clamp-2"
@@ -127,9 +164,7 @@ export default function ProductCard({ book }) {
         {(book.authors || []).join(", ")}
       </div>
 
-      {/* Pricing + CTA */}
       <div className="mt-auto pt-3 flex items-center justify-between gap-3">
-        {/* Pricing block: Price, MRP (struck), Discount badge */}
         <div className="flex items-baseline gap-2">
           <div className="font-semibold">₹{d.price}</div>
           {d.mrp > d.price && (
@@ -144,7 +179,6 @@ export default function ProductCard({ book }) {
           )}
         </div>
 
-        {/* CTA */}
         {!inCart ? (
           <button
             onClick={addToCart}
@@ -203,12 +237,6 @@ export default function ProductCard({ book }) {
           </button>
         )}
       </div>
-
-      <style>{`
-        @media (prefers-reduced-motion: reduce) {
-          .group:hover img { transform: none !important; }
-        }
-      `}</style>
     </article>
   );
 }

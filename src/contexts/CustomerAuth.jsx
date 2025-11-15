@@ -5,9 +5,7 @@ import { api } from "../api/client";
 const LS_KEY = "customer_jwt";
 
 // MUST match your backend mount: app.use("/api/customer", customerRoutes)
-const CUST_PREFIX =
-  process.env.REACT_APP_CUST_API_PREFIX?.trim() || "/customer";
-
+const CUST_PREFIX = process.env.REACT_APP_CUST_API_PREFIX?.trim() || "/customer";
 const withPrefix = (p) => `${CUST_PREFIX}${p}`;
 
 const Ctx = createContext(null);
@@ -19,10 +17,10 @@ export const useCustomer = () =>
     customer: null,
     isCustomer: false,
     loading: false,
-    login: async () => { },
-    register: async () => { },
-    logout: () => { },
-    setCustomer: () => { },
+    login: async () => {},
+    register: async () => {},
+    logout: () => {},
+    setCustomer: () => {},
   };
 
 // Try a few paths so it works whether your routes are /auth/login or /login
@@ -46,25 +44,15 @@ export default function CustomerProvider({ children }) {
   const [loading, setLoading] = useState(Boolean(token));
   const isCustomer = Boolean(token && customer);
 
-  // Attach token **only** for /customer/* requests so admin APIs are unaffected
-  useEffect(() => {
-    const id = api.interceptors.request.use((cfg) => {
-      const url = String(cfg?.url || "");
-      const targetIsCustomer =
-        url.startsWith(CUST_PREFIX) || url.includes(`${CUST_PREFIX}/`);
-      if (token && targetIsCustomer) {
-        cfg.headers = { ...(cfg.headers || {}), Authorization: `Bearer ${token}` };
-      }
-      return cfg;
-    });
-    return () => api.interceptors.request.eject(id);
-  }, [token]);
-
   async function refresh() {
-    if (!token) { setLoading(false); return; }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
+      // Use meta.auth to ensure proper token attachment
       const { data } = await api.get(withPrefix("/me"), {
-        headers: { Authorization: `Bearer ${token}` },
+        meta: { auth: "customer" },
       });
       setCustomer(data?.customer || null);
     } catch {
@@ -75,12 +63,25 @@ export default function CustomerProvider({ children }) {
       setLoading(false);
     }
   }
-  useEffect(() => { refresh(); /* eslint-disable-line */ }, []);
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function login({ email, phone, password }) {
-    const body = { email: email || undefined, phone: phone || undefined, password };
+    const body = { 
+      email: email || undefined, 
+      phone: phone || undefined, 
+      password 
+    };
+    
     const { data } = await postWithFallback(["/auth/login", "/login"], body);
-    if (!data?.token) throw new Error(data?.error || "Login failed");
+    
+    if (!data?.token) {
+      throw new Error(data?.error || "Login failed");
+    }
+    
     localStorage.setItem(LS_KEY, data.token);
     setToken(data.token);
     setCustomer(data.customer || null);
@@ -93,10 +94,15 @@ export default function CustomerProvider({ children }) {
       email: email || undefined,
       phone: phone || undefined,
       password,
-      emailOtpTicket,              // <-- forward the short-lived ticket
+      emailOtpTicket,
     };
+    
     const { data } = await postWithFallback(["/auth/register", "/register"], body);
-    if (!data?.token) throw new Error(data?.error || "Registration failed");
+    
+    if (!data?.token) {
+      throw new Error(data?.error || "Registration failed");
+    }
+    
     localStorage.setItem(LS_KEY, data.token);
     setToken(data.token);
     setCustomer(data.customer || null);
@@ -109,10 +115,19 @@ export default function CustomerProvider({ children }) {
     setCustomer(null);
   }
 
-  const value = useMemo(() => ({
-    token, customer, isCustomer, loading,
-    login, register, logout, setCustomer,
-  }), [token, customer, isCustomer, loading]);
+  const value = useMemo(
+    () => ({
+      token,
+      customer,
+      isCustomer,
+      loading,
+      login,
+      register,
+      logout,
+      setCustomer,
+    }),
+    [token, customer, isCustomer, loading]
+  );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

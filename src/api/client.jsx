@@ -1,4 +1,4 @@
-// src/api/client.jsx - COMPLETE FIXED VERSION
+// src/api/client.jsx - FULLY FIXED VERSION
 import axios from "axios";
 
 /** Resolve base URL and normalize to ".../api" */
@@ -11,20 +11,23 @@ function resolveBaseURL() {
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api");
-  if (apiIdx === -1) u = `${u}/api`;
-  else if (apiIdx !== u.length - 4) u = u.slice(0, apiIdx + 4);
+  
+  if (apiIdx === -1) {
+    u = `${u}/api`;
+  } else if (apiIdx !== u.length - 4) {
+    u = u.slice(0, apiIdx + 4);
+  }
+  
   return u;
 }
 
 const BASE_URL = resolveBaseURL();
 
-// ✅ DON'T set default Content-Type for the instance
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 20000,
-  headers: { 
-    Accept: "application/json" 
-    // ❌ DON'T set Content-Type here - it breaks FormData
+  headers: {
+    Accept: "application/json"
   },
   validateStatus: (s) => (s >= 200 && s < 300) || s === 304 || s === 400 || s === 401 || s === 422,
 });
@@ -40,17 +43,33 @@ function getTokens() {
   }
 }
 
-/** Attach admin token for /books, /admin, /auth; customer for /customer */
+/** ✅ IMPROVED: Attach tokens based on URL pattern and meta.auth */
 api.interceptors.request.use((config) => {
   const url = String(config?.url || "");
   const metaAuth = config?.meta?.auth;
   let token = "";
 
-  if (metaAuth === "admin" || metaAuth === "customer") token = getTokens()[metaAuth];
-  else if (metaAuth === "none") token = "";
-  else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books"))
+  console.log("🔍 Request interceptor:", { url, metaAuth });
+
+  // ✅ Priority 1: Explicit meta.auth directive
+  if (metaAuth === "admin") {
     token = getTokens().admin;
-  else if (url.startsWith("/customer/")) token = getTokens().customer;
+    console.log("✅ Using admin token (explicit)");
+  } else if (metaAuth === "customer") {
+    token = getTokens().customer;
+    console.log("✅ Using customer token (explicit)");
+  } else if (metaAuth === "none") {
+    token = "";
+    console.log("✅ No auth required (explicit)");
+  }
+  // ✅ Priority 2: Auto-detect from URL pattern
+  else if (url.startsWith("/customer/")) {
+    token = getTokens().customer;
+    console.log("✅ Using customer token (auto-detected from /customer/)");
+  } else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
+    token = getTokens().admin;
+    console.log("✅ Using admin token (auto-detected)");
+  }
 
   // Initialize headers if not exists
   if (!config.headers) {
@@ -60,16 +79,16 @@ api.interceptors.request.use((config) => {
   // Add authorization token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log("🔑 Token attached:", token.substring(0, 20) + "...");
+  } else {
+    console.warn("⚠️ No token attached for:", url);
   }
 
   // ✅ CRITICAL: Handle Content-Type correctly
   if (config.data instanceof FormData) {
-    // For FormData, completely remove Content-Type
-    // Browser will auto-set it with boundary
     delete config.headers["Content-Type"];
     delete config.headers["content-type"];
   } else if (!config.headers["Content-Type"] && !config.headers["content-type"]) {
-    // For non-FormData, set JSON as default
     config.headers["Content-Type"] = "application/json";
   }
 
@@ -77,26 +96,40 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    console.log("✅ Response success:", res.config.url, res.status);
+    return res;
+  },
   (err) => {
     const status = err?.response?.status;
     const url = String(err?.config?.url || "");
+    console.error("❌ Response error:", { url, status, error: err?.response?.data });
+    
     if (status === 401) {
+      console.error("🚫 401 Unauthorized for:", url);
       try {
-        if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
-          localStorage.removeItem("admin_jwt");
-          if (typeof window !== "undefined" && window.location.pathname !== "/admin/login") {
-            window.location.href = "/admin/login";
-          }
-        } else if (url.startsWith("/customer/")) {
+        // ✅ Check if it's a customer route
+        if (url.startsWith("/customer/")) {
+          console.error("🚫 Customer token invalid, logging out");
           localStorage.removeItem("customer_jwt");
           localStorage.removeItem("customer_profile");
           if (typeof window !== "undefined" && window.location.pathname !== "/login") {
             window.location.href = "/login";
           }
         }
-      } catch {}
+        // Admin routes
+        else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
+          console.error("🚫 Admin token invalid, logging out");
+          localStorage.removeItem("admin_jwt");
+          if (typeof window !== "undefined" && window.location.pathname !== "/admin/login") {
+            window.location.href = "/admin/login";
+          }
+        }
+      } catch (e) {
+        console.error("Error handling 401:", e);
+      }
     }
+    
     return Promise.reject(err);
   }
 );

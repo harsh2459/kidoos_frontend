@@ -1,4 +1,4 @@
-// src/pages/BookDetail.jsx - REDESIGNED
+// src/pages/BookDetail.jsx - FIXED COVER IMAGE LOGIC
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -29,11 +29,33 @@ export default function BookDetail() {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Gallery
-  const images = useMemo(
-    () => (Array.isArray(book?.assets?.coverUrl) ? book.assets.coverUrl.filter(Boolean) : []),
-    [book]
-  );
+  // ✅ IMPROVED: Get all possible cover images
+  const images = useMemo(() => {
+    if (!book) return [];
+    
+    // Try assets.coverUrl first (preferred structure)
+    if (book.assets?.coverUrl) {
+      if (Array.isArray(book.assets.coverUrl)) {
+        return book.assets.coverUrl.filter(Boolean);
+      }
+      if (typeof book.assets.coverUrl === 'string') {
+        return [book.assets.coverUrl];
+      }
+    }
+    
+    // Fallback to old coverUrl structure
+    if (book.coverUrl) {
+      if (Array.isArray(book.coverUrl)) {
+        return book.coverUrl.filter(Boolean);
+      }
+      if (typeof book.coverUrl === 'string') {
+        return [book.coverUrl];
+      }
+    }
+    
+    return [];
+  }, [book]);
+
   const [active, setActive] = useState(0);
 
   // Cart
@@ -41,6 +63,7 @@ export default function BookDetail() {
   const add = useCart((s) => s.add);
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
+  const replaceAll = useCart((s) => s.replaceAll);
   const { isCustomer, token } = useCustomer();
 
   // Fetch book
@@ -114,13 +137,19 @@ export default function BookDetail() {
     }
 
     try {
+      // Add locally first for immediate feedback
       add({ ...book, id, assets: { ...book.assets } }, 1);
-      if (isCustomer) {
-        await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
-      }
+      
+      // Then sync with server
+      const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+      
+      // Update cart with server response
+      replaceAll(res?.data?.cart?.items || []);
+      
       t.ok("Added to cart");
     } catch (e) {
-      t.err("Could not add to cart");
+      console.error("Add to cart error:", e);
+      t.err("Could not sync with server, but added locally");
     }
   }
 
@@ -150,7 +179,7 @@ export default function BookDetail() {
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* LEFT: GALLERY */}
-          <div className="lg:sticky lg:top-24 self-start">
+          <div className="self-start">
             {/* Main Image */}
             <div className="relative rounded-2xl overflow-hidden bg-white shadow-xl border border-gray-100 aspect-[3/4]">
               {mainSrc ? (

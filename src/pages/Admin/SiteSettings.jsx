@@ -39,7 +39,7 @@ export default function SiteSettings() {
       return { path: res.data.images[0].path, previewUrl: res.data.images[0].previewUrl };  // Ensure correct data structure from response
     } catch (error) {
       t.err("Error uploading image.");
-      
+
       return {};
     }
   }
@@ -75,31 +75,44 @@ export default function SiteSettings() {
     e.preventDefault();
     setSaving(true);
 
-    // Ensure relative paths before sending to the backend
-    const payload = {
-      title: form.title || "",
-      logoUrl: toRelativeFromPublic(form.logoUrl || ""),
-      faviconUrl: toRelativeFromPublic(form.faviconUrl || ""),
-    };
+    try {
+      // Ensure relative paths before sending to the backend
+      const payload = {
+        title: form.title || "",
+        logoUrl: toRelativeFromPublic(form.logoUrl || ""),
+        faviconUrl: toRelativeFromPublic(form.faviconUrl || ""),
+      };
 
-    // Save settings
-    await api.put("/settings/site", payload, auth);
-    t.ok("Saved");
-    setSaving(false);
+      // Save settings - FIXED: properly await the response
+      const response = await api.put("/settings/site", payload, auth);
 
-    // Update favicon + title in browser immediately (using absolute path for href)
-    if (form.faviconUrl) {
-      const absFavi = assetUrl(form.faviconUrl);
-      let link = document.querySelector("link[rel='icon']");
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "icon";
-        document.head.appendChild(link);
+      // Check if save was successful
+      if (response.data.ok) {
+        t.ok("Saved successfully");
+
+        // Update favicon + title in browser immediately (using absolute path for href)
+        if (form.faviconUrl) {
+          const absFavi = assetUrl(form.faviconUrl);
+          let link = document.querySelector("link[rel='icon']");
+          if (!link) {
+            link = document.createElement("link");
+            link.rel = "icon";
+            document.head.appendChild(link);
+          }
+          link.href = absFavi;
+        }
+        if (form.title) document.title = form.title;
+      } else {
+        t.err("Failed to save settings");
       }
-      link.href = absFavi;
+    } catch (error) {
+      console.error("Save error:", error);
+      t.err(error.response?.data?.error || "Error saving settings");
+    } finally {
+      setSaving(false);
     }
-    if (form.title) document.title = form.title;
   }
+
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">

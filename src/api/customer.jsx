@@ -4,33 +4,48 @@ export const CustomerAPI = {
   async register(payload) {
     return api.post("/customer/auth/register", payload);
   },
+  
   async login(payload) {
     return api.post("/customer/auth/login", payload);
   },
+  
   async me(token) {
-    return api.get("/customer/me", token ? { headers: { Authorization: `Bearer ${token}` } } : {});
+    return api.get("/customer/me", { meta: { auth: "customer" } });
   },
+  
   async updateProfile(token, patch) {
-    return api.patch("/customer/me", patch, { headers: { Authorization: `Bearer ${token}` } });
+    return api.patch("/customer/me", patch, { meta: { auth: "customer" } });
   },
+  
   async getCart(token) {
-    return api.get("/customer/cart", { headers: { Authorization: `Bearer ${token}` } });
+    return api.get("/customer/cart", { meta: { auth: "customer" } });
   },
+  
   async addToCart(token, { bookId, qty }) {
-    return api.post("/customer/cart/add", { bookId, qty }, { headers: { Authorization: `Bearer ${token}` } });
+    return api.post(
+      "/customer/cart/add", 
+      { bookId, qty }, 
+      { meta: { auth: "customer" } }
+    );
   },
+  
   async setCartQty(token, { itemId, qty }) {
     return api.patch(
       "/customer/cart/qty",
       { itemId, qty },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { meta: { auth: "customer" } }
     );
   },
+  
   async removeCartItem(token, itemId) {
-    return api.delete(`/customer/cart/item/${itemId}`, { headers: { Authorization: `Bearer ${token}` } });
+    return api.delete(
+      `/customer/cart/item/${itemId}`, 
+      { meta: { auth: "customer" } }
+    );
   },
+  
   async clearCart(token) {
-    return api.delete("/customer/cart/clear", { headers: { Authorization: `Bearer ${token}` } });
+    return api.delete("/customer/cart/clear", { meta: { auth: "customer" } });
   },
 };
 

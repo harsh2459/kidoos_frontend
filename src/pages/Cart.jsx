@@ -1,4 +1,4 @@
-// src/pages/Cart.jsx
+// src/pages/Cart.jsx - FIXED COVER IMAGE LOGIC
 import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { assetUrl } from "../api/asset";
@@ -10,8 +10,7 @@ import { t } from "../lib/toast";
 export default function Cart() {
   const navigate = useNavigate();
   const { isCustomer, token } = useCustomer();
-  console.log(assetUrl);
-    
+
   const items = useCart((s) => s.items);
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
@@ -20,33 +19,29 @@ export default function Cart() {
   const clearLocal = useCart((s) => s.clear);
   const replaceAll = useCart((s) => s.replaceAll);
 
-  // --- Hydrate from server when logged in (server is source of truth) ---
+  // --- Hydrate from server when logged in ---
   useEffect(() => {
     if (!isCustomer) return;
     (async () => {
       try {
-        const res = await CustomerAPI.getCart(token); // axios response
+        const res = await CustomerAPI.getCart(token);
         replaceAll(res?.data?.cart?.items || []);
       } catch (e) {
-       
+        console.error("Failed to load cart:", e);
       }
     })();
   }, [isCustomer, token, replaceAll]);
 
-  // --- Qty change (server-first when logged in; local-only for guest) ---
+  // --- Qty change ---
   const syncQty = async (lineId, nextQty) => {
-    if (!isCustomer) {
-      // handled per-item with setQtyLocal(bookId, nextQty)
-      return;
-    }
+    if (!isCustomer) return;
+
     try {
       const res = await CustomerAPI.setCartQty(token, { itemId: lineId, qty: nextQty });
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Quantity updated");
     } catch (e) {
-      
       t.err("Failed to update quantity");
-      // Best effort re-sync
       try {
         const fresh = await CustomerAPI.getCart(token);
         replaceAll(fresh?.data?.cart?.items || []);
@@ -54,15 +49,14 @@ export default function Cart() {
     }
   };
 
-  // --- Remove line (server-first; 404 treated as success) ---
+  // --- Remove item ---
   const removeItem = async (idForCurrentMode) => {
     if (!isCustomer) {
-      // In guest mode, this id is the bookId
       removeLocal(idForCurrentMode);
       t.ok("Item removed");
       return;
     }
-    // In logged-in mode, this id is the server lineId
+
     try {
       const res = await CustomerAPI.removeCartItem(token, idForCurrentMode);
       replaceAll(res?.data?.cart?.items || []);
@@ -77,24 +71,23 @@ export default function Cart() {
         t.info("Item was already removed");
         return;
       }
-      
       t.err("Failed to remove item");
     }
   };
 
-  // --- Clear all (server-first for logged in) ---
+  // --- Clear all ---
   const clearAll = async () => {
     if (!isCustomer) {
       clearLocal();
       t.ok("Cart cleared");
       return;
     }
+
     try {
       const res = await CustomerAPI.clearCart(token);
-      replaceAll(res?.data?.cart?.items || []); // may be []
+      replaceAll(res?.data?.cart?.items || []);
       t.ok("Cart cleared");
     } catch (e) {
- 
       t.err("Failed to clear cart");
     }
   };
@@ -106,7 +99,7 @@ export default function Cart() {
       const qty = Number(it.qty ?? 1);
       return sum + price * qty;
     }, 0);
-    const shipping = subtotal > 0 ? 0 : 0; // placeholder for future rule
+    const shipping = subtotal > 0 ? 0 : 0;
     const grand = subtotal + shipping;
     return { subtotal, shipping, grand };
   }, [items]);
@@ -118,14 +111,84 @@ export default function Cart() {
       maximumFractionDigits: 0,
     }).format(n);
 
+  // ✅ IMPROVED: Universal cover image resolver
+  const getCoverImage = (item) => {
+    // Priority 1: Check if bookId is populated (server response)
+    if (item?.bookId?.assets?.coverUrl) {
+      const covers = item.bookId.assets.coverUrl;
+      if (Array.isArray(covers) && covers.length > 0) {
+        return assetUrl(covers[0]);
+      }
+      if (typeof covers === 'string') {
+        return assetUrl(covers);
+      }
+    }
+
+    // Priority 2: Check direct assets on item (local cart)
+    if (item?.assets?.coverUrl) {
+      const covers = item.assets.coverUrl;
+      if (Array.isArray(covers) && covers.length > 0) {
+        return assetUrl(covers[0]);
+      }
+      if (typeof covers === 'string') {
+        return assetUrl(covers);
+      }
+    }
+
+    // Priority 3: Check old coverUrl structure
+    if (item?.bookId?.coverUrl) {
+      const covers = item.bookId.coverUrl;
+      if (Array.isArray(covers) && covers.length > 0) {
+        return assetUrl(covers[0]);
+      }
+      if (typeof covers === 'string') {
+        return assetUrl(covers);
+      }
+    }
+
+    // Priority 4: Check direct coverUrl on item
+    if (item?.coverUrl) {
+      const covers = item.coverUrl;
+      if (Array.isArray(covers) && covers.length > 0) {
+        return assetUrl(covers[0]);
+      }
+      if (typeof covers === 'string') {
+        return assetUrl(covers);
+      }
+    }
+
+    // Fallback: placeholder
+    return "https://via.placeholder.com/120x180?text=No+Cover";
+  };
+
   if (!items || items.length === 0) {
     return (
-      <div className="max-w-5xl mx-auto my-12 px-4">
-        <h1 className="text-2xl font-bold mb-4">Your Cart</h1>
-        <div className="rounded-2xl border bg-surface p-8 text-fg-muted text-center shadow-sm">
-          Your cart is empty.
-          <Link to="/catalog" className="text-primary font-medium ml-2">
-            Continue shopping →
+      <div className="container mx-auto px-4 py-12 text-center">
+        <div className="max-w-md mx-auto">
+          <svg
+            className="mx-auto h-24 w-24 text-fg-subtle mb-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          <h2 className="text-2xl font-bold text-fg mb-2">
+            Your cart is empty
+          </h2>
+          <p className="text-fg-muted mb-6">
+            Looks like you haven't added any books yet.
+          </p>
+          <Link
+            to="/catalog"
+            className="btn-primary"
+          >
+            Browse Books
           </Link>
         </div>
       </div>
@@ -133,204 +196,159 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto my-8 px-4">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Your Cart</h1>
-        <Link to="/catalog" className="text-sm text-primary hover:underline">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-fg">Your Cart</h1>
+        <Link
+          to="/catalog"
+          className="text-brand hover:text-brand/90 flex items-center gap-2"
+        >
           ← Continue shopping
         </Link>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* LEFT: Items */}
-        <section className="md:col-span-2 space-y-4">
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Cart Items */}
+        <div className="lg:col-span-2 space-y-4">
           {items.map((it) => {
-            // Server cart item id (line id) vs product id (book id)
-            const lineId = it._id || it.lineId || it.itemId;                 // server line id
-            const bookId = it.bookId || it.book?._id || it.id;               // product id (guest/local)
-
-            const price = Number(it.price ?? it.pric ?? 0);
-            const mrp = Number(it.mrp ?? it.mrpPrice ?? price);
-            const off = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+            const bookData = it.bookId || it;
+            const id = it._id || it.id || bookData._id || bookData.id;
+            const title = it.title || bookData.title || "Untitled";
+            const authors = it.authors || bookData.authors || [];
+            const price = Number(it.unitPriceSnapshot ?? it.price ?? bookData.price ?? 0);
             const qty = Number(it.qty ?? 1);
-            const subtotal = price * qty;
+            const coverImage = getCoverImage(it);
 
             return (
-              <article
-                key={lineId || bookId}
-                className="bg-surface border rounded-2xl p-4 flex items-start gap-4 shadow-sm"
+              <div
+                key={id}
+                className="card flex gap-4 hover:shadow-md transition-shadow"
               >
-                <div className="relative">
+                {/* ✅ BOOK COVER IMAGE */}
+                <div className="flex-shrink-0">
                   <img
-                    src={assetUrl(it.assets?.coverUrl || it.book?.assets?.coverUrl)}
-                    alt={it.title || it.book?.title}
-                    className="w-[72px] h-[96px] object-contain rounded-lg border bg-white"
+                    src={coverImage}
+                    alt={title}
+                    className="w-20 h-28 object-cover rounded-lg shadow-sm"
+                    onError={(e) => {
+                      e.target.src = "https://via.placeholder.com/120x180?text=No+Cover";
+                    }}
                   />
-                  {off > 0 && (
-                    <span className="absolute -top-2 -left-2 bg-green-100 text-green-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border">
-                      -{off}% OFF
-                    </span>
-                  )}
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold leading-snug line-clamp-2">
-                        {it.title}
-                      </h3>
-                      {!!(it.authors && it.authors.length) && (
-                        <p className="text-xs text-fg-subtle line-clamp-1">
-                          {(it.authors || []).join(", ")}
-                        </p>
-                      )}
-                      {/* price (mobile) */}
-                      <div className="mt-1 flex items-baseline gap-2 md:hidden">
-                        <div className="font-semibold">{fmt(it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0)}</div>
-                        {mrp > price && (
-                          <>
-                            <div className="line-through text-xs text-fg-subtle">{fmt(mrp)}</div>
-                            <span className="text-xs text-green-700 bg-green-100 rounded-full px-2 py-0.5 border">
-                              -{off}%
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                {/* Book Details */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base text-fg mb-1 line-clamp-2">
+                    {title}
+                  </h3>
+                  {authors && authors.length > 0 && (
+                    <p className="text-sm text-fg-muted mb-3">
+                      {authors.join(", ")}
+                    </p>
+                  )}
 
-                    {/* price (desktop) */}
-                    <div className="hidden md:flex items-baseline gap-2">
-                      <div className="font-semibold">{fmt(it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0)}</div>
-                      {mrp > price && (
-                        <>
-                          <div className="line-through text-sm text-fg-subtle">{fmt(mrp)}</div>
-                          <span className="text-[11px] text-green-700 bg-green-100 rounded-full px-2 py-0.5 border">
-                            -{off}%
-                          </span>
-                        </>
-                      )}
-                    </div>
+                  {/* Price (mobile) */}
+                  <div className="text-sm text-fg-subtle mb-3">
+                    Subtotal: {fmt(price)}
                   </div>
 
-                  {/* controls */}
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <div className="flex items-center justify-between">
+                    {/* Quantity Controls */}
                     <div className="flex items-center gap-2">
                       <button
-                        className="h-9 w-9 rounded-full border hover:bg-muted"
                         onClick={() => {
-                          const next = Math.max(1, qty - 1);
-                          if (isCustomer && lineId) {
-                            syncQty(lineId, next);      // server
+                          const next = qty - 1;
+                          if (next < 1) return;
+                          if (isCustomer) {
+                            syncQty(id, next);
+                          } else {
+                            dec(id);
                           }
-                          setQtyLocal?.(bookId, next);  // guest/local (no-op if store ignores when logged-in)
-                          dec?.(bookId);                // keep local UI optimistic for guests
                         }}
-                        aria-label="Decrease quantity"
+                        className="w-8 h-8 flex items-center justify-center border border-border rounded-lg hover:bg-surface-subtle disabled:opacity-50 transition-colors"
+                        disabled={qty <= 1}
                       >
                         −
                       </button>
-                      <input
-                        className="w-16 h-9 text-center border rounded-full"
-                        type="number"
-                        min={1}
-                        value={qty}
-                        onChange={(e) => {
-                          const next = Math.max(1, Number(e.target.value) || 1);
-                          if (isCustomer && lineId) {
-                            syncQty(lineId, next);      // server
-                          }
-                          setQtyLocal?.(bookId, next);  // guest/local
-                        }}
-                      />
+                      <span className="w-12 text-center font-medium text-fg">
+                        {qty}
+                      </span>
                       <button
-                        className="h-9 w-9 rounded-full border hover:bg-muted"
                         onClick={() => {
                           const next = qty + 1;
-                          if (isCustomer && lineId) {
-                            syncQty(lineId, next);      // server
+                          if (isCustomer) {
+                            syncQty(id, next);
+                          } else {
+                            inc(id);
                           }
-                          setQtyLocal?.(bookId, next);  // guest/local
-                          inc?.(bookId);                // guest optimistic
                         }}
-                        aria-label="Increase quantity"
+                        className="w-8 h-8 flex items-center justify-center border border-border rounded-lg hover:bg-surface-subtle transition-colors"
                       >
                         +
                       </button>
                     </div>
 
-                    <button
-                      onClick={() => removeItem(isCustomer ? lineId : bookId)}
-                      className="text-sm text-danger hover:underline"
-                    >
-                      Remove
-                    </button>
-
-                    {/* per-item subtotal (mobile) */}
-                    <div className="md:hidden ml-auto font-medium">{fmt((it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0) * (it.qty ?? 1))}</div>
+                    {/* Price & Remove */}
+                    <div className="flex items-center gap-4">
+                      <span className="text-lg font-bold text-fg">
+                        {fmt(price * qty)}
+                      </span>
+                      <button
+                        onClick={() => removeItem(id)}
+                        className="text-danger hover:text-danger/80 text-sm font-medium transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {/* per-item subtotal (desktop) */}
-                <div className="hidden md:flex flex-col items-end">
-                  <div className="text-xs text-fg-subtle">Subtotal</div>
-                  <div className="font-semibold"> {fmt((it.unitPriceSnapshot ?? it.price ?? it.bookId?.price ?? 0) * (it.qty ?? 1))}</div>
-                </div>
-              </article>
+              </div>
             );
           })}
-        </section>
+        </div>
 
-        {/* RIGHT: Summary */}
-        <aside className="md:col-span-1">
-          <div className="md:sticky md:top-24 bg-surface border rounded-2xl p-5 shadow-md">
-            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="card sticky top-4">
+            <h2 className="text-xl font-bold mb-4 text-fg">Order Summary</h2>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-fg-subtle">Subtotal</span>
-                <span className="font-medium">{fmt(totals.subtotal)}</span>
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between text-fg-muted">
+                <span>Subtotal</span>
+                <span className="font-medium text-fg">{fmt(totals.subtotal)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-fg-subtle">Shipping</span>
-                <span className="font-medium">
-                  {totals.shipping === 0 ? "Free" : fmt(totals.shipping)}
-                </span>
+              <div className="flex justify-between text-fg-muted">
+                <span>Shipping</span>
+                <span className="font-medium text-success">Free</span>
               </div>
-              <div className="h-px bg-border my-3" />
-              <div className="flex justify-between text-base">
-                <span className="font-semibold">Total</span>
-                <span className="font-semibold text-primary">
-                  {fmt(totals.grand)}
-                </span>
+              <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
+                <span className="text-fg">Total</span>
+                <span className="text-fg">{fmt(totals.grand)}</span>
               </div>
             </div>
 
             <button
-              onClick={() => {
-                if (!isCustomer)
-                  navigate("/login", { state: { next: "/checkout" } });
-                else navigate("/checkout");
-              }}
-              className="btn-primary w-full mt-5 py-3 rounded-xl shadow-sm"
+              onClick={() => navigate("/checkout")}
+              className="btn-primary w-full mb-3"
             >
               Checkout
             </button>
 
             <button
               onClick={clearAll}
-              className="btn w-full mt-2 py-3 rounded-xl"
+              className="btn-secondary w-full"
             >
               Clear cart
             </button>
 
             <Link
               to="/catalog"
-              className="block text-center mt-3 text-sm text-primary hover:underline"
+              className="block text-center mt-4 text-brand hover:text-brand/90"
             >
               Continue shopping
             </Link>
           </div>
-        </aside>
+        </div>
       </div>
     </div>
   );
