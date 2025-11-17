@@ -326,7 +326,7 @@ const TermsAndConditions = () => {
                                     Shipping Policy
                                 </Link>
                                 <Link
-                                    to="/aboutus"
+                                    to="/contact"
                                     className="btn-secondary bg-brand-foreground/10 text-brand-foreground hover:bg-brand-foreground/20 border border-brand-foreground/20"
                                 >
                                     Contact Us

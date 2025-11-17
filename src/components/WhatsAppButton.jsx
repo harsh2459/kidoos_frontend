@@ -5,10 +5,7 @@ import {
   FaShareAlt,
 } from "react-icons/fa";
 import { FaThreads } from "react-icons/fa6"
-/**
- * FloatingSocialMenu (theme-friendly)
- * - Main handle now uses site brand color instead of green.
- */
+
 export default function FloatingSocialMenu({
   initial = { x: 20, y: 220 },
   phone = "919879857529",
@@ -183,91 +180,147 @@ export default function FloatingSocialMenu({
   const offsets = offsetsFor[direction] || offsetsFor.center;
 
   return (
-    <div
-      className="fixed z-[9999] select-none"
-      style={{ left: pos.x, top: pos.y, touchAction: "none", width: 64, height: 64 }}
-    >
+    <>
+      {/* WAVE ANIMATION STYLES - ONLY ADDITION */}
+      <style>{`
+        @keyframes wave-pulse {
+          0% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
+          50% {
+            transform: scale(1.4);
+            opacity: 0.3;
+          }
+          100% {
+            transform: scale(1.8);
+            opacity: 0;
+          }
+        }
+
+        .wave-ring {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 48px;
+          height: 48px;
+          margin-left: -24px;
+          margin-top: -24px;
+          border-radius: 50%;
+          background: hsl(var(--brand));
+          pointer-events: none;
+        }
+
+        .wave-ring-1 {
+          animation: wave-pulse 1s ease-out infinite;
+          animation-delay: 0s;
+        }
+
+        .wave-ring-2 {
+          animation: wave-pulse 1s ease-out infinite;
+          animation-delay: 1s;
+        }
+
+        .wave-ring-3 {
+          animation: wave-pulse 1s ease-out infinite;
+          animation-delay: 2s;
+        }
+      `}</style>
+
       <div
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
-        role="button"
-        tabIndex={0}
-        aria-label="Open social share menu"
-        style={{ width: 64, height: 64 }}
+        className="fixed z-[9999] select-none"
+        style={{ left: pos.x, top: pos.y, touchAction: "none", width: 64, height: 64 }}
       >
-        {/* social icons */}
-        {items.map((it, i) => {
-          const off = offsets[i] || { x: 0, y: 0 };
-          const transform = open ? `translate(${off.x}px, ${off.y}px) scale(1)` : `translate(0,0) scale(0)`;
-          const delay = `${i * 45}ms`;
-          return (
-            <a
-              key={it.id}
-              href={it.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              onMouseEnter={() => setHovered(it.id)}
-              onMouseLeave={() => setHovered(null)}
-              className="absolute left-0 top-0 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-popup outline-none"
-              title={it.title}
-              aria-label={it.title}
-              style={{
-                transform,
-                transition: `transform 260ms cubic-bezier(.2,.9,.3,1) ${delay}`,
-                background: it.bg,
-                color: it.color,
-                boxShadow: open ? "0 10px 24px rgba(15,23,42,0.18)" : "none",
-                zIndex: open ? 2 : 0,
-              }}
-            >
-              <span style={{ pointerEvents: "none", fontSize: 16, color: it.color }}>{it.icon}</span>
-
-              {hovered === it.id && (
-                <span
-                  className="absolute whitespace-nowrap text-sm px-2 py-1 rounded-md text-gray-800 bg-white shadow-md left-14 top-1/2 -translate-y-1/2"
-                  style={{ fontSize: 12 }}
-                >
-                  {it.title}
-                </span>
-              )}
-            </a>
-          );
-        })}
-
-        {/* MAIN BUTTON (brand-styled) */}
         <div
-          className={`w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-2xl border-2 border-white`}
-          style={{
-            transform: dragging ? "scale(0.98)" : "scale(1)",
-            transition: "transform 160ms",
-            boxShadow: "0 10px 30px rgba(2,6,23,0.18)",
-          }}
-          onMouseDown={(e) => {
-            startDrag(e.clientX, e.clientY);
-            e.stopPropagation();
-          }}
-          onTouchStart={(e) => {
-            const t = e.touches[0];
-            startDrag(t.clientX, t.clientY);
-            e.stopPropagation();
-          }}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onMouseDown={onMouseDown}
+          onTouchStart={onTouchStart}
+          role="button"
+          tabIndex={0}
+          aria-label="Open social share menu"
+          style={{ width: 64, height: 64, position: 'relative' }}
         >
-          {/* inner accent uses brand color now so it matches the theme */}
+          {/* social icons */}
+          {items.map((it, i) => {
+            const off = offsets[i] || { x: 0, y: 0 };
+            const transform = open ? `translate(${off.x}px, ${off.y}px) scale(1)` : `translate(0,0) scale(0)`;
+            const delay = `${i * 45}ms`;
+            return (
+              <a
+                key={it.id}
+                href={it.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                onMouseEnter={() => setHovered(it.id)}
+                onMouseLeave={() => setHovered(null)}
+                className="absolute left-0 top-0 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-popup outline-none"
+                title={it.title}
+                aria-label={it.title}
+                style={{
+                  transform,
+                  transition: `transform 260ms cubic-bezier(.2,.9,.3,1) ${delay}`,
+                  background: it.bg,
+                  color: it.color,
+                  boxShadow: open ? "0 10px 24px rgba(15,23,42,0.18)" : "none",
+                  zIndex: open ? 2 : 0,
+                }}
+              >
+                <span style={{ pointerEvents: "none", fontSize: 16, color: it.color }}>{it.icon}</span>
+
+                {hovered === it.id && (
+                  <span
+                    className="absolute whitespace-nowrap text-sm px-2 py-1 rounded-md text-gray-800 bg-white shadow-md left-14 top-1/2 -translate-y-1/2"
+                    style={{ fontSize: 12 }}
+                  >
+                    {it.title}
+                  </span>
+                )}
+              </a>
+            );
+          })}
+
+          {/* MAIN BUTTON (brand-styled) WITH WAVE RINGS */}
           <div
-            className="w-12 h-12 rounded-full flex items-center justify-center"
+            className={`w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-2xl border-2 border-white`}
             style={{
-              background: "hsl(var(--brand))",           // brand background
-              color: "hsl(var(--brand-foreground))",     // icon color (usually white)
-              boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+              transform: dragging ? "scale(0.98)" : "scale(1)",
+              transition: "transform 160ms",
+              boxShadow: "0 10px 30px rgba(2,6,23,0.18)",
+              position: 'relative',
+            }}
+            onMouseDown={(e) => {
+              startDrag(e.clientX, e.clientY);
+              e.stopPropagation();
+            }}
+            onTouchStart={(e) => {
+              const t = e.touches[0];
+              startDrag(t.clientX, t.clientY);
+              e.stopPropagation();
             }}
           >
-            <FaShareAlt size={18} />
+            {/* WAVE RINGS - ONLY ADDITION */}
+            <span className="wave-ring wave-ring-1"></span>
+            <span className="wave-ring wave-ring-2"></span>
+            <span className="wave-ring wave-ring-3"></span>
+
+            {/* inner accent uses brand color now so it matches the theme */}
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{
+                background: "hsl(var(--brand))",           // brand background
+                color: "hsl(var(--brand-foreground))",     // icon color (usually white)
+                boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+                position: 'relative',
+                zIndex: 1,
+              }}
+            >
+              <FaShareAlt size={18} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
