@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { assetUrl } from "../api/asset";
 import '../styles/style-button.css';
 import FancyButton from "../components/button/button";
+import ScrollToTopButton from "../components/ScrollToTopButton";
 
 /* ----------------------------- Page ------------------------------ */
 export default function Home() {
@@ -168,6 +169,7 @@ function SimpleShowcaseCard({ book }) {
           </>
         )}
       </div>
+      <ScrollToTopButton />
     </article>
   );
 }

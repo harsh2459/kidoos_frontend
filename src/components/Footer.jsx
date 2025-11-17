@@ -71,7 +71,7 @@ export default function Footer({ contact, links }) {
 
                         <p className="mt-4 text-sm leading-6 text-white">
                             Hand-picked children’s books and learning materials for curious
-                            minds. Fast shipping across India.                            
+                            minds. Fast shipping across India.
                         </p>
                     </div>
 
@@ -81,8 +81,13 @@ export default function Footer({ contact, links }) {
                         className="grid grid-cols-2 gap-6 md:col-span-2 md:grid-cols-3"
                     >
                         <div>
-                            <div className="font-semibold text-white">Shop</div>
+                            <div className="font-semibold text-white">Explore</div>
                             <ul className="mt-3 space-y-2 text-sm ">
+                                <li>
+                                    <Link to="/" className="text-white hover:opacity-80 hover:underline">
+                                        Home
+                                    </Link>
+                                </li>
                                 <li>
                                     <Link to="/catalog" className="text-white hover:opacity-80 hover:underline">
                                         Catalog
@@ -94,56 +99,51 @@ export default function Footer({ contact, links }) {
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link to="/#featured" className="text-white hover:opacity-80 hover:underline">
-                                        Featured
+                                    <Link to="/aboutus" className="text-white hover:opacity-80 hover:underline">
+                                        About us
                                     </Link>
                                 </li>
-                                <li>
-                                    <Link to="/#new" className="text-white hover:opacity-80 hover:underline">
-                                        New Arrivals
-                                    </Link>
-                                </li>
+
                             </ul>
                         </div>
 
                         <div>
-                            <div className="font-semibold text-white">Company</div>
+                            <div className="font-semibold text-white">Others</div>
                             <ul className="mt-3 space-y-2 text-sm">
                                 <li>
-                                    <Link to="/about" className="text-white hover:opacity-80 hover:underline">
-                                        About us
+                                    <Link to="/faq" className="text-white hover:opacity-80 hover:underline">
+                                        FAQs
                                     </Link>
                                 </li>
                                 <li>
                                     <Link to="/contact" className="text-white hover:opacity-80 hover:underline">
-                                        Contact
+                                        Contact Us
                                     </Link>
                                 </li>
-
                             </ul>
                         </div>
 
                         <div>
-                            <div className="font-semibold text-white">Support</div>
+                            <div className="font-semibold text-white">Our Policy</div>
                             <ul className="mt-3 space-y-2 text-sm">
                                 <li>
-                                    <Link to="/help" className="text-white hover:opacity-80 hover:underline">
-                                        Help Center
+                                    <Link to="/privacy" className="text-white hover:opacity-80 hover:underline">
+                                        Privacy Policy
                                     </Link>
                                 </li>
                                 <li>
                                     <Link to="/shipping" className="text-white hover:opacity-80 hover:underline">
-                                        Shipping
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link to="/returns" className="text-white hover:opacity-80 hover:underline">
-                                        Returns &amp; Refunds
+                                        Shipping Policy
                                     </Link>
                                 </li>
                                 <li>
                                     <Link to="/terms" className="text-white hover:opacity-80 hover:underline">
                                         Terms &amp; Privacy
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link to="/refund" className="text-white hover:opacity-80 hover:underline">
+                                        Returns &amp; Refunds
                                     </Link>
                                 </li>
                             </ul>

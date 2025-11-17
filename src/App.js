@@ -32,10 +32,18 @@ import AdminLayout from './components/AdminLayout';
 import BlueDartProfiles from './pages/Admin/BlueDartProfiles';
 import AboutUs from './pages/AboutUs';
 import WhatsAppButton from './components/WhatsAppButton';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import ShippingPolicy from './pages/ShippingPolicy';
+import TermsAndConditions from './pages/Terms&Conditions';
+import RefundPolicy from './pages/RefundPolicy';
+import FAQ from './pages/FAQ';
+import ContactUs from './pages/ContactUs';
 
 function InnerApp() {
   const loc = useLocation();
-  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus';
+  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' ;
+
+  const isAdminRoute = loc.pathname.startsWith('/admin');
 
   function RequireCustomer({ children }) {
     const { isCustomer } = useCustomer();
@@ -72,6 +80,16 @@ function InnerApp() {
               </RequireCustomer>
             }
           />
+
+          {/* others */}
+          <Route path="/faq" element={<PageGate page="faq"><FAQ /></PageGate>} />
+          <Route path="/contact" element={<PageGate page="contact"><ContactUs /></PageGate>} />
+
+          {/* Policy */}
+          <Route path='/privacy' element={<PrivacyPolicy />} />
+          <Route path='/shipping' element={<ShippingPolicy />} />
+          <Route path='/terms' element={<TermsAndConditions />} />
+          <Route path='/refund' element={<RefundPolicy />} />
 
           {/* admin auth pages */}
           <Route path="/admin/login" element={<PageGate page="adminLogin"><AdminLogin /></PageGate>} />
@@ -122,7 +140,7 @@ function InnerApp() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <WhatsAppButton initial={{ x: 20, y: 220 }} phone="919879857529" />
+      {!isAdminRoute && <WhatsAppButton initial={{ x: 20, y: 220 }} phone="919879857529" />}
       {showFooter && (
         <Footer
           contact={{

@@ -1,4 +1,5 @@
 import React from 'react';
+import ScrollToTopButton from '../components/ScrollToTopButton';
 
 export default function AboutUs() {
     const navigateToCatalog = () => {
@@ -232,6 +233,7 @@ export default function AboutUs() {
                     </div>
                 </div>
             </div>
+            <ScrollToTopButton />
         </div>
     );
 }

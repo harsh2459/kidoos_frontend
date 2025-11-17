@@ -209,11 +209,7 @@ export default function ProductCard({ book }) {
             </span>
             <span
               className="
-                pr-4
-                text-[0.95rem] whitespace-nowrap
-                opacity-0 translate-x-2
-                transition-all duration-300
-                group-hover:opacity-100 group-hover:translate-x-0
+               flex items-center justify-center mr-4 text-[0.95rem] whitespace-nowrap opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 absolute right-0.5
               "
             >
               Add to Cart
