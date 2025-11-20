@@ -10,7 +10,7 @@
 
   html,
   body {
-    @apply bg-surface-subtle text-fg antialiased;
+    @apply bg-white text-fg antialiased;
   }
 
   a {
@@ -221,7 +221,7 @@
 /* ---------- HERO WRAPPER (soft gradient band) ---------- */
 @layer components {
   .hero {
-    @apply bg-gradient-to-b from-surface to-surface-subtle border border-border-subtle rounded-2xl shadow-sm;
+    @apply  from-surface to-surface-subtle border border-border-subtle rounded-2xl shadow-sm;
   }
 
   .eyebrow {

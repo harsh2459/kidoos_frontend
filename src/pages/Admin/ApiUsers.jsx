@@ -225,7 +225,7 @@ export default function ApiUsers() {
           </div>
           <button
             onClick={openNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 btn-primary"
           >
             Add Profile
           </button>
@@ -447,7 +447,7 @@ export default function ApiUsers() {
               <button
                 onClick={save}
                 disabled={saving || !validateForm()}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 btn-primary disabled:opacity-50"
               >
                 {saving ? "Saving..." : (form.id ? "Update Profile" : "Create Profile")}
               </button>
@@ -481,7 +481,7 @@ export default function ApiUsers() {
                   <tr>
                     <td colSpan="6" className="px-6 py-8 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                         <span className="text-gray-500">Loading profiles...</span>
                       </div>
                     </td>
@@ -490,7 +490,7 @@ export default function ApiUsers() {
                   <tr>
                     <td colSpan="6" className="px-6 py-8 text-center">
                       <div className="text-gray-500 mb-2">No BlueDart profiles found</div>
-                      <button onClick={openNew} className="text-blue-600 hover:text-blue-800 text-sm">
+                      <button onClick={openNew} className="bg-primary text-sm">
                         Create your first profile
                       </button>
                     </td>
@@ -499,7 +499,7 @@ export default function ApiUsers() {
                   list.map(p => (
                     <tr key={p._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center text-sm font-bold">
+                        <div className="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center text-sm font-bold">
                           {String(p.label || "BD").slice(0, 2).toUpperCase()}
                         </div>
                       </td>
@@ -529,7 +529,7 @@ export default function ApiUsers() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => openEdit(p)}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
+                            className="bg-primary text-white text-sm px-2 py-1 rounded"
                           >
                             Edit
                           </button>

@@ -1,11 +1,10 @@
 // src/components/ProductCard.jsx
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
 import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
-import { CustomerAPI } from "../api/customer"; // ✅ Removed debugCustomerAuth
+import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
 
 function CartIcon({ className = "" }) {
@@ -38,11 +37,9 @@ export default function ProductCard({ book }) {
   const inCart = items.some((i) => (i._id || i.id || i.bookId) === id);
 
   const { isCustomer, token } = useCustomer();
-  const [pop, setPop] = useState(false);
+
 
   const addToCart = async () => {
-    setPop(true);
-    setTimeout(() => setPop(false), 600);
     window.dispatchEvent(new Event("cart:add"));
 
     // Check if customer is logged in
@@ -63,18 +60,8 @@ export default function ProductCard({ book }) {
         return;
       }
 
-      console.log("🛒 Adding to cart:", {
-        bookId: id,
-        bookTitle: book.title,
-        isCustomer,
-        hasToken,
-        assets: book.assets,
-      });
-
       // Call API with token (interceptor will attach it)
       const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
-
-      console.log("✅ Cart updated successfully:", res.data);
 
       // Update local cart state
       replaceAll(res?.data?.cart?.items || []);
@@ -183,34 +170,41 @@ export default function ProductCard({ book }) {
           <button
             onClick={addToCart}
             className="
-              group relative
-              h-[44px] w-[52px]
-              hover:w-40
-              -mr-1
-              rounded-full bg-slate-900 text-white
-              shadow-sm hover:shadow-md
-              transition-all duration-300
-              overflow-hidden
-              flex items-center
-              focus:outline-none focus-visible:outline-none
-            "
+      group relative
+      h-[44px] w-[52px]
+      hover:w-40
+      -mr-1
+      rounded-full bg-slate-900 text-white
+      shadow-sm hover:shadow-md
+      transition-all duration-300
+      overflow-hidden
+      flex items-center justify-center
+      focus:outline-none focus-visible:outline-none
+    "
             title="Add to cart"
             aria-label="Add to cart"
           >
+            {/* Cart Icon - Hidden on hover */}
             <span
               className="
-                flex items-center justify-center
-                h-[44px] w-[52px] shrink-0
-                transition-transform duration-300
-                group-hover:-translate-x-1
-              "
+        absolute
+        flex items-center justify-center
+        h-[44px] w-[52px]
+        transition-all duration-300
+        group-hover:opacity-0 group-hover:scale-75
+      "
             >
               <CartIcon className="h-5 w-5" />
             </span>
+
+            {/* Text - Shown on hover */}
             <span
               className="
-               flex items-center justify-center mr-4 text-[0.95rem] whitespace-nowrap opacity-0 translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 absolute right-0.5
-              "
+        text-[0.95rem] font-medium whitespace-nowrap
+        opacity-0 scale-75
+        transition-all duration-300
+        group-hover:opacity-100 group-hover:scale-100
+      "
             >
               Add to Cart
             </span>
@@ -219,13 +213,13 @@ export default function ProductCard({ book }) {
           <button
             onClick={goToCart}
             className="
-              inline-flex items-center justify-center gap-2
-              h-[44px] w-40
-              -mr-1
-              rounded-full bg-slate-900 text-white
-              shadow-sm hover:shadow-md transition-all duration-300
-              focus:outline-none focus-visible:outline-none
-            "
+      inline-flex items-center justify-center gap-2
+      h-[44px] w-40
+      -mr-1
+      rounded-full bg-slate-900 text-white
+      shadow-sm hover:shadow-md transition-all duration-300
+      focus:outline-none focus-visible:outline-none
+    "
             title="Go to cart"
           >
             <CartIcon className="h-5 w-5" />

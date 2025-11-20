@@ -1,10 +1,10 @@
-// src/pages/BookDetail.jsx - FIXED COVER IMAGE LOGIC
+// src/pages/BookDetail.jsx - MATCHING PRODUCTCARD UI WITH SUGGESTIONS
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useCart } from "../contexts/CartStore";
 import { assetUrl } from "../api/asset";
-import { deal } from "../lib/Price";
+import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
@@ -22,18 +22,36 @@ const textToBulletHtml = (raw = "") => {
   return `<ul>${lis}</ul>`;
 };
 
+function CartIcon({ className = "" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </svg>
+  );
+}
+
 export default function BookDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
   const [book, setBook] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ IMPROVED: Get all possible cover images
+  // ✅ Get all possible cover images
   const images = useMemo(() => {
     if (!book) return [];
-    
-    // Try assets.coverUrl first (preferred structure)
+
     if (book.assets?.coverUrl) {
       if (Array.isArray(book.assets.coverUrl)) {
         return book.assets.coverUrl.filter(Boolean);
@@ -42,8 +60,7 @@ export default function BookDetail() {
         return [book.assets.coverUrl];
       }
     }
-    
-    // Fallback to old coverUrl structure
+
     if (book.coverUrl) {
       if (Array.isArray(book.coverUrl)) {
         return book.coverUrl.filter(Boolean);
@@ -52,7 +69,7 @@ export default function BookDetail() {
         return [book.coverUrl];
       }
     }
-    
+
     return [];
   }, [book]);
 
@@ -66,15 +83,34 @@ export default function BookDetail() {
   const replaceAll = useCart((s) => s.replaceAll);
   const { isCustomer, token } = useCustomer();
 
-  // Fetch book
+  // ✅ Fetch book with suggestions
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const { data } = await api.get(`/books/${slug}`);
-        setBook(data.book);
+        const { data } = await api.get(`/books/${slug}/suggestions?limit=8`);
+        const b = data?.book || null;
+        const sugg = data?.suggestions || [];
+
+        if (!b) {
+          t.err("Book not found");
+          setBook(null);
+          setSuggestions([]);
+          return;
+        }
+
+        setBook(b);
+        setSuggestions(sugg);
       } catch (error) {
         console.error("Failed to load book:", error);
+        // Fallback to regular endpoint if suggestions endpoint fails
+        try {
+          const { data } = await api.get(`/books/${slug}`);
+          setBook(data.book);
+          setSuggestions([]);
+        } catch (fallbackError) {
+          console.error("Fallback failed:", fallbackError);
+        }
       } finally {
         setLoading(false);
       }
@@ -126,30 +162,51 @@ export default function BookDetail() {
 
   const id = book._id || book.id;
   const inCart = items.find((i) => (i.bookId || i.book?._id || i.id) === id);
-  const d = deal(book);
+  const d = dealFn(book);
   const mainSrc = images.length ? assetUrl(images[active]) : "";
 
   async function handleAddToCart() {
+    window.dispatchEvent(new Event("cart:add"));
+
     if (!isCustomer) {
-      t.info("Please login to add to cart");
-      navigate("/login");
+      console.warn("⚠️ User not logged in, redirecting to login");
+      t.info("Please login to add items to your cart");
+      navigate("/login", { state: { next: "/cart" } });
       return;
     }
 
     try {
-      // Add locally first for immediate feedback
-      add({ ...book, id, assets: { ...book.assets } }, 1);
-      
-      // Then sync with server
+      const hasToken = !!localStorage.getItem("customer_jwt");
+      if (!hasToken) {
+        console.error("❌ No customer token found!");
+        t.err("Session expired, please login again");
+        navigate("/login", { state: { next: "/cart" } });
+        return;
+      }
+
       const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
-      
-      // Update cart with server response
       replaceAll(res?.data?.cart?.items || []);
-      
       t.ok("Added to cart");
     } catch (e) {
-      console.error("Add to cart error:", e);
-      t.err("Could not sync with server, but added locally");
+      console.error("❌ Add to cart failed:", e);
+
+      if (e?.response?.status === 401) {
+        t.err("Session expired, please login again");
+        localStorage.removeItem("customer_jwt");
+        localStorage.removeItem("customer_profile");
+        navigate("/login", { state: { next: "/cart" } });
+        return;
+      }
+
+      console.log("ℹ️ Falling back to local cart");
+      add({
+        ...book,
+        price: book.price || book.pric || book.mrp,
+        mrp: book.mrp || book.price || book.pric,
+        qty: 1
+      }, 1);
+
+      t.warn("Added to local cart (sync with server failed)");
     }
   }
 
@@ -166,7 +223,7 @@ export default function BookDetail() {
   const fallbackPlain = addEmojiSpaces(rawDesc);
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
+    <div className="from-gray-50 to-white min-h-screen">
       <div className="mx-auto max-w-screen-xl px-4 py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-fg-muted mb-6">
@@ -179,7 +236,7 @@ export default function BookDetail() {
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* LEFT: GALLERY */}
-          <div className="self-start">
+          <div className="self-start space-y-6">
             {/* Main Image */}
             <div className="relative rounded-2xl overflow-hidden bg-white shadow-xl border border-gray-100 aspect-[3/4]">
               {mainSrc ? (
@@ -238,7 +295,7 @@ export default function BookDetail() {
 
             {/* Thumbnail Gallery */}
             {images.length > 1 && (
-              <div className="mt-4 grid grid-cols-6 gap-2">
+              <div className="grid grid-cols-6 gap-2">
                 {images.map((p, idx) => {
                   const src = assetUrl(p);
                   const isActive = idx === active;
@@ -270,6 +327,40 @@ export default function BookDetail() {
                 })}
               </div>
             )}
+
+            {/* WHY CHOOSE THIS BOOK */}
+            {book.whyChooseThis && book.whyChooseThis.length > 0 && (
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">✨</span>
+                  Why Choose This Book?
+                </h3>
+                <ul className="space-y-3">
+                  {book.whyChooseThis.map((reason, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-gray-700">
+                      <span className="text-green-600 font-bold text-lg mt-0.5 flex-shrink-0">✓</span>
+                      <span className="leading-relaxed break-words flex-1 overflow-hidden">{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Additional Info */}
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              {book.language && (
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Language</p>
+                  <p className="font-semibold text-gray-900">{book.language}</p>
+                </div>
+              )}
+              {book.pages > 0 && (
+                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-1">Pages</p>
+                  <p className="font-semibold text-gray-900">{book.pages}</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* RIGHT: DETAILS */}
@@ -278,6 +369,11 @@ export default function BookDetail() {
             <div className="mb-6">
               <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-3">
                 {book.title}
+                {book.subtitle && (
+                  <span className="block text-2xl font-normal text-gray-600 mt-2">
+                    {book.subtitle}
+                  </span>
+                )}
               </h1>
               <p className="text-lg text-gray-600 flex items-center gap-2">
                 <span className="text-sm text-gray-500">by</span>
@@ -335,39 +431,38 @@ export default function BookDetail() {
               </div>
             </div>
 
-            {/* Add to Cart */}
+            {/* Add to Cart - Matching ProductCard Style */}
             <div className="mb-8">
               {!inCart ? (
                 <button
                   onClick={handleAddToCart}
-                  className="w-full py-4 rounded-xl bg-black text-white font-semibold text-lg hover:bg-gray-800 transition-all hover:shadow-xl flex items-center justify-center gap-2 group"
+                  className="w-full h-[52px] rounded-full bg-slate-900 text-white font-semibold text-lg hover:bg-slate-800 transition-all hover:shadow-xl flex items-center justify-center gap-3 group"
                 >
-                  <svg className="w-6 h-6 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Add to Cart
+                  <CartIcon className="h-6 w-6 transition-transform group-hover:scale-110" />
+                  <span>Add to Cart</span>
                 </button>
               ) : (
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-4 bg-gray-100 rounded-xl p-2 flex-1">
+                  <div className="flex items-center gap-4 bg-gray-100 rounded-full p-2 flex-1">
                     <button
                       onClick={() => dec(id)}
-                      className="w-10 h-10 rounded-lg bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
+                      className="w-10 h-10 rounded-full bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
                     >
                       −
                     </button>
                     <span className="flex-1 text-center text-xl font-bold">{inCart.qty}</span>
                     <button
                       onClick={() => inc(id)}
-                      className="w-10 h-10 rounded-lg bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
+                      className="w-10 h-10 rounded-full bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
                     >
                       +
                     </button>
                   </div>
                   <button
                     onClick={() => navigate("/cart")}
-                    className="px-6 py-3 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 transition-all whitespace-nowrap"
+                    className="h-[52px] px-8 rounded-full bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all whitespace-nowrap flex items-center gap-2"
                   >
+                    <CartIcon className="h-5 w-5" />
                     Go to Cart
                   </button>
                 </div>
@@ -388,31 +483,175 @@ export default function BookDetail() {
                 </div>
               )}
             </div>
-            {/* Additional Info */}
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              {book.language && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Language</p>
-                  <p className="font-semibold text-gray-900">{book.language}</p>
-                </div>
-              )}
-              {book.printType && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Format</p>
-                  <p className="font-semibold text-gray-900 capitalize">{book.printType}</p>
-                </div>
-              )}
-              {book.pages > 0 && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Pages</p>
-                  <p className="font-semibold text-gray-900">{book.pages}</p>
-                </div>
-              )}
-
-            </div>
           </div>
         </div>
+
+        {/* ✅ SUGGESTIONS SECTION - Matching ProductCard Style */}
+        {suggestions && suggestions.length > 0 && (
+          <div className="mt-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold text-gray-900">You Might Also Like</h2>
+              <span className="text-sm text-gray-600">
+                {suggestions.length} {suggestions.length === 1 ? "book" : "books"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {suggestions.map((suggestedBook) => (
+                <SuggestionCard
+                  key={suggestedBook._id}
+                  book={suggestedBook}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+/* ✅ Suggestion Card - Matching ProductCard Component Style */
+/* Replace the old SuggestionCard with this fixed version */
+function SuggestionCard({ book }) {
+  const navigate = useNavigate();
+  const d = dealFn(book); // or dealFn(book) if using that import
+
+  const items = useCart((s) => s.items);
+  const replaceAll = useCart((s) => s.replaceAll);
+  const addLocal = useCart((s) => s.add);
+  const { isCustomer, token } = useCustomer();
+
+  const id = book._id || book.id;
+  const inCartItem = items.find((i) => (i.bookId || i.book?._id || i.id) === id);
+  const inCart = !!inCartItem;
+
+  const cover =
+    (Array.isArray(book?.assets?.coverUrl) ? book.assets.coverUrl[0] : book?.assets?.coverUrl) ||
+    "/uploads/placeholder.png";
+
+  const addToCart = async () => {
+    window.dispatchEvent(new Event("cart:add"));
+
+    if (!isCustomer) {
+      t.info("Please login to add items to your cart");
+      navigate("/login", { state: { next: "/cart" } });
+      return;
+    }
+
+    try {
+      const hasToken = !!localStorage.getItem("customer_jwt");
+      if (!hasToken) {
+        t.err("Session expired, please login again");
+        navigate("/login", { state: { next: "/cart" } });
+        return;
+      }
+
+      const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+      replaceAll(res?.data?.cart?.items || []);
+      t.ok("Added to cart");
+      navigate("/cart");
+    } catch (e) {
+      if (e?.response?.status === 401) {
+        t.err("Session expired, please login again");
+        localStorage.removeItem("customer_jwt");
+        localStorage.removeItem("customer_profile");
+        navigate("/login", { state: { next: "/cart" } });
+        return;
+      }
+
+      addLocal({
+        ...book,
+        price: book.price || book.pric || book.mrp,
+        mrp: book.mrp || book.price || book.pric,
+        qty: 1
+      });
+
+      t.warn("Added to local cart (sync with server failed)");
+      navigate("/cart");
+    }
+  };
+
+  const goToCart = () => {
+    t.info("Already in your cart");
+    navigate("/cart");
+  };
+
+  return (
+    <article className="flex flex-col h-full rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+      <button
+        onClick={() => {
+          navigate(`/book/${book.slug}`);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        className="block group text-left"
+        aria-label={`Open ${book.title}`}
+      >
+        <div className="aspect-[3/4] w-full grid place-items-center p-4 bg-white overflow-hidden">
+          <img
+            src={assetUrl(cover)}
+            alt={book.title}
+            loading="lazy"
+            draggable={false}
+            className="max-h-[88%] max-w-[88%] object-contain transition-transform duration-300 ease-out group-hover:scale-[1.05]"
+            onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+          />
+        </div>
+      </button>
+
+      <div className="p-3 flex-1 flex flex-col">
+        <button
+          onClick={() => {
+            navigate(`/book/${book.slug}`);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="mt-1 font-medium text-fg leading-tight line-clamp-2 text-left hover:text-primary transition-colors"
+        >
+          {book.title}
+        </button>
+
+        <div className="text-fg-muted text-sm line-clamp-1 mt-1">
+          {(book.authors || []).join(", ")}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="flex items-baseline gap-2">
+            <div className="font-semibold text-lg">₹{d.price}</div>
+            {d.mrp > d.price && (
+              <>
+                <div className="line-through text-sm text-fg-subtle">₹{d.mrp}</div>
+                {d.off > 0 && (
+                  <span className="text-xs text-green-700 bg-green-100 rounded-full px-2 py-0.5">
+                    -{d.off}%
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Fixed-size add-to-cart button (no negative margins/expansion) */}
+          {!inCart ? (
+            <button
+              onClick={addToCart}
+              className="h-11 w-11 rounded-full bg-slate-900 text-white shadow-sm hover:shadow-md transition-all flex items-center justify-center"
+              title="Add to cart"
+              aria-label="Add to cart"
+            >
+              <CartIcon className="h-5 w-5" />
+            </button>
+          ) : (
+            <button
+              onClick={goToCart}
+              className="h-11 px-3 rounded-full bg-slate-900 text-white shadow-sm hover:shadow-md transition-all inline-flex items-center gap-2"
+              title="Go to cart"
+            >
+              <CartIcon className="h-4 w-4" />
+              <span className="text-sm">Cart</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+

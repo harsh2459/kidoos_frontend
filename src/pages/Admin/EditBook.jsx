@@ -15,17 +15,17 @@ export default function EditBook() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [whyChooseThisText, setWhyChooseThisText] = useState("");
   // free-text versions so commas are allowed while typing
   const [authorsText, setAuthorsText] = useState("");
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
-
+  const [suggestionsText, setSuggestionsText] = useState("");
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        
+
         // ✅ FIX: Use admin route directly with slug - it handles both ID and slug
         const { data } = await api.get(`/books/admin/${slug}`, auth);
         const b = data?.book || null;
@@ -46,6 +46,7 @@ export default function EditBook() {
         setAuthorsText((b.authors || []).join(", "));
         setCategoriesText((b.categories || []).join(", "));
         setTagsText((b.tags || []).join(", "));
+        setSuggestionsText((b.suggestions || []).join(", "));
       } catch (error) {
         console.error("❌ Error loading book:", error);
         t.err(error?.response?.data?.error || "Failed to load book");
@@ -77,8 +78,8 @@ export default function EditBook() {
   }
 
   // ---------- safe setters ----------
-  const setField  = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
-  const setInv    = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
+  const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
+  const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
   const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...(prev.assets || {}), [k]: v } }));
 
   /* ---------------- Images (multiple) ---------------- */
@@ -97,7 +98,7 @@ export default function EditBook() {
         .filter(Boolean)
         .map(toRelativeFromPublic);
       if (!paths.length) t.info("No images returned from server.");
-      setAssets("coverUrl", [ ...(book.assets?.coverUrl || []), ...paths ]);
+      setAssets("coverUrl", [...(book.assets?.coverUrl || []), ...paths]);
       return paths;
     } catch (e) {
       t.err(e?.response?.data?.error || "Upload failed");
@@ -130,6 +131,15 @@ export default function EditBook() {
   /* ---------------- Save ---------------- */
   const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
 
+
+  // Add new function for whyChooseThis that handles both commas and newlines
+  function splitReasons(str = "") {
+    return str
+      .split(/[\n,]/) // Split by newlines OR commas
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
   async function save(e) {
     e.preventDefault();
     setSaving(true);
@@ -146,7 +156,6 @@ export default function EditBook() {
         mrp: Number(book.mrp) || 0,
         price: Number(book.price) || 0,
         discountPct: Number(book.discountPct) || 0,
-        taxRate: Number(book.taxRate) || 0,
         currency: book.currency || "INR",
 
         inventory: {
@@ -163,6 +172,8 @@ export default function EditBook() {
         categories: splitCsv(categoriesText),
         tags: splitCsv(tagsText),
         descriptionHtml: book.descriptionHtml || "",
+        whyChooseThis: splitReasons(whyChooseThisText),
+        suggestions: splitCsv(suggestionsText),
         visibility: (book.visibility || "public").toLowerCase(),
       };
 
@@ -197,9 +208,9 @@ export default function EditBook() {
       setBook((prev) => {
         const next = { ...prev, [field]: raw };
 
-        const mrp   = field === "mrp"         ? raw : (prev.mrp ?? "");
-        const price = field === "price"       ? raw : (prev.price ?? "");
-        const disc  = field === "discountPct" ? raw : (prev.discountPct ?? "");
+        const mrp = field === "mrp" ? raw : (prev.mrp ?? "");
+        const price = field === "price" ? raw : (prev.price ?? "");
+        const disc = field === "discountPct" ? raw : (prev.discountPct ?? "");
 
         const newDiscount = calcDiscountPct(mrp, price);
         next.discountPct = newDiscount;
@@ -219,11 +230,10 @@ export default function EditBook() {
     <div className="mx-auto max-w-screen-xl px-4 py-8">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Edit Book</h1>
-        <span className={`px-3 py-1 rounded-full text-sm border ${
-          book.visibility === "public"
-            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-            : "bg-gray-100 text-gray-700 border-gray-200"
-        }`}>
+        <span className={`px-3 py-1 rounded-full text-sm border ${book.visibility === "public"
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-gray-100 text-gray-700 border-gray-200"
+          }`}>
           {book.visibility || "draft"}
         </span>
       </div>
@@ -275,16 +285,6 @@ export default function EditBook() {
                 onChange={(e) => setField("edition", e.target.value)}
               />
             </Row>
-            <Row label="Format">
-              <select
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.printType || "paperback"}
-                onChange={(e) => setField("printType", e.target.value)}>
-                <option value="paperback">Paperback</option>
-                <option value="hardcover">Hardcover</option>
-                <option value="ebook">eBook (PDF/Kindle)</option>
-              </select>
-            </Row>
             <Row label="Pages">
               <input
                 type="number"
@@ -324,15 +324,6 @@ export default function EditBook() {
                 className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
                 value={book.discountPct ?? ""}
                 onChange={handlePriceChange("discountPct")}
-                placeholder="0"
-              />
-            </Row>
-            <Row label="Tax %">
-              <input
-                type="number"
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
-                value={book.taxRate ?? ""}
-                onChange={(e) => setField("taxRate", e.target.value)}
                 placeholder="0"
               />
             </Row>
@@ -381,6 +372,21 @@ export default function EditBook() {
               />
             </Row>
           </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Suggestion Groups (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={suggestionsText}
+              onChange={e => setSuggestionsText(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Hindu Scriptures, Epic Texts"
+            />
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              💡 Books with the same suggestion group will show as related to each other
+            </p>
+          </div>
 
           <Row label="Description">
             <textarea
@@ -389,6 +395,18 @@ export default function EditBook() {
               onChange={(e) => setField("descriptionHtml", e.target.value)}
             />
           </Row>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Why Choose This Book
+            </label>
+            <textarea
+              value={whyChooseThisText}
+              onChange={e => setWhyChooseThisText(e.target.value)}
+              rows={5}
+              placeholder="Comma or newline separated reasons"
+              className="w-full bg-surface border border-border rounded-lg px-3 py-2 h-32"
+            />
+          </div>
         </Card>
 
         {/* Media & Visibility */}
@@ -446,7 +464,7 @@ export default function EditBook() {
         <div className="flex justify-end">
           <button
             disabled={saving || uploading}
-            className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60"
+            className="px-5 py-2.5 rounded-lg btn-primary disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save Changes"}
           </button>

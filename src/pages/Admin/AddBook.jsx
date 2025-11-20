@@ -18,11 +18,11 @@ export default function AddBook() {
   const [coverUrls, setCoverUrls] = useState([]); // string[] relative..."
 
   const [form, setForm] = useState({
-    title: "", subtitle: "", authors: "",
+    title: "", subtitle: "", authors: "Kiddos Intellect",
     language: "English", edition: "", printType: "paperback", pages: 0,
-    mrp: 0, price: 0, discountPct: 0, taxRate: 0, currency: "INR",
-    sku: "", stock: 0, lowStockAlert: 5, categories: "", tags: "",
-    samplePdfUrl: "", descriptionHtml: "", visibility: "public",
+    mrp: 0, price: 0, discountPct: 0, currency: "INR",
+    sku: "", stock: 0, lowStockAlert: 5, categories: "", tags: "", suggestions: "",
+    samplePdfUrl: "", descriptionHtml: "", whyChooseThis: "", visibility: "public",
   });
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
@@ -77,6 +77,14 @@ export default function AddBook() {
     return str.split(",").map(s => s.trim()).filter(Boolean);
   }
 
+  // Add new function for whyChooseThis that handles both commas and newlines
+  function splitReasons(str = "") {
+    return str
+      .split(/[\n,]/) // Split by newlines OR commas
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
   async function submit(e) {
     if (e?.preventDefault) e.preventDefault();
     if (!token && !localStorage.getItem("admin_jwt")) return t.info("Please log in as Admin first.");
@@ -96,7 +104,6 @@ export default function AddBook() {
       mrp: Number(form.mrp) || 0,
       price: Number(form.price) || 0,
       discountPct: Number(form.discountPct) || 0,
-      taxRate: Number(form.taxRate) || 0,
       currency: form.currency,
       inventory: {
         sku: form.sku || undefined,
@@ -110,6 +117,8 @@ export default function AddBook() {
       categories: splitCsv(form.categories),
       tags: splitCsv(form.tags),
       descriptionHtml: form.descriptionHtml || "",
+      whyChooseThis: splitReasons(form.whyChooseThis),
+      suggestions: splitCsv(form.suggestions),
       visibility: (form.visibility || "public").toLowerCase(),
     };
 
@@ -119,7 +128,7 @@ export default function AddBook() {
       // reset some fields, keep others if you like
       setForm(f => ({
         ...f,
-        title: "", subtitle: "", authors: "",
+        title: "", subtitle: "", authors: "Kiddos Intellect",
         mrp: 0, price: 0, categories: "", tags: "", samplePdfUrl: ""
       }));
       setCoverUrls([]);
@@ -182,17 +191,7 @@ export default function AddBook() {
                 onChange={e => set("edition", e.target.value)}
               />
             </Field>
-            <Field label="Format">
-              <select
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.printType}
-                onChange={e => set("printType", e.target.value)}
-              >
-                <option value="paperback">Paperback</option>
-                <option value="hardcover">Hardcover</option>
-                <option value="ebook">eBook (PDF/Kindle)</option>
-              </select>
-            </Field>
+
             <Field label="Pages">
               <input
                 type="number"
@@ -231,14 +230,6 @@ export default function AddBook() {
                 className="w-full bg-surface border border-border rounded-lg px-3 py-2"
                 value={form.discountPct}
                 onChange={e => set("discountPct", e.target.value)}
-              />
-            </Field>
-            <Field label="Tax %">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.taxRate}
-                onChange={e => set("taxRate", e.target.value)}
               />
             </Field>
           </div>
@@ -285,6 +276,21 @@ export default function AddBook() {
               />
             </Field>
           </div>
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Suggestion Groups (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={form.suggestions}
+              onChange={e => set("suggestions", e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Hindu Scriptures, Epic Texts"
+            />
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+               Books with the same suggestion group will show as related to each other
+            </p>
+          </div>
           <Field label="Description">
             <textarea
               className="w-full bg-surface border border-border rounded-lg px-3 py-2 h-32"
@@ -292,7 +298,20 @@ export default function AddBook() {
               onChange={e => set("descriptionHtml", e.target.value)}
             />
           </Field>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Why Choose This Book <span className="text-gray-500 text-xs">(comma or newline separated)</span>
+            </label>
+            <textarea
+              value={form.whyChooseThis}
+              onChange={e => set("whyChooseThis", e.target.value)}
+              rows={5}
+              placeholder="e.g., Age-appropriate activities, Enhances fine motor skills, Beautiful illustrations"
+              className="w-full bg-surface border border-border rounded-lg px-3 py-2 h-32"
+            />
+          </div>
         </div>
+
 
         {/* Media & Visibility */}
         <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">

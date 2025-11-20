@@ -177,8 +177,6 @@ const PrivacyPolicy = () => {
             </div>
           </section>
 
-
-
           {/* Third-party Links */}
           <section className="card">
             <h2 className="text-2xl font-bold text-fg mb-4">Third-party Links</h2>

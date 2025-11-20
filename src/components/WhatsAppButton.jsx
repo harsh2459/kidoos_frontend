@@ -109,6 +109,7 @@ export default function FloatingSocialMenu({
     movedRef.current = false;
     setDragging(true);
   }
+
   function moveDrag(clientX, clientY) {
     if (!startRef.current) return;
     const dx = clientX - startRef.current.x;
@@ -121,6 +122,7 @@ export default function FloatingSocialMenu({
     setPos({ x: clampedX, y: clampedY });
     recomputeDirection(clampedX);
   }
+  
   function endDrag() {
     setDragging(false);
     const vw = window.innerWidth || document.documentElement.clientWidth;
@@ -138,25 +140,30 @@ export default function FloatingSocialMenu({
     startDrag(e.clientX, e.clientY);
     e.preventDefault();
   }
+  
   function onMouseMove(e) {
     if (!dragging) return;
     moveDrag(e.clientX, e.clientY);
   }
+  
   function onMouseUp() {
     if (!dragging) return;
     if (!movedRef.current) setOpen((s) => !s);
     endDrag();
   }
+  
   function onTouchStart(e) {
     const t = e.touches[0];
     startDrag(t.clientX, t.clientY);
   }
+  
   function onTouchMove(e) {
     if (!dragging) return;
     const t = e.touches[0];
     moveDrag(t.clientX, t.clientY);
     e.preventDefault();
   }
+  
   function onTouchEnd() {
     if (!dragging) return;
     if (!movedRef.current) setOpen((s) => !s);

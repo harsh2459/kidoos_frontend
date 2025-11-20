@@ -12,7 +12,7 @@ const Ctx = createContext(null);
 
 // Safe default so components don't crash if provider is missing
 export const useCustomer = () =>
-  useContext(Ctx) || {
+    useContext(Ctx) || {
     token: "",
     customer: null,
     isCustomer: false,

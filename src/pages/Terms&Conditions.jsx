@@ -133,7 +133,7 @@ const TermsAndConditions = () => {
                             </div>
                         </div>
                     </section>
-
+        
                     {/* 4. Disclaimer */}
                     <section className="card bg-surface-subtle">
                         <div className="flex items-start gap-4">
@@ -173,7 +173,7 @@ const TermsAndConditions = () => {
                                         <span className="text-brand mt-1">•</span>
                                         <span>Product performance or suitability</span>
                                     </li>
-                                    <li className="flex items-start gap-2">
+                                                <li className="flex items-start gap-2">
                                         <span className="text-brand mt-1">•</span>
                                         <span>Website downtime or technical issues</span>
                                     </li>

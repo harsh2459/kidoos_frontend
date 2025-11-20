@@ -47,9 +47,8 @@ export default function BooksAdmin() {
         }
       });
 
-      console.log("📊 Received:", data.items?.length, "books, total:", data.total);
       setItems(data.items || []);
-      setTotal(data.total || data.items?.length || 0); // ✅ Get total count from backend
+      setTotal(data.total || data.items?.length || 0);
     } catch (error) {
       console.error("❌ Load error:", error);
       setItems([]);

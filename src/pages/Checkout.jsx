@@ -26,9 +26,7 @@ export default function Checkout() {
   const remove = useCart((s) => s.remove);
   const { payments } = useSite();
   const pollTimer = useRef(null);
-
-  console.log(assetUrl);
-
+  
   // --- PAYMENT OPTION SELECTION ---
   const [paymentOption, setPaymentOption] = useState("full_online");
 
@@ -278,7 +276,7 @@ export default function Checkout() {
         </p>
         <button
           onClick={() => navigate("/")}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          className="btn-primary px-6 py-2 rounded"
         >
           Continue Shopping
         </button>
@@ -525,7 +523,7 @@ export default function Checkout() {
               disabled={placing || !hasOnlinePay}
               className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${placing || !hasOnlinePay
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+                  : "btn-primary"
                 }`}
             >
               {placing ? (

@@ -8,7 +8,7 @@ export default function AboutUs() {
     };
 
     return (
-        <div className="bg-gradient-to-b from-gray-50 to-white min-h-screen">
+        <div className="from-gray-50 to-white min-h-screen">
             <div className="mx-auto max-w-screen-xl px-4 py-12">
                 {/* Hero Section */}
                 <div className="text-center mb-16">
@@ -35,25 +35,29 @@ export default function AboutUs() {
                         <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
                         <div className="space-y-4 text-gray-700 leading-relaxed">
                             <p>
-                                Founded with a passion for children's education and development, Kiddos Intellect began as a small initiative to make quality children's books accessible to every family across India.
+                                In today's digital age, children are increasingly disconnected from their spiritual roots and cultural values. Founded with a mission to counter screen addiction and restore meaningful learning, Kiddos Intellect brings you carefully curated books that teach timeless religious wisdom, moral values, and life lessons from sacred texts like the Bhagavad Gita, Ramayana, and other spiritual classics.
                             </p>
                             <p>
-                                We carefully curate each book in our collection, ensuring they not only entertain but also educate, inspire creativity, and help children develop essential life skills. From colorful picture books for toddlers to engaging chapter books for young readers, we have something for every age and interest.
+                                We understand the challenges parents face—children glued to smartphones, tablets, and video games, missing out on the profound teachings that shaped generations. Our collection bridges this gap by making ancient wisdom accessible, engaging, and age-appropriate through beautifully illustrated storybooks that capture young minds.
                             </p>
                             <p>
-                                What started as a modest collection has grown into a trusted destination for parents, teachers, and gift-givers who understand the transformative power of a good book.
+                                From stories of Lord Krishna's divine teachings to tales of courage, compassion, and dharma from Indian mythology, each book is designed to instill strong moral foundations, cultural pride, and spiritual awareness—helping children grow into thoughtful, value-driven individuals rooted in their heritage.
+                            </p>
+                            <p>
+                                What started as a humble effort to preserve our rich spiritual legacy has grown into a trusted destination for parents, educators, and grandparents who believe in raising children with strong character, devotion, and respect for timeless traditions beyond the digital distractions of modern life.
                             </p>
                         </div>
                     </div>
                     <div className="relative">
                         <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
                             <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center p-8">
-                                <img src="/images/About-us.png" alt="Our Story"
+                                <img src="/images/About-us.png" alt="Our Story - Religious Values & Digital Detox"
                                     className="w-full h-full object-cover" />
                             </div>
                         </div>
-                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-yellow-400 rounded-full opacity-50 blur-3xl"></div>
-                        <div className="absolute -top-6 -left-6 w-32 h-32 bg-blue-400 rounded-full opacity-50 blur-3xl"></div>
+                        {/* Optional blurred circles, adjust colors to match new gradient */}
+                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-200 rounded-full opacity-40 blur-3xl"></div>
+                        <div className="absolute -top-6 -left-6 w-32 h-32 bg-purple-200 rounded-full opacity-40 blur-3xl"></div>
                     </div>
                 </div>
 

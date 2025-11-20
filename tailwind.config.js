@@ -48,7 +48,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Inter", "sans-serif"],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       maxWidth: {
         container: "var(--container)",

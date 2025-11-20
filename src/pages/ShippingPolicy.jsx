@@ -136,6 +136,7 @@ const ShippingPolicy = () => {
                     </section>
 
                     {/* Order Tracking */}
+
                     {/* <section className="card">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">

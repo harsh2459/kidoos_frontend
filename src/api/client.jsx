@@ -7,7 +7,7 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "https://kiddosintellect.com/api";
+    "http://localhost:5050/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api");
@@ -16,8 +16,7 @@ function resolveBaseURL() {
     u = `${u}/api`;
   } else if (apiIdx !== u.length - 4) {
     u = u.slice(0, apiIdx + 4);
-  }
-  
+  }  
   return u;
 }
 
@@ -128,8 +127,7 @@ api.interceptors.response.use(
       } catch (e) {
         console.error("Error handling 401:", e);
       }
-    }
-    
+    }  
     return Promise.reject(err);
   }
 );

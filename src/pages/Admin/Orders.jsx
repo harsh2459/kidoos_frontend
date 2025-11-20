@@ -28,7 +28,7 @@ export default function AdminOrders() {
   const [selectedProfile, setSelectedProfile] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(null); // FIXED: Replace confirm dialog
-  const [dateFilter, setDateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
   const [customDate, setCustomDate] = useState("");
   const hasSelection = selected.size > 0;
 
@@ -537,19 +537,6 @@ export default function AdminOrders() {
                   }`}
               >
                 Yesterday
-              </button>
-
-              <button
-                onClick={() => {
-                  setDateFilter("tomorrow");
-                  setCustomDate("");
-                }}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${dateFilter === "tomorrow"
-                  ? "bg-purple-500 text-white border-purple-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                  }`}
-              >
-                Tomorrow
               </button>
 
               <div className="flex items-center gap-2">
