@@ -147,15 +147,15 @@ const FAQ = () => {
     return (
         <div className="min-h-screen bg-surface-subtle">
             {/* Hero Section */}
-            <div className="hero py-16 mb-12">
-                <div className="max-w-container mx-auto px-6">
-                    <div className="flex items-center justify-center mb-4">
-                        <HelpCircle className="w-12 h-12 text-brand" />
+            <div className="hero py-8 xs:py-10 sm:py-12 md:py-14 lg:py-16 xl:py-18 2xl:py-20 mb-6 xs:mb-7 sm:mb-8 md:mb-10 lg:mb-12">
+                <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12">
+                    <div className="flex items-center justify-center mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
+                        <HelpCircle className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-brand" />
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-center text-fg mb-4">
+                    <h1 className="text-3xl xs:text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-6xl font-bold text-center text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
                         Frequently Asked Questions
                     </h1>
-                    <p className="text-center text-fg-muted text-lg max-w-2xl mx-auto">
+                    <p className="text-center text-fg-muted text-base xs:text-base sm:text-lg md:text-lg lg:text-xl xl:text-xl 2xl:text-2xl max-w-xl xs:max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
                         Find answers to common questions about our products, ordering, shipping, and more.
                         Can't find what you're looking for? Contact our support team!
                     </p>
@@ -163,21 +163,21 @@ const FAQ = () => {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-container mx-auto px-6 pb-16">
-                <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12 pb-8 xs:pb-10 sm:pb-12 md:pb-14 lg:pb-16 xl:pb-20">
+                <div className="max-w-3xl xs:max-w-3xl sm:max-w-4xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-6 xs:space-y-7 sm:space-y-8 md:space-y-10">
 
                     {faqData.map((category, categoryIndex) => {
                         const IconComponent = category.icon;
                         return (
                             <section key={categoryIndex} className="card">
-                                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border-subtle">
-                                    <div className="w-10 h-10 rounded-lg bg-brand/10 flex items-center justify-center">
-                                        <IconComponent className="w-5 h-5 text-brand" />
+                                <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 md:gap-4 mb-4 xs:mb-5 sm:mb-6 pb-3 xs:pb-3.5 sm:pb-4 border-b border-border-subtle">
+                                    <div className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-brand/10 flex items-center justify-center">
+                                        <IconComponent className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-fg">{category.category}</h2>
+                                    <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg">{category.category}</h2>
                                 </div>
 
-                                <div className="space-y-3">
+                                <div className="space-y-2 xs:space-y-2.5 sm:space-y-3 md:space-y-4">
                                     {category.questions.map((faq, faqIndex) => {
                                         const globalIndex = `${categoryIndex}-${faqIndex}`;
                                         const isOpen = openIndex === globalIndex;
@@ -185,17 +185,17 @@ const FAQ = () => {
                                         return (
                                             <div
                                                 key={faqIndex}
-                                                className="bg-surface-subtle rounded-lg border border-border-subtle overflow-hidden transition-all duration-200"
+                                                className="bg-surface-subtle rounded-lg xs:rounded-xl border border-border-subtle overflow-hidden transition-all duration-200"
                                             >
                                                 <button
                                                     onClick={() => toggleAccordion(globalIndex)}
-                                                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-surface transition-colors duration-200"
+                                                    className="w-full px-3 xs:px-4 sm:px-5 md:px-6 py-3 xs:py-3.5 sm:py-4 md:py-5 flex items-center justify-between text-left hover:bg-surface transition-colors duration-200"
                                                 >
-                                                    <span className="font-semibold text-fg pr-4">
+                                                    <span className="font-semibold text-fg pr-3 xs:pr-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg">
                                                         {faq.question}
                                                     </span>
                                                     <ChevronDown
-                                                        className={`w-5 h-5 text-brand flex-shrink-0 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
+                                                        className={`w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand flex-shrink-0 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
                                                             }`}
                                                     />
                                                 </button>
@@ -204,8 +204,8 @@ const FAQ = () => {
                                                     className={`transition-all duration-200 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                                                         } overflow-hidden`}
                                                 >
-                                                    <div className="px-5 pb-4 pt-1">
-                                                        <p className="text-fg-muted leading-relaxed">{faq.answer}</p>
+                                                    <div className="px-3 xs:px-4 sm:px-5 md:px-6 pb-3 xs:pb-3.5 sm:pb-4 md:pb-5 pt-1">
+                                                        <p className="text-fg-muted leading-relaxed text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-lg">{faq.answer}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -219,32 +219,32 @@ const FAQ = () => {
                     {/* Still Have Questions Section */}
                     <section className="card bg-brand text-brand-foreground">
                         <div className="text-center">
-                            <h2 className="text-2xl font-bold mb-3">Still Have Questions?</h2>
-                            <p className="mb-6 opacity-90 max-w-2xl mx-auto">
+                            <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold mb-2 xs:mb-2.5 sm:mb-3">Still Have Questions?</h2>
+                            <p className="mb-4 xs:mb-5 sm:mb-6 opacity-90 max-w-xl xs:max-w-xl sm:max-w-2xl mx-auto text-sm xs:text-sm sm:text-base md:text-base lg:text-lg">
                                 Can't find the answer you're looking for? Our friendly customer support team is here to help!
                                 Reach out to us and we'll get back to you as soon as possible.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <div className="flex flex-col xs:flex-col sm:flex-row gap-3 xs:gap-3.5 sm:gap-4 md:gap-5 justify-center items-center">
                                 <a
                                     href="kiddosintellect@gmail.com"
-                                    className="btn-secondary bg-brand-foreground text-brand hover:bg-brand-foreground/90 flex items-center gap-2"
+                                    className="btn-secondary bg-brand-foreground text-brand hover:bg-brand-foreground/90 flex items-center gap-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base"
                                 >
-                                    <Mail className="w-4 h-4" />
+                                    <Mail className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                                     Email Us
                                 </a>
                                 <a
                                     href="tel:+919879857529"
-                                    className="btn-secondary bg-brand-foreground/10 text-brand-foreground hover:bg-brand-foreground/20 border border-brand-foreground/20 flex items-center gap-2"
+                                    className="btn-secondary bg-brand-foreground/10 text-brand-foreground hover:bg-brand-foreground/20 border border-brand-foreground/20 flex items-center gap-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base"
                                 >
-                                    <Phone className="w-4 h-4" />
+                                    <Phone className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                                     Call Us
                                 </a>
                             </div>
-                            <div className="mt-6 pt-6 border-t border-brand-foreground/20">
-                                <p className="text-sm opacity-75">
+                            <div className="mt-4 xs:mt-5 sm:mt-6 pt-4 xs:pt-5 sm:pt-6 border-t border-brand-foreground/20">
+                                <p className="text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base opacity-75">
                                     Business Hours: Monday - Saturday, 9:00 AM - 6:00 PM IST
                                 </p>
-                                <p className="text-sm opacity-75 mt-1">
+                                <p className="text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base opacity-75 mt-0.5 xs:mt-1 sm:mt-1.5">
                                     Email Response Time: Within 24 hours on business days
                                 </p>
                             </div>
@@ -253,35 +253,35 @@ const FAQ = () => {
 
                     {/* Quick Links */}
                     <section className="card">
-                        <h2 className="text-xl font-bold text-fg mb-4 text-center">Related Resources</h2>
-                        <div className="grid md:grid-cols-4 gap-4">
+                        <h2 className="text-lg xs:text-lg sm:text-xl md:text-xl lg:text-2xl xl:text-2xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-center">Related Resources</h2>
+                        <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
                             <Link
                                 to="/privacy"
-                                className="text-center p-4 bg-surface-subtle rounded-lg hover:bg-surface transition-colors border border-border-subtle"
+                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
                             >
-                                <div className="text-brand font-semibold mb-1">Privacy Policy</div>
-                                <div className="text-fg-subtle text-sm">How we protect your data</div>
+                                <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Privacy Policy</div>
+                                <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">How we protect your data</div>
                             </Link>
                             <Link
                                 to="/shipping"
-                                className="text-center p-4 bg-surface-subtle rounded-lg hover:bg-surface transition-colors border border-border-subtle"
+                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
                             >
                                 <div className="text-brand font-semibold mb-1">Shipping Policy</div>
                                 <div className="text-fg-subtle text-sm">Delivery information</div>
                             </Link>
                             <Link
                                 to="/refund"
-                                className="text-center p-4 bg-surface-subtle rounded-lg hover:bg-surface transition-colors border border-border-subtle"
+                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
                             >
-                                <div className="text-brand font-semibold mb-1">Refund Policy</div>
-                                <div className="text-fg-subtle text-sm">Returns & refunds</div>
+                                <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Refund Policy</div>
+                                <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">Returns & refunds</div>
                             </Link>
                             <Link
                                 to="/terms"
-                                className="text-center p-4 bg-surface-subtle rounded-lg hover:bg-surface transition-colors border border-border-subtle"
+                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
                             >
-                                <div className="text-brand font-semibold mb-1">Terms & Conditions</div>
-                                <div className="text-fg-subtle text-sm">Legal information</div>
+                                <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Terms & Conditions</div>
+                                <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">Legal information</div>
                             </Link>
                         </div>
                     </section>

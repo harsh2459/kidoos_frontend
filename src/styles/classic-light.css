@@ -4,10 +4,8 @@
 
 /* ========== CLASSIC LIGHT THEME LAYERS ========== */
 
-
 /* ---------- BASE (global look & nicer inputs) ---------- */
 @layer base {
-
   html,
   body {
     @apply bg-white text-fg antialiased;
@@ -59,9 +57,9 @@
     background-color: hsl(var(--brand));
     color: hsl(var(--brand-foreground));
   }
-
-  /* legacy safety */
 }
+
+/* legacy safety */
 
 @font-face {
   font-family: 'NeueHaasGrotesk';
@@ -221,10 +219,144 @@
 /* ---------- HERO WRAPPER (soft gradient band) ---------- */
 @layer components {
   .hero {
-    @apply  from-surface to-surface-subtle border border-border-subtle rounded-2xl shadow-sm;
+    @apply from-surface to-surface-subtle border border-border-subtle rounded-2xl shadow-sm;
   }
 
   .eyebrow {
     @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg bg-surface-subtle text-fg-muted;
+  }
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS (480px - 2560px) ========== */
+
+/* Mobile (480px - 600px) */
+@media (min-width: 480px) and (max-width: 600px) {
+  @layer base {
+    input:not([type=checkbox]):not([type=radio]):not([type=file]),
+    select,
+    textarea {
+      @apply px-2 py-1.5 text-sm;
+    }
+  }
+
+  @layer components {
+    .btn-primary {
+      @apply px-4 py-2 text-sm;
+    }
+
+    .btn-secondary,
+    .btn-muted,
+    .btn-ghost {
+      @apply px-3 py-1.5 text-sm;
+    }
+
+    .card {
+      @apply p-3 rounded-lg;
+    }
+
+    .table thead th,
+    .table tbody td {
+      @apply px-2 py-1.5 text-xs;
+    }
+
+    .empty {
+      @apply p-4 text-sm;
+    }
+
+    .hero {
+      @apply rounded-lg;
+    }
+  }
+}
+
+/* Tablets (601px - 768px) */
+@media (min-width: 601px) and (max-width: 768px) {
+  @layer components {
+    .btn-primary {
+      @apply px-5 py-3;
+    }
+
+    .card {
+      @apply p-3.5;
+    }
+
+    .table thead th,
+    .table tbody td {
+      @apply px-3 py-1.5;
+    }
+
+    .empty {
+      @apply p-6;
+    }
+
+    .hero {
+      @apply rounded-xl;
+    }
+  }
+}
+
+/* Large Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  @layer components {
+    .card {
+      @apply p-4;
+    }
+
+    .empty {
+      @apply p-7;
+    }
+  }
+}
+
+/* Large Desktop (1441px - 1920px) */
+@media (min-width: 1441px) and (max-width: 1920px) {
+  @layer components {
+    .btn-primary {
+      @apply px-6 py-3.5 text-base;
+    }
+
+    .card {
+      @apply p-5;
+    }
+
+    .table thead th,
+    .table tbody td {
+      @apply px-5 py-3;
+    }
+
+    .empty {
+      @apply p-10;
+    }
+  }
+}
+
+/* Ultra-Wide (1921px - 2560px) */
+@media (min-width: 1921px) and (max-width: 2560px) {
+  @layer components {
+    .btn-primary {
+      @apply px-7 py-4 text-lg;
+    }
+
+    .btn-secondary,
+    .btn-muted {
+      @apply px-5 py-3 text-base;
+    }
+
+    .card {
+      @apply p-6;
+    }
+
+    .table thead th,
+    .table tbody td {
+      @apply px-6 py-3.5 text-base;
+    }
+
+    .empty {
+      @apply p-12 text-base;
+    }
+
+    .badge {
+      @apply px-3 py-1.5 text-sm;
+    }
   }
 }

@@ -264,7 +264,7 @@ export default function Checkout() {
   /* ------------ Thank-you page ------------ */
   if (placed) {
     return (
-      <div className="container mx-auto p-6 text-center">
+      <div className="container mx-auto p-4 xs:p-5 sm:p-6 md:p-8 text-center">
         <h2 className="text-2xl font-bold text-green-600 mb-4">
           ✓ Order Placed Successfully!
         </h2>
@@ -286,47 +286,47 @@ export default function Checkout() {
 
   /* ------------ MAIN CHECKOUT FORM ------------ */
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+    <div className="container mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-6 md:py-8 max-w-xl xs:max-w-xl sm:max-w-3xl md:max-w-5xl lg:max-w-6xl">
+      <h1 className="text-2xl xs:text-2xl sm:text-3xl md:text-4xl font-bold mb-5 xs:mb-6 sm:mb-8">Checkout</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8 md:gap-10 lg:gap-12">
         {/* LEFT SIDE - FORM */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 xs:space-y-5 sm:space-y-6">
           {/* Customer Information */}
-          <div className="bg-white border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white border rounded-lg p-3 xs:p-4 sm:p-6 md:p-8 shadow-sm">
+            <h2 className="text-lg xs:text-lg sm:text-xl md:text-2xl font-semibold mb-3 xs:mb-3.5 sm:mb-4">Customer Information</h2>
+            <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 xs:gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={cust.name}
                   onChange={(e) => set("name", e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                   placeholder="Your full name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                   Phone <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
                   value={cust.phone}
                   onChange={(e) => set("phone", e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                   placeholder="10-digit mobile"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">Email</label>
                 <input
                   type="email"
                   value={cust.email}
                   onChange={(e) => set("email", e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                   placeholder="your@email.com"
                 />
               </div>
@@ -334,25 +334,25 @@ export default function Checkout() {
           </div>
 
           {/* Shipping Address */}
-          <div className="bg-white border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
+          <div className="bg-white border rounded-lg p-3 xs:p-4 sm:p-6 md:p-8 shadow-sm">
+            <h2 className="text-lg xs:text-lg sm:text-xl md:text-2xl font-semibold mb-3 xs:mb-3.5 sm:mb-4">Shipping Address</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                   Address Line 1 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={cust.line1}
                   onChange={(e) => set("line1", e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                   placeholder="Street address"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 xs:gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                     PIN Code <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -360,12 +360,12 @@ export default function Checkout() {
                     value={cust.pin}
                     onChange={(e) => onPinChange(e.target.value)}
                     maxLength="6"
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                     placeholder="6-digit PIN"
                   />
                   {pinStatus && (
                     <p
-                      className={`text-xs mt-1 ${pinStatus === "OK"
+                      className={`text-[10px] xs:text-xs sm:text-xs mt-0.5 xs:mt-1 ${pinStatus === "OK"
                           ? "text-green-600"
                           : pinStatus === "Looking up…"
                             ? "text-blue-600"
@@ -379,13 +379,13 @@ export default function Checkout() {
 
                 {offices.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                       Locality
                     </label>
                     <select
                       value={locality}
                       onChange={(e) => setLocality(e.target.value)}
-                      className="w-full border rounded px-3 py-2"
+                      className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                     >
                       {offices.map((o, i) => (
                         <option key={i} value={o.Name}>
@@ -397,33 +397,33 @@ export default function Checkout() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 xs:gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                     City <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={cust.city}
                     onChange={(e) => set("city", e.target.value)}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">
                     State <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={cust.state}
                     onChange={(e) => set("state", e.target.value)}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Country</label>
+                <label className="block text-xs xs:text-sm font-medium mb-1 xs:mb-2">Country</label>
                 <input
                   type="text"
                   value={cust.country}
@@ -435,10 +435,10 @@ export default function Checkout() {
           </div>
 
           {/* Payment Options */}
-          <div className="bg-white border rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
-            <div className="space-y-3">
-              <label className="flex items-center space-x-3 cursor-pointer">
+          <div className="bg-white border rounded-lg p-3 xs:p-4 sm:p-6 md:p-8 shadow-sm">
+            <h2 className="text-lg xs:text-lg sm:text-xl md:text-2xl font-semibold mb-3 xs:mb-3.5 sm:mb-4">Payment Method</h2>
+            <div className="space-y-2 xs:space-y-2.5 sm:space-y-3">
+              <label className="text-xs xs:text-sm font-medium">
                 <input
                   type="radio"
                   name="paymentOption"
@@ -451,7 +451,7 @@ export default function Checkout() {
                   Pay Full Amount Online
                 </span>
               </label>
-              <label className="flex items-center space-x-3 cursor-pointer">
+              <label className="text-xs xs:text-sm font-medium">
                 <input
                   type="radio"
                   name="paymentOption"
@@ -470,13 +470,13 @@ export default function Checkout() {
 
         {/* RIGHT SIDE - ORDER SUMMARY */}
         <div className="lg:col-span-1">
-          <div className="bg-white border rounded-lg p-6 shadow-sm sticky top-6">
-            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+          <div className="bg-white border rounded-lg p-3 xs:p-4 sm:p-6 md:p-7 sticky top-3 xs:top-4 sm:top-6 shadow-sm">
+            <h2 className="text-lg xs:text-lg sm:text-xl md:text-2xl font-semibold mb-3 xs:mb-3.5 sm:mb-4">Order Summary</h2>
 
             {/* Cart Items */}
-            <div className="space-y-2 mb-4 max-h-64 overflow-y-auto border-b pb-4">
+            <div className="space-y-1.5 xs:space-y-2 mb-3 xs:mb-4 max-h-40 xs:max-h-48 sm:max-h-64 overflow-y-auto border-b pb-3 xs:pb-4">
               {items.map((item, idx) => (
-                <div key={idx} className="flex justify-between text-sm">
+                <div key={idx} className="flex justify-between text-xs xs:text-sm">
                   <span className="text-gray-700">
                     {item.title} x {item.qty}
                   </span>
@@ -490,27 +490,27 @@ export default function Checkout() {
             </div>
 
             {/* Totals */}
-            <div className="space-y-2 mb-6">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-1.5 xs:space-y-2 mb-4 xs:mb-6">
+              <div className="flex justify-between text-xs xs:text-sm">
                 <span>Subtotal:</span>
                 <span>{fmt(totals.sub)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs xs:text-sm">
                 <span>Tax:</span>
                 <span>{fmt(totals.tax)}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs xs:text-sm">
                 <span>Shipping:</span>
                 <span>{fmt(totals.ship)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
+              <div className="flex justify-between text-base xs:text-lg font-bold border-t pt-1.5 xs:pt-2">
                 <span>Total:</span>
                 <span>{fmt(totals.grand)}</span>
               </div>
 
               {/* Payment Amount Breakdown */}
               {paymentOption === "half_cod_half_online" && (
-                <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3 text-xs">
+                <div className="bg-blue-50 border border-blue-200 rounded p-2 xs:p-2.5 sm:p-3 mt-2 xs:mt-3 text-[10px] xs:text-xs">
                   <p>Pay Now: <strong>{fmt(totals.grand / 2)}</strong></p>
                   <p>Pay on Delivery: <strong>{fmt(totals.grand / 2)}</strong></p>
                 </div>
@@ -521,7 +521,7 @@ export default function Checkout() {
             <button
               onClick={placeWithRazorpay}
               disabled={placing || !hasOnlinePay}
-              className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${placing || !hasOnlinePay
+              className={`w-full py-2.5 xs:py-3 rounded-lg font-semibold text-xs xs:text-sm sm:text-base text-white transition-all ${placing || !hasOnlinePay
                   ? "bg-gray-400 cursor-not-allowed"
                   : "btn-primary"
                 }`}
@@ -540,7 +540,7 @@ export default function Checkout() {
             </button>
 
             {!hasOnlinePay && (
-              <p className="text-red-500 text-xs mt-3 text-center">
+              <p className="text-red-500 text-[10px] xs:text-xs mt-2 xs:mt-3 text-center">
                 ⚠️ Online payment is currently unavailable
               </p>
             )}

@@ -1,20 +1,59 @@
 /* Wave shape above the footer */
 .custom-shape-divider-top {
   position: absolute;
-  top: -1px;           /* tucks the wave right into the section above */
+  top: -1px; /* tucks the wave right into the section above */
   left: 0;
   width: 100%;
   overflow: hidden;
   line-height: 0;
-  z-index: 0;          /* sits behind footer content */
+  z-index: 0; /* sits behind footer content */
 }
 
 .custom-shape-divider-top svg {
   display: block;
   width: calc(151% + 1.3px);
-  height: 100px;       /* adjust to make the wave taller/shorter */
+  height: 100px; /* adjust to make the wave taller/shorter */
 }
 
 .custom-shape-divider-top .shape-fill {
-  fill: #ffffff;       /* matches footer background */
+  fill: #ffffff; /* matches footer background */
+}
+
+/* ========== RESPONSIVE STYLES (480px - 2560px) ========== */
+
+/* Mobile (480px - 600px) */
+@media (min-width: 480px) and (max-width: 600px) {
+  .custom-shape-divider-top svg {
+    height: 60px;
+  }
+}
+
+/* Tablets (601px - 768px) */
+@media (min-width: 601px) and (max-width: 768px) {
+  .custom-shape-divider-top svg {
+    height: 70px;
+  }
+}
+
+/* Large Tablets (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .custom-shape-divider-top svg {
+    height: 85px;
+  }
+}
+
+/* Desktop (1025px - 1440px) - Default 100px height applies */
+
+/* Large Desktop (1441px - 1920px) */
+@media (min-width: 1441px) and (max-width: 1920px) {
+  .custom-shape-divider-top svg {
+    height: 110px;
+  }
+}
+
+/* Ultra-Wide (1921px - 2560px) */
+@media (min-width: 1921px) and (max-width: 2560px) {
+  .custom-shape-divider-top svg {
+    height: 120px;
+  }
 }
