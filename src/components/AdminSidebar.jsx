@@ -33,6 +33,7 @@ export default function AdminSidebar() {
           <Item to="/admin/orders" active={loc.pathname.startsWith("/admin/orders")}>Orders</Item>
           <Item to="/admin/books" active={loc.pathname.startsWith("/admin/books")}>Books</Item>
           <Item to="/admin/add-book" active={loc.pathname.startsWith("/admin/add-book")}>Add Book</Item>
+          <Item to="/admin/categories" active={loc.pathname.startsWith("/admin/categories")}>Categories</Item>
           <Item to="/admin/payments" active={loc.pathname.startsWith("/admin/payments")}>Payments</Item>
           <Item to="/admin/settings" active={loc.pathname.startsWith("/admin/settings")}>Settings</Item>
           <Item to="/admin/api-users" active={loc.pathname.startsWith("/admin/api-users")}>API Users</Item>

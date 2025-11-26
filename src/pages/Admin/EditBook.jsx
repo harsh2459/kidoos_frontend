@@ -21,12 +21,17 @@ export default function EditBook() {
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [suggestionsText, setSuggestionsText] = useState("");
+
+  // categories dropdown
+  const [categoryList, setCategoryList] = useState([]);
+  const [catOpen, setCatOpen] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
 
-        // ✅ FIX: Use admin route directly with slug - it handles both ID and slug
+        // ✅ Use admin route directly with slug - it handles both ID and slug
         const { data } = await api.get(`/books/admin/${slug}`, auth);
         const b = data?.book || null;
 
@@ -55,6 +60,21 @@ export default function EditBook() {
       }
     })();
   }, [slug]);
+
+  useEffect(() => {
+    // fetch categories for dropdown
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get("/books/categories", auth);
+        if (!mounted) return;
+        setCategoryList(res?.data?.items || []);
+      } catch (e) {
+        console.warn("Failed to load categories", e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   if (loading) {
     return (
@@ -131,6 +151,17 @@ export default function EditBook() {
   /* ---------------- Save ---------------- */
   const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
 
+  // categories helper for dropdown
+  const selectedFromText = () => splitCsv(categoriesText);
+
+  function toggleCategoryInEdit(val) {
+    const cur = selectedFromText();
+    if (cur.includes(val)) {
+      setCategoriesText(cur.filter(x => x !== val).join(", "));
+    } else {
+      setCategoriesText([...cur, val].join(", "));
+    }
+  }
 
   // Add new function for whyChooseThis that handles both commas and newlines
   function splitReasons(str = "") {
@@ -186,7 +217,7 @@ export default function EditBook() {
     }
   }
 
-  /* ---------------- Pricing: bi-directional auto calc ---------------- */
+  /* ---------------- Pricing helpers (unchanged) ---------------- */
   const toNum = (v) => (v === "" || v === null || v === undefined ? NaN : Number(v));
 
   function calcDiscountPct(mrp, price) {
@@ -225,6 +256,8 @@ export default function EditBook() {
       });
     };
   }
+
+  const selected = selectedFromText();
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
@@ -354,24 +387,91 @@ export default function EditBook() {
           </div>
         </Card>
 
-        {/* Categorization */}
-        <Card title="Categorization">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+          <div className="text-sm font-semibold text-gray-700 mb-3">Categorization</div>
+
+          <div className="mb-3">
+            <label className="text-sm font-medium block mb-2">Select Categories</label>
+
+            <div className="relative">
+              <div
+                className="flex items-center gap-2 flex-wrap p-2 border border-border rounded-md bg-white"
+                onClick={() => setCatOpen(v => !v)}
+                style={{ cursor: "pointer" }}
+              >
+                {selected.length === 0 ? (
+                  <span className="text-sm text-gray-500">Choose categories…</span>
+                ) : (
+                  selected.map((s) => {
+                    const found = categoryList.find(c => c.slug === s || c.name === s);
+                    const label = found?.name || s;
+                    return (
+                      <span key={s} className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm bg-black/5 text-black">
+                        {label}
+                        <button
+                          type="button"
+                          onClick={(ev) => { ev.stopPropagation(); toggleCategoryInEdit(s); }}
+                          className="text-xs px-1"
+                          aria-label={`Remove ${label}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })
+                )}
+
+                <div className="ml-auto text-xs text-gray-400">▾</div>
+              </div>
+
+              {catOpen && (
+                <div className="absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-auto">
+                  {categoryList.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-500">No categories</div>
+                  ) : (
+                    categoryList.map((c) => {
+                      const key = c.slug || c._id || c.name;
+                      const val = c.slug || c.name;
+                      const checked = selected.includes(val) || selected.includes(c.name);
+                      return (
+                        <label key={key} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                          <input type="checkbox" checked={checked} onChange={() => toggleCategoryInEdit(val)} />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{c.name}</div>
+                            <div className="text-xs text-gray-500">Books: {c.count ?? 0}</div>
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">You can also edit categories using the CSV field below.</p>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-3">
-            <Row label="Categories" hintRight="comma separated">
+            <div>
+              <label className="text-sm">Categories (CSV)</label>
               <input
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
+                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 mt-1"
                 value={categoriesText}
                 onChange={(e) => setCategoriesText(e.target.value)}
+                placeholder="e.g. kids, math"
               />
-            </Row>
-            <Row label="Tags" hintRight="comma separated">
+            </div>
+            <div>
+              <label className="text-sm">Tags (CSV)</label>
               <input
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2"
+                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 mt-1"
                 value={tagsText}
                 onChange={(e) => setTagsText(e.target.value)}
               />
-            </Row>
+            </div>
           </div>
+        </div>
+        <Card title="Description & Suggestions">
+
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               Suggestion Groups (comma-separated)

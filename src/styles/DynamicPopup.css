@@ -1,0 +1,244 @@
+/* src/styles/DynamicPopup.css */
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9998;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.popup-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 9999;
+  width: 90%;
+}
+
+/* Image-based popup */
+.popup-image-mode {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.popup-full-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: inherit;
+}
+
+.popup-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.popup-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+/* Layout variations */
+.popup-layout-left-right .popup-content {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.popup-layout-top-bottom .popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.popup-layout-centered .popup-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.popup-image {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f7fafc;
+  flex-shrink: 0;
+}
+
+.popup-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.popup-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.popup-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  width: fit-content;
+}
+
+.popup-title {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.popup-description {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.popup-product h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.popup-pricing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.popup-original-price {
+  font-size: 18px;
+  color: #a0aec0;
+  text-decoration: line-through;
+}
+
+.popup-discounted-price {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.popup-price {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.popup-cta {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.popup-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.popup-cta:active {
+  transform: translateY(0);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -55%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .popup-container {
+    width: 95%;
+    max-height: 90vh;
+    padding: 20px !important;
+  }
+  
+  .popup-layout-left-right .popup-content {
+    flex-direction: column;
+  }
+  
+  .popup-image {
+    width: 100% !important;
+  }
+  
+  .popup-title {
+    font-size: 22px !important;
+  }
+  
+  .popup-description {
+    font-size: 14px !important;
+  }
+  
+  .popup-discounted-price,
+  .popup-price {
+    font-size: 20px !important;
+  }
+  
+  .popup-cta {
+    padding: 14px 24px !important;
+    font-size: 16px !important;
+  }
+}

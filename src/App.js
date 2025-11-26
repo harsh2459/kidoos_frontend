@@ -38,12 +38,24 @@ import TermsAndConditions from './pages/Terms&Conditions';
 import RefundPolicy from './pages/RefundPolicy';
 import FAQ from './pages/FAQ';
 import ContactUs from './pages/ContactUs';
+import CustomerProfile from './pages/CustomerProfile';
+import OrderHistory from './pages/OrderHistory';
+import AdminCategories from './pages/Admin/Categories';
+import DynamicPopup from './components/DynamicPopup';
+import PopupSettings from './pages/Admin/PopupSettings';
 
 function InnerApp() {
   const loc = useLocation();
-  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' ;
+  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact';
 
   const isAdminRoute = loc.pathname.startsWith('/admin');
+
+  const getPageName = () => {
+    if (loc.pathname === '/') return 'home';
+    if (loc.pathname === '/catalog') return 'products';
+    if (loc.pathname === '/cart') return 'cart';
+    return 'all';
+  };
 
   function RequireCustomer({ children }) {
     const { isCustomer } = useCustomer();
@@ -56,6 +68,7 @@ function InnerApp() {
     <>
       <Navbar />
       <main>
+        {!isAdminRoute && <DynamicPopup   page={getPageName()} />}
         <Routes>
           {/* customer auth */}
           <Route path="/login" element={<CustomerAuth />} />
@@ -63,6 +76,22 @@ function InnerApp() {
           <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
           <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
           <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
+          <Route
+            path="/profile"
+            element={
+              <RequireCustomer>
+                <CustomerProfile />
+              </RequireCustomer>
+            }
+          />
+          <Route
+            path="/profile/orders"
+            element={
+              <RequireCustomer>
+                <OrderHistory />
+              </RequireCustomer>
+            }
+          />
           <Route
             path="/checkout"
             element={
@@ -137,24 +166,35 @@ function InnerApp() {
             path="/admin/email-templates"
             element={<AdminGuard><AdminLayout><EmailTemplates /></AdminLayout></AdminGuard>}
           />
+          <Route
+            path="/admin/categories"
+            element={<AdminGuard><AdminLayout><AdminCategories /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/settings/popup"
+            element={<AdminGuard><AdminLayout><PopupSettings /></AdminLayout></AdminGuard>}
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-      {!isAdminRoute && <WhatsAppButton initial={{ x: 20, y: 220 }} phone="919879857529" />}
-      {showFooter && (
-        <Footer
-          contact={{
-            email: "kiddosintellect@gmail.com",
-            phone: "+91 98798 57529",
-            hours: "Mon–Sat, 10am–6pm IST",
-          }}
-          links={[
-            { label: "Privacy", href: "/privacy" },
-            { label: "Returns", href: "/returns" },
-            { label: "Shipping", href: "/shipping" },
-          ]}
-        />
-      )}
+        </Routes >
+      </main >
+      {!isAdminRoute && <WhatsAppButton initial={{ x: 20, y: 220 }} phone="919879857529" />
+      }
+      {
+        showFooter && (
+          <Footer
+            contact={{
+              email: "kiddosintellect@gmail.com",
+              phone: "+91 98798 57529",
+              hours: "Mon–Sat, 10am–6pm IST",
+            }}
+            links={[
+              { label: "Privacy", href: "/privacy" },
+              { label: "Returns", href: "/returns" },
+              { label: "Shipping", href: "/shipping" },
+            ]}
+          />
+        )
+      }
     </>
   );
 }

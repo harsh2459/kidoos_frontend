@@ -7,7 +7,7 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "http://localhost:5050/api";
+    "https://kiddosintellect.com/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api");
@@ -46,28 +46,26 @@ function getTokens() {
 api.interceptors.request.use((config) => {
   const url = String(config?.url || "");
   const metaAuth = config?.meta?.auth;
-  let token = "";
-
-  console.log("🔍 Request interceptor:", { url, metaAuth });
+  let token = ""; 
 
   // ✅ Priority 1: Explicit meta.auth directive
   if (metaAuth === "admin") {
     token = getTokens().admin;
-    console.log("✅ Using admin token (explicit)");
+    
   } else if (metaAuth === "customer") {
     token = getTokens().customer;
-    console.log("✅ Using customer token (explicit)");
+    
   } else if (metaAuth === "none") {
     token = "";
-    console.log("✅ No auth required (explicit)");
+    
   }
   // ✅ Priority 2: Auto-detect from URL pattern
   else if (url.startsWith("/customer/")) {
     token = getTokens().customer;
-    console.log("✅ Using customer token (auto-detected from /customer/)");
+    
   } else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
     token = getTokens().admin;
-    console.log("✅ Using admin token (auto-detected)");
+    
   }
 
   // Initialize headers if not exists
@@ -96,7 +94,6 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (res) => {
-    console.log("✅ Response success:", res.config.url, res.status);
     return res;
   },
   (err) => {

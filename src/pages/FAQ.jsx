@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, ChevronDown, Package, CreditCard, Truck, ShieldCheck, Mail, Phone } from 'lucide-react';
+import { HelpCircle, ChevronDown, Package, CreditCard, Truck, ShieldCheck, Mail, Phone, FileText, RefreshCw, Shield } from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 import { Link } from 'react-router-dom';
 
@@ -126,7 +126,7 @@ const FAQ = () => {
                 },
                 {
                     question: "How can I contact customer support?",
-                    answer: "We're here to help! You can reach us via Email: kiddosintellect@gmail.com, Phone: +91-98798 57529 (Mon-Sat, 9 AM - 6 PM IST), or through our Contact Us page. We typically respond to emails within 24 hours on business days. For urgent matters, please call us directly."
+                    answer: "We're here to help! You can reach us via Email: kiddosintellect@gmail.com, Phone: +91-98798 57529 (Mon-Sat, 10 AM - 6 PM IST), or through our Contact Us page. We typically respond to emails within 24 hours on business days. For urgent matters, please call us directly."
                 },
                 {
                     question: "How do I reset my password?",
@@ -165,7 +165,6 @@ const FAQ = () => {
             {/* Main Content */}
             <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12 pb-8 xs:pb-10 sm:pb-12 md:pb-14 lg:pb-16 xl:pb-20">
                 <div className="max-w-3xl xs:max-w-3xl sm:max-w-4xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-6 xs:space-y-7 sm:space-y-8 md:space-y-10">
-
                     {faqData.map((category, categoryIndex) => {
                         const IconComponent = category.icon;
                         return (
@@ -253,36 +252,103 @@ const FAQ = () => {
 
                     {/* Quick Links */}
                     <section className="card">
-                        <h2 className="text-lg xs:text-lg sm:text-xl md:text-xl lg:text-2xl xl:text-2xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-center">Related Resources</h2>
+                        <h2 className="text-lg xs:text-lg sm:text-xl md:text-xl lg:text-2xl xl:text-2xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-center">
+                            Related Resources
+                        </h2>
                         <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
+
+                            {/* Privacy Policy */}
                             <Link
                                 to="/privacy"
-                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
+                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
                             >
-                                <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Privacy Policy</div>
-                                <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">How we protect your data</div>
+                                <div className="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+
+                                <div className="relative z-10">
+                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
+                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-blue-50 group-hover:bg-blue-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                                            <Shield className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-blue-500 group-hover:text-white transition-colors duration-300" />
+                                        </div>
+                                    </div>
+
+                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
+                                        Privacy Policy
+                                    </div>
+                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
+                                        How we protect your data
+                                    </div>
+                                </div>
                             </Link>
+
+                            {/* Shipping Policy */}
                             <Link
                                 to="/shipping"
-                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
+                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
                             >
-                                <div className="text-brand font-semibold mb-1">Shipping Policy</div>
-                                <div className="text-fg-subtle text-sm">Delivery information</div>
+                                <div className="absolute inset-0 bg-green-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+
+                                <div className="relative z-10">
+                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
+                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-green-50 group-hover:bg-green-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                                            <Truck className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-green-500 group-hover:text-white transition-colors duration-300" />
+                                        </div>
+                                    </div>
+
+                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
+                                        Shipping Policy
+                                    </div>
+                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
+                                        Delivery information
+                                    </div>
+                                </div>
                             </Link>
+
+                            {/* Refund Policy */}
                             <Link
                                 to="/refund"
-                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
+                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
                             >
-                                <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Refund Policy</div>
-                                <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">Returns & refunds</div>
+                                <div className="absolute inset-0 bg-purple-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+
+                                <div className="relative z-10">
+                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
+                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-purple-50 group-hover:bg-purple-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                                            <RefreshCw className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-purple-500 group-hover:text-white transition-colors duration-300" />
+                                        </div>
+                                    </div>
+
+                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
+                                        Refund Policy
+                                    </div>
+                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
+                                        Returns & refunds
+                                    </div>
+                                </div>
                             </Link>
+
+                            {/* Terms & Conditions */}
                             <Link
                                 to="/terms"
-                                className="text-center p-3 xs:p-3.5 sm:p-4 md:p-5 bg-surface-subtle rounded-lg xs:rounded-xl hover:bg-surface transition-colors border border-border-subtle"
+                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
                             >
-                                <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Terms & Conditions</div>
-                                <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">Legal information</div>
+                                <div className="absolute inset-0 bg-amber-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+
+                                <div className="relative z-10">
+                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
+                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-amber-50 group-hover:bg-amber-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
+                                            <FileText className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-amber-500 group-hover:text-white transition-colors duration-300" />
+                                        </div>
+                                    </div>
+
+                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
+                                        Terms & Conditions
+                                    </div>
+                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
+                                        Legal information
+                                    </div>
+                                </div>
                             </Link>
+
                         </div>
                     </section>
                 </div>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCustomer } from "../contexts/CustomerAuth";
-import { CustomerOTPAPI } from "../api/customer";
+import { CustomerAPI, CustomerOTPAPI } from "../api/customer";
+import GoogleLoginButton from "../components/button/GoogleLoginButton";
 
 export default function CustomerAuth() {
   const { login, register } = useCustomer();
@@ -195,20 +196,41 @@ export default function CustomerAuth() {
     setErr("");
     setInfo("");
     setLoading(true);
+
     try {
       const f = normalizeForm(form);
+      const pendingItem = loc.state?.pendingItem; // Get pending item from navigation state
 
       if (mode === "login") {
         if (!f.password || (!f.email && !f.phone)) {
           setErr("Enter password and either Email or Phone");
         } else {
-          await login({
+          // 1. Perform Login
+          const res = await login({
             email: f.email || undefined,
             phone: f.phone || undefined,
             password: f.password,
           });
+
+          // 2. Add Pending Item if exists (Buy Now flow)
+          if (pendingItem && res?.token) {
+            try {
+              console.log("Adding pending item to cart...", pendingItem);
+              await CustomerAPI.addToCart(res.token, {
+                bookId: pendingItem.bookId,
+                qty: pendingItem.qty
+              });
+              // Note: The cart context usually auto-refreshes or you might need to call replaceAll if your useCustomer doesn't trigger it
+            } catch (cartErr) {
+              console.error("Failed to add pending item:", cartErr);
+              // Don't block navigation, but maybe warn?
+            }
+          }
+
+          // 3. Navigate
           nav(next, { replace: true });
         }
+
       } else {
         // SIGNUP - Both Email and Phone are REQUIRED
         if (!f.name || !f.password || !f.email || !f.phone) {
@@ -250,13 +272,28 @@ export default function CustomerAuth() {
           return;
         }
 
-        await register({
+        // 1. Register
+        const res = await register({
           name: f.name,
           email: f.email,
           phone: f.phone,
           password: f.password,
           emailOtpTicket: f.emailOtpTicket,
         });
+
+        // 2. Add Pending Item if exists (Buy Now flow)
+        if (pendingItem && res?.token) {
+          try {
+            await CustomerAPI.addToCart(res.token, {
+              bookId: pendingItem.bookId,
+              qty: pendingItem.qty
+            });
+          } catch (cartErr) {
+            console.error("Failed to add pending item:", cartErr);
+          }
+        }
+
+        // 3. Navigate
         nav(next, { replace: true });
       }
     } catch (e2) {
@@ -266,15 +303,17 @@ export default function CustomerAuth() {
     }
   }
 
+
   return (
     <div className="min-h-[70vh] grid place-items-center px-3 xs:px-4 sm:px-5 md:px-6 py-6 xs:py-7 sm:py-8 md:py-10 lg:py-12">
       <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg">
         <div className="bg-card rounded-theme shadow-theme p-4 xs:p-5 sm:p-6 md:p-7 lg:p-8 border border-border-subtle">
           {/* Header + tabs */}
           <div className="mb-3 xs:mb-4 sm:mb-5 md:mb-6">
-            <h1 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold">
+            <h1 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold mb-5 xs:mb-6 sm:mb-7 md:mb-8">
               {mode === "login" ? "Login" : "Create account"}
             </h1>
+            <GoogleLoginButton />
             <p className="text-fg-subtle text-xs xs:text-xs sm:text-sm md:text-sm mt-0.5 xs:mt-1">
               {mode === "login"
                 ? "Use your customer credentials to continue."

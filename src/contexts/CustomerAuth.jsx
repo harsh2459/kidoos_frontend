@@ -1,6 +1,8 @@
 // src/contexts/CustomerAuth.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
+import { auth, googleProvider } from "../lib/firebase";
+import { signInWithPopup } from "firebase/auth";
 
 const LS_KEY = "customer_jwt";
 
@@ -12,15 +14,15 @@ const Ctx = createContext(null);
 
 // Safe default so components don't crash if provider is missing
 export const useCustomer = () =>
-    useContext(Ctx) || {
+  useContext(Ctx) || {
     token: "",
     customer: null,
     isCustomer: false,
     loading: false,
-    login: async () => {},
-    register: async () => {},
-    logout: () => {},
-    setCustomer: () => {},
+    login: async () => { },
+    register: async () => { },
+    logout: () => { },
+    setCustomer: () => { },
   };
 
 // Try a few paths so it works whether your routes are /auth/login or /login
@@ -70,18 +72,18 @@ export default function CustomerProvider({ children }) {
   }, []);
 
   async function login({ email, phone, password }) {
-    const body = { 
-      email: email || undefined, 
-      phone: phone || undefined, 
-      password 
+    const body = {
+      email: email || undefined,
+      phone: phone || undefined,
+      password
     };
-    
+
     const { data } = await postWithFallback(["/auth/login", "/login"], body);
-    
+
     if (!data?.token) {
       throw new Error(data?.error || "Login failed");
     }
-    
+
     localStorage.setItem(LS_KEY, data.token);
     setToken(data.token);
     setCustomer(data.customer || null);
@@ -96,13 +98,13 @@ export default function CustomerProvider({ children }) {
       password,
       emailOtpTicket,
     };
-    
+
     const { data } = await postWithFallback(["/auth/register", "/register"], body);
-    
+
     if (!data?.token) {
       throw new Error(data?.error || "Registration failed");
     }
-    
+
     localStorage.setItem(LS_KEY, data.token);
     setToken(data.token);
     setCustomer(data.customer || null);
@@ -115,6 +117,34 @@ export default function CustomerProvider({ children }) {
     setCustomer(null);
   }
 
+  async function googleLogin() {
+    try {
+      // 1. Open Google popup
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // 2. Get Firebase ID token
+      const idToken = await user.getIdToken();
+
+      // 3. Send to YOUR backend
+      const { data } = await api.post(withPrefix("/auth/google"), { idToken });
+
+      if (!data?.token) {
+        throw new Error(data?.error || "Google login failed");
+      }
+
+      // 4. Save YOUR JWT token
+      localStorage.setItem(LS_KEY, data.token);
+      setToken(data.token);
+      setCustomer(data.customer || null);
+
+      return data;
+    } catch (error) {
+      console.error("Google login error:", error);
+      throw error;
+    }
+  }
+
   const value = useMemo(
     () => ({
       token,
@@ -124,6 +154,7 @@ export default function CustomerProvider({ children }) {
       login,
       register,
       logout,
+      googleLogin,
       setCustomer,
     }),
     [token, customer, isCustomer, loading]

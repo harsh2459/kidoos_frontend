@@ -1,5 +1,5 @@
 // src/pages/Admin/AddBook.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import slugify from "slugify";
@@ -15,16 +15,59 @@ export default function AddBook() {
   const [uploading, setUploading] = useState(false);
 
   // MULTI images
-  const [coverUrls, setCoverUrls] = useState([]); // string[] relative..."
+  const [coverUrls, setCoverUrls] = useState([]); // string[] relative...""
 
   const [form, setForm] = useState({
     title: "", subtitle: "", authors: "Kiddos Intellect",
-    language: "English", edition: "", printType: "paperback", pages: 0,
+    language: "Gujarati", edition: "", printType: "paperback", pages: 0,
     mrp: 0, price: 0, discountPct: 0, currency: "INR",
     sku: "", stock: 0, lowStockAlert: 5, categories: "", tags: "", suggestions: "",
     samplePdfUrl: "", descriptionHtml: "", whyChooseThis: "", visibility: "public",
   });
+
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+  // --- categories dropdown state ---
+  const [categoryList, setCategoryList] = useState([]); // fetched from backend
+  const [catOpen, setCatOpen] = useState(false);
+
+  useEffect(() => {
+    // fetch categories for dropdown (admin route)
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.get("/books/categories", auth);
+        if (!mounted) return;
+        setCategoryList(res?.data?.items || []);
+      } catch (e) {
+        // don't break admin UI if categories missing
+        console.warn("Failed to load categories", e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []); // run once
+
+  // convert CSV to array
+  const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
+
+  // internal helper to get selected array from form.categories
+  const selectedFromForm = () => splitCsv(form.categories);
+
+  function toggleCategoryInForm(slugOrName) {
+    const cur = selectedFromForm();
+    // if this matches a slug in categoryList, we'll prefer the category name when showing chips,
+    // but we keep using slug OR name interchangeably in the CSV.
+    if (cur.includes(slugOrName)) {
+      const next = cur.filter(x => x !== slugOrName);
+      set("categories", next.join(", "));
+    } else {
+      set("categories", [...cur, slugOrName].join(", "));
+    }
+  }
+
+  function replaceCategoriesWithSelected(arr) {
+    set("categories", (arr || []).join(", "));
+  }
 
   /* ------------ Upload (multiple) ------------ */
   async function uploadImages(files) {
@@ -70,11 +113,6 @@ export default function AddBook() {
       list.unshift(picked); // chosen image now index 0 (the cover)
       return list;
     });
-  }
-
-  /* ------------ Submit ------------ */
-  function splitCsv(str = "") {
-    return str.split(",").map(s => s.trim()).filter(Boolean);
   }
 
   // Add new function for whyChooseThis that handles both commas and newlines
@@ -125,7 +163,6 @@ export default function AddBook() {
     try {
       await api.post("/books", payload, auth);
       t.ok("Book Created!");
-      // reset some fields, keep others if you like
       setForm(f => ({
         ...f,
         title: "", subtitle: "", authors: "Kiddos Intellect",
@@ -139,10 +176,12 @@ export default function AddBook() {
     }
   }
 
+  // UI helpers
+  const selected = selectedFromForm(); // array of strings
+
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Add Book</h1>
-
       <form onSubmit={submit} className="space-y-6">
         {/* Basics */}
         <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
@@ -191,7 +230,6 @@ export default function AddBook() {
                 onChange={e => set("edition", e.target.value)}
               />
             </Field>
-
             <Field label="Pages">
               <input
                 type="number"
@@ -201,7 +239,6 @@ export default function AddBook() {
               />
             </Field>
           </div>
-
         </div>
 
         {/* Pricing */}
@@ -257,25 +294,102 @@ export default function AddBook() {
             </Field>
           </div>
         </div>
-        {/* Categorization & Description */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Categorization" />
+        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5 mt-4">
+          <div className="text-sm font-semibold text-gray-700 mb-3">Categorization</div>
+
+          {/* Multi-select dropdown */}
+          <div className="mb-3">
+            <label className="text-sm font-medium block mb-2">Select Categories</label>
+
+            <div className="relative">
+              <div
+                className="flex items-center gap-2 flex-wrap p-2 border border-border rounded-md bg-white"
+                onClick={() => setCatOpen(v => !v)}
+                style={{ cursor: "pointer" }}
+              >
+                {selected.length === 0 ? (
+                  <span className="text-sm text-gray-500">Choose categories…</span>
+                ) : (
+                  selected.map((s) => {
+                    // find nice name if possible
+                    const found = categoryList.find(c => c.slug === s || c.name === s);
+                    const label = found?.name || s;
+                    return (
+                      <span key={s} className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm bg-black/5 text-black">
+                        {label}
+                        <button
+                          type="button"
+                          onClick={(ev) => { ev.stopPropagation(); toggleCategoryInForm(s); }}
+                          className="text-xs px-1"
+                          aria-label={`Remove ${label}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })
+                )}
+
+                <div className="ml-auto text-xs text-gray-400">▾</div>
+              </div>
+
+              {catOpen && (
+                <div className="absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-auto">
+                  {categoryList.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-500">No categories</div>
+                  ) : (
+                    categoryList.map((c) => {
+                      const key = c.slug || c._id || c.name;
+                      const val = c.slug || c.name;
+                      const checked = selected.includes(val) || selected.includes(c.name);
+                      return (
+                        <label
+                          key={key}
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleCategoryInForm(val)}
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{c.name}</div>
+                            <div className="text-xs text-gray-500">Books: {c.count ?? 0}</div>
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">You can also enter comma separated categories below.</p>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-3">
-            <Field label="Categories" hint="comma separated">
+            <div>
+              <label className="text-sm">Categories (CSV)</label>
               <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 mt-1"
                 value={form.categories}
                 onChange={e => set("categories", e.target.value)}
+                placeholder="e.g. kids, math"
+                disabled
               />
-            </Field>
-            <Field label="Tags" hint="comma separated">
+            </div>
+            <div>
+              <label className="text-sm">Tags</label>
               <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2 mt-1"
                 value={form.tags}
                 onChange={e => set("tags", e.target.value)}
               />
-            </Field>
+            </div>
           </div>
+        </div>
+        {/* Description & Suggestions */}
+        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
+          <SectionTitle title="Description & Suggestions" />
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
               Suggestion Groups (comma-separated)
@@ -288,7 +402,7 @@ export default function AddBook() {
               placeholder="Hindu Scriptures, Epic Texts"
             />
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-               Books with the same suggestion group will show as related to each other
+              Books with the same suggestion group will show as related to each other
             </p>
           </div>
           <Field label="Description">
@@ -387,6 +501,7 @@ export default function AddBook() {
 function SectionTitle({ title }) {
   return <div className="text-sm font-semibold text-gray-700 mb-3">{title}</div>;
 }
+
 function Field({ label, hint, children }) {
   return (
     <div className="mb-3 last:mb-0">

@@ -1,4 +1,4 @@
-// src/components/Navbar.jsx
+// src/components/Navbar.jsx - WITH PROFILE LINK
 import { Link, useLocation } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useSite } from "../contexts/SiteConfig";
@@ -45,15 +45,15 @@ export default function Navbar() {
   const [openCustomer, setOpenCustomer] = useState(false);
 
   // shopper UI rules
-  const showShopUI = !isAdmin && !onAdminPage;      // show catalog + cart
+  const showShopUI = !isAdmin && !onAdminPage;
   const showLogin = !isAdmin && !isCustomer && !onAdminPage;
 
   // brand visibility: hide logo whenever an admin is logged in
   const showBrand = !isAdmin;
 
   return (
-    <header className="sticky top-0 z-40 bg-surface border-b border-border-subtle">
-      <div className="relative mx-auto max-w-container px-4 h-[68px] flex items-center">
+    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+      <div className="relative mx-auto max-w-7xl px-4 h-[68px] flex items-center">
         {/* LEFT: Brand (hidden for admin) */}
         {showBrand && (
           <Link to="/" className="flex items-center gap-3 shrink-0">
@@ -64,44 +64,33 @@ export default function Navbar() {
                 className="h-[4rem] w-auto object-contain"
               />
             ) : (
-              <div className="h-8 w-8 rounded-md bg-surface-subtle grid place-items-center text-xs text-fg-subtle">
+              <div className="h-8 w-8 rounded-md bg-gray-100 grid place-items-center text-xs text-gray-500">
                 logo
               </div>
             )}
           </Link>
         )}
 
-        {/* CENTER: CATALOG (centered regardless of left/right widths) */}
+        {/* CENTER: CATALOG + ABOUT US */}
         {showShopUI && nav.includes("catalog") && (
-          <nav
-            className="
-              pointer-events-auto
-              absolute left-1/2 -translate-x-1/2
-            "
-          >
+          <nav className="absolute left-1/2 -translate-x-1/2 flex items-center gap-8">
             <Link
               to="/catalog"
-              className="
-                mr-3
-                relative tracking-[0.25em] text-sm
+              className="relative tracking-[0.25em] text-sm font-medium text-gray-700 hover:text-gray-900 
                 after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
-                after:block after:h-[2px] after:w-full after:bg-current/80
+                after:block after:h-[2px] after:w-full after:bg-current
                 after:origin-left after:scale-x-0 after:transition-transform after:duration-300
-                hover:after:scale-x-100
-              "
+                hover:after:scale-x-100"
             >
               CATALOG
             </Link>
             <Link
               to="/aboutus"
-              className="
-              ml-3
-                relative tracking-[0.25em] text-sm
+              className="relative tracking-[0.25em] text-sm font-medium text-gray-700 hover:text-gray-900
                 after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
-                after:block after:h-[2px] after:w-full after:bg-current/80
+                after:block after:h-[2px] after:w-full after:bg-current
                 after:origin-left after:scale-x-0 after:transition-transform after:duration-300
-                hover:after:scale-x-100
-              "
+                hover:after:scale-x-100"
             >
               ABOUT US
             </Link>
@@ -110,17 +99,15 @@ export default function Navbar() {
 
         {/* RIGHT: Cart icon + profile/login/admin chip */}
         <div className="ml-auto flex items-center gap-4">
-          {/* CART ICON (right side) */}
+          {/* CART ICON */}
           {showShopUI && nav.includes("cart") && (
-            <Link to="/cart" className="relative inline-flex items-center">
-              <CartIcon className="h-5 w-5" />
+            <Link to="/cart" className="relative inline-flex items-center group">
+              <CartIcon className="h-6 w-6 text-gray-700 group-hover:text-gray-900 transition-colors" />
               {cartCount > 0 && (
                 <span
-                  className="
-                    absolute -top-2 -right-2 min-w-[18px] h-[18px]
-                    rounded-full bg-red-600 text-white text-[10px] leading-none
-                    px-1 flex items-center justify-center font-medium shadow
-                  "
+                  className="absolute -top-2 -right-2 min-w-[20px] h-[20px]
+                    rounded-full bg-red-600 text-white text-[11px] leading-none
+                    px-1.5 flex items-center justify-center font-semibold shadow-md"
                   aria-label={`${cartCount} items in cart`}
                 >
                   {cartCount}
@@ -129,29 +116,43 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* CUSTOMER CHIP */}
-          {!isAdmin && !onAdminPage && isCustomer && (
+          {/* PROFILE LINK (only for authenticated customers) */}
+          {showShopUI && isCustomer && (
+            <Link
+              to="/profile"
+              className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 transition-colors group"
+              title="My Profile"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:shadow-md transition-shadow">
+                {customer?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+            </Link>
+          )}
+
+          {/* CUSTOMER DROPDOWN (alternative - commented out since we have profile link above) */}
+          {/* {!isAdmin && !onAdminPage && isCustomer && (
             <div className="relative">
               <button
                 onClick={() => setOpenCustomer((v) => !v)}
                 onBlur={() => setTimeout(() => setOpenCustomer(false), 150)}
-                className="px-3 py-1.5 rounded-lg bg-surface-subtle border border-border-subtle"
+                className="px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors"
               >
                 Hi, {customer?.name?.split(" ")[0] || "there"}
               </button>
               {openCustomer && (
-                <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-subtle rounded-xl shadow-theme p-1">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-1">
+                  <MenuButton onClick={() => navigate('/profile')} label="My Profile" />
                   <MenuButton onClick={() => logoutCustomer()} label="Logout" />
                 </div>
               )}
             </div>
-          )}
+          )} */}
 
           {/* LOGIN */}
           {showLogin && (
             <Link
               to="/login"
-              className="px-3 py-1.5 rounded-lg border bg-surface hover:bg-surface-subtle"
+              className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors font-medium text-sm"
             >
               Login
             </Link>
@@ -161,13 +162,13 @@ export default function Navbar() {
           {isAdmin && (
             <div className="relative">
               <details className="group">
-                <summary className="list-none cursor-pointer px-3 py-1.5 rounded-lg bg-surface-subtle border border-border-subtle">
+                <summary className="list-none cursor-pointer px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors">
                   Hi, {admin?.name || "Admin"}{" "}
-                  <span className="ml-1 text-[10px] align-middle px-1.5 py-0.5 rounded bg-surface text-fg-muted border">
+                  <span className="ml-1 text-[10px] align-middle px-1.5 py-0.5 rounded bg-white text-gray-600 border">
                     ADMIN
                   </span>
                 </summary>
-                <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-subtle rounded-xl shadow-theme p-1">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-1">
                   <MenuButton onClick={() => logoutAdmin()} label="Logout" />
                 </div>
               </details>
@@ -183,7 +184,7 @@ function MenuButton({ onClick, label }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-subtle"
+      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm"
     >
       {label}
     </button>

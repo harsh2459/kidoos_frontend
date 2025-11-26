@@ -32,7 +32,14 @@ function Block({ block }) {
           )}
         </div>
         {block.image && (
-          <img src={assetUrl(block.image)} alt="" className="w-full h-48 xs:h-56 sm:h-64 md:h-full object-cover" />
+          <div className="relative w-full h-48 xs:h-56 sm:h-64 md:h-full overflow-hidden group">
+            <img
+              src={assetUrl(block.image)}
+              alt=""
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          </div>
         )}
       </section>
     );
@@ -40,8 +47,17 @@ function Block({ block }) {
 
   if (block.type === "banner") {
     return (
-      <a href={block.href || "#"} className="block rounded-theme overflow-hidden shadow-theme">
-        <img src={assetUrl(block.image)} alt={block.alt || ""} className="w-full object-cover" />
+      <a
+        href={block.ctaLink || "/"}
+        className="block rounded-theme overflow-hidden shadow-theme group relative"
+      >
+        <img
+          src={assetUrl(block.image)}
+          alt={block.alt || ""}
+          className="w-full object-cover transition-all duration-500 group-hover:brightness-110 group-hover:saturate-150"
+        />
+        {/* Optional: Sliding overlay effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
       </a>
     );
   }
@@ -105,14 +121,14 @@ function GridSection({ title, query }) {
 
   return (
     <section>
-      {title && <h3 className="text-lg xs:text-lg sm:text-xl md:text-xl lg:text-2xl xl:text-3xl font-semibold mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">{title}</h3>}
+      {title && <h3 className="text-xl font-semibold mb-4">{title}</h3>}
 
       {!items.length ? (
-        <div className="rounded-2xl border border-border-subtle bg-surface p-4 xs:p-5 sm:p-6 md:p-7 text-fg-subtle text-sm xs:text-sm sm:text-base md:text-base lg:text-lg">
+        <div className="rounded-2xl border border-border-subtle bg-surface p-6 text-fg-subtle">
           No items found.
         </div>
       ) : (
-        <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5 lg:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {items.map((b) =>
             layout === "classic" ? (
               <div key={b._id || b.id} className="h-full">
@@ -137,14 +153,14 @@ function SimpleShowcaseCard({ book }) {
   return (
     <article
       className="
-        h-full bg-white rounded-2xl border border-gray-200 p-2 xs:p-2.5 sm:p-3 md:p-4
+        h-full bg-white rounded-2xl border border-gray-200 p-3 
         shadow-sm hover:shadow-md hover:-translate-y-0.5 transition
         flex flex-col
       "
     >
       <Link
         to={`/book/${book.slug}`}
-        className="aspect-[3/4] rounded-lg overflow-hidden bg-gray-50 grid place-items-center p-2 xs:p-3 sm:p-4 md:p-5"
+        className="aspect-[3/4] rounded-lg overflow-hidden bg-gray-50 grid place-items-center p-4"
       >
         <img
           src={assetUrl(book.assets?.coverUrl)}
@@ -154,16 +170,16 @@ function SimpleShowcaseCard({ book }) {
         />
       </Link>
 
-      <Link to={`/book/${book.slug}`} className="mt-2 xs:mt-2.5 sm:mt-3 font-medium leading-snug line-clamp-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">
+      <Link to={`/book/${book.slug}`} className="mt-3 font-medium leading-snug line-clamp-2">
         {book.title}
       </Link>
 
-      <div className="mt-1 xs:mt-1.5 sm:mt-2 flex items-center gap-1.5 xs:gap-2 sm:gap-2">
+      <div className="mt-1 flex items-center gap-2">
         <div className="font-semibold text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">₹{price}</div>
         {off > 0 && (
           <>
-            <div className="line-through text-[10px] xs:text-xs sm:text-xs md:text-sm text-fg-subtle">₹{mrp}</div>
-            <span className="text-[9px] xs:text-[10px] sm:text-[10px] md:text-xs text-green-700 bg-green-100 rounded-full px-1.5 xs:px-2 sm:px-2 py-0.5 border">
+            <div className="line-through text-xs text-fg-subtle">₹{mrp}</div>
+            <span className="text-[10px] text-green-700 bg-green-100 rounded-full px-2 py-0.5 border">
               -{off}%
             </span>
           </>

@@ -111,7 +111,7 @@ export default function HomepageAdmin() {
 
 function defaultBlock(type) {
   if (type === "hero") return { type, title: "Welcome", subtitle: "", image: "", ctaText: "Shop Now", ctaHref: "/catalog" };
-  if (type === "banner") return { type, image: "", ctaText: "", ctaLink: "#" };
+  if (type === "banner") return { type, image: "", ctaText: "", ctaLink: "/" };
   if (type === "grid") return { type, title: "Featured", query: { q: "", category: "", sort: "new", limit: 8 } };
   if (type === "html") return { type, html: "<h2>Custom Section</h2><p>Edit me</p>" };
   return { type };

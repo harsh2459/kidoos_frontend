@@ -103,7 +103,7 @@ const ContactUs = () => {
                             </div>
                             <h3 className="font-bold text-fg mb-2">Call Us</h3>
                             <p className="text-brand text-sm mb-2">{contactInfo.phone}</p>
-                            <p className="text-fg-subtle text-xs">Mon-Sat, 9 AM - 6 PM IST</p>
+                            <p className="text-fg-subtle text-xs">Mon-Sat, 10 AM - 6 PM IST</p>
                         </div>
                     </a>
 
@@ -185,7 +185,7 @@ const ContactUs = () => {
                                         >
                                             {contactInfo.phone}
                                         </a>
-                                        <p className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs mt-0.5 xs:mt-1">Mon-Sat, 9 AM - 6 PM IST</p>
+                                        <p className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs mt-0.5 xs:mt-1">Mon-Sat, 10 AM - 6 PM IST</p>
                                     </div>
                                 </div>
                             </div>

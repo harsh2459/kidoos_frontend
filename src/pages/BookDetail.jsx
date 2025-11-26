@@ -210,6 +210,36 @@ export default function BookDetail() {
     }
   }
 
+  async function handleBuyNow() {
+    // 1. Check Login
+    if (!isCustomer) {
+      t.info("Please login to continue");
+      navigate("/login", {
+        state: {
+          next: "/checkout",
+          // PASS PENDING ITEM DETAILS
+          pendingItem: { bookId: id, qty: 1 }
+        }
+      });
+      return;
+    }
+
+    try {
+      // 2. If not in cart, add it first
+      if (!inCart) {
+        const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+        if (res?.data?.cart?.items) {
+          replaceAll(res.data.cart.items);
+        }
+      }
+      // 3. Go directly to checkout
+      navigate("/checkout");
+    } catch (e) {
+      console.error("Buy Now Error", e);
+      t.err("Failed to process buy now");
+    }
+  }
+
   const primary = (book.descriptionHtml ?? "").trim();
   const fallback = (book.description ?? "").trim();
   const rawDesc = primary || fallback;
@@ -346,21 +376,7 @@ export default function BookDetail() {
               </div>
             )}
 
-            {/* Additional Info */}
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              {book.language && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Language</p>
-                  <p className="font-semibold text-gray-900">{book.language}</p>
-                </div>
-              )}
-              {book.pages > 0 && (
-                <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                  <p className="text-sm text-gray-600 mb-1">Pages</p>
-                  <p className="font-semibold text-gray-900">{book.pages}</p>
-                </div>
-              )}
-            </div>
+
           </div>
 
           {/* RIGHT: DETAILS */}
@@ -434,36 +450,56 @@ export default function BookDetail() {
             {/* Add to Cart - Matching ProductCard Style */}
             <div className="mb-8">
               {!inCart ? (
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full h-[52px] rounded-full bg-slate-900 text-white font-semibold text-lg hover:bg-slate-800 transition-all hover:shadow-xl flex items-center justify-center gap-3 group"
-                >
-                  <CartIcon className="h-6 w-6 transition-transform group-hover:scale-110" />
-                  <span>Add to Cart</span>
-                </button>
+                <div className="flex items-center gap-3 w-full">
+                  {/* Add to Cart - Secondary Style (Outline) */}
+                  <button
+                    onClick={handleAddToCart}
+                    className="flex-1 h-[52px] rounded-full bg-white text-slate-900 border-2 border-slate-900 font-bold text-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2 group"
+                  >
+                    <CartIcon className="h-6 w-6 transition-transform group-hover:scale-110" />
+                    <span>Add to Cart</span>
+                  </button>
+
+                  {/* Buy Now - Primary Style (Solid) */}
+                  <button
+                    onClick={handleBuyNow}
+                    className="flex-1 h-[52px] rounded-full bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition-all hover:shadow-xl flex items-center justify-center gap-2"
+                  >
+                    <span>Buy Now</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </button>
+                </div>
               ) : (
                 <div className="flex items-center gap-4">
+                  {/* Existing Quantity Controls */}
                   <div className="flex items-center gap-4 bg-gray-100 rounded-full p-2 flex-1">
                     <button
-                      onClick={() => dec(id)}
+                      onClick={dec}
+                      id={id}
                       className="w-10 h-10 rounded-full bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
                     >
-                      −
+                      -
                     </button>
-                    <span className="flex-1 text-center text-xl font-bold">{inCart.qty}</span>
+                    <span className="flex-1 text-center text-xl font-bold">
+                      {inCart.qty}
+                    </span>
                     <button
-                      onClick={() => inc(id)}
+                      onClick={inc}
+                      id={id}
                       className="w-10 h-10 rounded-full bg-white hover:bg-gray-200 font-bold transition-all hover:scale-110 shadow-sm"
                     >
                       +
                     </button>
                   </div>
+
+                  {/* Buy Now (when already in cart) */}
                   <button
-                    onClick={() => navigate("/cart")}
-                    className="h-[52px] px-8 rounded-full bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all whitespace-nowrap flex items-center gap-2"
+                    onClick={() => navigate("/checkout")}
+                    className="h-[52px] px-6 rounded-full bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all whitespace-nowrap flex items-center gap-2"
                   >
-                    <CartIcon className="h-5 w-5" />
-                    Go to Cart
+                    Buy Now
                   </button>
                 </div>
               )}
@@ -513,6 +549,7 @@ export default function BookDetail() {
 
 /* ✅ Suggestion Card - Matching ProductCard Component Style */
 /* Replace the old SuggestionCard with this fixed version */
+
 function SuggestionCard({ book }) {
   const navigate = useNavigate();
   const d = dealFn(book); // or dealFn(book) if using that import
@@ -654,4 +691,3 @@ function SuggestionCard({ book }) {
     </article>
   );
 }
-
