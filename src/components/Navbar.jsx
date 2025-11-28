@@ -94,6 +94,16 @@ export default function Navbar() {
             >
               ABOUT US
             </Link>
+            <Link
+              to="/PreSchool"
+              className="relative tracking-[0.25em] text-sm font-medium text-gray-700 hover:text-gray-900
+                after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
+                after:block after:h-[2px] after:w-full after:bg-current
+                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
+                hover:after:scale-x-100"
+            >
+              PRE SCHOOL
+            </Link>
           </nav>
         )}
 

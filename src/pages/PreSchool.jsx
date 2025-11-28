@@ -208,7 +208,9 @@ export default function PreSchool() {
       setIsAnimating(false);
     }, 300);
   };
-
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
