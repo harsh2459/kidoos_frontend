@@ -43,6 +43,7 @@ import OrderHistory from './pages/OrderHistory';
 import AdminCategories from './pages/Admin/Categories';
 import DynamicPopup from './components/DynamicPopup';
 import PopupSettings from './pages/Admin/PopupSettings';
+import PreSchool from './pages/PreSchool';
 
 function InnerApp() {
   const loc = useLocation();
@@ -68,7 +69,7 @@ function InnerApp() {
     <>
       <Navbar />
       <main>
-        {!isAdminRoute && <DynamicPopup   page={getPageName()} />}
+        {!isAdminRoute && <DynamicPopup page={getPageName()} />}
         <Routes>
           {/* customer auth */}
           <Route path="/login" element={<CustomerAuth />} />
@@ -76,6 +77,7 @@ function InnerApp() {
           <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
           <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
           <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
+          <Route path="/preschool" element={<PageGate page="preschool"><PreSchool /></PageGate>} />
           <Route
             path="/profile"
             element={

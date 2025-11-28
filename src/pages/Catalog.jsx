@@ -14,6 +14,10 @@ export default function Catalog() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // ✅ Pagination state
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
@@ -100,7 +104,7 @@ export default function Catalog() {
       if (page <= 3) {
         end = Math.min(totalPages - 1, 5);
       }
-      
+
       // Adjust if we're near the end
       if (page >= totalPages - 2) {
         start = Math.max(2, totalPages - 4);

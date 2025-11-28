@@ -7,18 +7,20 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "https://kiddosintellect.com/api";
+    "http://localhost:5050/api";
+    // "https://kiddosintellect.com/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api");
-  
+
   if (apiIdx === -1) {
     u = `${u}/api`;
   } else if (apiIdx !== u.length - 4) {
     u = u.slice(0, apiIdx + 4);
-  }  
+  }
   return u;
 }
+
 
 const BASE_URL = resolveBaseURL();
 
@@ -46,26 +48,26 @@ function getTokens() {
 api.interceptors.request.use((config) => {
   const url = String(config?.url || "");
   const metaAuth = config?.meta?.auth;
-  let token = ""; 
+  let token = "";
 
   // ✅ Priority 1: Explicit meta.auth directive
   if (metaAuth === "admin") {
     token = getTokens().admin;
-    
+
   } else if (metaAuth === "customer") {
     token = getTokens().customer;
-    
+
   } else if (metaAuth === "none") {
     token = "";
-    
+
   }
   // ✅ Priority 2: Auto-detect from URL pattern
   else if (url.startsWith("/customer/")) {
     token = getTokens().customer;
-    
+
   } else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
     token = getTokens().admin;
-    
+
   }
 
   // Initialize headers if not exists
@@ -92,6 +94,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+
 api.interceptors.response.use(
   (res) => {
     return res;
@@ -100,7 +103,7 @@ api.interceptors.response.use(
     const status = err?.response?.status;
     const url = String(err?.config?.url || "");
     console.error("❌ Response error:", { url, status, error: err?.response?.data });
-    
+
     if (status === 401) {
       console.error("🚫 401 Unauthorized for:", url);
       try {
@@ -113,6 +116,7 @@ api.interceptors.response.use(
             window.location.href = "/login";
           }
         }
+       
         // Admin routes
         else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
           console.error("🚫 Admin token invalid, logging out");
@@ -124,7 +128,7 @@ api.interceptors.response.use(
       } catch (e) {
         console.error("Error handling 401:", e);
       }
-    }  
+    }
     return Promise.reject(err);
   }
 );

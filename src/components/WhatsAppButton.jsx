@@ -52,26 +52,52 @@ export default function FloatingSocialMenu({
       bg: "#25D366",
       color: "#fff",
     },
+    {
+      id: "X",
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      ),
+      href: 'https://x.com/KiddosIntellect',
+      title: "X",
+      bg: "#000",
+      color: "#fff",
+    },
+    {
+      id: "Facebook",
+      icon: (<svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.962.925-1.962 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      </svg>),
+      href: 'https://www.facebook.com/people/Kiddos-Intellect/61579945910642/',
+      title: "Facebook",
+      bg: "#1877F2",
+      color: "#fff",
+    },
+
   ];
 
   const offsetsFor = {
     right: [
-      { x: 78, y: 0 },
-      { x: 58, y: -58 },
-      { x: 58, y: 58 },
-      { x: 138, y: 0 },
+      { x: 78, y: 0 },    // 1. Threads (Center)
+      { x: 78, y: -60 },  // 2. Instagram (Aligned with Threads, Top)
+      { x: 78, y: 60 },   // 3. WhatsApp (Aligned with Threads, Bottom)
+      { x: 138, y: -60 }, // 4. X (Right of Instagram, Aligned Top)
+      { x: 138, y: 0 },   // 5. Facebook (Right of Threads, Under X)
     ],
     left: [
       { x: -78, y: 0 },
-      { x: -58, y: -58 },
-      { x: -58, y: 58 },
+      { x: -78, y: -60 },
+      { x: -78, y: 60 },
+      { x: -138, y: -60 },
       { x: -138, y: 0 },
     ],
     center: [
       { x: -70, y: 0 },
       { x: -45, y: -60 },
       { x: 45, y: -60 },
-      { x: 70, y: 0 },
+      { x: 110, y: -60 },
+      { x: 135, y: 0 },
     ],
   };
 
@@ -122,7 +148,7 @@ export default function FloatingSocialMenu({
     setPos({ x: clampedX, y: clampedY });
     recomputeDirection(clampedX);
   }
-  
+
   function endDrag() {
     setDragging(false);
     const vw = window.innerWidth || document.documentElement.clientWidth;
@@ -140,30 +166,30 @@ export default function FloatingSocialMenu({
     startDrag(e.clientX, e.clientY);
     e.preventDefault();
   }
-  
+
   function onMouseMove(e) {
     if (!dragging) return;
     moveDrag(e.clientX, e.clientY);
   }
-  
+
   function onMouseUp() {
     if (!dragging) return;
     if (!movedRef.current) setOpen((s) => !s);
     endDrag();
   }
-  
+
   function onTouchStart(e) {
     const t = e.touches[0];
     startDrag(t.clientX, t.clientY);
   }
-  
+
   function onTouchMove(e) {
     if (!dragging) return;
     const t = e.touches[0];
     moveDrag(t.clientX, t.clientY);
     e.preventDefault();
   }
-  
+
   function onTouchEnd() {
     if (!dragging) return;
     if (!movedRef.current) setOpen((s) => !s);

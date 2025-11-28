@@ -542,6 +542,218 @@ export default function BookDetail() {
             </div>
           </div>
         )}
+        {/* ✨ VISION, MISSION & VALUES SECTION */}
+        <div className="mt-20 mb-12">
+          <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="px-6 py-12 md:px-12 md:py-16 lg:px-16 lg:py-20">
+
+              {/* VISION */}
+              <div className="mb-16">
+                <div className="flex items-center justify-center gap-3 mb-8">
+                  <span className="text-4xl">✨</span>
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center">
+                    VISION OF KIDDOS INTELLECT
+                  </h2>
+                  <span className="text-4xl">✨</span>
+                </div>
+
+                <div className="space-y-5 text-white/95 text-base md:text-lg leading-relaxed max-w-6xl mx-auto">
+                  <p className="flex items-start gap-3">
+                    <span className="text-yellow-400 flex-shrink-0 mt-1">•</span>
+                    <span>
+                      Our goal is to be the most trusted and beloved companion for the holistic development of every child, in every family. Through our efforts, children not only become{" "}
+                      <span className="text-yellow-300 font-semibold">physically healthy and mentally happy, but also develop high values, ethics and spiritual awareness</span>. To this end, we are dedicated with utmost care and conviction.
+                    </span>
+                  </p>
+
+                  <p className="flex items-start gap-3">
+                    <span className="text-yellow-400 flex-shrink-0 mt-1">•</span>
+                    <span>
+                      We want children to become confident, compassionate and empowered, and to develop logical thinking, creativity and a balanced perspective within them.
+                    </span>
+                  </p>
+
+                  <p className="flex items-start gap-3">
+                    <span className="text-yellow-400 flex-shrink-0 mt-1">•</span>
+                    <span>
+                      <span className="text-yellow-300 font-semibold">We also aim</span> to ensure that children spend less time on digital devices and screens, so that they can better connect with real-life experiences, family and society.
+                    </span>
+                  </p>
+
+                  <p className="flex items-start gap-3">
+                    <span className="text-yellow-400 flex-shrink-0 mt-1">•</span>
+                    <span>
+                      We want to continuously create and provide children with resources that inspire them to make positive contributions to{" "}
+                      <span className="text-yellow-300 font-semibold">their lives, families and communities, to realize their dreams and move towards a bright, balanced and ideal future</span>.
+                    </span>
+                  </p>
+
+                  <p className="flex items-start gap-3">
+                    <span className="text-yellow-400 flex-shrink-0 mt-1">•</span>
+                    <span>
+                      <span className="text-yellow-300 font-semibold">Our dream is that</span>, through the holistic development of children, we, together with parents, can help establish a healthy, happy and ideal society, where every child develops to their full potential and becomes a successful, sensitive and responsible citizen.
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Decorative Divider */}
+              <div className="flex items-center justify-center my-12">
+                <div className="h-px bg-white/30 flex-1"></div>
+                <div className="px-6">
+                  <svg className="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                  </svg>
+                </div>
+                <div className="h-px bg-white/30 flex-1"></div>
+              </div>
+
+              {/* MISSION */}
+              <div className="mb-16">
+                <div className="flex items-center justify-center gap-3 mb-8">
+                  <span className="text-4xl">✨</span>
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center">
+                    MISSION
+                  </h2>
+                  <span className="text-4xl">✨</span>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                  {/* Mission Item 1 */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                    <h3 className="text-yellow-300 font-bold text-xl mb-3">
+                      Creating engaging and screen-free content:
+                    </h3>
+                    <p className="text-white/90 leading-relaxed">
+                      We will create interesting and screen-free educational and spiritual content that is based on Indian culture and universal values.
+                    </p>
+                  </div>
+
+                  {/* Mission Item 2 */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                    <h3 className="text-yellow-300 font-bold text-xl mb-3">
+                      To empower parents:
+                    </h3>
+                    <p className="text-white/90 leading-relaxed">
+                      We will provide parents who want to raise their children to be cultured, sensitive, and intelligent with appropriate guidance and simple tools for value-based parenting.
+                    </p>
+                  </div>
+
+                  {/* Mission Item 3 */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                    <h3 className="text-yellow-300 font-bold text-xl mb-3">
+                      Promoting all-round development:
+                    </h3>
+                    <p className="text-white/90 leading-relaxed">
+                      By reducing children's screen time, divert them to real-life experiences, curiosity-inspiring activities, and contemplation. This will lead to their all-round development.
+                    </p>
+                  </div>
+
+                  {/* Mission Item 4 */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all">
+                    <h3 className="text-yellow-300 font-bold text-xl mb-3">
+                      To empower parents:
+                    </h3>
+                    <p className="text-white/90 leading-relaxed">
+                      We will run a culture-based campaign across the country that will develop character, empathy, and a lifelong desire for learning in children.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative Divider */}
+              <div className="flex items-center justify-center my-12">
+                <div className="h-px bg-white/30 flex-1"></div>
+                <div className="px-6">
+                  <svg className="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                  </svg>
+                </div>
+                <div className="h-px bg-white/30 flex-1"></div>
+              </div>
+
+              {/* VALUES */}
+              <div>
+                <div className="flex items-center justify-center gap-3 mb-8">
+                  <span className="text-4xl">✨</span>
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white text-center">
+                    VALUES
+                  </h2>
+                  <span className="text-4xl">✨</span>
+                </div>
+
+                <div className="space-y-6 max-w-6xl mx-auto">
+                  {/* Value 1 */}
+                  <div className="flex items-start gap-4 group">
+                    <span className="text-3xl group-hover:scale-110 transition-transform">🌸</span>
+                    <div>
+                      <h3 className="text-yellow-300 font-bold text-xl mb-2">
+                        Child-Centricity :
+                      </h3>
+                      <p className="text-white/90 leading-relaxed">
+                        Every book and activity is crafted with the child's growth, happiness, and well-being at the center.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Value 2 */}
+                  <div className="flex items-start gap-4 group">
+                    <span className="text-3xl group-hover:scale-110 transition-transform">🌸</span>
+                    <div>
+                      <h3 className="text-yellow-300 font-bold text-xl mb-2">
+                        Screen-Free Living :
+                      </h3>
+                      <p className="text-white/90 leading-relaxed">
+                        We believe true learning happens beyond digital screens—through stories, creativity, and hands-on experiences.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Value 3 */}
+                  <div className="flex items-start gap-4 group">
+                    <span className="text-3xl group-hover:scale-110 transition-transform">🌸</span>
+                    <div>
+                      <h3 className="text-yellow-300 font-bold text-xl mb-2">
+                        Cultural Wisdom :
+                      </h3>
+                      <p className="text-white/90 leading-relaxed">
+                        Drawing inspiration from the timeless teachings of the Bhagavad Gita and India's spiritual heritage to shape young minds.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Value 4 */}
+                  <div className="flex items-start gap-4 group">
+                    <span className="text-3xl group-hover:scale-110 transition-transform">🌸</span>
+                    <div>
+                      <h3 className="text-yellow-300 font-bold text-xl mb-2">
+                        Parent Partnership :
+                      </h3>
+                      <p className="text-white/90 leading-relaxed">
+                        Collaborating with parents and educators to support, inspire, and empower the next generation.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Value 5 */}
+                  <div className="flex items-start gap-4 group">
+                    <span className="text-3xl group-hover:scale-110 transition-transform">🌸</span>
+                    <div>
+                      <h3 className="text-yellow-300 font-bold text-xl mb-2">
+                        Inclusivity :
+                      </h3>
+                      <p className="text-white/90 leading-relaxed">
+                        Resources for all children, regardless of background or ability—ensuring every child has the opportunity to flourish.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

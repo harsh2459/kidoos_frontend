@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useCart } from "../contexts/CartStore";
@@ -26,7 +26,7 @@ export default function Checkout() {
   const remove = useCart((s) => s.remove);
   const { payments } = useSite();
   const pollTimer = useRef(null);
-  
+
   // --- PAYMENT OPTION SELECTION ---
   const [paymentOption, setPaymentOption] = useState("full_online");
 
@@ -366,10 +366,10 @@ export default function Checkout() {
                   {pinStatus && (
                     <p
                       className={`text-[10px] xs:text-xs sm:text-xs mt-0.5 xs:mt-1 ${pinStatus === "OK"
-                          ? "text-green-600"
-                          : pinStatus === "Looking up…"
-                            ? "text-blue-600"
-                            : "text-red-600"
+                        ? "text-green-600"
+                        : pinStatus === "Looking up…"
+                          ? "text-blue-600"
+                          : "text-red-600"
                         }`}
                     >
                       {pinStatus}
@@ -522,8 +522,8 @@ export default function Checkout() {
               onClick={placeWithRazorpay}
               disabled={placing || !hasOnlinePay}
               className={`w-full py-2.5 xs:py-3 rounded-lg font-semibold text-xs xs:text-sm sm:text-base text-white transition-all ${placing || !hasOnlinePay
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "btn-primary"
+                ? "bg-gray-400 cursor-not-allowed"
+                : "btn-primary"
                 }`}
             >
               {placing ? (

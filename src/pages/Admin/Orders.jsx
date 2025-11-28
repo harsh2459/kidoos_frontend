@@ -157,7 +157,15 @@ export default function AdminOrders() {
       const bd = o?.shipping?.bd || {};
       if (bd.awbNumber) s.bd++;
       if (bd.awbNumber) s.awb++;
-      if (o.status === 'confirmed' && !bd.awbNumber) s.ready++;
+
+      // ✅ NEW: Include partially paid orders as ready to ship
+      const paymentStatus = o.payment?.status;
+      const isReadyPayment = paymentStatus === 'paid' ||
+        (paymentStatus === 'partially_paid' && o.payment?.mode === 'half');
+
+      if (o.status === 'confirmed' && !bd.awbNumber && isReadyPayment) {
+        s.ready++;
+      }
     }
     return s;
   }, [items]);
@@ -698,18 +706,37 @@ export default function AdminOrders() {
                       <td className="font-medium">
                         ₹{rupees?.toLocaleString('en-IN') || 0}
                       </td>
-                      <td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="space-y-1">
-                          <span className={cx(
-                            "badge",
-                            o.status === 'confirmed' && "badge-green",
-                            o.status === 'pending' && "bg-yellow-100 text-yellow-800"
+                          <div className={cx(
+                            "inline-flex px-2 py-1 text-xs rounded-full font-medium",
+                            o.status === 'confirmed' && "bg-green-100 text-green-800",
+                            o.status === 'pending' && "bg-yellow-100 text-yellow-800",
+                            o.status === 'shipped' && "bg-blue-100 text-blue-800",
+                            o.status === 'delivered' && "bg-purple-100 text-purple-800"
                           )}>
                             {o.status}
-                          </span>
-                          <div className="text-xs text-fg-subtle">
-                            Payment: {o.payment?.status || "—"}
                           </div>
+
+                          {/* ✅ NEW: Payment status badge */}
+                          <div className={cx(
+                            "inline-flex px-2 py-1 text-xs rounded-full font-medium ml-1",
+                            o.payment?.status === 'paid' && "bg-green-100 text-green-700",
+                            o.payment?.status === 'partially_paid' && "bg-orange-100 text-orange-700",
+                            o.payment?.status === 'pending' && "bg-gray-100 text-gray-700"
+                          )}>
+                            {o.payment?.status === 'partially_paid' ?
+                              `Half Paid (₹${o.payment?.paidAmount || 0} / ₹${o.amount})` :
+                              `Payment: ${o.payment?.status || '—'}`
+                            }
+                          </div>
+
+                          {/* Show COD amount if applicable */}
+                          {o.payment?.dueOnDeliveryAmount > 0 && (
+                            <div className="text-xs text-orange-600 font-medium">
+                              COD: ₹{o.payment.dueOnDeliveryAmount}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td>
