@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api } from "../../api/client";
+import { api, BASE_URL } from "../../api/client";
 import { BlueDartAPI } from "../../api/bluedart";
 import { useAuth } from "../../contexts/Auth";
 import AdminTabs from "../../components/AdminTabs";
@@ -635,6 +635,7 @@ export default function AdminOrders() {
                 </th>
                 <th>Date</th>
                 <th>Order ID</th>
+                <th>Items</th>
                 <th>Customer</th>
                 <th>Amount</th>
                 <th>Status</th>
@@ -695,6 +696,68 @@ export default function AdminOrders() {
                       <td className="font-mono text-sm">
                         {id.slice(-8)}
                       </td>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-col gap-3">
+                          {o.items?.map((item, i) => {
+                            // 1. Image Logic
+                            let finalImage = item.image;
+                            if (!finalImage) {
+                              const liveBook = item.bookId || {};
+                              const assets = liveBook.assets || {};
+                              if (Array.isArray(assets.coverUrl) && assets.coverUrl.length > 0) {
+                                finalImage = assets.coverUrl[0];
+                              } else if (typeof assets.coverUrl === "string") {
+                                finalImage = assets.coverUrl;
+                              }
+                            }
+                            if (!finalImage) finalImage = "/placeholder.png";
+
+                            // Handle URL pathing
+                            const isAbsolute = finalImage.startsWith("http");
+                            const cleanBase = BASE_URL.replace(/\/api\/?$/, "");
+                            const imgUrl = isAbsolute ? finalImage : `${cleanBase}${finalImage.startsWith('/') ? '' : '/'}${finalImage}`;
+
+                            // 2. Title Logic
+                            const displayTitle = item.title || item.bookId?.title || "Unknown Title";
+
+                            return (
+                              <div key={i} className="flex items-start gap-4">
+                                {/* ✅ BIG IMAGE: w-20 h-28 */}
+                                <img
+                                  src={imgUrl}
+                                  alt="cover"
+                                  className="w-20 h-28 object-cover rounded-md border border-border-subtle bg-surface-subtle flex-shrink-0 shadow-sm"
+                                  onError={(e) => e.target.style.display = 'none'}
+                                />
+
+                                <div className="flex flex-col min-w-0 py-1 relative">
+                                  {/* ✅ INSTANT HOVER LOGIC */}
+                                  {/* We use 'group' and 'group-hover' to show the tooltip div instantly */}
+                                  <div className="relative group cursor-help">
+
+                                    {/* The Truncated Title (Visible by default) */}
+                                    <span className="text-sm font-medium text-fg line-clamp-3 leading-snug">
+                                      {displayTitle}
+                                    </span>
+
+                                    {/* The Custom Tooltip (Hidden by default, appears INSTANTLY on hover) */}
+                                    <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-48 bg-gray-900 text-white text-xs p-2 rounded shadow-xl z-[50]">
+                                      {displayTitle}
+                                      {/* Little arrow pointing down */}
+                                      <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+
+                                  </div>
+
+                                  <span className="text-xs text-fg-muted mt-1.5 font-medium">
+                                    Qty: {item.qty}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </td>
                       <td>
                         <div className="text-sm font-medium text-fg">
                           {o?.shipping?.name || o?.customer?.name || o?.email || "—"}
@@ -706,24 +769,28 @@ export default function AdminOrders() {
                       <td className="font-medium">
                         ₹{rupees?.toLocaleString('en-IN') || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <div className="space-y-1">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm">
+                        {/* ✅ FIXED: Added 'flex flex-col' to force vertical stacking */}
+                        <div className="flex flex-col items-start gap-2">
+
+                          {/* 1. Order Status Badge */}
                           <div className={cx(
-                            "inline-flex px-2 py-1 text-xs rounded-full font-medium",
-                            o.status === 'confirmed' && "bg-green-100 text-green-800",
-                            o.status === 'pending' && "bg-yellow-100 text-yellow-800",
-                            o.status === 'shipped' && "bg-blue-100 text-blue-800",
-                            o.status === 'delivered' && "bg-purple-100 text-purple-800"
+                            "inline-flex px-2.5 py-1 text-xs rounded-full font-medium border",
+                            o.status === 'confirmed' && "bg-green-50 text-green-700 border-green-200",
+                            o.status === 'pending' && "bg-yellow-50 text-yellow-700 border-yellow-200",
+                            o.status === 'shipped' && "bg-blue-50 text-blue-700 border-blue-200",
+                            o.status === 'delivered' && "bg-purple-50 text-purple-700 border-purple-200",
+                            o.status === 'cancelled' && "bg-red-50 text-red-700 border-red-200"
                           )}>
                             {o.status}
                           </div>
 
-                          {/* ✅ NEW: Payment status badge */}
+                          {/* 2. Payment Status Badge (Now stacked below) */}
                           <div className={cx(
-                            "inline-flex px-2 py-1 text-xs rounded-full font-medium ml-1",
-                            o.payment?.status === 'paid' && "bg-green-100 text-green-700",
-                            o.payment?.status === 'partially_paid' && "bg-orange-100 text-orange-700",
-                            o.payment?.status === 'pending' && "bg-gray-100 text-gray-700"
+                            "inline-flex px-2.5 py-1 text-xs rounded-full font-medium border", // Removed ml-1
+                            o.payment?.status === 'paid' && "bg-emerald-50 text-emerald-700 border-emerald-200",
+                            o.payment?.status === 'partially_paid' && "bg-orange-50 text-orange-800 border-orange-200",
+                            o.payment?.status === 'pending' && "bg-gray-50 text-gray-700 border-gray-200"
                           )}>
                             {o.payment?.status === 'partially_paid' ?
                               `Half Paid (₹${o.payment?.paidAmount || 0} / ₹${o.amount})` :
@@ -731,9 +798,9 @@ export default function AdminOrders() {
                             }
                           </div>
 
-                          {/* Show COD amount if applicable */}
+                          {/* 3. COD Amount (Stacked at bottom) */}
                           {o.payment?.dueOnDeliveryAmount > 0 && (
-                            <div className="text-xs text-orange-600 font-medium">
+                            <div className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
                               COD: ₹{o.payment.dueOnDeliveryAmount}
                             </div>
                           )}

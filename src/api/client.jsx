@@ -1,4 +1,4 @@
-// src/api/client.jsx - FULLY FIXED VERSION
+// src/api/client.jsx - FIXED (No infinite loop)
 import axios from "axios";
 
 /** Resolve base URL and normalize to ".../api" */
@@ -7,8 +7,8 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    // "http://localhost:5050/api";
-    "https://kiddosintellect.com/api";
+    "http://localhost:5050/api";
+    // "https://kiddosintellect.com/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api");
@@ -20,7 +20,6 @@ function resolveBaseURL() {
   }
   return u;
 }
-
 
 const BASE_URL = resolveBaseURL();
 
@@ -53,21 +52,16 @@ api.interceptors.request.use((config) => {
   // ✅ Priority 1: Explicit meta.auth directive
   if (metaAuth === "admin") {
     token = getTokens().admin;
-
   } else if (metaAuth === "customer") {
     token = getTokens().customer;
-
   } else if (metaAuth === "none") {
     token = "";
-
   }
   // ✅ Priority 2: Auto-detect from URL pattern
   else if (url.startsWith("/customer/")) {
     token = getTokens().customer;
-
   } else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
     token = getTokens().admin;
-
   }
 
   // Initialize headers if not exists
@@ -78,9 +72,7 @@ api.interceptors.request.use((config) => {
   // Add authorization token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log("🔑 Token attached:", token.substring(0, 20) + "...");
-  } else {
-    console.warn("⚠️ No token attached for:", url);
+    // ✅ REMOVED: console.log that caused spam
   }
 
   // ✅ CRITICAL: Handle Content-Type correctly
@@ -94,7 +86,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-
 api.interceptors.response.use(
   (res) => {
     return res;
@@ -102,7 +93,11 @@ api.interceptors.response.use(
   (err) => {
     const status = err?.response?.status;
     const url = String(err?.config?.url || "");
-    console.error("❌ Response error:", { url, status, error: err?.response?.data });
+    
+    // ✅ Only log errors, not every request
+    if (status >= 400) {
+      console.error("❌ API Error:", { url, status, error: err?.response?.data });
+    }
 
     if (status === 401) {
       console.error("🚫 401 Unauthorized for:", url);
@@ -116,7 +111,6 @@ api.interceptors.response.use(
             window.location.href = "/login";
           }
         }
-       
         // Admin routes
         else if (url.startsWith("/admin/") || url.startsWith("/auth/") || url.startsWith("/books")) {
           console.error("🚫 Admin token invalid, logging out");

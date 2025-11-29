@@ -44,6 +44,7 @@ import AdminCategories from './pages/Admin/Categories';
 import DynamicPopup from './components/DynamicPopup';
 import PopupSettings from './pages/Admin/PopupSettings';
 import PreSchool from './pages/PreSchool';
+import { useCartCleanup } from './hooks/useCartCleanup';
 
 function InnerApp() {
   const loc = useLocation();
@@ -202,6 +203,8 @@ function InnerApp() {
 }
 
 export default function App() {
+  
+  useCartCleanup();
   return (
     <SiteProvider>
       <AuthProvider>

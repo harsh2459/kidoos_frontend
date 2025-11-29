@@ -30,6 +30,34 @@ export default function Checkout() {
   // --- PAYMENT OPTION SELECTION ---
   const [paymentOption, setPaymentOption] = useState("full_online");
 
+
+  const getBookIdFromCartItem = (item) => {
+    // Priority 1: bookId field (server format)
+    if (item.bookId) {
+      // If bookId is an object (populated by server), extract _id
+      if (typeof item.bookId === 'object' && item.bookId._id) {
+        return item.bookId._id;
+      }
+      // If bookId is a string, use it directly
+      if (typeof item.bookId === 'string') {
+        return item.bookId;
+      }
+    }
+
+    // Priority 2: book._id (alternative server format)
+    if (item.book?._id) {
+      return item.book._id;
+    }
+
+    // Priority 3: _id ONLY if it's NOT a local cart item ID
+    if (item._id && !item._id.startsWith('local_')) {
+      return item._id;
+    }
+
+    // Last resort
+    return item.id;
+  };
+
   /* ------------ Totals ------------ */
   const totals = useMemo(() => {
     const sub = items.reduce((sum, i) => {
@@ -146,13 +174,59 @@ export default function Checkout() {
   }
 
   async function createLocalOrder(paymentMethod, paymentStatus = "pending") {
+    console.log("\n" + "=".repeat(80));
+    console.log("🛒 [Checkout] Creating order...");
+    console.log("=".repeat(80));
+
+    // ✅ DEBUG: Log cart items BEFORE mapping
+    console.log("📦 Raw cart items:", items);
+    
+    items.forEach((item, idx) => {
+      const extractedBookId = getBookIdFromCartItem(item);
+      console.log(`\n📚 Cart Item ${idx + 1}:`);
+      console.log(`   - Cart Item _id: ${item._id}`);
+      console.log(`   - Extracted Book ID: ${extractedBookId}`);
+      console.log(`   - Title: ${item.title}`);
+      console.log(`   - Price: ${item.unitPriceSnapshot || item.price}`);
+      console.log(`   - Qty: ${item.qty}`);
+    });
+
+    // ✅ CRITICAL FIX: Extract REAL book IDs from cart items
+    const mappedItems = items.map((item) => {
+      const bookId = getBookIdFromCartItem(item);
+
+      // ✅ Validate book ID exists
+      if (!bookId) {
+        console.error(`❌ ERROR: No valid book ID found for "${item.title}"`);
+        throw new Error(`Cannot create order: Book "${item.title}" has no valid ID`);
+      }
+
+      // ✅ Validate it's not a local cart item ID
+      if (bookId.startsWith('local_')) {
+        console.error(`❌ ERROR: Attempted to use cart item ID as book ID: ${bookId}`);
+        throw new Error(`Cannot create order: Invalid book ID for "${item.title}"`);
+      }
+
+      // ✅ Validate MongoDB ObjectId format (24 hex characters)
+      if (!/^[0-9a-fA-F]{24}$/.test(bookId)) {
+        console.error(`❌ ERROR: Book ID is not a valid MongoDB ObjectId: "${bookId}"`);
+        throw new Error(`Cannot create order: Book "${item.title}" has malformed ID`);
+      }
+
+      console.log(`✅ Mapping "${item.title}" with Book ID: ${bookId}`);
+
+      return {
+        bookId: bookId,  // ✅ Only send the REAL book ID
+        title: item.title,
+        price: item.unitPriceSnapshot || item.price,
+        qty: item.qty,
+      };
+    });
+
+    console.log("\n📋 Final payload items:", JSON.stringify(mappedItems, null, 2));
+
     const payload = {
-      items: items.map((i) => ({
-        bookId: i._id || i.id,
-        title: i.title,
-        price: i.price,
-        qty: i.qty,
-      })),
+      items: mappedItems,
       customer: {
         name: cust.name,
         email: cust.email,
@@ -173,11 +247,23 @@ export default function Checkout() {
         status: paymentStatus,
       },
     };
-    const { data } = await api.post("/orders", payload);
-    if (!data?.ok) throw new Error(data?.error || "Failed to create order");
-    const newId = data.orderId || data._id;
-    if (!newId) throw new Error("Order created but id missing");
-    return newId;
+
+    console.log("\n📤 Sending payload to backend:", JSON.stringify(payload, null, 2));
+
+    try {
+      const { data } = await api.post("/orders", payload);
+
+      console.log("\n✅ Order created successfully:", data);
+
+      if (!data?.ok) throw new Error(data?.error || "Failed to create order");
+      const newId = data.orderId || data._id;
+      if (!newId) throw new Error("Order created but id missing");
+      return newId;
+    } catch (error) {
+      console.error("\n❌ Order creation failed:", error);
+      console.error("Error response:", error?.response?.data);
+      throw error;
+    }
   }
 
   async function placeWithRazorpay() {
