@@ -140,6 +140,41 @@ export default function AdminOrders() {
       // Don't show error toast for profiles as it's not critical
     }
   }
+  async function handlePrintLabel(order) {
+    // 1. Check if label is already generated
+    const existingLabelUrl = order?.shipping?.bd?.labelUrl;
+    if (existingLabelUrl) {
+      // If we already have it, just open it
+      window.open(`${BASE_URL}${existingLabelUrl}`, '_blank');
+      return;
+    }
+
+    // 2. If not, generate it from BlueDart
+    const awb = order?.shipping?.bd?.awbNumber;
+    if (!awb) return t.warn("No AWB found");
+
+    t.info("Generating Label...");
+    try {
+      const { data } = await BlueDartAPI.generateLabel(order._id, auth);
+      
+
+      if (data.ok && data.data?.url) {
+        t.success("Label Generated");
+        // Open the new label URL
+        // We prepend BASE_URL if it's a relative path like '/uploads/...'
+        const fullUrl = `${BASE_URL}${data.data.downloadUrl}`;
+        window.open(fullUrl, '_blank');
+
+        // Reload orders to save the label URL in local state
+        load();
+      } else {
+        t.err("Failed to generate label");
+      }
+    } catch (e) {
+      
+      t.err(e.message || "Error printing label");
+    }
+  }
 
   useEffect(() => {
     load();
@@ -826,6 +861,15 @@ export default function AdminOrders() {
                               className="btn-ghost text-xs px-2 py-1"
                             >
                               Track
+                            </button>
+                          )}
+                          {bd.awbNumber && (
+                            <button
+                              onClick={() => handlePrintLabel(o)}
+                              className="btn-secondary text-xs px-2 py-1 flex items-center gap-1"
+                              title="Print Shipping Label"
+                            >
+                              <span>🖨️</span> Label
                             </button>
                           )}
                           {o.status === 'confirmed' && !bd.awbNumber && (

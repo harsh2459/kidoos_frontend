@@ -180,7 +180,7 @@ export default function Checkout() {
 
     // ✅ DEBUG: Log cart items BEFORE mapping
     console.log("📦 Raw cart items:", items);
-    
+
     items.forEach((item, idx) => {
       const extractedBookId = getBookIdFromCartItem(item);
       console.log(`\n📚 Cart Item ${idx + 1}:`);
@@ -247,8 +247,6 @@ export default function Checkout() {
         status: paymentStatus,
       },
     };
-
-    console.log("\n📤 Sending payload to backend:", JSON.stringify(payload, null, 2));
 
     try {
       const { data } = await api.post("/orders", payload);
