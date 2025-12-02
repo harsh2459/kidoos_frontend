@@ -47,7 +47,7 @@ export default function Footer({ contact }) {
     const currentYear = new Date().getFullYear();
 
     const contactInfo = {
-        email: contact?.email || "support@kiddosintellect.com",
+        email: contact?.email || "kiddosintellect.com",
         phone: contact?.phone || "+91 98798 57529",
         address: "206 Sunrise Commercial Complex, Near Savjibhai Korat Bridge, Lajamani Chowk, Shanti Niketan Society, Mota Varachha, Surat, Gujarat 394101"
     };
