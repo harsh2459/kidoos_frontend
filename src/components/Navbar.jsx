@@ -1,31 +1,13 @@
-// src/components/Navbar.jsx - WITH PROFILE LINK
 import { Link, useLocation } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSite } from "../contexts/SiteConfig";
 import { useAuth } from "../contexts/Auth";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
-
-/* simple cart icon */
-function CartIcon({ className = "" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="9" cy="21" r="1" />
-      <circle cx="20" cy="21" r="1" />
-      <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
-    </svg>
-  );
-}
+import { 
+  Menu, X, ShoppingBag, User, LogOut, ShieldCheck 
+} from "lucide-react"; 
 
 export default function Navbar() {
   const loc = useLocation();
@@ -35,134 +17,119 @@ export default function Navbar() {
   const nav = useMemo(() => visibility?.publicNav || ["catalog", "cart"], [visibility]);
 
   const { isAdmin, admin, logout: logoutAdmin } = useAuth();
-  const { isCustomer, customer, logout: logoutCustomer } = useCustomer();
+  const { isCustomer, customer } = useCustomer();
 
-  // cart count badge
+  // Cart count badge
   const cartCount = useCart((s) =>
     (s.items || []).reduce((sum, it) => sum + Number(it.qty ?? 1), 0)
   );
 
-  const [openCustomer, setOpenCustomer] = useState(false);
+  // State for Mobile Menu & Scrolled State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  // shopper UI rules
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // UI Rules
   const showShopUI = !isAdmin && !onAdminPage;
   const showLogin = !isAdmin && !isCustomer && !onAdminPage;
-
-  // brand visibility: hide logo whenever an admin is logged in
   const showBrand = !isAdmin;
 
+  const closeMenu = () => setIsMobileMenuOpen(false);
+
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-      <div className="relative mx-auto max-w-7xl px-4 h-[68px] flex items-center">
-        {/* LEFT: Brand (hidden for admin) */}
+    <header 
+      className={`
+        sticky top-0 z-50 font-sans transition-all duration-300 border-b
+        ${isScrolled 
+          ? "bg-white/95 backdrop-blur-md border-[#E3E8E5] shadow-sm py-2" 
+          : "bg-white border-transparent py-4"
+        }
+      `}
+    >
+      
+      {/* Container: Responsive max-width for Mobile to Ultra-Wide */}
+      <div className="relative mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 flex items-center justify-between max-w-7xl 2xl:max-w-[1800px]">
+        
+        {/* LEFT: Brand */}
         {showBrand && (
-          <Link to="/" className="flex items-center gap-3 shrink-0">
+          <Link to="/" className="flex items-center gap-3 shrink-0 z-50 relative group" onClick={closeMenu}>
             {site?.logoUrl ? (
               <img
                 src={assetUrl(site.logoUrl)}
                 alt="logo"
-                className="h-[4rem] w-auto object-contain"
+                className="h-10 md:h-[5rem] w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
-              <div className="h-8 w-8 rounded-md bg-gray-100 grid place-items-center text-xs text-gray-500">
-                logo
+              <div className="h-10 w-10 rounded-xl bg-[#1A3C34] text-white grid place-items-center font-serif font-bold text-xl shadow-md">
+                KI
               </div>
             )}
+          
           </Link>
         )}
 
-        {/* CENTER: CATALOG + ABOUT US */}
+        {/* CENTER: DESKTOP NAVIGATION */}
         {showShopUI && nav.includes("catalog") && (
-          <nav className="absolute left-1/2 -translate-x-1/2 flex items-center gap-8">
-            <Link
-              to="/catalog"
-              className="relative tracking-[0.25em] text-sm font-medium text-gray-700 hover:text-gray-900 
-                after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
-                after:block after:h-[2px] after:w-full after:bg-current
-                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
-                hover:after:scale-x-100"
-            >
-              CATALOG
-            </Link>
-            <Link
-              to="/aboutus"
-              className="relative tracking-[0.25em] text-sm font-medium text-gray-700 hover:text-gray-900
-                after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
-                after:block after:h-[2px] after:w-full after:bg-current
-                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
-                hover:after:scale-x-100"
-            >
-              ABOUT US
-            </Link>
-            <Link
-              to="/PreSchool"
-              className="relative tracking-[0.25em] text-sm font-medium text-gray-700 hover:text-gray-900
-                after:content-[''] after:absolute after:left-0 after:-bottom-[6px]
-                after:block after:h-[2px] after:w-full after:bg-current
-                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
-                hover:after:scale-x-100"
-            >
-              PRE SCHOOL
-            </Link>
+          <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 xl:gap-12">
+            {[
+              { path: "/catalog", label: "CATALOG" },
+              { path: "/aboutus", label: "ABOUT US" },
+              { path: "/PreSchool", label: "PRE SCHOOL" }
+            ].map((link) => (
+              <NavLink key={link.path} to={link.path}>
+                {link.label}
+              </NavLink>
+            ))}
           </nav>
         )}
 
-        {/* RIGHT: Cart icon + profile/login/admin chip */}
-        <div className="ml-auto flex items-center gap-4">
+        {/* RIGHT: Icons & Actions */}
+        <div className="flex items-center gap-3 sm:gap-5 z-50 relative">
+          
           {/* CART ICON */}
           {showShopUI && nav.includes("cart") && (
-            <Link to="/cart" className="relative inline-flex items-center group">
-              <CartIcon className="h-6 w-6 text-gray-700 group-hover:text-gray-900 transition-colors" />
+            <Link 
+              to="/cart" 
+              className="relative p-2 text-[#1A3C34] hover:text-[#4A7C59] transition-colors group" 
+              onClick={closeMenu}
+              aria-label="Cart"
+            >
+              <ShoppingBag className="w-6 h-6" />
               {cartCount > 0 && (
-                <span
-                  className="absolute -top-2 -right-2 min-w-[20px] h-[20px]
-                    rounded-full bg-red-600 text-white text-[11px] leading-none
-                    px-1.5 flex items-center justify-center font-semibold shadow-md"
-                  aria-label={`${cartCount} items in cart`}
-                >
+                <span className="absolute top-0 right-0 min-w-[18px] h-[18px] rounded-full bg-[#4A7C59] text-white text-[10px] flex items-center justify-center font-bold shadow-sm ring-2 ring-white animate-bounce-short">
                   {cartCount}
                 </span>
               )}
             </Link>
           )}
 
-          {/* PROFILE LINK (only for authenticated customers) */}
+          {/* PROFILE LINK */}
           {showShopUI && isCustomer && (
             <Link
               to="/profile"
-              className="flex items-center gap-2 text-gray-700 hover:text-indigo-600 transition-colors group"
+              className="hidden sm:flex items-center justify-center w-9 h-9 rounded-full bg-[#E8F0EB] text-[#1A3C34] border border-[#DCE4E0] hover:border-[#4A7C59] hover:shadow-md transition-all"
               title="My Profile"
+              onClick={closeMenu}
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:shadow-md transition-shadow">
-                {customer?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
+              {customer?.name ? (
+                <span className="font-serif font-bold text-sm">{customer.name.charAt(0).toUpperCase()}</span>
+              ) : (
+                <User className="w-4 h-4" />
+              )}
             </Link>
           )}
 
-          {/* CUSTOMER DROPDOWN (alternative - commented out since we have profile link above) */}
-          {/* {!isAdmin && !onAdminPage && isCustomer && (
-            <div className="relative">
-              <button
-                onClick={() => setOpenCustomer((v) => !v)}
-                onBlur={() => setTimeout(() => setOpenCustomer(false), 150)}
-                className="px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors"
-              >
-                Hi, {customer?.name?.split(" ")[0] || "there"}
-              </button>
-              {openCustomer && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-1">
-                  <MenuButton onClick={() => navigate('/profile')} label="My Profile" />
-                  <MenuButton onClick={() => logoutCustomer()} label="Logout" />
-                </div>
-              )}
-            </div>
-          )} */}
-
-          {/* LOGIN */}
+          {/* LOGIN BUTTON */}
           {showLogin && (
             <Link
               to="/login"
-              className="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition-colors font-medium text-sm"
+              className="hidden sm:inline-flex px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] transition-all shadow-md hover:shadow-lg active:scale-95"
             >
               Login
             </Link>
@@ -170,33 +137,115 @@ export default function Navbar() {
 
           {/* ADMIN CHIP */}
           {isAdmin && (
-            <div className="relative">
-              <details className="group">
-                <summary className="list-none cursor-pointer px-3 py-1.5 rounded-lg bg-gray-100 border border-gray-200 hover:bg-gray-200 transition-colors">
-                  Hi, {admin?.name || "Admin"}{" "}
-                  <span className="ml-1 text-[10px] align-middle px-1.5 py-0.5 rounded bg-white text-gray-600 border">
-                    ADMIN
-                  </span>
+            <div className="relative hidden sm:block">
+              <details className="group relative">
+                <summary className="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#FAFBF9] border border-[#E3E8E5] hover:border-[#1A3C34] transition-all text-sm font-medium text-[#2C3E38]">
+                  <ShieldCheck className="w-4 h-4 text-[#4A7C59]" />
+                  <span>Admin</span>
                 </summary>
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg p-1">
-                  <MenuButton onClick={() => logoutAdmin()} label="Logout" />
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#E3E8E5] rounded-xl shadow-xl p-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-2 border-b border-[#F4F7F5] text-xs text-[#8BA699]">
+                        Signed in as {admin?.name || "Admin"}
+                    </div>
+                    <button 
+                        onClick={() => logoutAdmin()} 
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg transition-colors"
+                    >
+                        <LogOut className="w-4 h-4" /> Logout
+                    </button>
                 </div>
               </details>
             </div>
           )}
+
+          {/* HAMBURGER MENU (Mobile/Tablet) */}
+          {showShopUI && (
+            <button 
+              className="lg:hidden p-2 text-[#1A3C34] hover:bg-[#F4F7F5] rounded-lg transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle Menu"
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* --- MOBILE DROPDOWN MENU --- */}
+      <div 
+        className={`
+            lg:hidden absolute top-full left-0 w-full bg-white border-b border-[#E3E8E5] shadow-xl 
+            transition-all duration-300 ease-in-out origin-top overflow-hidden
+            ${isMobileMenuOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}
+        `}
+      >
+        <div className="flex flex-col p-6 space-y-4 text-center">
+          
+          {[
+              { path: "/catalog", label: "CATALOG" },
+              { path: "/aboutus", label: "ABOUT US" },
+              { path: "/PreSchool", label: "PRE SCHOOL" }
+          ].map((link) => (
+            <Link 
+                key={link.path}
+                to={link.path} 
+                onClick={closeMenu} 
+                className="text-[#1A3C34] font-serif font-bold text-lg py-2 hover:text-[#4A7C59] transition-colors"
+            >
+                {link.label}
+            </Link>
+          ))}
+          
+          {/* Mobile Actions */}
+          <div className="pt-4 border-t border-[#F4F7F5] flex flex-col gap-3 items-center w-full">
+            {showLogin && (
+              <Link 
+                to="/login" 
+                onClick={closeMenu} 
+                className="w-full max-w-xs py-3 rounded-xl bg-[#1A3C34] text-white font-bold text-sm shadow-md"
+              >
+                Login / Sign Up
+              </Link>
+            )}
+
+            {isCustomer && (
+                <Link 
+                    to="/profile" 
+                    onClick={closeMenu}
+                    className="flex items-center gap-2 text-[#1A3C34] font-medium"
+                >
+                    <User className="w-5 h-5" /> My Profile
+                </Link>
+            )}
+            
+            {isAdmin && (
+               <button onClick={logoutAdmin} className="flex items-center gap-2 text-red-600 font-medium py-2">
+                 <LogOut className="w-4 h-4" /> Admin Logout
+               </button>
+            )}
+          </div>
         </div>
       </div>
     </header>
   );
 }
 
-function MenuButton({ onClick, label }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-    >
-      {label}
-    </button>
-  );
+/* --- Helper Components --- */
+
+// Desktop Nav Link with Left-to-Right Underline Animation
+function NavLink({ to, children }) {
+    return (
+        <Link
+            to={to}
+            className="
+                relative py-1 text-sm font-bold tracking-widest text-[#5C756D] hover:text-[#1A3C34] transition-colors duration-300
+                after:content-[''] after:absolute after:left-0 after:bottom-0
+                after:block after:h-[2px] after:w-full after:bg-[#4A7C59]
+                after:origin-left after:scale-x-0 after:transition-transform after:duration-300
+                hover:after:scale-x-100
+            "
+        >
+            {children}
+        </Link>
+    );
 }

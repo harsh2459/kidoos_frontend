@@ -1,68 +1,58 @@
 // src/components/Toasts/AlertToast.jsx
 import React from "react";
+import { CheckCircle, Info, AlertTriangle, XCircle } from "lucide-react";
 
+// Theme-consistent variants
 const variants = {
   success: {
-    bg: "bg-green-700 dark:bg-green-700",
-    ring: "border-green-500 dark:border-green-500",
-    text: "text-white",
-    icon: "text-green-200",
-    hover: "hover:bg-green-600",
+    bg: "bg-[#E8F0EB] border-[#4A7C59]", // Sage background, Green border
+    text: "text-[#1A3C34]",
+    iconColor: "text-[#4A7C59]",
+    Icon: CheckCircle,
   },
   info: {
-    bg: "bg-blue-700 dark:bg-blue-700",
-    ring: "border-blue-500 dark:border-blue-500",
-    text: "text-white",
-    icon: "text-blue-200",
-    hover: "hover:bg-blue-600",
+    bg: "bg-[#F4F7F5] border-[#1A3C34]", // Light background, Deep Forest border
+    text: "text-[#2C3E38]",
+    iconColor: "text-[#1A3C34]",
+    Icon: Info,
   },
   warn: {
-    bg: "bg-amber-600 dark:bg-amber-600",
-    ring: "border-amber-500 dark:border-amber-500",
-    text: "text-white",
-    icon: "text-amber-200",
-    hover: "hover:bg-amber-500",
+    bg: "bg-[#FFF9F0] border-[#8A6A4B]", // Warm background, Gold/Earth border
+    text: "text-[#5C4D40]",
+    iconColor: "text-[#8A6A4B]",
+    Icon: AlertTriangle,
   },
   error: {
-    bg: "bg-red-700 dark:bg-red-700",
-    ring: "border-red-500 dark:border-red-500",
-    text: "text-white",
-    icon: "text-red-200",
-    hover: "hover:bg-red-600",
+    bg: "bg-[#FFF5F5] border-[#E53E3E]", // Light Red background, Red border
+    text: "text-[#742A2A]",
+    iconColor: "text-[#E53E3E]",
+    Icon: XCircle,
   },
 };
 
 export default function AlertToast({ type = "info", message = "" }) {
-  const v = variants[type] ?? variants.info;
+  // Default to 'info' if type is invalid
+  const v = variants[type] || variants.info;
+  const IconComponent = v.Icon;
 
   return (
     <div
       role="alert"
-      className={[
-        "rounded-xl border-l-4",
-        "px-4 py-3",
-        "min-w-[280px]",
-        "flex items-center gap-2",
-        "transition duration-200 ease-in-out",
-        "shadow-md",
-        v.bg, v.ring, v.text, v.hover,
-      ].join(" ")}
+      className={`
+        flex items-start gap-3 
+        min-w-[300px] max-w-md 
+        p-4 rounded-xl border-l-4 shadow-lg 
+        transition-all duration-300 ease-in-out transform hover:scale-[1.02]
+        ${v.bg}
+      `}
     >
-      <svg
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        fill="none"
-         className={`h-5 w-5 flex-shrink-0 ${v.icon}`}
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M13 16h-1v-4h1m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          strokeWidth={2}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-      </svg>
-      <p className="text-sm font-semibold leading-5">{message}</p>
+      <IconComponent className={`w-5 h-5 mt-0.5 flex-shrink-0 ${v.iconColor}`} />
+      
+      <div className="flex-1">
+        <p className={`text-sm font-medium leading-relaxed ${v.text}`}>
+          {message}
+        </p>
+      </div>
     </div>
   );
 }

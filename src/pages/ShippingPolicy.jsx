@@ -1,292 +1,535 @@
-import React, { useEffect } from 'react';
-import { Package, Truck, MapPin, Clock, Shield, AlertCircle, Search, Ban } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { 
+    Package, Truck, MapPin, Clock, Shield, AlertCircle, 
+    Search, CreditCard, Banknote, ChevronRight 
+} from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 
 const ShippingPolicy = () => {
+    const [activeSection, setActiveSection] = useState('overview');
 
     useEffect(() => {
         window.scrollTo(0, 0);
+
+        const handleScroll = () => {
+            const sectionElements = sections.map(sec => document.getElementById(sec.id));
+            let current = '';
+            
+            sectionElements.forEach(section => {
+                if (section) {
+                    const sectionTop = section.offsetTop;
+                    if (window.scrollY >= sectionTop - 200) {
+                        current = section.id;
+                    }
+                }
+            });
+            
+            if (current) setActiveSection(current);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const sections = [
+        { id: 'overview', label: '1. Overview' },
+        { id: 'processing', label: '2. Order Processing' },
+        { id: 'payment', label: '3. Payment Options' },
+        { id: 'delivery', label: '4. Delivery Timeline' },
+        { id: 'coverage', label: '5. Delivery Coverage' },
+        { id: 'tracking', label: '6. Order Tracking' },
+        { id: 'process', label: '7. Delivery Process' },
+        { id: 'packaging', label: '8. Packaging Standards' },
+        { id: 'delays', label: '9. Delays & Issues' },
+        { id: 'damaged', label: '10. Lost or Damaged' },
+        { id: 'address', label: '11. Address Requirements' },
+        { id: 'contact', label: '12. Contact Support' },
+    ];
+
+    // Using the same background texture as Terms & Conditions for consistency
+    const bgImage = "url('/images/terms-bg.png')"; 
+
     return (
-        <div className="min-h-screen bg-surface-subtle">
-            {/* Hero Section */}
-            <div className="hero py-8 xs:py-10 sm:py-12 md:py-14 lg:py-16 xl:py-18 2xl:py-20 mb-6 xs:mb-7 sm:mb-8 md:mb-10 lg:mb-12">
-                <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12">
-                    <div className="flex items-center justify-center mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
-                        <Package className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-brand" />
+        <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34]">
+            
+            {/* --- HERO SECTION WITH BACKGROUND IMAGE --- */}
+            <div className="relative w-full pt-20 md:pt-24 pb-16 px-6 border-b border-[#E3E8E5] overflow-hidden bg-[#F4F7F5]">
+                
+                {/* 1. BACKGROUND IMAGE LAYER */}
+                <div 
+                    className="absolute inset-0 z-0 pointer-events-none opacity-50 mix-blend-multiply" 
+                    style={{
+                        backgroundImage: bgImage,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center top',
+                        // CSS Filters to match the Sage/Green theme
+                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)' 
+                    }}
+                />
+                
+                {/* 2. GRADIENT OVERLAY */}
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#F4F7F5]/60 to-[#F4F7F5] pointer-events-none"></div>
+
+                {/* 3. TEXT CONTENT */}
+                <div className="relative z-10 max-w-5xl mx-auto text-center">
+                    <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm ring-1 ring-[#DCE4E0]">
+                        <Truck className="w-8 h-8 md:w-10 md:h-10 text-[#1A3C34]" />
                     </div>
-                    <h1 className="text-3xl xs:text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-6xl font-bold text-center text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
+                    
+                    <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-[#1A3C34] mb-6 tracking-tight leading-tight drop-shadow-sm">
                         Shipping Policy
                     </h1>
-                    <p className="text-center text-fg-muted text-base xs:text-base sm:text-lg md:text-lg lg:text-xl xl:text-xl 2xl:text-2xl max-w-xl xs:max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
-                        Fast, reliable shipping for your little ones. Learn about our delivery process, rates, and timelines.
+                    
+                    <p className="text-lg md:text-xl text-[#5C756D] font-light max-w-2xl mx-auto leading-relaxed">
+                        Fast, reliable, and FREE shipping across India. Learn about our delivery process and timelines.
                     </p>
-                    <p className="text-center text-fg-subtle text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base mt-2 xs:mt-2.5 sm:mt-3 md:mt-4">
-                        Last Updated: November 02, 2025
-                    </p>
+
+                    <div className="mt-8 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/80 backdrop-blur-md text-[#2F523F] text-xs font-bold uppercase tracking-widest border border-[#DCE4E0] shadow-sm">
+                        Last Updated: December 03, 2025
+                    </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12 pb-8 xs:pb-10 sm:pb-12 md:pb-14 lg:pb-16 xl:pb-20">
-                <div className="max-w-3xl xs:max-w-3xl sm:max-w-4xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-6 xs:space-y-7 sm:space-y-8 md:space-y-10">
+            {/* --- MAIN CONTENT CONTAINER --- */}
+            <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 2xl:gap-16">
 
-                    {/* Introduction */}
-                    <section className="card bg-brand/5 border-brand/20">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-brand/10 flex items-center justify-center">
-                                <Package className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Our Commitment</h2>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    At <span className="font-semibold text-fg">Kiddos Intallcat</span>, we strive to provide our customers with fast and reliable shipping services. This Shipping Policy outlines the terms and conditions under which we will process and deliver orders. By placing an order with us, you agree to the terms of this Shipping Policy.
-                                </p>
-                            </div>
+                    {/* --- LEFT SIDEBAR (Desktop) --- */}
+                    <div className="hidden lg:block lg:col-span-3">
+                        <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#DCE4E0]">
+                            <h3 className="text-xs font-bold text-[#8BA699] uppercase tracking-wider mb-4 px-3">
+                                Table of Contents
+                            </h3>
+                            <nav className="space-y-1">
+                                {sections.map((section) => (
+                                    <a
+                                        key={section.id}
+                                        href={`#${section.id}`}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            document.getElementById(section.id).scrollIntoView({ behavior: 'smooth' });
+                                            setActiveSection(section.id);
+                                        }}
+                                        className={`group flex items-center justify-between px-3 py-2.5 rounded-r-lg border-l-4 transition-all duration-200 ${
+                                            activeSection === section.id
+                                                ? 'bg-white border-[#1A3C34] text-[#1A3C34] font-semibold shadow-sm'
+                                                : 'border-transparent text-[#5C756D] hover:bg-[#EAF0ED] hover:text-[#2C3E38]'
+                                        }`}
+                                    >
+                                        <span className="text-sm truncate">{section.label}</span>
+                                        {activeSection === section.id && <ChevronRight className="w-4 h-4 text-[#4A7C59]" />}
+                                    </a>
+                                ))}
+                            </nav>
                         </div>
-                    </section>
+                    </div>
 
-                    {/* Shipping Methods */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                                <Truck className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-accent" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Shipping Methods</h2>
-                                <p className="text-fg-muted leading-relaxed mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    We use various shipping methods, such as courier services, to deliver our orders, depending on the destination and urgency of the order. Normally, the shipping method is chosen by the company to ensure the most efficient delivery. However, we consider customer preferences when possible.
-                                </p>
-                                <div className="bg-surface rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border">
-                                    <p className="text-fg text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base">
-                                        <span className="font-semibold">Note:</span> The final decision on the shipping method rests with Kiddos Intallcat to ensure optimal delivery.
+                    {/* --- MOBILE/TABLET NAV --- */}
+                    <div className="lg:hidden col-span-1 sticky top-0 z-50 bg-[#F4F7F5]/95 backdrop-blur-md border-b border-[#E3E8E5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 overflow-x-auto scrollbar-hide">
+                        <div className="flex gap-3">
+                            {sections.map((section) => (
+                                <a
+                                    key={section.id}
+                                    href={`#${section.id}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        document.getElementById(section.id).scrollIntoView({ behavior: 'smooth' });
+                                        setActiveSection(section.id);
+                                    }}
+                                    className={`whitespace-nowrap text-sm px-4 py-2 rounded-full transition-all border ${
+                                        activeSection === section.id
+                                            ? 'bg-[#1A3C34] text-white border-[#1A3C34] shadow-md'
+                                            : 'bg-white text-[#5C756D] border-[#DCE4E0]'
+                                    }`}
+                                >
+                                    {section.label}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* --- RIGHT CONTENT BODY --- */}
+                    <div className="lg:col-span-9 space-y-12 lg:space-y-16 pb-24">
+
+                        {/* 1. Overview */}
+                        <section id="overview" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Package className="w-6 h-6 text-[#4A7C59]" />
+                                    1. Overview
+                                </h2>
+                                <div className="prose prose-slate max-w-none text-[#4A5D56] leading-relaxed">
+                                    <p className="mb-4">
+                                        At <strong>Kiddos Intellect</strong>, we believe that quality educational books should reach every child across India. We offer <span className="font-medium text-[#4A7C59]">FREE shipping on all orders</span> with fast and reliable delivery through our trusted courier partner, BlueDart.
                                     </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Shipping Rates */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                                <MapPin className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-success" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Shipping Rates</h2>
-                                <p className="text-fg-muted leading-relaxed mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    The shipping rates vary depending on the destination, weight, and shipping method chosen. The shipping rates will be displayed during the checkout process before the order is confirmed.
-                                </p>
-                                <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                                    <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border">
-                                        <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                            <MapPin className="w-4 h-4 xs:w-5 xs:h-5 text-success" />
-                                            <span className="font-semibold text-fg text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Location</span>
-                                        </div>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">Based on your location</p>
-                                    </div>
-                                    <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border">
-                                        <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                            <Package className="w-4 h-4 xs:w-5 xs:h-5 text-success" />
-                                            <span className="font-semibold text-fg text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Weight</span>
-                                        </div>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">Package dimensions & weight</p>
-                                    </div>
-                                    <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border">
-                                        <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                            <Truck className="w-4 h-4 xs:w-5 xs:h-5 text-success" />
-                                            <span className="font-semibold text-fg text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Service</span>
-                                        </div>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">Standard or express delivery</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Delivery Timeframes */}
-                    <section className="card bg-accent/5 border-accent/20">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                                <Clock className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-accent" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Delivery Timeframes</h2>
-                                <p className="text-fg-muted leading-relaxed mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    The estimated delivery time depends on the shipping method chosen and the destination. We will provide the estimated delivery time at the time of order confirmation.
-                                </p>
-                                <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5 mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
-                                    <div className="bg-surface rounded-lg p-4 xs:p-4.5 sm:p-5 md:p-6 border border-border text-center">
-                                        <div className="text-3xl xs:text-3xl sm:text-4xl md:text-4xl font-bold text-brand mb-1 xs:mb-1.5 sm:mb-2">7 Days</div>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">Standard Delivery</p>
-                                    </div>
-                                    <div className="bg-surface rounded-lg p-4 xs:p-4.5 sm:p-5 md:p-6 border border-border text-center">
-                                        <div className="text-3xl xs:text-3xl sm:text-4xl md:text-4xl font-bold text-success mb-1 xs:mb-1.5 sm:mb-2">3-4 Days</div>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">Express Delivery</p>
-                                    </div>
-                                </div>
-                                <div className="bg-surface rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border-subtle">
-                                    <div className="flex items-start gap-2 xs:gap-2.5 sm:gap-3">
-                                        <AlertCircle className="w-4 h-4 xs:w-5 xs:h-5 text-accent flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="text-fg text-xs xs:text-xs sm:text-sm md:text-sm font-semibold mb-1">Please Note:</p>
-                                            <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">
-                                                Delivery times may vary due to unforeseen circumstances, such as inclement weather, local holidays, or customs clearance delays. In case of unavoidable circumstances from our side or stock-related issues, we will contact you and mention the revised time.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Order Tracking */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-brand/10 flex items-center justify-center">
-                                <Search className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Order Tracking</h2>
-                                <p className="text-fg-muted leading-relaxed mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    We provide order tracking information to the customers through email/SMS. Customers can track their order status using the provided tracking number.
-                                </p>
-                                <div className="bg-brand/5 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-brand/20">
-                                    <div className="flex items-start gap-2 xs:gap-2.5 sm:gap-3">
-                                        <Shield className="w-4 h-4 xs:w-5 xs:h-5 text-brand flex-shrink-0 mt-0.5" />
-                                        <p className="text-fg text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">
-                                            Once shipped, you'll receive a tracking number via email and SMS to monitor your package in real-time.
+                                    <p className="mb-6">
+                                        This Shipping Policy outlines the terms and conditions under which we process and deliver your orders. By placing an order with us, you acknowledge that you have read, understood, and agree to the terms of this policy.
+                                    </p>
+                                    <div className="bg-[#E8F0EB] border-l-4 border-[#4A7C59] p-5 rounded-r-lg">
+                                        <h4 className="font-bold text-[#1A3C34] text-sm mb-1 flex items-center gap-2">
+                                            <Package className="w-4 h-4 text-[#4A7C59]" />
+                                            FREE Shipping Across India
+                                        </h4>
+                                        <p className="text-sm text-[#4A5D56]">
+                                            Enjoy absolutely FREE shipping on every order, no minimum purchase required. We deliver fun and knowledge-filled books for children to every corner of India!
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Product Availability */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                                <Package className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-success" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Product Availability</h2>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    We make all efforts to ensure that the products are available and ready to ship. However, there may be instances when the product is out of stock, in which case we will notify the customer of the expected availability and delivery time.
-                                </p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Delivery Address */}
-                    <section className="card bg-danger-soft/30 border-danger/20">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-danger/10 flex items-center justify-center">
-                                <MapPin className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-danger" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Delivery Address</h2>
-                                <p className="text-fg-muted leading-relaxed mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    It is the responsibility of the customer to provide a correct and complete delivery address at the time of order placement. Any changes or corrections to the delivery address should be communicated to us as soon as possible.
-                                </p>
-                                <div className="bg-surface rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-danger/30">
-                                    <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">
-                                        We are not liable for any delay in delivery or loss of the package due to an incorrect or incomplete delivery address provided by the customer or due to any other unforeseen circumstances beyond our control.
+                        {/* 2. Order Processing */}
+                        <section id="processing" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Clock className="w-6 h-6 text-[#4A7C59]" />
+                                    2. Order Processing
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        All orders are processed within <span className="font-bold text-[#1A3C34]">1-2 business days</span> (Monday to Saturday, excluding public holidays and Sundays). Orders placed after 5:00 PM IST will be processed the next business day.
                                     </p>
+                                    
+                                    <div className="bg-[#FAFBF9] p-5 rounded-xl border border-[#EBEFEA]">
+                                        <h3 className="font-serif font-bold text-[#1A3C34] mb-4">Processing Timeline</h3>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-[#1A3C34] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#1A3C34] text-sm">Order Confirmation</h4>
+                                                    <p className="text-xs">Instant email confirmation sent.</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-[#1A3C34] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#1A3C34] text-sm">Payment Verification</h4>
+                                                    <p className="text-xs">Online payments verified in 1-2 hours.</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-[#1A3C34] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#1A3C34] text-sm">Order Packing</h4>
+                                                    <p className="text-xs">Books quality-checked & packed.</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-[#4A7C59] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#1A3C34] text-sm">Shipment Dispatch</h4>
+                                                    <p className="text-xs">Tracking number sent via SMS/Email.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-[#FFF9F0] border border-[#F5E6D3] rounded-lg">
+                                        <h4 className="font-bold text-[#8A6A4B] text-sm mb-1">Stock Availability</h4>
+                                        <p className="text-sm text-[#5C4D40]">
+                                            If an item is out of stock, we will notify you within 24 hours with options to wait for restock or receive a full refund.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Cancellation Policy */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                                <Ban className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-accent" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Cancellation Policy</h2>
-                                <p className="text-fg-muted leading-relaxed mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    Once the order has been shipped, it cannot be canceled. If the customer wishes to cancel the order before shipping, they should contact us immediately.
-                                </p>
-                                <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border">
-                                    <div className="flex items-start gap-2 xs:gap-2.5 sm:gap-3">
-                                        <AlertCircle className="w-4 h-4 xs:w-5 xs:h-5 text-accent flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="text-fg text-xs xs:text-xs sm:text-sm md:text-sm font-semibold mb-1">Important:</p>
-                                            <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm">
-                                                Orders cannot be canceled once they have left our facility. Please contact us promptly if you need to make changes to your order.
-                                            </p>
+                        {/* 3. Payment Options */}
+                        <section id="payment" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <CreditCard className="w-6 h-6 text-[#4A7C59]" />
+                                    3. Payment Options
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        We offer flexible payment options to make your shopping experience convenient and secure.
+                                    </p>
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {/* Half COD */}
+                                        <div className="bg-[#FAFBF9] p-6 rounded-xl border-2 border-[#4A7C59]/30">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 bg-[#E8F0EB] rounded-full flex items-center justify-center">
+                                                    <Banknote className="w-5 h-5 text-[#4A7C59]" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#1A3C34]">Half COD + Half Online</h4>
+                                                    <span className="text-xs font-bold text-[#4A7C59] uppercase tracking-wider">Most Popular</span>
+                                                </div>
+                                            </div>
+                                            <ul className="text-sm space-y-2 list-disc pl-4 text-[#5C756D]">
+                                                <li>Pay <strong>50%</strong> during online checkout.</li>
+                                                <li>Pay remaining <strong>50%</strong> in cash on delivery.</li>
+                                                <li>No additional fees.</li>
+                                            </ul>
+                                        </div>
+
+                                        {/* Full Online */}
+                                        <div className="bg-[#FAFBF9] p-6 rounded-xl border border-[#EBEFEA]">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 bg-[#E8F0EB] rounded-full flex items-center justify-center">
+                                                    <CreditCard className="w-5 h-5 text-[#4A7C59]" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-[#1A3C34]">Full Online Payment</h4>
+                                                    <span className="text-xs font-bold text-[#4A7C59] uppercase tracking-wider">100% Prepaid</span>
+                                                </div>
+                                            </div>
+                                            <ul className="text-sm space-y-2 list-disc pl-4 text-[#5C756D]">
+                                                <li>UPI, Credit/Debit Cards, Net Banking.</li>
+                                                <li>Faster order processing.</li>
+                                                <li>Secure encryption via trusted gateways.</li>
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Changes to Policy */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-brand/10 flex items-center justify-center">
-                                <Shield className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand" />
+                        {/* 4. Delivery Timeline */}
+                        <section id="delivery" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Truck className="w-6 h-6 text-[#4A7C59]" />
+                                    4. Delivery Timeline
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        We partner with <strong className="text-[#1A3C34]">BlueDart</strong> to ensure your books reach you safely.
+                                    </p>
+
+                                    <div className="grid md:grid-cols-3 gap-4">
+                                        <div className="p-4 bg-[#F4F7F5] rounded-xl border border-[#DCE4E0] text-center">
+                                            <MapPin className="w-6 h-6 text-[#4A7C59] mx-auto mb-2" />
+                                            <h5 className="font-bold text-[#1A3C34] mb-1">Metro Cities</h5>
+                                            <p className="text-2xl font-serif font-bold text-[#4A7C59]">3-5</p>
+                                            <p className="text-xs uppercase tracking-wider">Business Days</p>
+                                        </div>
+                                        <div className="p-4 bg-[#F4F7F5] rounded-xl border border-[#DCE4E0] text-center">
+                                            <MapPin className="w-6 h-6 text-[#8A6A4B] mx-auto mb-2" />
+                                            <h5 className="font-bold text-[#1A3C34] mb-1">Other Areas</h5>
+                                            <p className="text-2xl font-serif font-bold text-[#8A6A4B]">5-7</p>
+                                            <p className="text-xs uppercase tracking-wider">Business Days</p>
+                                        </div>
+                                        <div className="p-4 bg-[#F4F7F5] rounded-xl border border-[#DCE4E0] text-center">
+                                            <MapPin className="w-6 h-6 text-[#5C756D] mx-auto mb-2" />
+                                            <h5 className="font-bold text-[#1A3C34] mb-1">Remote Areas</h5>
+                                            <p className="text-2xl font-serif font-bold text-[#5C756D]">7-10</p>
+                                            <p className="text-xs uppercase tracking-wider">Business Days</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Changes to Policy</h2>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    We reserve the right to modify this Shipping Policy at any time without prior notice. Any modifications will be posted on our website and will be effective immediately.
+                        </section>
+
+                        {/* 5. Delivery Coverage */}
+                        <section id="coverage" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">5. Delivery Coverage</h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <div className="bg-[#E8F0EB] p-5 rounded-xl border border-[#DCE4E0]">
+                                        <h4 className="font-bold text-[#1A3C34] mb-2 flex items-center gap-2">
+                                            <MapPin className="w-4 h-4 text-[#4A7C59]" />
+                                            Pan-India Delivery
+                                        </h4>
+                                        <p className="text-sm">
+                                            We deliver to <strong>all serviceable PIN codes across India</strong> via BlueDart. From metros to remote villages, we bring knowledge to every child.
+                                        </p>
+                                    </div>
+                                    <p>
+                                        You can check delivery availability by entering your PIN code on the product page. If your location is unserviceable, we will notify you before payment.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 6. Order Tracking */}
+                        <section id="tracking" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Search className="w-6 h-6 text-[#4A7C59]" />
+                                    6. Order Tracking
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        Once dispatched, you will receive an <strong>AWB (Air Waybill)</strong> number via SMS/Email.
+                                    </p>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="p-5 bg-[#FAFBF9] border border-[#EBEFEA] rounded-xl">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2">Via BlueDart Website</h4>
+                                            <ol className="list-decimal pl-5 text-sm space-y-1">
+                                                <li>Visit <a href="#" className="text-[#4A7C59] underline">bluedart.com</a></li>
+                                                <li>Click 'TrackDart'</li>
+                                                <li>Enter your AWB number</li>
+                                            </ol>
+                                        </div>
+                                        <div className="p-5 bg-[#FAFBF9] border border-[#EBEFEA] rounded-xl">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2">Via Your Account</h4>
+                                            <ol className="list-decimal pl-5 text-sm space-y-1">
+                                                <li>Login to Kiddos Intellect</li>
+                                                <li>Go to 'My Orders'</li>
+                                                <li>Select 'Track Order'</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 7. Delivery Process */}
+                        <section id="process" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">7. Delivery Process</h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <ul className="space-y-3">
+                                        <li className="flex gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-[#E8F0EB] text-[#1A3C34] flex items-center justify-center font-bold text-xs flex-shrink-0">1</div>
+                                            <span><strong>Attempt 1:</strong> Delivery agent calls before arriving during business hours.</span>
+                                        </li>
+                                        <li className="flex gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-[#E8F0EB] text-[#1A3C34] flex items-center justify-center font-bold text-xs flex-shrink-0">2</div>
+                                            <span><strong>Attempt 2:</strong> If missed, a second attempt is made the next business day.</span>
+                                        </li>
+                                        <li className="flex gap-3">
+                                            <div className="w-6 h-6 rounded-full bg-[#E8F0EB] text-[#1A3C34] flex items-center justify-center font-bold text-xs flex-shrink-0">3</div>
+                                            <span><strong>Return:</strong> After 3 failed attempts, the package returns to us. Re-shipping fees apply.</span>
+                                        </li>
+                                    </ul>
+                                    <div className="p-4 bg-[#F4F7F5] rounded-lg text-sm">
+                                        <strong>Note:</strong> Open and inspect the package immediately upon delivery. For COD, please have exact cash ready.
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 8. Packaging */}
+                        <section id="packaging" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Package className="w-6 h-6 text-[#4A7C59]" />
+                                    8. Packaging Standards
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        We ensure your books arrive in pristine condition.
+                                    </p>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="bg-[#FAFBF9] p-4 rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] text-sm mb-2">Single Books</h4>
+                                            <ul className="list-disc pl-5 text-sm space-y-1">
+                                                <li>Bubble wrapped</li>
+                                                <li>Sturdy cardboard envelope</li>
+                                                <li>Water-resistant layer</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-[#FAFBF9] p-4 rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] text-sm mb-2">Bulk Orders</h4>
+                                            <ul className="list-disc pl-5 text-sm space-y-1">
+                                                <li>5-ply corrugated box</li>
+                                                <li>Eco-friendly cushioning</li>
+                                                <li>"Fragile" labeling</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-[#4A7C59] font-bold bg-[#E8F0EB] p-3 rounded-lg inline-block">
+                                        <Shield className="w-4 h-4" />
+                                        100% Eco-Friendly & Recyclable Materials
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 9. Delays */}
+                        <section id="delays" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">9. Delays & Issues</h2>
+                                <div className="space-y-4 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        While rare, delays can occur due to weather, festivals, or strikes.
+                                    </p>
+                                    <div className="p-4 bg-[#FFF9F0] border border-[#F5E6D3] rounded-lg">
+                                        <h4 className="font-bold text-[#8A6A4B] text-sm mb-1">What to do?</h4>
+                                        <ol className="list-decimal pl-5 text-sm space-y-1 text-[#5C4D40]">
+                                            <li>Check tracking status.</li>
+                                            <li>Allow 1-2 extra days for updates.</li>
+                                            <li>Contact our support with your Order ID.</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 10. Damaged */}
+                        <section id="damaged" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <AlertCircle className="w-6 h-6 text-[#4A7C59]" />
+                                    10. Lost or Damaged
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <div className="bg-[#FAFBF9] border border-[#EBEFEA] p-5 rounded-xl">
+                                        <h4 className="font-bold text-[#1A3C34] mb-2">Damaged on Arrival?</h4>
+                                        <p className="text-sm mb-3">
+                                            <strong>Report within 48 hours.</strong> Take photos of the damage and the outer box.
+                                        </p>
+                                        <ul className="text-sm space-y-1 list-disc pl-5">
+                                            <li>Do NOT accept if outer box is crushed.</li>
+                                            <li>Note damage on delivery receipt.</li>
+                                            <li>We will ship a free replacement immediately.</li>
+                                        </ul>
+                                    </div>
+                                    <div className="bg-[#FAFBF9] border border-[#EBEFEA] p-5 rounded-xl">
+                                        <h4 className="font-bold text-[#1A3C34] mb-2">Lost Package?</h4>
+                                        <p className="text-sm">
+                                            If tracking shows "No Movement" for 7 days, we will file a claim and issue a full refund or replacement.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 11. Address */}
+                        <section id="address" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">11. Address Requirements</h2>
+                                <div className="space-y-4 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        Ensure your address is complete to avoid returns.
+                                    </p>
+                                    <ul className="list-disc pl-5 text-sm space-y-1">
+                                        <li>Full Name & Valid Mobile Number</li>
+                                        <li>House No, Building Name, Street</li>
+                                        <li>Landmark (e.g., Near School)</li>
+                                        <li>Correct 6-digit PIN Code</li>
+                                    </ul>
+                                    <p className="text-sm text-[#8A6A4B] font-medium mt-2">
+                                        ⚠ Address cannot be changed once shipped.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 12. Contact */}
+                        <section id="contact" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">12. Contact Support</h2>
+                                <p className="text-[#4A5D56] mb-6">
+                                    Need help with your shipment?
                                 </p>
+                                <div className="bg-[#1A3C34] text-white p-8 rounded-xl text-center">
+                                    <div className="flex flex-col sm:flex-row justify-center gap-8 text-sm font-medium">
+                                        <span>kiddosintellect@gmail.com</span>
+                                        <span>+91 98798 57529</span>
+                                    </div>
+                                    <p className="text-[#8BA699] text-xs mt-4">
+                                        Mon-Sat, 10:00 AM - 6:00 PM IST
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Summary Card */}
-                    <section className="card bg-brand text-brand-foreground">
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-center">Shipping at a Glance</h2>
-                        <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="bg-brand-foreground/10 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5">
-                                <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                    <Clock className="w-4 h-4 xs:w-5 xs:h-5 text-brand-foreground" />
-                                    <span className="font-semibold text-brand-foreground text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Processing Time</span>
-                                </div>
-                                <p className="text-brand-foreground/80 text-xs xs:text-xs sm:text-sm md:text-sm">Orders processed within 24-48 hours</p>
-                            </div>
-                            <div className="bg-brand-foreground/10 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5">
-                                <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                    <Truck className="w-4 h-4 xs:w-5 xs:h-5 text-brand-foreground" />
-                                    <span className="font-semibold text-brand-foreground text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Delivery Time</span>
-                                </div>
-                                <p className="text-brand-foreground/80 text-xs xs:text-xs sm:text-sm md:text-sm">3-7 business days (location dependent)</p>
-                            </div>
-                            <div className="bg-brand-foreground/10 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5">
-                                <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                    <Search className="w-4 h-4 xs:w-5 xs:h-5 text-brand-foreground" />
-                                    <span className="font-semibold text-brand-foreground text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Tracking</span>
-                                </div>
-                                <p className="text-brand-foreground/80 text-xs xs:text-xs sm:text-sm md:text-sm">Email & SMS notifications with tracking number</p>
-                            </div>
-                            <div className="bg-brand-foreground/10 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5">
-                                <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                    <MapPin className="w-4 h-4 xs:w-5 xs:h-5 text-brand-foreground" />
-                                    <span className="font-semibold text-brand-foreground text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Address</span>
-                                </div>
-                                <p className="text-brand-foreground/80 text-xs xs:text-xs sm:text-sm md:text-sm">Customer responsibility for accuracy</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Contact Section */}
-                    <section className="card bg-success-soft border-success/20 text-center">
-                        <Package className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 text-success mx-auto mb-3 xs:mb-3.5 sm:mb-4 md:mb-5" />
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Have Questions?</h2>
-                        <p className="text-fg-muted mb-4 xs:mb-5 sm:mb-6 md:mb-7 max-w-2xl mx-auto text-sm xs:text-sm sm:text-base md:text-base lg:text-lg">
-                            If you have any questions or concerns about our shipping policy, please don't hesitate to contact our customer support team.
-                        </p>
-                        <a href="/contact" className="btn-primary text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">
-                            Contact Support
-                        </a>
-                    </section>
-
+                    </div>
                 </div>
             </div>
 

@@ -1,11 +1,10 @@
+// src/pages/Catalog.jsx
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import FilterBar from "../components/FilterBar";
 import ScrollToTopButton from "../components/ScrollToTopButton";
-import { assetUrl } from "../api/asset";
-import { useNavigate } from "react-router-dom";
-import { useCart } from "../contexts/CartStore";
 import ProductCard from "../components/ProductCard";
+import { Loader, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 export default function Catalog() {
   const [q, setQ] = useState("");
@@ -14,14 +13,14 @@ export default function Catalog() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   // ✅ Pagination state
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const totalPages = Math.ceil(total / limit);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -32,7 +31,7 @@ export default function Catalog() {
           page,
           limit,
           sort,
-          visibility: "public" // Only show public books
+          visibility: "public"
         }
       });
       setRawItems(Array.isArray(data.items) ? data.items : []);
@@ -54,13 +53,12 @@ export default function Catalog() {
 
   // Load when page changes (or search/sort after reset)
   useEffect(() => {
-    const t = setTimeout(load, q ? 250 : 0); // Debounce search, instant for pagination
+    const t = setTimeout(load, q ? 250 : 0);
     return () => clearTimeout(t);
   }, [q, sort, page]);
 
   const items = useMemo(() => {
     const arr = [...rawItems];
-    // Client-side sorting (can be removed if backend handles it)
     if (sort === "priceAsc" || sort === "priceDesc") {
       arr.sort((a, b) => {
         const pa = Number(a.price ?? a.mrp ?? 0);
@@ -73,160 +71,128 @@ export default function Catalog() {
     return arr;
   }, [rawItems, sort]);
 
-  // ✅ Pagination controls
+  // Pagination Controls
   const goToPage = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
-      // Scroll to top smoothly
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // ✅ Generate page numbers to display
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisible = 7; // Show max 7 page numbers
+    const maxVisible = 5;
 
     if (totalPages <= maxVisible) {
-      // Show all pages if total is small
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      // Always show first page
       pages.push(1);
-
-      // Calculate range around current page
-      let start = Math.max(2, page - 2);
-      let end = Math.min(totalPages - 1, page + 2);
-
-      // Adjust if we're near the start
-      if (page <= 3) {
-        end = Math.min(totalPages - 1, 5);
-      }
-
-      // Adjust if we're near the end
-      if (page >= totalPages - 2) {
-        start = Math.max(2, totalPages - 4);
-      }
-
-      // Add ellipsis if needed
+      let start = Math.max(2, page - 1);
+      let end = Math.min(totalPages - 1, page + 1);
+      
       if (start > 2) pages.push('...');
-
-      // Add pages around current
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      // Add ellipsis if needed
+      for (let i = start; i <= end; i++) pages.push(i);
       if (end < totalPages - 1) pages.push('...');
-
-      // Always show last page
-      if (totalPages > 1) {
-        pages.push(totalPages);
-      }
+      
+      pages.push(totalPages);
     }
-
     return pages;
   };
 
   return (
-    <div
-      id="top"
-      className="mx-auto max-w-screen-xl px-2 md:px-8 py-8 bg-surface"
-      style={{
-        minHeight: "100vh",
-      }}
-    >
-      <ScrollToTopButton />
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-2 mb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-fg tracking-tight">
-            Catalog <span className="text-fg-subtle text-lg font-medium">({total})</span>
-          </h1>
-          <div className="text-sm text-fg-subtle mt-1">
-            Showing <span className="font-semibold text-fg">{items.length}</span> of {total}
-            {totalPages > 1 && (
-              <span className="ml-2">• Page {page} of {totalPages}</span>
-            )}
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
+      
+      {/* --- HERO HEADER --- */}
+      <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34] overflow-hidden">
+        <div 
+            className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" 
+            style={{ backgroundImage: "url('/images/terms-bg.png')", backgroundSize: 'cover', filter: 'grayscale(100%)' }}
+        />
+        <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto flex flex-col md:flex-row items-end justify-between gap-6">
+          <div>
+            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">
+              Catalog
+            </h1>
+            <p className="text-[#8BA699] text-lg font-light">
+              Explore our collection of {total} curated books.
+            </p>
           </div>
-        </div>
-        <div className="w-full md:w-auto">
-          <FilterBar q={q} setQ={setQ} sort={sort} setSort={setSort} />
+          
+          {/* Filter Bar Container */}
+          <div className="w-full md:w-auto">
+            <FilterBar q={q} setQ={setQ} sort={sort} setSort={setSort} />
+          </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="py-20 text-center text-fg-subtle text-lg font-medium">
-          <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-current mb-4"></div>
-          <div>Loading…</div>
-        </div>
-      ) : (
-        <>
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7 bg-surface"
-          >
-            {items.map(b => <ProductCard key={b._id} book={b} />)}
-            {items.length === 0 && (
-              <div className="col-span-full py-16 text-center text-fg-subtle text-lg">
-                No books found.
+      {/* --- MAIN CONTENT --- */}
+      <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32 text-[#5C756D]">
+            <div className="w-12 h-12 border-4 border-[#E3E8E5] border-t-[#1A3C34] rounded-full animate-spin mb-4"></div>
+            <p className="text-lg font-medium">Loading library...</p>
+          </div>
+        ) : (
+          <>
+            {/* Items Grid */}
+            {items.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6 md:gap-8">
+                {items.map(b => (
+                  <ProductCard key={b._id} book={b} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-32 text-center">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-[#E3E8E5]">
+                  <SearchX className="w-10 h-10 text-[#8BA699]" />
+                </div>
+                <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-2">No books found</h3>
+                <p className="text-[#5C756D] max-w-md mx-auto">
+                  We couldn't find any books matching your search. Try adjusting your filters or search terms.
+                </p>
               </div>
             )}
-          </div>
 
-          {/* ✅ Pagination Controls - Customer-Friendly Design */}
-          {totalPages > 1 && (
-            <div className="mt-12 mb-8">
-              <div className="flex flex-col items-center gap-4">
-                {/* Page info */}
-                <div className="text-sm text-fg-subtle">
-                  Page <span className="font-semibold text-fg">{page}</span> of{" "}
-                  <span className="font-semibold text-fg">{totalPages}</span>
-                </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex flex-col items-center gap-6">
+                <div className="flex items-center justify-center gap-2">
+                  {/* First Page */}
+                  <button
+                    onClick={() => goToPage(1)}
+                    disabled={page === 1}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                    title="First Page"
+                  >
+                    <ChevronsLeft className="w-5 h-5" />
+                  </button>
 
-                {/* Navigation buttons */}
-                <div className="flex items-center gap-2 flex-wrap justify-center">
-                  {/* Previous button */}
+                  {/* Previous */}
                   <button
                     onClick={() => goToPage(page - 1)}
                     disabled={page === 1}
-                    className={`
-                      px-4 py-2 rounded-lg border text-sm font-medium
-                      transition-all duration-200
-                      ${page === 1
-                        ? "bg-surface-subtle text-fg-muted border-border-subtle cursor-not-allowed opacity-50"
-                        : "bg-surface text-fg border-border hover:bg-surface-subtle hover:border-fg-muted"
-                      }
-                    `}
-                    aria-label="Previous page"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                    title="Previous Page"
                   >
-                    ← Previous
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
 
-                  {/* Page numbers */}
-                  <div className="flex gap-1">
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-2 mx-2">
                     {getPageNumbers().map((pageNum, idx) => (
                       pageNum === '...' ? (
-                        <span
-                          key={`ellipsis-${idx}`}
-                          className="px-3 py-2 text-fg-subtle"
-                        >
-                          ...
-                        </span>
+                        <span key={`ellipsis-${idx}`} className="text-[#8BA699] px-2">...</span>
                       ) : (
                         <button
                           key={pageNum}
                           onClick={() => goToPage(pageNum)}
-                          className={`
-                            min-w-[40px] px-3 py-2 rounded-lg border text-sm font-medium
-                            transition-all duration-200
-                            ${page === pageNum
-                              ? "bg-black text-white border-black shadow-sm"
-                              : "bg-surface text-fg border-border hover:bg-surface-subtle hover:border-fg-muted"
-                            }
-                          `}
-                          aria-label={`Go to page ${pageNum}`}
-                          aria-current={page === pageNum ? "page" : undefined}
+                          className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold transition-all shadow-sm ${
+                            page === pageNum
+                              ? "bg-[#1A3C34] text-white shadow-md scale-105"
+                              : "bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59]"
+                          }`}
                         >
                           {pageNum}
                         </button>
@@ -234,50 +200,36 @@ export default function Catalog() {
                     ))}
                   </div>
 
-                  {/* Next button */}
+                  {/* Next */}
                   <button
                     onClick={() => goToPage(page + 1)}
                     disabled={page === totalPages}
-                    className={`
-                      px-4 py-2 rounded-lg border text-sm font-medium
-                      transition-all duration-200
-                      ${page === totalPages
-                        ? "bg-surface-subtle text-fg-muted border-border-subtle cursor-not-allowed opacity-50"
-                        : "bg-surface text-fg border-border hover:bg-surface-subtle hover:border-fg-muted"
-                      }
-                    `}
-                    aria-label="Next page"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                    title="Next Page"
                   >
-                    Next →
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  {/* Last Page */}
+                  <button
+                    onClick={() => goToPage(totalPages)}
+                    disabled={page === totalPages}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+                    title="Last Page"
+                  >
+                    <ChevronsRight className="w-5 h-5" />
                   </button>
                 </div>
 
-                {/* Quick jump to first/last (for many pages) */}
-                {totalPages > 10 && (
-                  <div className="flex gap-2 text-sm">
-                    {page > 3 && (
-                      <button
-                        onClick={() => goToPage(1)}
-                        className="text-fg-muted hover:text-fg underline"
-                      >
-                        « First
-                      </button>
-                    )}
-                    {page < totalPages - 2 && (
-                      <button
-                        onClick={() => goToPage(totalPages)}
-                        className="text-fg-muted hover:text-fg underline"
-                      >
-                        Last »
-                      </button>
-                    )}
-                  </div>
-                )}
+                <p className="text-sm text-[#8BA699]">
+                  Page <span className="font-bold text-[#1A3C34]">{page}</span> of {totalPages}
+                </p>
               </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
+      </div>
+      <ScrollToTopButton />
     </div>
   );
 }

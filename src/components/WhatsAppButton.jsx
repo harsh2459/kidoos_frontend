@@ -1,10 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  FaWhatsapp,
-  FaInstagram,
-  FaShareAlt,
-} from "react-icons/fa";
-import { FaThreads } from "react-icons/fa6"
+import { FaWhatsapp, FaInstagram, FaFacebookF, FaTwitter } from "react-icons/fa";
+import { FaThreads, FaXTwitter } from "react-icons/fa6";
+import { Share2, X } from "lucide-react";
 
 export default function FloatingSocialMenu({
   initial = { x: 20, y: 220 },
@@ -22,23 +19,25 @@ export default function FloatingSocialMenu({
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [hovered, setHovered] = useState(null);
-  const [direction, setDirection] = useState("right"); // 'left' | 'right' | 'center'
+  const [direction, setDirection] = useState("right");
 
   const startRef = useRef(null);
   const movedRef = useRef(false);
+  const hoverTimeoutRef = useRef(null);
 
+  // --- Social Items Configuration ---
   const items = [
     {
       id: "threads",
-      icon: <FaThreads />,
+      icon: <FaThreads size={18} />,
       href: "https://www.threads.com/@kiddosintellect",
       title: "Threads",
-      bg: "hsl(var(--brand))",
-      color: "hsl(var(--brand-foreground))",
+      bg: "#000000",
+      color: "#fff",
     },
     {
       id: "instagram",
-      icon: <FaInstagram />,
+      icon: <FaInstagram size={18} />,
       href: "https://www.instagram.com/kiddosintellect/",
       title: "Instagram",
       bg: "#E4405F",
@@ -46,7 +45,7 @@ export default function FloatingSocialMenu({
     },
     {
       id: "whatsapp",
-      icon: <FaWhatsapp />,
+      icon: <FaWhatsapp size={20} />,
       href: `https://wa.me/${phone}`,
       title: "WhatsApp",
       bg: "#25D366",
@@ -54,74 +53,68 @@ export default function FloatingSocialMenu({
     },
     {
       id: "X",
-      icon: (
-        <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-        </svg>
-      ),
+      icon: <FaXTwitter size={16} />,
       href: 'https://x.com/KiddosIntellect',
       title: "X",
-      bg: "#000",
+      bg: "#000000",
       color: "#fff",
     },
     {
       id: "Facebook",
-      icon: (<svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.962.925-1.962 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-      </svg>),
+      icon: <FaFacebookF size={18} />,
       href: 'https://www.facebook.com/people/Kiddos-Intellect/61579945910642/',
       title: "Facebook",
       bg: "#1877F2",
       color: "#fff",
     },
-
   ];
 
+  // --- Positioning Logic for the Fan Menu (FIXED ALIGNMENT) ---
   const offsetsFor = {
     right: [
-      { x: 78, y: 0 },    // 1. Threads (Center)
-      { x: 78, y: -60 },  // 2. Instagram (Aligned with Threads, Top)
-      { x: 78, y: 60 },   // 3. WhatsApp (Aligned with Threads, Bottom)
-      { x: 138, y: -60 }, // 4. X (Right of Instagram, Aligned Top)
-      { x: 138, y: 0 },   // 5. Facebook (Right of Threads, Under X)
+      { x: 80, y: 0 },     // 1. Center Right
+      { x: 70, y: -60 },   // 2. Top Right Diag
+      { x: 70, y: 60 },    // 3. Bottom Right Diag
+      { x: 0, y: -85 },    // 4. Top Center
+      { x: 0, y: 85 },     // 5. Bottom Center
     ],
     left: [
-      { x: -78, y: 0 },
-      { x: -78, y: -60 },
-      { x: -78, y: 60 },
-      { x: -138, y: -60 },
-      { x: -138, y: 0 },
+      { x: -80, y: 0 },    // 1. Center Left
+      { x: -70, y: -60 },  // 2. Top Left Diag
+      { x: -70, y: 60 },   // 3. Bottom Left Diag
+      { x: 0, y: -85 },    // 4. Top Center
+      { x: 0, y: 85 },     // 5. Bottom Center
     ],
     center: [
-      { x: -70, y: 0 },
-      { x: -45, y: -60 },
-      { x: 45, y: -60 },
-      { x: 110, y: -60 },
-      { x: 135, y: 0 },
+      { x: 0, y: -90 },
+      { x: 75, y: -50 },
+      { x: -75, y: -50 },
+      { x: 75, y: 50 },
+      { x: -75, y: 50 },
     ],
   };
 
+  // --- Persist Position ---
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(pos));
     } catch (e) { }
   }, [pos, storageKey]);
 
+  // --- Responsive Direction Calculation ---
   function recomputeDirection(x = pos.x) {
     const vw = window.innerWidth || document.documentElement.clientWidth;
-    const leftThreshold = vw * 0.33;
-    const rightThreshold = vw * 0.66;
-    if (x < leftThreshold) setDirection("right");
-    else if (x > rightThreshold) setDirection("left");
-    else setDirection("center");
+    if (x < vw / 2) setDirection("right");
+    else setDirection("left");
   }
 
+  // Handle Window Resize
   useEffect(() => {
     recomputeDirection();
     function onResize() {
       setPos((p) => ({
-        x: Math.max(8, Math.min(window.innerWidth - 72, p.x)),
-        y: Math.max(8, Math.min(window.innerHeight - 80, p.y)),
+        x: Math.max(16, Math.min(window.innerWidth - 80, p.x)),
+        y: Math.max(16, Math.min(window.innerHeight - 90, p.y)),
       }));
       recomputeDirection();
     }
@@ -130,6 +123,7 @@ export default function FloatingSocialMenu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // --- Drag Logic ---
   function startDrag(clientX, clientY) {
     startRef.current = { x: clientX, y: clientY, left: pos.x, top: pos.y };
     movedRef.current = false;
@@ -141,55 +135,85 @@ export default function FloatingSocialMenu({
     const dx = clientX - startRef.current.x;
     const dy = clientY - startRef.current.y;
     if (Math.abs(dx) > 4 || Math.abs(dy) > 4) movedRef.current = true;
+    
     const newX = startRef.current.left + dx;
     const newY = startRef.current.top + dy;
-    const clampedX = Math.max(8, Math.min(window.innerWidth - 72, newX));
-    const clampedY = Math.max(8, Math.min(window.innerHeight - 80, newY));
+    
+    const clampedX = Math.max(16, Math.min(window.innerWidth - 80, newX));
+    const clampedY = Math.max(16, Math.min(window.innerHeight - 90, newY));
+    
     setPos({ x: clampedX, y: clampedY });
     recomputeDirection(clampedX);
   }
 
   function endDrag() {
     setDragging(false);
-    const vw = window.innerWidth || document.documentElement.clientWidth;
-    const margin = 12;
-    const snapLeft = pos.x < vw / 2;
-    const toX = snapLeft ? margin : vw - margin - 64;
-    const finalY = Math.max(8, Math.min(window.innerHeight - 80, pos.y));
-    setPos({ x: toX, y: finalY });
-    recomputeDirection(toX);
+    if (movedRef.current) {
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const margin = 20;
+      const snapLeft = pos.x < vw / 2;
+      const toX = snapLeft ? margin : vw - margin - 64;
+      
+      const finalY = Math.max(20, Math.min(window.innerHeight - 90, pos.y));
+      
+      setPos({ x: toX, y: finalY });
+      recomputeDirection(toX);
+    }
     startRef.current = null;
   }
 
+  // --- Hover with 0.5s delay ---
+  function handleMouseEnter() {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setOpen(true);
+    }, 500); // 0.5 seconds delay
+  }
+
+  function handleMouseLeave() {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    // Keep open for 0.5s after leaving
+    hoverTimeoutRef.current = setTimeout(() => {
+      setOpen(false);
+    }, 500);
+  }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
+
+  // Mouse Events
   function onMouseDown(e) {
     if (e.button !== 0) return;
     startDrag(e.clientX, e.clientY);
-    e.preventDefault();
   }
-
   function onMouseMove(e) {
     if (!dragging) return;
     moveDrag(e.clientX, e.clientY);
   }
-
   function onMouseUp() {
     if (!dragging) return;
     if (!movedRef.current) setOpen((s) => !s);
     endDrag();
   }
 
+  // Touch Events
   function onTouchStart(e) {
     const t = e.touches[0];
     startDrag(t.clientX, t.clientY);
   }
-
   function onTouchMove(e) {
     if (!dragging) return;
     const t = e.touches[0];
     moveDrag(t.clientX, t.clientY);
     e.preventDefault();
   }
-
   function onTouchEnd() {
     if (!dragging) return;
     if (!movedRef.current) setOpen((s) => !s);
@@ -214,59 +238,20 @@ export default function FloatingSocialMenu({
 
   return (
     <>
-      {/* WAVE ANIMATION STYLES - ONLY ADDITION */}
-      <style>{`
-        @keyframes wave-pulse {
-          0% {
-            transform: scale(1);
-            opacity: 0.6;
-          }
-          50% {
-            transform: scale(1.4);
-            opacity: 0.3;
-          }
-          100% {
-            transform: scale(1.8);
-            opacity: 0;
-          }
-        }
-
-        .wave-ring {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 48px;
-          height: 48px;
-          margin-left: -24px;
-          margin-top: -24px;
-          border-radius: 50%;
-          background: hsl(var(--brand));
-          pointer-events: none;
-        }
-
-        .wave-ring-1 {
-          animation: wave-pulse 1s ease-out infinite;
-          animation-delay: 0s;
-        }
-
-        .wave-ring-2 {
-          animation: wave-pulse 1s ease-out infinite;
-          animation-delay: 1s;
-        }
-
-        .wave-ring-3 {
-          animation: wave-pulse 1s ease-out infinite;
-          animation-delay: 2s;
-        }
-      `}</style>
-
+      
       <div
         className="fixed z-[9999] select-none"
-        style={{ left: pos.x, top: pos.y, touchAction: "none", width: 64, height: 64 }}
+        style={{ 
+          left: pos.x, 
+          top: pos.y, 
+          touchAction: "none", 
+          width: 64, 
+          height: 64 
+        }}
       >
         <div
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
           role="button"
@@ -274,11 +259,17 @@ export default function FloatingSocialMenu({
           aria-label="Open social share menu"
           style={{ width: 64, height: 64, position: 'relative' }}
         >
-          {/* social icons */}
+          {/* --- SOCIAL ICONS (Fan Out) --- */}
           {items.map((it, i) => {
             const off = offsets[i] || { x: 0, y: 0 };
-            const transform = open ? `translate(${off.x}px, ${off.y}px) scale(1)` : `translate(0,0) scale(0)`;
-            const delay = `${i * 45}ms`;
+            const transform = open 
+              ? `translate(${off.x}px, ${off.y}px) scale(1)` 
+              : `translate(0, 0) scale(0.3)`;
+            
+            const opacity = open ? 1 : 0;
+            const pointerEvents = open ? 'auto' : 'none';
+            const delay = `${i * 60}ms`;
+
             return (
               <a
                 key={it.id}
@@ -288,24 +279,31 @@ export default function FloatingSocialMenu({
                 onClick={(e) => e.stopPropagation()}
                 onMouseEnter={() => setHovered(it.id)}
                 onMouseLeave={() => setHovered(null)}
-                className="absolute left-0 top-0 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-popup outline-none"
+                className="absolute rounded-full flex items-center justify-center text-white shadow-lg outline-none transition-all duration-300 ease-out"
                 title={it.title}
-                aria-label={it.title}
                 style={{
+                  width: 48,
+                  height: 48,
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: -24,
+                  marginTop: -24,
                   transform,
-                  transition: `transform 260ms cubic-bezier(.2,.9,.3,1) ${delay}`,
-                  background: it.bg,
+                  opacity,
+                  pointerEvents,
+                  transitionDelay: open ? delay : '0ms',
+                  backgroundColor: it.bg,
                   color: it.color,
-                  boxShadow: open ? "0 10px 24px rgba(15,23,42,0.18)" : "none",
-                  zIndex: open ? 2 : 0,
+                  zIndex: open ? 10 : -1,
                 }}
               >
-                <span style={{ pointerEvents: "none", fontSize: 16, color: it.color }}>{it.icon}</span>
+                {it.icon}
 
-                {hovered === it.id && (
+                {/* Tooltip on Hover */}
+                {hovered === it.id && open && (
                   <span
-                    className="absolute whitespace-nowrap text-sm px-2 py-1 rounded-md text-gray-800 bg-white shadow-md left-14 top-1/2 -translate-y-1/2"
-                    style={{ fontSize: 12 }}
+                    className={`absolute whitespace-nowrap text-xs font-bold px-2 py-1 rounded bg-[#1A3C34] text-white shadow-md
+                    ${direction === 'right' ? 'left-14' : 'right-14'} top-1/2 -translate-y-1/2`}
                   >
                     {it.title}
                   </span>
@@ -314,42 +312,25 @@ export default function FloatingSocialMenu({
             );
           })}
 
-          {/* MAIN BUTTON (brand-styled) WITH WAVE RINGS */}
+          {/* --- MAIN TOGGLE BUTTON --- */}
           <div
-            className={`w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-2xl border-2 border-white`}
+            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl cursor-move transition-transform duration-200`}
             style={{
-              transform: dragging ? "scale(0.98)" : "scale(1)",
-              transition: "transform 160ms",
-              boxShadow: "0 10px 30px rgba(2,6,23,0.18)",
+              backgroundColor: "#1A3C34",
+              color: "#ffffff",
+              transform: dragging ? "scale(0.95)" : (open ? "scale(1.05)" : "scale(1)"),
               position: 'relative',
-            }}
-            onMouseDown={(e) => {
-              startDrag(e.clientX, e.clientY);
-              e.stopPropagation();
-            }}
-            onTouchStart={(e) => {
-              const t = e.touches[0];
-              startDrag(t.clientX, t.clientY);
-              e.stopPropagation();
+              border: "3px solid #fff",
             }}
           >
-            {/* WAVE RINGS - ONLY ADDITION */}
-            <span className="wave-ring wave-ring-1"></span>
-            <span className="wave-ring wave-ring-2"></span>
-            <span className="wave-ring wave-ring-3"></span>
 
-            {/* inner accent uses brand color now so it matches the theme */}
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{
-                background: "hsl(var(--brand))",           // brand background
-                color: "hsl(var(--brand-foreground))",     // icon color (usually white)
-                boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-                position: 'relative',
-                zIndex: 1,
-              }}
-            >
-              <FaShareAlt size={18} />
+            {/* Icon Switch (Share vs Close) */}
+            <div className="relative z-10 flex items-center justify-center transition-all duration-300">
+              {open ? (
+                <X className="w-7 h-7" />
+              ) : (
+                <Share2 className="w-6 h-6" />
+              )}
             </div>
           </div>
         </div>

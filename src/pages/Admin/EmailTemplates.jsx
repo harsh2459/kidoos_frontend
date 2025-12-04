@@ -85,6 +85,7 @@ export default function EmailTemplates() {
         t.err("HTML or Text body is required");
         return;
       }
+
       if (!payload.mailSender) {
         t.err("Please select a Mail Sender");
         return;
@@ -103,6 +104,7 @@ export default function EmailTemplates() {
       } else {
         await EmailAPI.createTemplate(payload);
       }
+
       setEditing(null);
       await load();
     } finally { setSaving(false); }
@@ -155,7 +157,7 @@ export default function EmailTemplates() {
         <button onClick={newTpl} className="px-3 py-2 rounded-lg bg-brand font-semibold">+ Add</button>
       </div>
 
-      {/* Quick test bar */}
+      
       <div className="bg-surface border border-border-subtle rounded-xl p-3 mb-4 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <input placeholder="Send test to" className="w-full min-w-0" value={testTo} onChange={e => setTestTo(e.target.value)} />

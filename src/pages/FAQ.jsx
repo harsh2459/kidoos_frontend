@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { HelpCircle, ChevronDown, Package, CreditCard, Truck, ShieldCheck, Mail, Phone, FileText, RefreshCw, Shield } from 'lucide-react';
+import { 
+    HelpCircle, ChevronDown, Package, CreditCard, Truck, 
+    ShieldCheck, Mail, Phone, FileText, RefreshCw, Shield, 
+    ChevronRight, ArrowRight 
+} from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +18,9 @@ const FAQ = () => {
     const toggleAccordion = (index) => {
         setOpenIndex(openIndex === index ? null : index);
     };
+
+    // Consistent background texture
+    const bgImage = "url('/images/terms-bg.png')";
 
     const faqData = [
         {
@@ -145,66 +152,89 @@ const FAQ = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-surface-subtle">
-            {/* Hero Section */}
-            <div className="hero py-8 xs:py-10 sm:py-12 md:py-14 lg:py-16 xl:py-18 2xl:py-20 mb-6 xs:mb-7 sm:mb-8 md:mb-10 lg:mb-12">
-                <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12">
-                    <div className="flex items-center justify-center mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
-                        <HelpCircle className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-brand" />
+        <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34]">
+            
+            {/* --- HERO SECTION --- */}
+            <div className="relative w-full pt-20 md:pt-24 pb-16 px-6 border-b border-[#E3E8E5] overflow-hidden bg-[#F4F7F5]">
+                
+                {/* Background Image Layer */}
+                <div 
+                    className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply" 
+                    style={{
+                        backgroundImage: bgImage,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center top',
+                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)' 
+                    }}
+                />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#F4F7F5]/60 to-[#F4F7F5] pointer-events-none"></div>
+
+                {/* Content Layer */}
+                <div className="relative z-10 max-w-5xl mx-auto text-center">
+                    <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm ring-1 ring-[#DCE4E0]">
+                        <HelpCircle className="w-8 h-8 md:w-10 md:h-10 text-[#1A3C34]" />
                     </div>
-                    <h1 className="text-3xl xs:text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-6xl font-bold text-center text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
+                    
+                    <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-[#1A3C34] mb-6 tracking-tight leading-tight drop-shadow-sm">
                         Frequently Asked Questions
                     </h1>
-                    <p className="text-center text-fg-muted text-base xs:text-base sm:text-lg md:text-lg lg:text-xl xl:text-xl 2xl:text-2xl max-w-xl xs:max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
+                    
+                    <p className="text-lg md:text-xl text-[#5C756D] font-light max-w-2xl mx-auto leading-relaxed">
                         Find answers to common questions about our products, ordering, shipping, and more.
                         Can't find what you're looking for? Contact our support team!
                     </p>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12 pb-8 xs:pb-10 sm:pb-12 md:pb-14 lg:pb-16 xl:pb-20">
-                <div className="max-w-3xl xs:max-w-3xl sm:max-w-4xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-6 xs:space-y-7 sm:space-y-8 md:space-y-10">
+            {/* --- MAIN CONTENT --- */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+                <div className="space-y-12">
+                    
+                    {/* FAQ Categories Loop */}
                     {faqData.map((category, categoryIndex) => {
                         const IconComponent = category.icon;
                         return (
-                            <section key={categoryIndex} className="card">
-                                <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 md:gap-4 mb-4 xs:mb-5 sm:mb-6 pb-3 xs:pb-3.5 sm:pb-4 border-b border-border-subtle">
-                                    <div className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-brand/10 flex items-center justify-center">
-                                        <IconComponent className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand" />
+                            <section key={categoryIndex} className="bg-white rounded-2xl border border-[#E3E8E5] shadow-sm overflow-hidden">
+                                
+                                {/* Category Header */}
+                                <div className="flex items-center gap-3 p-6 md:p-8 border-b border-[#E3E8E5] bg-[#FAFBF9]">
+                                    <div className="w-10 h-10 rounded-xl bg-[#E8F0EB] flex items-center justify-center text-[#1A3C34]">
+                                        <IconComponent className="w-5 h-5" />
                                     </div>
-                                    <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg">{category.category}</h2>
+                                    <h2 className="text-xl md:text-2xl font-serif font-bold text-[#1A3C34]">
+                                        {category.category}
+                                    </h2>
                                 </div>
 
-                                <div className="space-y-2 xs:space-y-2.5 sm:space-y-3 md:space-y-4">
+                                {/* Accordion Items */}
+                                <div className="divide-y divide-[#E3E8E5]">
                                     {category.questions.map((faq, faqIndex) => {
                                         const globalIndex = `${categoryIndex}-${faqIndex}`;
                                         const isOpen = openIndex === globalIndex;
 
                                         return (
-                                            <div
-                                                key={faqIndex}
-                                                className="bg-surface-subtle rounded-lg xs:rounded-xl border border-border-subtle overflow-hidden transition-all duration-200"
-                                            >
+                                            <div key={faqIndex} className="transition-all duration-200">
                                                 <button
                                                     onClick={() => toggleAccordion(globalIndex)}
-                                                    className="w-full px-3 xs:px-4 sm:px-5 md:px-6 py-3 xs:py-3.5 sm:py-4 md:py-5 flex items-center justify-between text-left hover:bg-surface transition-colors duration-200"
+                                                    className={`w-full px-6 md:px-8 py-5 flex items-center justify-between text-left hover:bg-[#F4F7F5] transition-colors duration-200 ${isOpen ? 'bg-[#F4F7F5]' : ''}`}
                                                 >
-                                                    <span className="font-semibold text-fg pr-3 xs:pr-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg">
+                                                    <span className={`font-semibold pr-4 text-base md:text-lg transition-colors ${isOpen ? 'text-[#1A3C34]' : 'text-[#4A5D56]'}`}>
                                                         {faq.question}
                                                     </span>
                                                     <ChevronDown
-                                                        className={`w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand flex-shrink-0 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
-                                                            }`}
+                                                        className={`w-5 h-5 text-[#4A7C59] flex-shrink-0 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`}
                                                     />
                                                 </button>
 
                                                 <div
-                                                    className={`transition-all duration-200 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                                                        } overflow-hidden`}
+                                                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
                                                 >
-                                                    <div className="px-3 xs:px-4 sm:px-5 md:px-6 pb-3 xs:pb-3.5 sm:pb-4 md:pb-5 pt-1">
-                                                        <p className="text-fg-muted leading-relaxed text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-lg">{faq.answer}</p>
+                                                    <div className="px-6 md:px-8 pb-6 pt-0">
+                                                        <p className="text-[#5C756D] leading-relaxed text-sm md:text-base border-t border-[#E3E8E5]/50 pt-4">
+                                                            {faq.answer}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -216,141 +246,68 @@ const FAQ = () => {
                     })}
 
                     {/* Still Have Questions Section */}
-                    <section className="card bg-brand text-brand-foreground">
-                        <div className="text-center">
-                            <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold mb-2 xs:mb-2.5 sm:mb-3">Still Have Questions?</h2>
-                            <p className="mb-4 xs:mb-5 sm:mb-6 opacity-90 max-w-xl xs:max-w-xl sm:max-w-2xl mx-auto text-sm xs:text-sm sm:text-base md:text-base lg:text-lg">
+                    <div className="bg-[#1A3C34] text-white rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
+                        {/* Decorative Circle */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#4A7C59]/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+                        
+                        <div className="relative z-10 max-w-3xl mx-auto">
+                            <h2 className="text-2xl md:text-4xl font-serif font-bold mb-4">Still Have Questions?</h2>
+                            <p className="text-[#8BA699] mb-8 text-lg font-light leading-relaxed">
                                 Can't find the answer you're looking for? Our friendly customer support team is here to help!
                                 Reach out to us and we'll get back to you as soon as possible.
                             </p>
-                            <div className="flex flex-col xs:flex-col sm:flex-row gap-3 xs:gap-3.5 sm:gap-4 md:gap-5 justify-center items-center">
+                            
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                                 <a
-                                    href="kiddosintellect@gmail.com"
-                                    className="btn-secondary bg-brand-foreground text-brand hover:bg-brand-foreground/90 flex items-center gap-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base"
+                                    href="mailto:kiddosintellect@gmail.com"
+                                    className="bg-white text-[#1A3C34] hover:bg-[#E8F0EB] px-8 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 w-full sm:w-auto justify-center"
                                 >
-                                    <Mail className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                                    <Mail className="w-4 h-4" />
                                     Email Us
                                 </a>
                                 <a
                                     href="tel:+919879857529"
-                                    className="btn-secondary bg-brand-foreground/10 text-brand-foreground hover:bg-brand-foreground/20 border border-brand-foreground/20 flex items-center gap-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base"
+                                    className="bg-transparent border border-[#8BA699] text-white hover:bg-white/10 px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
                                 >
-                                    <Phone className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                                    <Phone className="w-4 h-4" />
                                     Call Us
                                 </a>
                             </div>
-                            <div className="mt-4 xs:mt-5 sm:mt-6 pt-4 xs:pt-5 sm:pt-6 border-t border-brand-foreground/20">
-                                <p className="text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base opacity-75">
-                                    Business Hours: Monday - Saturday, 9:00 AM - 6:00 PM IST
-                                </p>
-                                <p className="text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base opacity-75 mt-0.5 xs:mt-1 sm:mt-1.5">
-                                    Email Response Time: Within 24 hours on business days
-                                </p>
+                            
+                            <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-[#8BA699]">
+                                <p>Business Hours: Mon - Sat, 9:00 AM - 6:00 PM IST</p>
+                                <p>Email Response: Within 24 hours</p>
                             </div>
                         </div>
-                    </section>
+                    </div>
 
-                    {/* Quick Links */}
-                    <section className="card">
-                        <h2 className="text-lg xs:text-lg sm:text-xl md:text-xl lg:text-2xl xl:text-2xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5 text-center">
+                    {/* Quick Links / Related Resources */}
+                    <section>
+                        <h2 className="text-2xl font-serif font-bold text-[#1A3C34] mb-6 text-center">
                             Related Resources
                         </h2>
-                        <div className="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-
-                            {/* Privacy Policy */}
-                            <Link
-                                to="/privacy"
-                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
-
-                                <div className="relative z-10">
-                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
-                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-blue-50 group-hover:bg-blue-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                                            <Shield className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-blue-500 group-hover:text-white transition-colors duration-300" />
-                                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {[
+                                { title: "Privacy Policy", link: "/privacy", icon: Shield, desc: "Data protection" },
+                                { title: "Shipping Policy", link: "/shipping", icon: Truck, desc: "Delivery info" },
+                                { title: "Refund Policy", link: "/refund", icon: RefreshCw, desc: "Returns info" },
+                                { title: "Terms & Conditions", link: "/terms", icon: FileText, desc: "Legal terms" },
+                            ].map((item, idx) => (
+                                <Link
+                                    key={idx}
+                                    to={item.link}
+                                    className="group p-6 bg-white rounded-xl border border-[#E3E8E5] hover:border-[#4A7C59] hover:shadow-md transition-all duration-300 text-center"
+                                >
+                                    <div className="w-12 h-12 mx-auto rounded-full bg-[#E8F0EB] group-hover:bg-[#1A3C34] flex items-center justify-center transition-colors duration-300 mb-4">
+                                        <item.icon className="w-6 h-6 text-[#1A3C34] group-hover:text-white transition-colors" />
                                     </div>
-
-                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
-                                        Privacy Policy
-                                    </div>
-                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
-                                        How we protect your data
-                                    </div>
-                                </div>
-                            </Link>
-
-                            {/* Shipping Policy */}
-                            <Link
-                                to="/shipping"
-                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-green-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
-
-                                <div className="relative z-10">
-                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
-                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-green-50 group-hover:bg-green-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                                            <Truck className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-green-500 group-hover:text-white transition-colors duration-300" />
-                                        </div>
-                                    </div>
-
-                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
-                                        Shipping Policy
-                                    </div>
-                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
-                                        Delivery information
-                                    </div>
-                                </div>
-                            </Link>
-
-                            {/* Refund Policy */}
-                            <Link
-                                to="/refund"
-                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-purple-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
-
-                                <div className="relative z-10">
-                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
-                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-purple-50 group-hover:bg-purple-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                                            <RefreshCw className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-purple-500 group-hover:text-white transition-colors duration-300" />
-                                        </div>
-                                    </div>
-
-                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
-                                        Refund Policy
-                                    </div>
-                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
-                                        Returns & refunds
-                                    </div>
-                                </div>
-                            </Link>
-
-                            {/* Terms & Conditions */}
-                            <Link
-                                to="/terms"
-                                className="group text-center p-4 xs:p-5 sm:p-5 md:p-6 bg-surface-subtle rounded-xl hover:bg-surface transition-all duration-300 border border-border-subtle hover:shadow-lg hover:scale-[1.02] relative overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-amber-500 opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
-
-                                <div className="relative z-10">
-                                    <div className="flex justify-center mb-3 xs:mb-3.5 sm:mb-4">
-                                        <div className="w-14 h-14 xs:w-16 xs:h-16 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-amber-50 group-hover:bg-amber-500 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                                            <FileText className="w-7 h-7 xs:w-8 xs:h-8 sm:w-8 sm:h-8 md:w-9 md:h-9 text-amber-500 group-hover:text-white transition-colors duration-300" />
-                                        </div>
-                                    </div>
-
-                                    <div className="text-brand font-semibold mb-0.5 xs:mb-1 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base group-hover:text-fg transition-colors duration-300">
-                                        Terms & Conditions
-                                    </div>
-                                    <div className="text-fg-subtle text-[10px] xs:text-xs sm:text-xs md:text-sm lg:text-sm">
-                                        Legal information
-                                    </div>
-                                </div>
-                            </Link>
-
+                                    <h3 className="font-bold text-[#1A3C34] mb-1 group-hover:text-[#4A7C59] transition-colors">{item.title}</h3>
+                                    <p className="text-xs text-[#5C756D] uppercase tracking-wide">{item.desc}</p>
+                                </Link>
+                            ))}
                         </div>
                     </section>
+
                 </div>
             </div>
 

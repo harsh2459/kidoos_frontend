@@ -1,39 +1,67 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
+import { Link } from 'react-router-dom';
+import { 
+    BookOpen, Heart, Users, Truck, ShieldCheck, 
+    Sparkles, Target, Lightbulb, TrendingUp, 
+    Award, Mail, Phone, ArrowRight, Star
+} from 'lucide-react';
 
 export default function AboutUs() {
-    const navigateToCatalog = () => {
-        // In your actual app, use: navigate('/catalog')
-        window.location.href = '/catalog';
-    };
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    // Consistent background texture
+    const bgImage = "url('/images/terms-bg.png')";
 
     return (
-        <div className="from-gray-50 to-white min-h-screen">
-            <div className="mx-auto max-w-screen-xl px-4 py-12">
-                {/* Hero Section */}
-                <div className="text-center mb-16">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-6">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
-                        </svg>
-                        About Us
+        <div className="bg-[#F4F7F5] font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] min-h-screen">
+            
+            {/* --- HERO SECTION --- */}
+            <div className="relative w-full pt-20 md:pt-24 pb-16 px-6 border-b border-[#E3E8E5] overflow-hidden bg-[#F4F7F5]">
+                
+                {/* Background Image Layer */}
+                <div 
+                    className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply" 
+                    style={{
+                        backgroundImage: bgImage,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center top',
+                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)' 
+                    }}
+                />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#F4F7F5]/60 to-[#F4F7F5] pointer-events-none"></div>
+
+                {/* Content Layer */}
+                <div className="relative z-10 max-w-5xl mx-auto text-center">
+                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 mb-8 bg-white/80 backdrop-blur-sm rounded-full text-[#1A3C34] font-medium text-sm shadow-sm ring-1 ring-[#DCE4E0]">
+                        <BookOpen className="w-4 h-4 text-[#4A7C59]" />
+                        <span>About Kiddos Intellect</span>
                     </div>
-                    <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+
+                    <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-bold text-[#1A3C34] mb-8 tracking-tight leading-tight drop-shadow-sm">
                         Nurturing Young Minds<br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                        <span className="text-[#4A7C59] italic">
                             One Book at a Time
                         </span>
                     </h1>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                        At Kiddos Intellect, we believe every child deserves access to quality books that spark curiosity, foster imagination, and build a lifelong love for reading.
+                    
+                    <p className="text-lg md:text-xl text-[#5C756D] max-w-3xl mx-auto leading-relaxed font-light">
+                         At Kiddos Intellect, we believe every child deserves access to quality books that spark curiosity, foster imagination, and build a lifelong love for reading.
                     </p>
                 </div>
+            </div>
 
-                {/* Story Section */}
-                <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 space-y-20">
+
+                {/* --- STORY SECTION --- */}
+                <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
                     <div>
-                        <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
-                        <div className="space-y-4 text-gray-700 leading-relaxed">
+                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34] mb-6">Our Story</h2>
+                        <div className="space-y-6 text-[#4A5D56] text-lg leading-relaxed font-light">
                             <p>
                                 In today's digital age, children are increasingly disconnected from their spiritual roots and cultural values. Founded with a mission to counter screen addiction and restore meaningful learning, Kiddos Intellect brings you carefully curated books that teach timeless religious wisdom, moral values, and life lessons from sacred texts like the Bhagavad Gita, Ramayana, and other spiritual classics.
                             </p>
@@ -43,199 +71,174 @@ export default function AboutUs() {
                             <p>
                                 From stories of Lord Krishna's divine teachings to tales of courage, compassion, and dharma from Indian mythology, each book is designed to instill strong moral foundations, cultural pride, and spiritual awareness—helping children grow into thoughtful, value-driven individuals rooted in their heritage.
                             </p>
-                            <p>
-                                What started as a humble effort to preserve our rich spiritual legacy has grown into a trusted destination for parents, educators, and grandparents who believe in raising children with strong character, devotion, and respect for timeless traditions beyond the digital distractions of modern life.
-                            </p>
+                            <div className="bg-[#E8F0EB] border-l-4 border-[#4A7C59] p-5 rounded-r-lg">
+                                <p className="font-medium text-[#1A3C34]">
+                                    What started as a humble effort to preserve our rich spiritual legacy has grown into a trusted destination for parents, educators, and grandparents who believe in raising children with strong character.
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div className="relative">
-                        <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-                            <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center p-8">
-                                <img src="/images/About-us.png" alt="Our Story - Religious Values & Digital Detox"
-                                    className="w-full h-full object-cover" />
-                            </div>
+                         <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white rotate-2 hover:rotate-0 transition-transform duration-500 bg-[#DCE4E0]">
+                            {/* Replace with your actual About Us image path */}
+                            <img src="/images/About-us.png" alt="Our Story" className="w-full h-full object-cover" />
                         </div>
-                        {/* Optional blurred circles, adjust colors to match new gradient */}
-                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-200 rounded-full opacity-40 blur-3xl"></div>
-                        <div className="absolute -top-6 -left-6 w-32 h-32 bg-purple-200 rounded-full opacity-40 blur-3xl"></div>
+                        {/* Decorative elements matching theme */}
+                        <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-[#4A7C59]/20 rounded-full blur-3xl -z-10"></div>
+                        <div className="absolute -top-6 -right-6 w-32 h-32 bg-[#1A3C34]/10 rounded-full blur-3xl -z-10"></div>
                     </div>
                 </div>
 
-                {/* Mission & Vision */}
-                <div className="grid md:grid-cols-2 gap-8 mb-20">
-                    <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mb-6">
-                            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                {/* --- MISSION & VISION --- */}
+                <div className="grid md:grid-cols-2 gap-8">
+                    <div className="bg-white rounded-3xl p-8 md:p-12 border border-[#E3E8E5] shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="w-14 h-14 rounded-2xl bg-[#E8F0EB] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                           <Target className="w-7 h-7 text-[#4A7C59]" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
-                        <p className="text-gray-700 leading-relaxed">
+                        <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-4">Our Mission</h3>
+                        <p className="text-[#4A5D56] leading-relaxed text-lg">
                             To make quality children's literature accessible and affordable to every family, fostering a culture of reading that empowers young minds to explore, learn, and grow beyond screens.
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center mb-6">
-                            <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
+                    <div className="bg-white rounded-3xl p-8 md:p-12 border border-[#E3E8E5] shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="w-14 h-14 rounded-2xl bg-[#FAFBF9] border border-[#E3E8E5] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                           <Lightbulb className="w-7 h-7 text-[#1A3C34]" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Vision</h3>
-                        <p className="text-gray-700 leading-relaxed">
+                        <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-4">Our Vision</h3>
+                        <p className="text-[#4A5D56] leading-relaxed text-lg">
                             A future where every child in India has access to books that inspire them to dream bigger, think deeper, and become lifelong learners who contribute positively to society.
                         </p>
                     </div>
                 </div>
 
-                {/* What Makes Us Different */}
-                <div className="mb-20">
-                    <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-                        What Makes Us Different
-                    </h2>
-                    <div className="grid md:grid-cols-3 gap-8">
+                {/* --- WHAT MAKES US DIFFERENT --- */}
+                <div>
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#1A3C34] mb-6">What Makes Us Different</h2>
+                        <div className="w-24 h-1 bg-[#4A7C59] mx-auto rounded-full"></div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
                             {
-                                icon: (
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                ),
+                                icon: Star,
                                 title: "Hand-Picked Selection",
                                 description: "Every book is carefully reviewed and selected by our team of educators and parents to ensure quality content."
                             },
                             {
-                                icon: (
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                ),
+                                icon: TrendingUp,
                                 title: "Affordable Pricing",
                                 description: "Quality books shouldn't break the bank. We offer competitive prices and regular discounts to make reading accessible."
                             },
                             {
-                                icon: (
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                ),
+                                icon: Truck,
                                 title: "Fast Delivery",
                                 description: "Quick and reliable shipping across India, so your little ones can start their reading adventure without delay."
                             },
                             {
-                                icon: (
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                    </svg>
-                                ),
+                                icon: BookOpen,
                                 title: "Age-Appropriate",
                                 description: "Books organized by age groups and reading levels, making it easy to find the perfect match for your child."
                             },
                             {
-                                icon: (
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                ),
+                                icon: ShieldCheck,
                                 title: "Trusted by Parents",
                                 description: "Join thousands of satisfied parents who trust us to deliver quality books that their children love."
                             },
                             {
-                                icon: (
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                ),
+                                icon: Users,
                                 title: "Customer Support",
                                 description: "Have questions? Our friendly team is always ready to help you find the perfect books for your children."
                             }
                         ].map((item, idx) => (
-                            <div key={idx} className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-all hover:-translate-y-1">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 text-blue-600 flex items-center justify-center mb-4">
-                                    {item.icon}
+                            <div key={idx} className="bg-white rounded-2xl p-8 border border-[#E3E8E5] hover:border-[#4A7C59] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                                <div className="w-12 h-12 rounded-xl bg-[#FAFBF9] group-hover:bg-[#E8F0EB] flex items-center justify-center mb-6 transition-colors border border-[#E3E8E5] group-hover:border-[#DCE4E0]">
+                                    <item.icon className="w-6 h-6 text-[#5C756D] group-hover:text-[#1A3C34] transition-colors" />
                                 </div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3>
-                                <p className="text-gray-600 text-sm leading-relaxed">{item.description}</p>
+                                <h3 className="text-xl font-bold text-[#1A3C34] mb-3 group-hover:text-[#4A7C59] transition-colors">{item.title}</h3>
+                                <p className="text-[#4A5D56] leading-relaxed">{item.description}</p>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Values Section */}
-                <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-12 mb-20">
-                    <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Our Core Values</h2>
-                    <div className="grid md:grid-cols-4 gap-8">
-                        {[
-                            { emoji: "🎯", title: "Quality First", desc: "Every book meets our high standards" },
-                            { emoji: "❤️", title: "Child-Centric", desc: "Children's development is our priority" },
-                            { emoji: "🌟", title: "Innovation", desc: "Always evolving our collection" },
-                            { emoji: "🤝", title: "Trust", desc: "Building lasting relationships" }
-                        ].map((value, idx) => (
-                            <div key={idx} className="text-center">
-                                <div className="text-5xl mb-4">{value.emoji}</div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">{value.title}</h3>
-                                <p className="text-sm text-gray-600">{value.desc}</p>
-                            </div>
-                        ))}
+                {/* --- VALUES SECTION (Dark Wisdom Theme) --- */}
+                <div className="bg-[#1A3C34] text-white rounded-[2.5rem] p-12 md:p-16 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#4A7C59]/20 rounded-full blur-3xl pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/20 rounded-full blur-3xl pointer-events-none -translate-x-1/3 translate-y-1/3"></div>
+
+                    <div className="relative z-10">
+                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-center mb-16">Our Core Values</h2>
+                        <div className="grid md:grid-cols-4 gap-12 text-center">
+                            {[
+                                { icon: Award, title: "Quality First", desc: "Every book meets our high standards" },
+                                { icon: Heart, title: "Child-Centric", desc: "Children's development is our priority" },
+                                { icon: Sparkles, title: "Innovation", desc: "Always evolving our collection" },
+                                { icon: ShieldCheck, title: "Trust", desc: "Building lasting relationships" }
+                            ].map((value, idx) => (
+                                <div key={idx} className="group">
+                                    <div className="w-16 h-16 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:bg-[#4A7C59]/20 group-hover:border-[#4A7C59]/50 transition-all duration-300">
+                                        <value.icon className="w-8 h-8 text-[#8BA699] group-hover:text-white transition-colors" />
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-2 text-white">{value.title}</h3>
+                                    <p className="text-[#8BA699] text-sm">{value.desc}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Stats Section */}
-                <div className="grid md:grid-cols-4 gap-8 mb-20">
+                {/* --- STATS SECTION --- */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-8 border-y border-[#E3E8E5]">
                     {[
-                        { number: "10,000+", label: "Happy Families" },
+                        { number: "10K+", label: "Happy Families" },
                         { number: "200+", label: "Books Available" },
                         { number: "100%", label: "Quality Assured" },
                         { number: "Pan India", label: "Delivery" }
                     ].map((stat, idx) => (
                         <div key={idx} className="text-center">
-                            <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+                            <div className="text-4xl md:text-5xl font-serif font-bold text-[#1A3C34] mb-2">
                                 {stat.number}
                             </div>
-                            <div className="text-gray-600 font-medium">{stat.label}</div>
+                            <div className="text-[#5C756D] font-medium tracking-wide uppercase text-sm">{stat.label}</div>
                         </div>
                     ))}
                 </div>
 
-                {/* CTA Section */}
-                <div className="bg-gradient-to-r from-gray-900 to-black rounded-3xl p-12 text-center text-white">
-                    <h2 className="text-3xl font-bold mb-4">Start Your Child's Reading Journey Today</h2>
-                    <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+                {/* --- CTA SECTION --- */}
+                <div className="bg-[#E8F0EB] rounded-3xl p-12 md:p-16 text-center border border-[#DCE4E0]">
+                    <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#1A3C34] mb-6">Start Your Child's Reading Journey</h2>
+                    <p className="text-[#4A5D56] text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
                         Explore our carefully curated collection of children's books and give your child the gift of knowledge and imagination.
                     </p>
-                    <button
-                        onClick={navigateToCatalog}
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-900 rounded-xl font-semibold hover:bg-gray-100 transition-all hover:scale-105 shadow-xl"
+                    <Link
+                        to="/catalog"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-[#1A3C34] text-white rounded-xl font-bold hover:bg-[#2F523F] hover:-translate-y-1 transition-all shadow-xl shadow-[#1A3C34]/10"
                     >
                         Browse Our Catalog
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                    </button>
+                        <ArrowRight className="w-5 h-5" />
+                    </Link>
                 </div>
 
-                {/* Contact Section */}
-                <div className="mt-20 text-center">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Get in Touch</h2>
-                    <p className="text-gray-600 mb-6">
+                {/* --- CONTACT FOOTER --- */}
+                <div className="text-center pb-8">
+                    <h2 className="text-2xl font-serif font-bold text-[#1A3C34] mb-4">Get in Touch</h2>
+                    <p className="text-[#4A5D56] mb-8">
                         Have questions or suggestions? We'd love to hear from you!
                     </p>
                     <div className="flex flex-wrap justify-center gap-6">
-                        <a href="mailto:kiddosintellect@gmail.com" className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            kiddosintellect@gmail.com
+                        <a href="mailto:kiddosintellect@gmail.com" className="flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-[#E3E8E5] text-[#2C3E38] hover:border-[#4A7C59] hover:text-[#1A3C34] transition-all shadow-sm">
+                            <Mail className="w-4 h-4" />
+                            <span className="font-medium">kiddosintellect@gmail.com</span>
                         </a>
-                        <a href="tel:+919879857529" className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                            +91 9879857529
+                        <a href="tel:+919879857529" className="flex items-center gap-2 px-6 py-3 bg-white rounded-full border border-[#E3E8E5] text-[#2C3E38] hover:border-[#4A7C59] hover:text-[#1A3C34] transition-all shadow-sm">
+                            <Phone className="w-4 h-4" />
+                            <span className="font-medium">+91 9879857529</span>
                         </a>
                     </div>
                 </div>
+
             </div>
             <ScrollToTopButton />
         </div>

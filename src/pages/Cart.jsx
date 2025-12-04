@@ -1,4 +1,4 @@
-// src/pages/Cart.jsx - FIXED COVER IMAGE LOGIC
+// src/pages/Cart.jsx
 import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { assetUrl } from "../api/asset";
@@ -6,6 +6,10 @@ import { useCart } from "../contexts/CartStore";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
+import { 
+    ShoppingCart, Trash2, Plus, Minus, ArrowLeft, 
+    ArrowRight, PackageOpen, Check, ShieldCheck 
+} from "lucide-react";
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -14,10 +18,12 @@ export default function Cart() {
   const items = useCart((s) => s.items);
   const inc = useCart((s) => s.inc);
   const dec = useCart((s) => s.dec);
-  const setQtyLocal = useCart((s) => s.setQty);
   const removeLocal = useCart((s) => s.remove);
   const clearLocal = useCart((s) => s.clear);
   const replaceAll = useCart((s) => s.replaceAll);
+
+  // Background texture
+  const bgImage = "url('/images/terms-bg.png')";
 
   // --- Hydrate from server when logged in ---
   useEffect(() => {
@@ -35,7 +41,6 @@ export default function Cart() {
   // --- Qty change ---
   const syncQty = async (lineId, nextQty) => {
     if (!isCustomer) return;
-
     try {
       const res = await CustomerAPI.setCartQty(token, { itemId: lineId, qty: nextQty });
       replaceAll(res?.data?.cart?.items || []);
@@ -56,21 +61,13 @@ export default function Cart() {
       t.ok("Item removed");
       return;
     }
-
     try {
-      const res = await CustomerAPI.removeCartItem(token, idForCurrentMode);
+      await CustomerAPI.removeCartItem(token, idForCurrentMode);
+      // Optimistic update or fetch fresh
+      const res = await CustomerAPI.getCart(token);
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Item removed");
     } catch (e) {
-      const status = e?.response?.status;
-      if (status === 404) {
-        try {
-          const fresh = await CustomerAPI.getCart(token);
-          replaceAll(fresh?.data?.cart?.items || []);
-        } catch { }
-        t.info("Item was already removed");
-        return;
-      }
       t.err("Failed to remove item");
     }
   };
@@ -82,10 +79,9 @@ export default function Cart() {
       t.ok("Cart cleared");
       return;
     }
-
     try {
-      const res = await CustomerAPI.clearCart(token);
-      replaceAll(res?.data?.cart?.items || []);
+      await CustomerAPI.clearCart(token);
+      replaceAll([]);
       t.ok("Cart cleared");
     } catch (e) {
       t.err("Failed to clear cart");
@@ -99,7 +95,8 @@ export default function Cart() {
       const qty = Number(it.qty ?? 1);
       return sum + price * qty;
     }, 0);
-    const shipping = subtotal > 0 ? 0 : 0;
+    // Free shipping logic could go here
+    const shipping = 0; 
     const grand = subtotal + shipping;
     return { subtotal, shipping, grand };
   }, [items]);
@@ -111,245 +108,224 @@ export default function Cart() {
       maximumFractionDigits: 0,
     }).format(n);
 
-  // ✅ IMPROVED: Universal cover image resolver
+  // Universal cover image resolver
   const getCoverImage = (item) => {
-    // Priority 1: Check if bookId is populated (server response)
-    if (item?.bookId?.assets?.coverUrl) {
-      const covers = item.bookId.assets.coverUrl;
-      if (Array.isArray(covers) && covers.length > 0) {
-        return assetUrl(covers[0]);
-      }
-      if (typeof covers === 'string') {
-        return assetUrl(covers);
-      }
-    }
+    const candidates = [
+        item?.bookId?.assets?.coverUrl,
+        item?.assets?.coverUrl,
+        item?.bookId?.coverUrl,
+        item?.coverUrl
+    ];
 
-    // Priority 2: Check direct assets on item (local cart)
-    if (item?.assets?.coverUrl) {
-      const covers = item.assets.coverUrl;
-      if (Array.isArray(covers) && covers.length > 0) {
-        return assetUrl(covers[0]);
-      }
-      if (typeof covers === 'string') {
-        return assetUrl(covers);
-      }
+    for (const c of candidates) {
+        if (Array.isArray(c) && c.length > 0) return assetUrl(c[0]);
+        if (typeof c === 'string' && c) return assetUrl(c);
     }
-
-    // Priority 3: Check old coverUrl structure
-    if (item?.bookId?.coverUrl) {
-      const covers = item.bookId.coverUrl;
-      if (Array.isArray(covers) && covers.length > 0) {
-        return assetUrl(covers[0]);
-      }
-      if (typeof covers === 'string') {
-        return assetUrl(covers);
-      }
-    }
-
-    // Priority 4: Check direct coverUrl on item
-    if (item?.coverUrl) {
-      const covers = item.coverUrl;
-      if (Array.isArray(covers) && covers.length > 0) {
-        return assetUrl(covers[0]);
-      }
-      if (typeof covers === 'string') {
-        return assetUrl(covers);
-      }
-    }
-
-    // Fallback: placeholder
-    return "https://via.placeholder.com/120x180?text=No+Cover";
+    return "/uploads/placeholder.png";
   };
 
+  // --- EMPTY STATE ---
   if (!items || items.length === 0) {
     return (
-      <div className="container mx-auto px-2 xs:px-3 sm:px-4 py-8 xs:py-10 sm:py-12 text-center">
-        <div className="max-w-xs xs:max-w-sm sm:max-w-md mx-auto">
-          <svg
-            className="mx-auto h-14 w-14 xs:h-16 xs:w-16 sm:h-24 sm:w-24 text-fg-subtle mb-2 xs:mb-3 sm:mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+      <div className="bg-[#F4F7F5] min-h-screen flex flex-col font-sans text-[#2C3E38]">
+        {/* Header Background */}
+        <div className="relative h-48 md:h-64 bg-[#1A3C34] overflow-hidden">
+             <div 
+                className="absolute inset-0 opacity-20 mix-blend-soft-light" 
+                style={{ backgroundImage: bgImage, backgroundSize: 'cover', filter: 'grayscale(100%)' }}
             />
-          </svg>
-          <h2 className="text-lg xs:text-xl sm:text-2xl font-bold text-fg mb-1 xs:mb-1.5 sm:mb-2">
-            Your cart is empty
-          </h2>
-          <p className="text-fg-muted mb-4 xs:mb-5 sm:mb-6 text-xs xs:text-sm sm:text-base">
-            Looks like you haven't added any books yet.
-          </p>
-          <Link
-            to="/catalog"
-            className="btn-primary text-xs xs:text-sm sm:text-base"
-          >
-            Browse Books
-          </Link>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#F4F7F5]"></div>
+        </div>
+
+        <div className="flex-grow flex flex-col items-center justify-center -mt-20 px-4 pb-20 relative z-10">
+            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-lg border border-[#E3E8E5] text-center max-w-lg w-full">
+                <div className="w-20 h-20 mx-auto bg-[#F4F7F5] rounded-full flex items-center justify-center mb-6">
+                    <PackageOpen className="w-10 h-10 text-[#8BA699]" />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-serif font-bold text-[#1A3C34] mb-3">
+                    Your cart is empty
+                </h2>
+                <p className="text-[#5C756D] mb-8 text-lg">
+                    Looks like you haven't added any books yet.
+                </p>
+                <Link
+                    to="/catalog"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1A3C34] text-white rounded-xl font-bold hover:bg-[#2F523F] transition-all shadow-md hover:shadow-lg active:scale-95"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Browse Books
+                </Link>
+            </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-2 xs:px-3 sm:px-4 py-6 xs:py-7 sm:py-8">
-      <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between mb-3 xs:mb-5 sm:mb-8 gap-2">
-        <h1 className="text-xl xs:text-2xl sm:text-3xl font-bold text-fg">Your Cart</h1>
-        <Link
-          to="/catalog"
-          className="text-brand hover:text-brand/90 flex items-center gap-1.5 xs:gap-2 text-xs xs:text-sm sm:text-base"
-        >
-          ← Continue shopping
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xs:gap-6 sm:gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-2 xs:space-y-3 sm:space-y-4">
-          {items.map((it) => {
-            const bookData = it.bookId || it;
-            const id = it._id || it.id || bookData._id || bookData.id;
-            const title = it.title || bookData.title || "Untitled";
-            const authors = it.authors || bookData.authors || [];
-            const price = Number(it.unitPriceSnapshot ?? it.price ?? bookData.price ?? 0);
-            const qty = Number(it.qty ?? 1);
-            const coverImage = getCoverImage(it);
-
-            return (
-              <div
-                key={id}
-                className="card flex flex-col xs:flex-row gap-3 xs:gap-4 hover:shadow-md transition-shadow"
-              >
-                {/* ✅ BOOK COVER IMAGE */}
-                <div className="flex-shrink-0">
-                  <img
-                    src={coverImage}
-                    alt={title}
-                    className="w-16 h-24 xs:w-20 xs:h-28 sm:w-24 sm:h-32 object-cover rounded-lg shadow-sm"
-                    onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/120x180?text=No+Cover";
-                    }}
-                  />
-                </div>
-
-                {/* Book Details */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-xs xs:text-sm sm:text-base text-fg mb-1">
-                    {title}
-                  </h3>
-                  {authors && authors.length > 0 && (
-                    <p className="text-xs xs:text-sm text-fg-muted mb-1 xs:mb-2 sm:mb-3">
-                      {authors.join(", ")}
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34]">
+        
+        {/* --- HEADER SECTION --- */}
+        <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34] overflow-hidden">
+            <div 
+                className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" 
+                style={{ backgroundImage: bgImage, backgroundSize: 'cover', filter: 'grayscale(100%)' }}
+            />
+            <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-end gap-6">
+                <div>
+                    <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">Your Cart</h1>
+                    <p className="text-[#8BA699] text-lg font-light">
+                        Review your selection before checkout.
                     </p>
-                  )}
-
-                  {/* Price (mobile) */}
-                  <div className="text-xs xs:text-sm text-fg-subtle mb-1 xs:mb-2 sm:mb-3">
-                    Subtotal: {fmt(price)}
-                  </div>
-
-                  <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1 xs:gap-2">
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-1 xs:gap-2">
-                      <button
-                        onClick={() => {
-                          const next = qty - 1;
-                          if (next < 1) return;
-                          if (isCustomer) {
-                            syncQty(id, next);
-                          } else {
-                            dec(id);
-                          }
-                        }}
-                        className="w-7 h-7 xs:w-8 xs:h-8 flex items-center justify-center border border-border rounded-lg hover:bg-surface-subtle disabled:opacity-50 transition-colors text-xs xs:text-sm"
-                        disabled={qty <= 1}
-                      >
-                        −
-                      </button>
-                      <span className="w-8 xs:w-10 sm:w-12 text-center font-medium text-xs xs:text-sm text-fg">
-                        {qty}
-                      </span>
-                      <button
-                        onClick={() => {
-                          const next = qty + 1;
-                          if (isCustomer) {
-                            syncQty(id, next);
-                          } else {
-                            inc(id);
-                          }
-                        }}
-                        className="w-8 h-8 flex items-center justify-center border border-border rounded-lg hover:bg-surface-subtle transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    {/* Price & Remove */}
-                    <div className="flex items-center gap-4">
-                      <span className="text-base xs:text-lg font-bold text-fg">
-                        {fmt(price * qty)}
-                      </span>
-                      <button
-                        onClick={() => removeItem(id)}
-                        className="text-danger hover:text-danger/80 text-xs xs:text-sm font-medium transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <div className="card sticky top-2 xs:top-3 sm:top-4">
-            <h2 className="text-lg xs:text-xl font-bold mb-2 xs:mb-4 text-fg">Order Summary</h2>
-
-            <div className="space-y-2 xs:space-y-3 mb-3 xs:mb-4">
-              <div className="flex justify-between text-xs xs:text-sm text-fg-muted">
-                <span>Subtotal</span>
-                <span className="font-medium text-fg">{fmt(totals.subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-xs xs:text-sm text-fg-muted">
-                <span>Shipping</span>
-                <span className="font-medium text-success">Free</span>
-              </div>
-              <div className="border-t border-border pt-2 xs:pt-3 flex justify-between text-base xs:text-lg font-bold">
-                <span className="text-fg">Total</span>
-                <span className="text-fg">{fmt(totals.grand)}</span>
-              </div>
+                <Link 
+                    to="/catalog"
+                    className="flex items-center gap-2 text-[#8BA699] hover:text-white transition-colors text-sm font-medium"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Continue Shopping
+                </Link>
             </div>
-
-            <button
-              onClick={() => navigate("/checkout")}
-              className="btn-primary w-full mb-2 xs:mb-3 text-xs xs:text-sm sm:text-base"
-            >
-              Checkout
-            </button>
-
-            <button
-              onClick={clearAll}
-              className="btn-secondary w-full text-xs xs:text-sm sm:text-base"
-            >
-              Clear cart
-            </button>
-
-            <Link
-              to="/catalog"
-              className="block text-center mt-3 xs:mt-4 text-brand hover:text-brand/90 text-xs xs:text-sm sm:text-base"
-            >
-              Continue shopping
-            </Link>
-          </div>
         </div>
-      </div>
+
+        {/* --- MAIN CONTENT --- */}
+        <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+                
+                {/* --- LEFT: CART ITEMS --- */}
+                <div className="lg:col-span-8 space-y-4">
+                    {items.map((it) => {
+                        const bookData = it.bookId || it;
+                        const id = it._id || it.id || bookData._id || bookData.id;
+                        const title = it.title || bookData.title || "Untitled";
+                        const authors = it.authors || bookData.authors || [];
+                        const price = Number(it.unitPriceSnapshot ?? it.price ?? bookData.price ?? 0);
+                        const qty = Number(it.qty ?? 1);
+                        const coverImage = getCoverImage(it);
+
+                        return (
+                            <div 
+                                key={id} 
+                                className="group flex flex-col sm:flex-row gap-4 p-4 bg-white border border-[#E3E8E5] rounded-2xl hover:border-[#4A7C59] transition-all shadow-sm hover:shadow-md"
+                            >
+                                {/* Image */}
+                                <div className="w-full sm:w-28 h-40 sm:h-36 bg-[#F4F7F5] rounded-xl overflow-hidden flex-shrink-0 border border-[#E3E8E5]">
+                                    <img 
+                                        src={coverImage} 
+                                        alt={title} 
+                                        className="w-full h-full object-contain p-2"
+                                        onError={(e) => { e.target.src = "/placeholder.png"; }}
+                                    />
+                                </div>
+
+                                {/* Details */}
+                                <div className="flex-1 flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex justify-between items-start gap-4">
+                                            <h3 className="font-serif font-bold text-lg md:text-xl text-[#1A3C34] line-clamp-2">
+                                                <Link to={`/book/${bookData.slug}`} className="hover:text-[#4A7C59] transition-colors">
+                                                    {title}
+                                                </Link>
+                                            </h3>
+                                            <button 
+                                                onClick={() => removeItem(id)}
+                                                className="text-[#8BA699] hover:text-red-500 transition-colors p-1"
+                                                title="Remove Item"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                        <p className="text-[#5C756D] text-sm mt-1 mb-2">
+                                            {authors.join(", ")}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-end justify-between gap-4 mt-auto">
+                                        <div className="flex items-center gap-3 bg-[#F4F7F5] rounded-lg p-1">
+                                            <button
+                                                onClick={() => {
+                                                    const next = qty - 1;
+                                                    if (next < 1) return;
+                                                    isCustomer ? syncQty(id, next) : dec(id);
+                                                }}
+                                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-[#1A3C34] hover:bg-[#E8F0EB] disabled:opacity-50 transition-colors"
+                                                disabled={qty <= 1}
+                                            >
+                                                <Minus className="w-4 h-4" />
+                                            </button>
+                                            <span className="w-6 text-center font-bold text-[#1A3C34]">{qty}</span>
+                                            <button
+                                                onClick={() => {
+                                                    const next = qty + 1;
+                                                    isCustomer ? syncQty(id, next) : inc(id);
+                                                }}
+                                                className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-[#1A3C34] hover:bg-[#E8F0EB] transition-colors"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="text-right">
+                                            <p className="text-xs text-[#8BA699] mb-0.5">Subtotal</p>
+                                            <p className="text-xl font-bold text-[#1A3C34]">
+                                                {fmt(price * qty)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    
+                    <button 
+                        onClick={clearAll}
+                        className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-2 mt-4 ml-2"
+                    >
+                        <Trash2 className="w-4 h-4" /> Clear Cart
+                    </button>
+                </div>
+
+                {/* --- RIGHT: ORDER SUMMARY --- */}
+                <div className="lg:col-span-4">
+                    <div className="bg-white rounded-2xl border border-[#E3E8E5] shadow-sm p-6 lg:p-8 sticky top-24">
+                        <h2 className="text-xl font-serif font-bold text-[#1A3C34] mb-6">Order Summary</h2>
+                        
+                        <div className="space-y-4 mb-6">
+                            <div className="flex justify-between text-[#5C756D]">
+                                <span>Subtotal</span>
+                                <span className="font-medium text-[#2C3E38]">{fmt(totals.subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between text-[#5C756D]">
+                                <span>Shipping</span>
+                                <span className="font-medium text-[#4A7C59]">Free</span>
+                            </div>
+                            <div className="pt-4 border-t border-[#E3E8E5] flex justify-between items-center">
+                                <span className="text-lg font-bold text-[#1A3C34]">Total</span>
+                                <span className="text-2xl font-bold text-[#1A3C34]">{fmt(totals.grand)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-sm text-[#5C756D] bg-[#E8F0EB] p-3 rounded-xl border border-[#DCE4E0]">
+                                <ShieldCheck className="w-5 h-5 text-[#4A7C59]" />
+                                <span>Secure Checkout guaranteed</span>
+                            </div>
+
+                            <button
+                                onClick={() => navigate("/checkout")}
+                                className="w-full py-4 bg-[#1A3C34] text-white rounded-xl font-bold hover:bg-[#2F523F] transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                Proceed to Checkout
+                                <ArrowRight className="w-5 h-5" />
+                            </button>
+                            
+                            <p className="text-center text-xs text-[#8BA699] mt-4">
+                                Taxes calculated at checkout.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
   );
 }

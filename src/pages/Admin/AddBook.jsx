@@ -1,79 +1,69 @@
-// src/pages/Admin/AddBook.jsx
-import { useEffect, useState } from "react";
+// src/pages/admin/AddBook.jsx
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
-import slugify from "slugify";
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
-import FancyButton from "../../components/button/button";
+import { Save, Upload, X, ChevronDown, Check, Image as ImageIcon, ArrowLeft, PlusCircle } from "lucide-react";
 
 export default function AddBook() {
+  const navigate = useNavigate();
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
+
+  // Initial State for New Book
+  const [book, setBook] = useState({
+    title: "",
+    subtitle: "",
+    language: "English",
+    edition: "",
+    pages: "",
+    mrp: "",
+    price: "",
+    discountPct: "",
+    inventory: { stock: 0, lowStockAlert: 5 },
+    visibility: "public",
+    assets: { coverUrl: [] },
+    descriptionHtml: ""
+  });
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // MULTI images
-  const [coverUrls, setCoverUrls] = useState([]); // string[] relative...""
+  // Text Inputs for CSV fields
+  const [authorsText, setAuthorsText] = useState("");
+  const [categoriesText, setCategoriesText] = useState("");
+  const [tagsText, setTagsText] = useState("");
+  const [suggestionsText, setSuggestionsText] = useState("");
+  const [whyChooseThisText, setWhyChooseThisText] = useState("");
 
-  const [form, setForm] = useState({
-    title: "", subtitle: "", authors: "Kiddos Intellect",
-    language: "Gujarati", edition: "", printType: "paperback", pages: 0,
-    mrp: 0, price: 0, discountPct: 0, currency: "INR",
-    sku: "", stock: 0, lowStockAlert: 5, categories: "", tags: "", suggestions: "",
-    samplePdfUrl: "", descriptionHtml: "", whyChooseThis: "", visibility: "public",
-  });
-
-  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
-
-  // --- categories dropdown state ---
-  const [categoryList, setCategoryList] = useState([]); // fetched from backend
+  // Categories Dropdown Data
+  const [categoryList, setCategoryList] = useState([]);
   const [catOpen, setCatOpen] = useState(false);
 
+  // Fetch categories on mount
   useEffect(() => {
-    // fetch categories for dropdown (admin route)
-    let mounted = true;
     (async () => {
       try {
         const res = await api.get("/books/categories", auth);
-        if (!mounted) return;
         setCategoryList(res?.data?.items || []);
       } catch (e) {
-        // don't break admin UI if categories missing
         console.warn("Failed to load categories", e);
       }
     })();
-    return () => { mounted = false; };
-  }, []); // run once
+  }, []);
 
-  // convert CSV to array
-  const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
+  // ---------- Helpers ----------
+  const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
+  const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...prev.inventory, [k]: v } }));
+  const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...prev.assets, [k]: v } }));
 
-  // internal helper to get selected array from form.categories
-  const selectedFromForm = () => splitCsv(form.categories);
-
-  function toggleCategoryInForm(slugOrName) {
-    const cur = selectedFromForm();
-    // if this matches a slug in categoryList, we'll prefer the category name when showing chips,
-    // but we keep using slug OR name interchangeably in the CSV.
-    if (cur.includes(slugOrName)) {
-      const next = cur.filter(x => x !== slugOrName);
-      set("categories", next.join(", "));
-    } else {
-      set("categories", [...cur, slugOrName].join(", "));
-    }
-  }
-
-  function replaceCategoriesWithSelected(arr) {
-    set("categories", (arr || []).join(", "));
-  }
-
-  /* ------------ Upload (multiple) ------------ */
+  /* ---------------- Images ---------------- */
   async function uploadImages(files) {
-    if (!files?.length) return [];
+    if (!files?.length) return;
     const fd = new FormData();
-    Array.from(files).forEach(f => fd.append("files", f)); // field name MUST be "files"
+    Array.from(files).forEach(f => fd.append("files", f));
     setUploading(true);
     try {
       const res = await api.post("/uploads/image", fd, {
@@ -84,12 +74,10 @@ export default function AddBook() {
         .map(x => x?.path)
         .filter(Boolean)
         .map(toRelativeFromPublic);
-      if (!paths.length) t.info("No images returned from server.");
-      setCoverUrls(prev => [...prev, ...paths]); // append
-      return paths;
-    } catch (err) {
-      t.err(err?.response?.data?.error || err?.message || "Upload failed");
-      return [];
+
+      setAssets("coverUrl", [...(book.assets?.coverUrl || []), ...paths]);
+    } catch (e) {
+      t.err("Upload failed");
     } finally {
       setUploading(false);
     }
@@ -97,417 +85,412 @@ export default function AddBook() {
 
   function onPickImages(e) {
     const list = Array.from(e.target.files || []);
-    if (!list.length) return;
-    void uploadImages(list);
+    if (list.length) uploadImages(list);
   }
 
   function removeImageAt(i) {
-    setCoverUrls(arr => arr.filter((_, idx) => idx !== i));
+    setAssets("coverUrl", (book.assets?.coverUrl || []).filter((_, idx) => idx !== i));
   }
 
   function setAsCover(i) {
-    setCoverUrls(arr => {
-      const list = [...arr];
+    setAssets("coverUrl", ((arr) => {
+      const list = [...(arr || [])];
       if (i <= 0 || i >= list.length) return list;
       const [picked] = list.splice(i, 1);
-      list.unshift(picked); // chosen image now index 0 (the cover)
+      list.unshift(picked);
       return list;
-    });
+    })(book.assets?.coverUrl || []));
   }
 
-  // Add new function for whyChooseThis that handles both commas and newlines
-  function splitReasons(str = "") {
-    return str
-      .split(/[\n,]/) // Split by newlines OR commas
-      .map(s => s.trim())
-      .filter(Boolean);
+  /* ---------------- Save Logic ---------------- */
+  const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
+  const splitReasons = (str = "") => str.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+
+  // Category Selection Helpers
+  const selectedFromText = () => splitCsv(categoriesText);
+  function toggleCategory(val) {
+    const cur = selectedFromText();
+    if (cur.includes(val)) {
+      setCategoriesText(cur.filter(x => x !== val).join(", "));
+    } else {
+      setCategoriesText([...cur, val].join(", "));
+    }
   }
 
-  async function submit(e) {
-    if (e?.preventDefault) e.preventDefault();
-    if (!token && !localStorage.getItem("admin_jwt")) return t.info("Please log in as Admin first.");
-    if (!form.title?.trim()) return t.err("Title is required");
-
+  async function save(e) {
+    e.preventDefault();
     setSaving(true);
-
-    const payload = {
-      title: form.title.trim(),
-      slug: slugify(form.title, { lower: true, strict: true }),
-      subtitle: form.subtitle || undefined,
-      authors: splitCsv(form.authors),
-      language: form.language,
-      pages: Number(form.pages) || 0,
-      edition: form.edition || undefined,
-      printType: (form.printType || "").toLowerCase() || undefined,
-      mrp: Number(form.mrp) || 0,
-      price: Number(form.price) || 0,
-      discountPct: Number(form.discountPct) || 0,
-      currency: form.currency,
-      inventory: {
-        sku: form.sku || undefined,
-        stock: Number(form.stock) || 0,
-        lowStockAlert: Number(form.lowStockAlert) || 5,
-      },
-      assets: {
-        coverUrl: (coverUrls || []).map(toRelativeFromPublic), // MULTI
-        samplePdfUrl: toRelativeFromPublic(form.samplePdfUrl) || form.samplePdfUrl || undefined,
-      },
-      categories: splitCsv(form.categories),
-      tags: splitCsv(form.tags),
-      descriptionHtml: form.descriptionHtml || "",
-      whyChooseThis: splitReasons(form.whyChooseThis),
-      suggestions: splitCsv(form.suggestions),
-      visibility: (form.visibility || "public").toLowerCase(),
-    };
-
     try {
+      const payload = {
+        ...book,
+        authors: splitCsv(authorsText),
+        categories: splitCsv(categoriesText),
+        tags: splitCsv(tagsText),
+        suggestions: splitCsv(suggestionsText),
+        whyChooseThis: splitReasons(whyChooseThisText),
+        pages: Number(book.pages) || 0,
+        mrp: Number(book.mrp) || 0,
+        price: Number(book.price) || 0,
+        discountPct: Number(book.discountPct) || 0,
+        inventory: {
+          stock: Number(book.inventory.stock) || 0,
+          lowStockAlert: Number(book.inventory.lowStockAlert) || 5,
+        }
+      };
+
       await api.post("/books", payload, auth);
-      t.ok("Book Created!");
-      setForm(f => ({
-        ...f,
-        title: "", subtitle: "", authors: "Kiddos Intellect",
-        mrp: 0, price: 0, categories: "", tags: "", samplePdfUrl: ""
-      }));
-      setCoverUrls([]);
-    } catch (err) {
-      t.err(err?.response?.data?.error || "Failed to create book");
+      t.ok("Book created successfully!");
+      navigate("/admin/books");
+    } catch (e) {
+      console.error(e);
+      t.err(e.response?.data?.error || "Failed to create book");
     } finally {
       setSaving(false);
     }
   }
 
-  // UI helpers
-  const selected = selectedFromForm(); // array of strings
+  /* ---------------- Pricing Logic ---------------- */
+  const toNum = (v) => (v === "" || v === null ? NaN : Number(v));
+
+  function handlePriceChange(field) {
+    return (e) => {
+      const raw = e.target.value;
+      setBook((prev) => {
+        const next = { ...prev, [field]: raw };
+        const mrp = field === "mrp" ? raw : prev.mrp;
+        const price = field === "price" ? raw : prev.price;
+        const disc = field === "discountPct" ? raw : prev.discountPct;
+
+        if (field === "mrp" || field === "price") {
+          const M = toNum(mrp), P = toNum(price);
+          if (isFinite(M) && M > 0 && isFinite(P)) {
+            next.discountPct = String(Math.round(((M - P) / M) * 100));
+          }
+        } else if (field === "discountPct") {
+          const M = toNum(mrp), D = toNum(disc);
+          if (isFinite(M) && M > 0 && isFinite(D)) {
+            next.price = String(Math.round(M * (1 - D / 100)));
+          }
+        }
+        return next;
+      });
+    };
+  }
+
+  const selected = selectedFromText();
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Add Book</h1>
-      <form onSubmit={submit} className="space-y-6">
-        {/* Basics */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Basic Info" />
-          <Field label="Title *" hint="Shown in catalog">
-            <input
-              className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.title}
-              onChange={e => set("title", e.target.value)}
-              placeholder="e.g. Strategic Management MPA-011"
-            />
-          </Field>
-          <div className="grid md:grid-cols-2 gap-3">
-            <Field label="Subtitle">
-              <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.subtitle}
-                onChange={e => set("subtitle", e.target.value)}
-              />
-            </Field>
-            <Field label="Authors" hint="comma separated">
-              <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.authors}
-                onChange={e => set("authors", e.target.value)}
-              />
-            </Field>
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
+
+      {/* Responsive Container */}
+      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <button
+              onClick={() => navigate("/admin/books")}
+              className="flex items-center gap-2 text-[#5C756D] hover:text-[#1A3C34] mb-2 transition-colors text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Books
+            </button>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34]">Add New Book</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border ${book.visibility === "public"
+              ? "bg-[#E8F0EB] text-[#2F523F] border-[#4A7C59]"
+              : "bg-gray-100 text-gray-600 border-gray-300"
+              }`}>
+              {book.visibility}
+            </span>
+            <button
+              onClick={save}
+              disabled={saving || uploading}
+              className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold hover:bg-[#2F523F] transition-all shadow-md active:scale-95 disabled:opacity-50"
+            >
+              <PlusCircle className="w-4 h-4" />
+              {saving ? "Creating..." : "Create Book"}
+            </button>
           </div>
         </div>
 
-        {/* Details */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Details" />
-          <div className="grid md:grid-cols-4 gap-3">
-            <Field label="Language">
+        <form onSubmit={save} className="space-y-8">
+
+          {/* Basic Info */}
+          <Card title="Basic Information">
+            <Row label="Title" hintRight="Required">
               <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.language}
-                onChange={e => set("language", e.target.value)}
+                required
+                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                placeholder="e.g. My First Book of Colors"
+                value={book.title}
+                onChange={(e) => setField("title", e.target.value)}
               />
-            </Field>
-            <Field label="Edition">
-              <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.edition}
-                onChange={e => set("edition", e.target.value)}
-              />
-            </Field>
-            <Field label="Pages">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.pages}
-                onChange={e => set("pages", e.target.value)}
-              />
-            </Field>
+            </Row>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <Row label="Subtitle">
+                <input
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                  placeholder="e.g. A fun learning adventure"
+                  value={book.subtitle}
+                  onChange={(e) => setField("subtitle", e.target.value)}
+                />
+              </Row>
+              <Row label="Authors" hintRight="Comma separated">
+                <input
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                  placeholder="e.g. Dr. Seuss, Roald Dahl"
+                  value={authorsText}
+                  onChange={(e) => setAuthorsText(e.target.value)}
+                />
+              </Row>
+            </div>
+          </Card>
+
+          {/* Details & Pricing Grid */}
+          <div className="grid lg:grid-cols-1  gap-4">
+            <Card title="Pricing & Inventory">
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <Row label="MRP (₹)">
+                  <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={book.mrp}
+                    onChange={handlePriceChange("mrp")}
+                    placeholder="0"
+                  />
+                </Row>
+                <Row label="Sale Price (₹)">
+                  <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
+                    value={book.price}
+                    onChange={handlePriceChange("price")}
+                    placeholder="0"
+                  />
+                </Row>
+                <Row label="Discount (%)">
+                  <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
+                    value={book.discountPct}
+                    onChange={handlePriceChange("discountPct")}
+                    placeholder="0"
+                  />
+                </Row>
+              </div>
+              <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
+                <Row label="Stock">
+                  <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={book.inventory.stock}
+                    onChange={(e) => setInv("stock", e.target.value)}
+                    placeholder="0"
+                  />
+                </Row>
+                <Row label="Low Stock Alert">
+                  <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={book.inventory.lowStockAlert}
+                    onChange={(e) => setInv("lowStockAlert", e.target.value)}
+                    placeholder="5"
+                  />
+                </Row>
+              </div>
+            </Card>
           </div>
-        </div>
 
-        {/* Pricing */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Pricing" />
-          <div className="grid md:grid-cols-4 gap-3">
-            <Field label="MRP">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.mrp}
-                onChange={e => set("mrp", e.target.value)}
-              />
-            </Field>
-            <Field label="Sale price">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.price}
-                onChange={e => set("price", e.target.value)}
-              />
-            </Field>
-            <Field label="Discount %">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.discountPct}
-                onChange={e => set("discountPct", e.target.value)}
-              />
-            </Field>
-          </div>
-        </div>
+          {/* Categorization */}
+          <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
+            <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
+              Categorization
+            </div>
 
-        {/* Inventory */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Inventory" />
-          <div className="grid md:grid-cols-3 gap-3">
-            <Field label="Stock">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.stock}
-                onChange={e => set("stock", e.target.value)}
-              />
-            </Field>
-            <Field label="Low stock alert">
-              <input
-                type="number"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2"
-                value={form.lowStockAlert}
-                onChange={e => set("lowStockAlert", e.target.value)}
-              />
-            </Field>
-          </div>
-        </div>
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5 mt-4">
-          <div className="text-sm font-semibold text-gray-700 mb-3">Categorization</div>
+            <div className="mb-6">
+              <label className="text-sm font-bold text-[#2C3E38] block mb-2">Select Categories</label>
 
-          {/* Multi-select dropdown */}
-          <div className="mb-3">
-            <label className="text-sm font-medium block mb-2">Select Categories</label>
-
-            <div className="relative">
-              <div
-                className="flex items-center gap-2 flex-wrap p-2 border border-border rounded-md bg-white"
-                onClick={() => setCatOpen(v => !v)}
-                style={{ cursor: "pointer" }}
-              >
-                {selected.length === 0 ? (
-                  <span className="text-sm text-gray-500">Choose categories…</span>
-                ) : (
-                  selected.map((s) => {
-                    // find nice name if possible
-                    const found = categoryList.find(c => c.slug === s || c.name === s);
-                    const label = found?.name || s;
-                    return (
-                      <span key={s} className="inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm bg-black/5 text-black">
-                        {label}
+              <div className="relative">
+                <div
+                  className="flex items-center gap-2 flex-wrap p-3 border border-[#DCE4E0] rounded-xl bg-[#FAFBF9] cursor-pointer min-h-[50px]"
+                  onClick={() => setCatOpen(v => !v)}
+                >
+                  {selected.length === 0 ? (
+                    <span className="text-sm text-[#8BA699]">Choose categories…</span>
+                  ) : (
+                    selected.map((s) => (
+                      <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#1A3C34] text-white">
+                        {s}
                         <button
                           type="button"
-                          onClick={(ev) => { ev.stopPropagation(); toggleCategoryInForm(s); }}
-                          className="text-xs px-1"
-                          aria-label={`Remove ${label}`}
+                          onClick={(ev) => { ev.stopPropagation(); toggleCategory(s); }}
+                          className="hover:text-red-300"
                         >
-                          ×
+                          <X className="w-3 h-3" />
                         </button>
                       </span>
-                    );
-                  })
-                )}
+                    ))
+                  )}
+                  <ChevronDown className="ml-auto w-4 h-4 text-[#8BA699]" />
+                </div>
 
-                <div className="ml-auto text-xs text-gray-400">▾</div>
-              </div>
-
-              {catOpen && (
-                <div className="absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-auto">
-                  {categoryList.length === 0 ? (
-                    <div className="p-3 text-sm text-gray-500">No categories</div>
-                  ) : (
-                    categoryList.map((c) => {
-                      const key = c.slug || c._id || c.name;
+                {catOpen && (
+                  <div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">
+                    {categoryList.map((c) => {
                       const val = c.slug || c.name;
                       const checked = selected.includes(val) || selected.includes(c.name);
                       return (
-                        <label
-                          key={key}
-                          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleCategoryInForm(val)}
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{c.name}</div>
-                            <div className="text-xs text-gray-500">Books: {c.count ?? 0}</div>
+                        <label key={c._id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors">
+                          <div className={`w-5 h-5 rounded border flex items-center justify-center ${checked ? 'bg-[#1A3C34] border-[#1A3C34]' : 'border-[#DCE4E0] bg-white'}`}>
+                            {checked && <Check className="w-3.5 h-3.5 text-white" />}
                           </div>
+                          <div className="flex-1 font-medium text-sm text-[#2C3E38]">{c.name}</div>
                         </label>
                       );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">You can also enter comma separated categories below.</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm">Categories (CSV)</label>
-              <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2 mt-1"
-                value={form.categories}
-                onChange={e => set("categories", e.target.value)}
-                placeholder="e.g. kids, math"
-                disabled
-              />
-            </div>
-            <div>
-              <label className="text-sm">Tags</label>
-              <input
-                className="w-full bg-surface border border-border rounded-lg px-3 py-2 mt-1"
-                value={form.tags}
-                onChange={e => set("tags", e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-        {/* Description & Suggestions */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Description & Suggestions" />
-          <div>
-            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Suggestion Groups (comma-separated)
-            </label>
-            <input
-              type="text"
-              value={form.suggestions}
-              onChange={e => set("suggestions", e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              placeholder="Hindu Scriptures, Epic Texts"
-            />
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Books with the same suggestion group will show as related to each other
-            </p>
-          </div>
-          <Field label="Description">
-            <textarea
-              className="w-full bg-surface border border-border rounded-lg px-3 py-2 h-32"
-              value={form.descriptionHtml}
-              onChange={e => set("descriptionHtml", e.target.value)}
-            />
-          </Field>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Why Choose This Book <span className="text-gray-500 text-xs">(comma or newline separated)</span>
-            </label>
-            <textarea
-              value={form.whyChooseThis}
-              onChange={e => set("whyChooseThis", e.target.value)}
-              rows={5}
-              placeholder="e.g., Age-appropriate activities, Enhances fine motor skills, Beautiful illustrations"
-              className="w-full bg-surface border border-border rounded-lg px-3 py-2 h-32"
-            />
-          </div>
-        </div>
-
-
-        {/* Media & Visibility */}
-        <div className="bg-surface border border-border-subtle rounded-xl shadow-sm p-5">
-          <SectionTitle title="Media & Visibility" />
-
-          <div className="flex items-center gap-3">
-            <input type="file" accept="image/*" multiple onChange={onPickImages} />
-            {uploading && <span className="text-xs text-fg-subtle">Uploading…</span>}
-          </div>
-
-          {/* Thumbnails grid */}
-          {coverUrls.length > 0 ? (
-            <div className="mt-3 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-              {coverUrls.map((p, i) => (
-                <div key={`${p}-${i}`} className="relative border rounded-md overflow-hidden group">
-                  <img src={assetUrl(p)} alt="" className="h-28 w-full object-cover" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                  <div className="absolute top-1 right-1 flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => removeImageAt(i)}
-                      className="px-2 py-0.5 text-xs rounded bg-white/90 border"
-                    >
-                      Remove
-                    </button>
-                    {i !== 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setAsCover(i)}
-                        className="px-2 py-0.5 text-xs rounded bg-white/90 border"
-                        title="Make cover"
-                      >
-                        Cover
-                      </button>
-                    )}
+                    })}
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="mt-2 text-sm text-fg-subtle">No images yet.</div>
-          )}
 
-          <div className="flex items-center gap-3 mt-4">
-            <label className="text-sm">Visibility</label>
-            <select
-              className="bg-surface border border-border rounded-lg px-3 py-2"
-              value={form.visibility}
-              onChange={e => set("visibility", e.target.value)}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Row label="Categories (CSV)" hintRight="Manual Entry">
+                <input
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={categoriesText}
+                  onChange={(e) => setCategoriesText(e.target.value)}
+                  placeholder="e.g. kids, math"
+                />
+              </Row>
+              <Row label="Tags (CSV)" hintRight="For Search">
+                <input
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={tagsText}
+                  onChange={(e) => setTagsText(e.target.value)}
+                  placeholder="e.g. bestseller, new"
+                />
+              </Row>
+            </div>
+          </div>
+
+          {/* Description & Suggestions */}
+          <Card title="Content & SEO">
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-bold text-[#2C3E38]">Suggestion Groups (CSV)</label>
+              <input
+                type="text"
+                value={suggestionsText}
+                onChange={e => setSuggestionsText(e.target.value)}
+                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                placeholder="e.g. Hindu Scriptures, Epic Texts"
+              />
+            </div>
+
+            <Row label="Description">
+              <textarea
+                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-40 outline-none focus:border-[#1A3C34] font-mono text-sm"
+                value={book.descriptionHtml}
+                onChange={(e) => setField("descriptionHtml", e.target.value)}
+                placeholder="Book description..."
+              />
+            </Row>
+
+            <div className="mt-6">
+              <label className="block text-sm font-bold text-[#2C3E38] mb-2">"Why Choose This Book" Points</label>
+              <textarea
+                value={whyChooseThisText}
+                onChange={e => setWhyChooseThisText(e.target.value)}
+                rows={5}
+                placeholder="Enter each point on a new line"
+                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+              />
+            </div>
+          </Card>
+
+          {/* Media & Visibility */}
+          <Card title="Media & Settings">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+              <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm">
+                <Upload className="w-4 h-4" />
+                <span>Upload Images</span>
+                <input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" />
+              </label>
+              {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
+            </div>
+
+            {book.assets.coverUrl.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {book.assets.coverUrl.map((p, i) => (
+                  <div key={`${p}-${i}`} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
+                    <img src={assetUrl(p)} alt="" className="h-full w-full object-contain p-2" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                      {i !== 0 && (
+                        <button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>
+                      )}
+                      <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
+                    </div>
+                    {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-[#8BA699]">
+                <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm">No images uploaded yet</p>
+              </div>
+            )}
+
+            <div className="border-t border-[#E3E8E5] mt-8 pt-6">
+              <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
+              <select
+                className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                value={book.visibility}
+                onChange={(e) => setField("visibility", e.target.value)}
+              >
+                <option value="public">Public (Visible to everyone)</option>
+                <option value="draft">Draft (Hidden)</option>
+              </select>
+            </div>
+          </Card>
+
+          {/* Mobile Floating Save Button */}
+          <div className="fixed bottom-6 right-6 sm:hidden z-50">
+            <button
+              onClick={save}
+              disabled={saving || uploading}
+              className="w-14 h-14 rounded-full bg-[#1A3C34] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"
             >
-              <option value="public">Public</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Sticky actions — hidden native submit + FancyButton click */}
-        <div className="sticky bottom-3 z-10">
-          <div className="bg-surface/90 backdrop-blur border border-border-subtle rounded-xl shadow-md p-3 flex justify-end gap-2">
-            <button type="submit" disabled={saving || uploading} className="sr-only" aria-hidden="true">
-              Submit
+              <Save className="w-6 h-6" />
             </button>
-            <div onClick={submit}>
-              <FancyButton text={saving ? "Saving…" : "Create"} />
-            </div>
           </div>
-        </div>
-      </form>
+
+        </form>
+      </div>
     </div>
   );
 }
 
-function SectionTitle({ title }) {
-  return <div className="text-sm font-semibold text-gray-700 mb-3">{title}</div>;
+/* ---------------- UI building blocks ---------------- */
+function Card({ title, children }) {
+  return (
+    <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
+      <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
+        {title}
+      </div>
+      {children}
+    </div>
+  );
 }
 
-function Field({ label, hint, children }) {
+function Row({ label, hintRight, children }) {
   return (
-    <div className="mb-3 last:mb-0">
-      <div className="flex items-center justify-between mb-1">
-        <label className="text-sm">{label}</label>
-        {hint && <span className="text-xs text-gray-500">{hint}</span>}
+    <div className="mb-4 last:mb-0">
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-sm font-bold text-[#2C3E38]">{label}</label>
+        {hintRight ? <span className="text-xs text-[#8BA699] font-medium">{hintRight}</span> : null}
       </div>
       {children}
     </div>

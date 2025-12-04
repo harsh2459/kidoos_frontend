@@ -6,24 +6,7 @@ import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
-
-function CartIcon({ className = "" }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="9" cy="21" r="1" />
-      <circle cx="20" cy="21" r="1" />
-      <path d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
-    </svg>
-  );
-}
+import { ShoppingCart, Check } from "lucide-react"; // Using Lucide icons for consistency
 
 export default function ProductCard({ book }) {
   const d = dealFn(book);
@@ -38,45 +21,29 @@ export default function ProductCard({ book }) {
 
   const { isCustomer, token } = useCustomer();
 
-
   const addToCart = async () => {
     window.dispatchEvent(new Event("cart:add"));
 
-    // Check if customer is logged in
     if (!isCustomer) {
-      console.warn("⚠️ User not logged in, redirecting to login");
       t.info("Please login to add items to your cart");
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
 
-    // ✅ Simple token check (no external function needed)
     try {
       const hasToken = !!localStorage.getItem("customer_jwt");
       if (!hasToken) {
-        console.error("❌ No customer token found!");
         t.err("Session expired, please login again");
         navigate("/login", { state: { next: "/cart" } });
         return;
       }
 
-      // Call API with token (interceptor will attach it)
       const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
-
-      // Update local cart state
       replaceAll(res?.data?.cart?.items || []);
-
       t.ok("Added to cart");
       navigate("/cart");
 
     } catch (e) {
-      console.error("❌ Add to cart failed:", {
-        status: e?.response?.status,
-        error: e?.response?.data,
-        message: e.message
-      });
-
-      // Handle 401 specifically
       if (e?.response?.status === 401) {
         t.err("Session expired, please login again");
         localStorage.removeItem("customer_jwt");
@@ -85,15 +52,12 @@ export default function ProductCard({ book }) {
         return;
       }
 
-      // Fallback: Add locally for better UX
-      console.log("ℹ️ Falling back to local cart");
       addLocal({
         ...book,
         price: book.price || book.pric || book.mrp,
         mrp: book.mrp || book.price || book.pric,
         qty: 1
       });
-
       t.warn("Added to local cart (sync with server failed)");
       navigate("/cart");
     }
@@ -110,122 +74,100 @@ export default function ProductCard({ book }) {
       : book?.assets?.coverUrl) || "/uploads/placeholder.png";
 
   return (
-    <article className="card card-hover p-4 flex flex-col h-full">
+    <article className="group flex flex-col h-full bg-white rounded-2xl border border-[#E3E8E5] overflow-hidden hover:border-[#4A7C59] hover:shadow-lg transition-all duration-300">
+      
+      {/* 1. IMAGE CONTAINER */}
       <Link
         to={`/book/${book.slug}`}
         title={book.title}
-        className="
-          group relative block rounded-xl overflow-hidden bg-white border border-slate-100
-          transition-all duration-300 ease-out focus:outline-none focus-visible:outline-none
-        "
+        className="relative block w-full aspect-[3/4] overflow-hidden bg-[#F4F7F5]"
       >
-        <div className="aspect-[3/4] w-full grid place-items-center p-4 bg-white overflow-hidden">
+        <div className="w-full h-full p-6 flex items-center justify-center">
           <img
             src={assetUrl(cover)}
             alt={book.title}
             loading="lazy"
             draggable={false}
             className="
-              max-h-[88%] max-w-[88%] object-contain
-              transition-transform duration-300 ease-out
-              group-hover:scale-[1.05]
+              max-h-full max-w-full object-contain drop-shadow-sm
+              transition-transform duration-500 ease-out
+              group-hover:scale-110
             "
           />
         </div>
-        <div
-          className="
-            pointer-events-none absolute inset-0
-            bg-white/0 group-hover:bg-primary/5
-            transition-colors duration-300
-          "
-        />
+        {/* Discount Badge */}
+        {d.off > 0 && (
+          <span className="absolute top-3 left-3 bg-[#E8F0EB] text-[#1A3C34] text-xs font-bold px-2 py-1 rounded-md border border-[#DCE4E0]">
+            -{d.off}%
+          </span>
+        )}
       </Link>
 
-      <Link
-        to={`/book/${book.slug}`}
-        className="mt-3 font-medium text-fg leading-tight line-clamp-2"
-      >
-        {book.title}
-      </Link>
-      <div className="text-fg-muted text-sm line-clamp-1">
-        {(book.authors || []).join(", ")}
-      </div>
-
-      <div className="mt-auto pt-3 flex items-center justify-between gap-3">
-        <div className="flex items-baseline gap-2">
-          <div className="font-semibold">₹{d.price}</div>
-          {d.mrp > d.price && (
-            <>
-              <div className="line-through text-sm text-fg-subtle">₹{d.mrp}</div>
-              {d.off > 0 && (
-                <span className="text-[10px] text-green-700 bg-green-100 rounded-full px-2 py-0.5 border">
-                  -{d.off}%
-                </span>
-              )}
-            </>
-          )}
+      {/* 2. TEXT CONTENT */}
+      <div className="p-4 flex flex-col flex-grow">
+        <Link
+          to={`/book/${book.slug}`}
+          className="font-serif font-bold text-[#1A3C34] text-lg leading-tight line-clamp-2 mb-1 hover:text-[#4A7C59] transition-colors"
+        >
+          {book.title}
+        </Link>
+        
+        <div className="text-[#5C756D] text-sm line-clamp-1 mb-4">
+          {(book.authors || []).join(", ")}
         </div>
 
-        {!inCart ? (
-          <button
-            onClick={addToCart}
-            className="
-      group relative
-      h-[44px] w-[52px]
-      hover:w-40
-      -mr-1
-      rounded-full bg-slate-900 text-white
-      shadow-sm hover:shadow-md
-      transition-all duration-300
-      overflow-hidden
-      flex items-center justify-center
-      focus:outline-none focus-visible:outline-none
-    "
-            title="Add to cart"
-            aria-label="Add to cart"
-          >
-            {/* Cart Icon - Hidden on hover */}
-            <span
-              className="
-        absolute
-        flex items-center justify-center
-        h-[44px] w-[52px]
-        transition-all duration-300
-        group-hover:opacity-0 group-hover:scale-75
-      "
-            >
-              <CartIcon className="h-5 w-5" />
-            </span>
+        {/* 3. PRICE & ACTION FOOTER */}
+        <div className="mt-auto flex items-center justify-between gap-3">
+          
+          {/* Price Block */}
+          <div className="flex flex-col">
+            <div className="font-bold text-[#1A3C34] text-lg">₹{d.price}</div>
+            {d.mrp > d.price && (
+              <span className="line-through text-xs text-[#8BA699]">₹{d.mrp}</span>
+            )}
+          </div>
 
-            {/* Text - Shown on hover */}
-            <span
+          {/* Action Button - Responsive & Stable */}
+          {!inCart ? (
+            <button
+              onClick={addToCart}
               className="
-        text-[0.95rem] font-medium whitespace-nowrap
-        opacity-0 scale-75
-        transition-all duration-300
-        group-hover:opacity-100 group-hover:scale-100
-      "
+                bg-[#1A3C34] text-white hover:bg-[#2F523F]
+                transition-all duration-300 shadow-md hover:shadow-lg active:scale-95
+                flex items-center justify-center
+                
+                /* Mobile: Circle Icon Only */
+                w-10 h-10 rounded-full
+                
+                /* Desktop: Pill Shape with Text */
+                md:w-auto md:h-10 md:px-4 md:rounded-xl
+              "
+              title="Add to cart"
             >
-              Add to Cart
-            </span>
-          </button>
-        ) : (
-          <button
-            onClick={goToCart}
-            className="
-      inline-flex items-center justify-center gap-2
-      h-[44px] w-40
-      -mr-1
-      rounded-full bg-slate-900 text-white
-      shadow-sm hover:shadow-md transition-all duration-300
-      focus:outline-none focus-visible:outline-none
-    "
-            title="Go to cart"
-          >
-            <CartIcon className="h-5 w-5" />
-            <span className="text-[0.95rem]">Go to Cart</span>
-          </button>
-        )}
+              <ShoppingCart className="w-5 h-5 md:mr-2" />
+              <span className="hidden md:inline font-medium text-sm">Add</span>
+            </button>
+          ) : (
+            <button
+              onClick={goToCart}
+              className="
+                bg-[#E8F0EB] text-[#1A3C34] border border-[#DCE4E0]
+                transition-all duration-300 hover:bg-[#DCE4E0] active:scale-95
+                flex items-center justify-center
+                
+                /* Mobile: Circle Icon Only */
+                w-10 h-10 rounded-full
+                
+                /* Desktop: Pill Shape with Text */
+                md:w-auto md:h-10 md:px-4 md:rounded-xl
+              "
+              title="Go to cart"
+            >
+              <Check className="w-5 h-5 md:mr-2" />
+              <span className="hidden md:inline font-medium text-sm">Added</span>
+            </button>
+          )}
+        </div>
       </div>
     </article>
   );

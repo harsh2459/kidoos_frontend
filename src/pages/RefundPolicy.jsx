@@ -1,328 +1,456 @@
-import React, { useEffect } from 'react';
-import { RefreshCw, XCircle, CheckCircle, AlertTriangle, CreditCard, Package, Mail, Phone, Shield, FileText } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { 
+    RefreshCw, XCircle, CheckCircle, AlertTriangle, CreditCard, 
+    Package, Mail, Phone, Shield, FileText, Clock, Ban, Info, ChevronRight 
+} from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 
 const RefundPolicy = () => {
+    const [activeSection, setActiveSection] = useState('overview');
 
     useEffect(() => {
         window.scrollTo(0, 0);
+
+        const handleScroll = () => {
+            const sectionElements = sections.map(sec => document.getElementById(sec.id));
+            let current = '';
+            
+            sectionElements.forEach(section => {
+                if (section) {
+                    const sectionTop = section.offsetTop;
+                    if (window.scrollY >= sectionTop - 200) {
+                        current = section.id;
+                    }
+                }
+            });
+            
+            if (current) setActiveSection(current);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    const sections = [
+        { id: 'overview', label: '1. Overview' },
+        { id: 'eligibility', label: '2. Return Eligibility' },
+        { id: 'timeline', label: '3. Return Timeline' },
+        { id: 'conditions', label: '4. Return Conditions' },
+        { id: 'non-returnable', label: '5. Non-Returnable Items' },
+        { id: 'process', label: '6. Return Process' },
+        { id: 'refund-methods', label: '7. Refund Methods' },
+        { id: 'refund-timeline', label: '8. Refund Timeline' },
+        { id: 'cancellation', label: '9. Order Cancellation' },
+        { id: 'damaged', label: '10. Damaged/Defective' },
+        { id: 'exchange', label: '11. Exchanges' },
+        { id: 'exceptions', label: '12. Special Cases' },
+        { id: 'contact', label: '13. Contact Support' },
+    ];
+
+    // Consistent background texture
+    const bgImage = "url('/images/terms-bg.png')";
+
     return (
-        <div className="min-h-screen bg-surface-subtle">
-            {/* Hero Section */}
-            <div className="hero py-8 xs:py-10 sm:py-12 md:py-14 lg:py-16 xl:py-18 2xl:py-20 mb-6 xs:mb-7 sm:mb-8 md:mb-10 lg:mb-12">
-                <div className="max-w-container mx-auto px-6">
-                    <div className="flex items-center justify-center mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
-                        <RefreshCw className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-brand" />
+        <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34]">
+            
+            {/* --- HERO SECTION --- */}
+            <div className="relative w-full pt-20 md:pt-24 pb-16 px-6 border-b border-[#E3E8E5] overflow-hidden bg-[#F4F7F5]">
+                
+                {/* Background Image Layer */}
+                <div 
+                    className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply" 
+                    style={{
+                        backgroundImage: bgImage,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center top',
+                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)' 
+                    }}
+                />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#F4F7F5]/60 to-[#F4F7F5] pointer-events-none"></div>
+
+                {/* Content Layer */}
+                <div className="relative z-10 max-w-5xl mx-auto text-center">
+                    <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm ring-1 ring-[#DCE4E0]">
+                        <RefreshCw className="w-8 h-8 md:w-10 md:h-10 text-[#1A3C34]" />
                     </div>
-                    <h1 className="text-3xl xs:text-3xl sm:text-4xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-6xl font-bold text-center text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
-                        Refund Policy
+                    
+                    <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-[#1A3C34] mb-6 tracking-tight leading-tight drop-shadow-sm">
+                        Refund & Returns Policy
                     </h1>
-                    <p className="text-center text-fg-muted text-base xs:text-base sm:text-lg md:text-lg lg:text-xl xl:text-xl 2xl:text-2xl max-w-xl xs:max-w-xl sm:max-w-2xl md:max-w-3xl mx-auto">
-                        Understanding our refund terms helps ensure a transparent shopping experience for your little ones.
+                    
+                    <p className="text-lg md:text-xl text-[#5C756D] font-light max-w-2xl mx-auto leading-relaxed">
+                        Understanding our refund terms helps ensure a transparent and satisfying shopping experience for your little ones.
                     </p>
-                    <p className="text-center text-fg-subtle text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base mt-2 xs:mt-2.5 sm:mt-3 md:mt-4">
-                        Last Updated: November 02, 2025
-                    </p>
+
+                    <div className="mt-8 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/80 backdrop-blur-md text-[#2F523F] text-xs font-bold uppercase tracking-widest border border-[#DCE4E0] shadow-sm">
+                        Last Updated: December 03, 2025
+                    </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="max-w-container mx-auto px-4 xs:px-5 sm:px-6 md:px-8 lg:px-10 xl:px-12 pb-8 xs:pb-10 sm:pb-12 md:pb-14 lg:pb-16 xl:pb-20">
-                <div className="max-w-3xl xs:max-w-3xl sm:max-w-4xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-6 xs:space-y-7 sm:space-y-8 md:space-y-10">
+            {/* --- MAIN CONTENT --- */}
+            <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 2xl:gap-16">
 
-                    {/* Introduction */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-brand/10 flex items-center justify-center">
-                                <Shield className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Our Commitment</h2>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    At Kiddos Intallcat, we strive to provide high-quality products to our customers. We value our
-                                    customers' satisfaction and aim to deliver excellent products and services. However, due to the
-                                    nature of our business, we have specific refund policies outlined below.
-                                </p>
-                                <div className="bg-brand/5 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-brand/20">
-                                    <p className="text-fg text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base font-semibold">
-                                        By placing an order with Kiddos Intallcat, you acknowledge that you have read, understood, and
-                                        agree to the terms of this Refund Policy.
-                                    </p>
-                                </div>
-                            </div>
+                    {/* --- LEFT SIDEBAR (Desktop) --- */}
+                    <div className="hidden lg:block lg:col-span-3">
+                        <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#DCE4E0]">
+                            <h3 className="text-xs font-bold text-[#8BA699] uppercase tracking-wider mb-4 px-3">
+                                Table of Contents
+                            </h3>
+                            <nav className="space-y-1">
+                                {sections.map((section) => (
+                                    <a
+                                        key={section.id}
+                                        href={`#${section.id}`}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            document.getElementById(section.id).scrollIntoView({ behavior: 'smooth' });
+                                            setActiveSection(section.id);
+                                        }}
+                                        className={`group flex items-center justify-between px-3 py-2.5 rounded-r-lg border-l-4 transition-all duration-200 ${
+                                            activeSection === section.id
+                                                ? 'bg-white border-[#1A3C34] text-[#1A3C34] font-semibold shadow-sm'
+                                                : 'border-transparent text-[#5C756D] hover:bg-[#EAF0ED] hover:text-[#2C3E38]'
+                                        }`}
+                                    >
+                                        <span className="text-sm truncate">{section.label}</span>
+                                        {activeSection === section.id && <ChevronRight className="w-4 h-4 text-[#4A7C59]" />}
+                                    </a>
+                                ))}
+                            </nav>
                         </div>
-                    </section>
+                    </div>
 
-                    {/* General Policy */}
-                    <section className="card bg-surface-subtle border-2 border-border">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-danger/10 flex items-center justify-center">
-                                <XCircle className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-danger" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">General Policy</h2>
-                                <div className="bg-danger-soft rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-danger/20 mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">
-                                    <p className="text-danger font-semibold mb-1 xs:mb-1.5 sm:mb-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">No Refund Policy - Important Notice</p>
-                                    <p className="text-danger text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base">
-                                        All sales are final. We do not offer refunds or exchanges for any products or services once an
-                                        order has been placed and confirmed, except under specific circumstances outlined below.
-                                    </p>
-                                </div>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    This policy applies to all products and services, including but not limited to physical products,
-                                    digital products, custom or personalized products, and any other services provided by Kiddos Intallcat.
-                                </p>
-                            </div>
+                    {/* --- MOBILE/TABLET NAV --- */}
+                    <div className="lg:hidden col-span-1 sticky top-0 z-50 bg-[#F4F7F5]/95 backdrop-blur-md border-b border-[#E3E8E5] -mx-4 sm:-mx-6 px-4 sm:px-6 py-4 overflow-x-auto scrollbar-hide">
+                        <div className="flex gap-3">
+                            {sections.map((section) => (
+                                <a
+                                    key={section.id}
+                                    href={`#${section.id}`}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        document.getElementById(section.id).scrollIntoView({ behavior: 'smooth' });
+                                        setActiveSection(section.id);
+                                    }}
+                                    className={`whitespace-nowrap text-sm px-4 py-2 rounded-full transition-all border ${
+                                        activeSection === section.id
+                                            ? 'bg-[#1A3C34] text-white border-[#1A3C34] shadow-md'
+                                            : 'bg-white text-[#5C756D] border-[#DCE4E0]'
+                                    }`}
+                                >
+                                    {section.label}
+                                </a>
+                            ))}
                         </div>
-                    </section>
+                    </div>
 
-                    {/* Duplicate Payments */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                                <CreditCard className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-success" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Duplicate Payments</h2>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    If a duplicate payment is made, customers may be eligible for a refund of the duplicate amount.
-                                    In such cases, please contact our customer support team with proof of the duplicate payment.
-                                </p>
-                                <div className="bg-success-soft rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-success/20">
-                                    <p className="text-success text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base font-semibold">
-                                        We will review and process the refund within 10 business days if eligible.
+                    {/* --- RIGHT CONTENT BODY --- */}
+                    <div className="lg:col-span-9 space-y-12 lg:space-y-16 pb-24">
+
+                        {/* 1. Overview */}
+                        <section id="overview" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Shield className="w-6 h-6 text-[#4A7C59]" />
+                                    1. Overview
+                                </h2>
+                                <div className="prose prose-slate max-w-none text-[#4A5D56] leading-relaxed">
+                                    <p className="mb-4">
+                                        At <strong>Kiddos Intellect</strong>, customer satisfaction is our top priority. We understand that sometimes a book may not meet your expectations, arrive damaged, or you may simply change your mind.
                                     </p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Order Cancellations */}
-                    <section className="card">
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">Order Cancellations</h2>
-
-                        <div className="space-y-3 xs:space-y-3.5 sm:space-y-4 md:space-y-5">
-                            <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border-subtle">
-                                <div className="flex items-start gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                    <AlertTriangle className="w-4 h-4 xs:w-5 xs:h-5 text-fg-muted flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <h3 className="text-fg font-semibold mb-1 xs:mb-1.5 sm:mb-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Before Work Starts</h3>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed">
-                                            Orders cannot be canceled once the work has started. If an order is canceled by the customer
-                                            before the work has started, a refund may be provided at the company's discretion, less any
-                                            administrative or processing fees incurred.
+                                    <div className="bg-[#E8F0EB] border-l-4 border-[#4A7C59] p-5 rounded-r-lg">
+                                        <h4 className="font-bold text-[#1A3C34] text-sm mb-1 flex items-center gap-2">
+                                            <Shield className="w-4 h-4 text-[#4A7C59]" />
+                                            Our Commitment
+                                        </h4>
+                                        <p className="text-sm text-[#4A5D56]">
+                                            We stand behind the quality of our books. If you receive a damaged, defective, or incorrect book, we will replace it or provide a full refund at no additional cost to you.
                                         </p>
                                     </div>
                                 </div>
                             </div>
+                        </section>
 
-                            <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border-subtle">
-                                <div className="flex items-start gap-2 xs:gap-2.5 sm:gap-3 mb-1 xs:mb-1.5 sm:mb-2">
-                                    <CheckCircle className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-success flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <h3 className="text-fg font-semibold mb-1 xs:mb-1.5 sm:mb-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Company-Initiated Cancellation</h3>
-                                        <p className="text-fg-muted text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed">
-                                            If the order is canceled by the company due to unforeseen circumstances, such as unavailability
-                                            of resources or inability to complete the work within the agreed deadline, a full refund will
-                                            be provided.
+                        {/* 2. Return Eligibility */}
+                        <section id="eligibility" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">2. Return Eligibility</h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        You may return books within <span className="font-bold text-[#1A3C34]">7 days from delivery</span> if they meet the criteria below.
+                                    </p>
+                                    
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="bg-[#FAFBF9] p-5 rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2 flex items-center gap-2">
+                                                <CheckCircle className="w-4 h-4 text-[#4A7C59]" /> Damaged Book
+                                            </h4>
+                                            <p className="text-sm text-[#5C756D]">Torn pages, broken spine, or water damage.</p>
+                                        </div>
+                                        <div className="bg-[#FAFBF9] p-5 rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2 flex items-center gap-2">
+                                                <CheckCircle className="w-4 h-4 text-[#4A7C59]" /> Defective Book
+                                            </h4>
+                                            <p className="text-sm text-[#5C756D]">Missing pages, printing errors, or binding issues.</p>
+                                        </div>
+                                        <div className="bg-[#FAFBF9] p-5 rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2 flex items-center gap-2">
+                                                <CheckCircle className="w-4 h-4 text-[#4A7C59]" /> Wrong Item
+                                            </h4>
+                                            <p className="text-sm text-[#5C756D]">Received a different book than ordered.</p>
+                                        </div>
+                                        <div className="bg-[#FAFBF9] p-5 rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2 flex items-center gap-2">
+                                                <Info className="w-4 h-4 text-[#4A7C59]" /> Change of Mind
+                                            </h4>
+                                            <p className="text-sm text-[#5C756D]">Accepted if unused/unread. Return shipping charges may apply.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 3. Timeline */}
+                        <section id="timeline" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Clock className="w-6 h-6 text-[#4A7C59]" />
+                                    3. Return Timeline
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <div className="p-5 bg-[#F0F5F2] border-l-4 border-[#4A7C59] rounded-r-lg">
+                                        <h4 className="font-bold text-[#1A3C34] mb-2">7-Day Window</h4>
+                                        <p className="text-sm">Returns must be initiated within 7 days of delivery. The window starts from the day you receive your order.</p>
+                                    </div>
+                                    <div className="p-4 bg-[#FFF9F0] border border-[#F5E6D3] rounded-lg flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-[#8A6A4B] mt-0.5 flex-shrink-0" />
+                                        <p className="text-sm text-[#5C4D40]">
+                                            <strong>Important:</strong> Please inspect your books immediately. Returns initiated after 7 days will not be accepted.
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-
-
-                    {/* Custom or Personalized Products */}
-                    <section className="card">
-                        <div className="flex items-start gap-3 xs:gap-3.5 sm:gap-4 md:gap-5">
-                            <div className="flex-shrink-0 w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 lg:w-12 lg:h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                                <Package className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-accent" />
-                            </div>
-                            <div className="flex-1">
-                                <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Custom or Personalized Products</h2>
-                                <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                                    No refunds are available for custom or personalized products, such as engraved items, monogrammed
-                                    products, or custom-designed items, once the order has been confirmed.
-                                </p>
-                                <div className="bg-surface-subtle rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-border-subtle">
-                                    <h3 className="text-fg font-semibold mb-1 xs:mb-1.5 sm:mb-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base text-sm">Examples Include:</h3>
-                                    <ul className="space-y-1 text-fg-muted text-sm">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-brand mt-1">•</span>
-                                            <span>Custom engraved products</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-brand mt-1">•</span>
-                                            <span>Made-to-order items with specific customizations</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-brand mt-1">•</span>
-                                            <span>Special order items</span>
-                                        </li>
-                                    </ul>
+                        {/* 4. Conditions */}
+                        <section id="conditions" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">4. Return Conditions</h2>
+                                <div className="grid md:grid-cols-2 gap-4 text-sm text-[#5C756D]">
+                                    <div className="p-4 border border-[#EBEFEA] rounded-lg">
+                                        <h4 className="font-bold text-[#1A3C34] mb-2">Required</h4>
+                                        <ul className="space-y-1 list-disc pl-4">
+                                            <li>Unused & Unread</li>
+                                            <li>Original Packaging</li>
+                                            <li>Invoice Included</li>
+                                            <li>No Markings/Writing</li>
+                                        </ul>
+                                    </div>
+                                    <div className="p-4 bg-[#FFF5F5] border border-red-100 rounded-lg">
+                                        <h4 className="font-bold text-red-800 mb-2">Rejected If</h4>
+                                        <ul className="space-y-1 list-disc pl-4 text-red-700/80">
+                                            <li>Signs of use/reading</li>
+                                            <li>Damaged after delivery</li>
+                                            <li>Missing parts/pages</li>
+                                            <li>Past 7-day window</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Shipping and Handling Charges */}
-                    <section className="card bg-surface-subtle">
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Shipping and Handling Charges</h2>
-                        <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                            Shipping and handling charges are non-refundable under any circumstances, even if a refund is approved
-                            for the product itself.
-                        </p>
-                        <div className="bg-surface rounded-lg p-4 border border-border">
-                            <p className="text-fg text-sm">
-                                This applies to all shipping methods including standard, expedited, and international shipping.
-                            </p>
-                        </div>
-                    </section>
-
-                    {/* Dispute Resolution */}
-                    <section className="card">
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">Dispute Resolution</h2>
-                        <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                            If the customer disputes the refund decision, they may request a review by our management team.
-                        </p>
-                        <div className="bg-brand/5 rounded-lg p-3 xs:p-3.5 sm:p-4 md:p-5 border border-brand/20">
-                            <div className="flex items-start gap-3">
-                                <AlertTriangle className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5 md:w-6 md:h-6 text-brand flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="text-fg font-semibold mb-1 xs:mb-1.5 sm:mb-2 text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">Review Process</p>
-                                    <p className="text-fg-muted text-sm">
-                                        The management team will review the request and provide a final decision within 10 business days.
-                                        This decision will be final and binding.
+                        {/* 5. Non-Returnable */}
+                        <section id="non-returnable" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Ban className="w-6 h-6 text-red-400" />
+                                    5. Non-Returnable Items
+                                </h2>
+                                <div className="space-y-4">
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                        {[
+                                            "Personalized Books", "Clearance/Sale Items", 
+                                            "Digital Downloads", "Gift Cards", 
+                                            "Opened Sealed Books", "Used/Read Books"
+                                        ].map((item, i) => (
+                                            <div key={i} className="flex items-center gap-2 p-3 bg-[#FAFBF9] border border-[#EBEFEA] rounded-lg text-sm text-[#5C756D]">
+                                                <XCircle className="w-4 h-4 text-red-400" /> {item}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-sm text-[#5C756D] mt-2 italic">
+                                        *Exception: If a non-returnable item arrives damaged or defective, we will still replace it.
                                     </p>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* No Return of Goods */}
-                    <section className="card">
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">No Return of Goods</h2>
-                        <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                            We recommend using an insured and trackable mail service as we will not be responsible for goods
-                            damaged or lost in return shipment.
-                        </p>
-                        <div className="bg-danger-soft rounded-lg p-4 border border-danger/20">
-                            <p className="text-danger text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base xl:text-base font-semibold">
-                                Refunds will not be issued without actual receipt of the goods or proof of received return delivery.
-                            </p>
-                        </div>
-                    </section>
+                        {/* 6. Process */}
+                        <section id="process" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">6. Return Process</h2>
+                                <div className="space-y-4">
+                                    {[
+                                        { title: "Initiate Request", desc: "Contact us via Email, Phone, or Website within 7 days." },
+                                        { title: "Provide Details", desc: "Share Order ID, photos of damage (if any), and reason." },
+                                        { title: "Approval", desc: "We review within 24 hours and send shipping instructions." },
+                                        { title: "Ship Back", desc: "Free pickup for damaged items. Self-ship for change of mind." },
+                                        { title: "Refund", desc: "Processed after quality check (1-2 days after receipt)." }
+                                    ].map((step, i) => (
+                                        <div key={i} className="flex gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-[#1A3C34] text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                                {i + 1}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-[#1A3C34]">{step.title}</h4>
+                                                <p className="text-sm text-[#5C756D]">{step.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
 
-                    {/* Modifications to Policy */}
-                    <section className="card">
-                        <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Modifications to Policy</h2>
-                        <p className="text-fg-muted leading-relaxed text-sm xs:text-sm sm:text-base md:text-base lg:text-lg xl:text-lg">
-                            We reserve the right to modify this refund policy at any time without prior notice. Any modifications
-                            will be posted on our website and will be effective immediately. We encourage you to review this policy
-                            periodically for any changes.
-                        </p>
-                    </section>
+                        {/* 7. Refund Methods */}
+                        <section id="refund-methods" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <CreditCard className="w-6 h-6 text-[#4A7C59]" />
+                                    7. Refund Methods
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="p-5 bg-[#FAFBF9] rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2">Full Online Payment</h4>
+                                            <p className="text-sm">Refunded to original source (Card, UPI, etc.). 100% of order value.</p>
+                                        </div>
+                                        <div className="p-5 bg-[#FAFBF9] rounded-xl border border-[#EBEFEA]">
+                                            <h4 className="font-bold text-[#1A3C34] mb-2">COD Orders</h4>
+                                            <p className="text-sm">Refunded via Bank Transfer. You must provide bank details.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-                    {/* Quick Reference */}
-                    <section className="card bg-brand text-brand-foreground">
-                        <h2 className="text-2xl font-bold mb-6 text-center">Refund Policy Quick Reference</h2>
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="bg-brand-foreground/10 rounded-lg p-4 border border-brand-foreground/20">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <XCircle className="w-5 h-5" />
-                                    <h3 className="font-semibold">General Sales</h3>
+                        {/* 8. Refund Timeline */}
+                        <section id="refund-timeline" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">8. Refund Timeline</h2>
+                                <div className="overflow-hidden border border-[#E3E8E5] rounded-xl">
+                                    <table className="w-full text-sm text-[#4A5D56]">
+                                        <thead className="bg-[#F4F7F5] text-[#1A3C34] font-bold">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left">Method</th>
+                                                <th className="px-4 py-3 text-left">Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#E3E8E5]">
+                                            <tr><td className="px-4 py-3">UPI / Wallets</td><td className="px-4 py-3">3-5 Days</td></tr>
+                                            <tr><td className="px-4 py-3">Cards / Net Banking</td><td className="px-4 py-3">5-7 Days</td></tr>
+                                            <tr><td className="px-4 py-3">Bank Transfer (COD)</td><td className="px-4 py-3">5-10 Days</td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <p className="text-sm opacity-90">All sales are final - No refunds</p>
                             </div>
-                            <div className="bg-brand-foreground/10 rounded-lg p-4 border border-brand-foreground/20">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <CheckCircle className="w-5 h-5" />
-                                    <h3 className="font-semibold">Duplicate Payments</h3>
-                                </div>
-                                <p className="text-sm opacity-90">Eligible for refund within 10 days</p>
-                            </div>
-                            <div className="bg-brand-foreground/10 rounded-lg p-4 border border-brand-foreground/20">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <FileText className="w-5 h-5" />
-                                    <h3 className="font-semibold">Digital Products</h3>
-                                </div>
-                                <p className="text-sm opacity-90">No refunds once accessed/downloaded</p>
-                            </div>
-                            <div className="bg-brand-foreground/10 rounded-lg p-4 border border-brand-foreground/20">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <Package className="w-5 h-5" />
-                                    <h3 className="font-semibold">Custom Items</h3>
-                                </div>
-                                <p className="text-sm opacity-90">No refunds on personalized products</p>
-                            </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Contact Section */}
-                    <section className="card">
-                        <div className="text-center">
-                            <h2 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl xl:text-3xl font-bold text-fg mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">Questions or Concerns?</h2>
-                            <p className="text-fg-muted mb-6 max-w-2xl mx-auto">
-                                If you have any questions or need further clarification about our refund policy, please contact our
-                                customer support team. We're here to help!
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                                <a
-                                    href="mailto:kiddosintellect@gmail.com"
-                                    className="btn-primary flex items-center gap-2"
-                                >
-                                    <Mail className="w-4 h-4" />
-                                    Email Support
-                                </a>
-                                <a
-                                    href="tel:+9198798 57529"
-                                    className="btn-secondary flex items-center gap-2"
-                                >
-                                    <Phone className="w-4 h-4" />
-                                    Call Us
-                                </a>
+                        {/* 9. Cancellation */}
+                        <section id="cancellation" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">9. Order Cancellation</h2>
+                                <div className="space-y-4 text-[#4A5D56]">
+                                    <div className="p-4 bg-[#E8F0EB] rounded-lg">
+                                        <h4 className="font-bold text-[#1A3C34] mb-1">Before Shipment</h4>
+                                        <p className="text-sm">Free cancellation. Full refund processed instantly.</p>
+                                    </div>
+                                    <div className="p-4 bg-[#FFF9F0] rounded-lg">
+                                        <h4 className="font-bold text-[#8A6A4B] mb-1">After Shipment</h4>
+                                        <p className="text-sm text-[#5C4D40]">Cancellation not possible. Please accept delivery and initiate a return.</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="mt-6 pt-6 border-t border-border-subtle">
-                                <p className="text-fg-subtle text-sm">
-                                    For any queries or concerns, please reach out to us at:
+                        </section>
+
+                        {/* 10. Damaged */}
+                        <section id="damaged" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <AlertTriangle className="w-6 h-6 text-[#4A7C59]" />
+                                    10. Damaged/Defective
+                                </h2>
+                                <div className="space-y-6 text-[#4A5D56] leading-relaxed">
+                                    <p>
+                                        If your book arrives damaged, we offer a <strong>Free Replacement</strong> or <strong>Full Refund</strong>.
+                                    </p>
+                                    <div className="bg-[#FAFBF9] border border-[#EBEFEA] p-5 rounded-xl">
+                                        <h4 className="font-bold text-[#1A3C34] mb-3">Report within 48 Hours</h4>
+                                        <ul className="list-disc pl-5 text-sm space-y-1">
+                                            <li>Take clear photos of the damage.</li>
+                                            <li>Keep original packaging.</li>
+                                            <li>Contact support immediately.</li>
+                                            <li>We arrange free pickup.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 11. Exchanges */}
+                        <section id="exchange" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">11. Exchanges</h2>
+                                <p className="text-[#4A5D56] leading-relaxed">
+                                    We do not offer direct exchanges. To exchange a book, simply return the unwanted item for a refund and place a new order for the correct item. This ensures faster processing.
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-3 text-sm">
-                                    <div className="flex items-center gap-2 text-fg-muted">
-                                        <Phone className="w-4 h-4" />
-                                        <span>+91 98798 57529</span>
+                            </div>
+                        </section>
+
+                        {/* 12. Exceptions */}
+                        <section id="exceptions" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6">12. Special Cases</h2>
+                                <div className="grid sm:grid-cols-2 gap-4 text-sm text-[#5C756D]">
+                                    <div className="p-4 border border-[#EBEFEA] rounded-lg">
+                                        <strong>Duplicate Payment:</strong> Full refund within 5-7 days upon proof.
                                     </div>
-                                    <div className="flex items-center gap-2 text-fg-muted">
-                                        <Mail className="w-4 h-4" />
-                                        <span>kiddosintellect@gmail.com</span>
+                                    <div className="p-4 border border-[#EBEFEA] rounded-lg">
+                                        <strong>Refused Delivery:</strong> Return shipping costs deducted from refund.
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    {/* Acknowledgment */}
-                    <section className="card bg-surface-subtle border-2 border-border">
-                        <div className="text-center">
-                            <div className="flex items-center justify-center mb-3 xs:mb-3.5 sm:mb-4 md:mb-5">
-                                <div className="w-16 h-16 rounded-full bg-brand/10 flex items-center justify-center">
-                                    <CheckCircle className="w-8 h-8 text-brand" />
+                        {/* 13. Contact */}
+                        <section id="contact" className="scroll-mt-32">
+                            <div className="bg-white p-6 md:p-8 lg:p-10 rounded-2xl border border-[#E3E8E5] shadow-sm">
+                                <h2 className="font-serif text-2xl md:text-3xl text-[#1A3C34] mb-6 flex items-center gap-3">
+                                    <Phone className="w-6 h-6 text-[#4A7C59]" />
+                                    13. Contact Support
+                                </h2>
+                                <p className="text-[#4A5D56] mb-6">
+                                    Need help with a return?
+                                </p>
+                                <div className="bg-[#1A3C34] text-white p-8 rounded-xl text-center">
+                                    <div className="flex flex-col sm:flex-row justify-center gap-8 text-sm font-medium">
+                                        <span className="flex items-center gap-2 justify-center"><Mail className="w-4 h-4"/> kiddosintellect@gmail.com</span>
+                                        <span className="flex items-center gap-2 justify-center"><Phone className="w-4 h-4"/> +91 98798 57529</span>
+                                    </div>
+                                    <p className="text-[#8BA699] text-xs mt-4">
+                                        Mon-Sat, 10:00 AM - 6:00 PM IST
+                                    </p>
                                 </div>
                             </div>
-                            <h2 className="text-xl font-bold text-fg mb-3">Acknowledgment</h2>
-                            <p className="text-fg-muted max-w-2xl mx-auto">
-                                By placing an order with Kiddos Intallcat, you acknowledge that you have read, understood, and
-                                agree to the terms of this No-Refund Policy. If you have any questions or need further clarification,
-                                please contact our customer support team before making a purchase.
-                            </p>
-                        </div>
-                    </section>
+                        </section>
 
+                    </div>
                 </div>
             </div>
+
             <ScrollToTopButton />
         </div>
     );
