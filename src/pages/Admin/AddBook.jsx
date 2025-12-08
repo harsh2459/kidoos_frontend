@@ -5,14 +5,14 @@ import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
-import { Save, Upload, X, ChevronDown, Check, Image as ImageIcon, ArrowLeft, PlusCircle } from "lucide-react";
+import { Save, Upload, X, ChevronDown, Check, Image as ImageIcon, ArrowLeft, PlusCircle, Edit3, Lock } from "lucide-react";
+
 
 export default function AddBook() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
 
-  // Initial State for New Book
   const [book, setBook] = useState({
     title: "",
     subtitle: "",
@@ -22,7 +22,8 @@ export default function AddBook() {
     mrp: "",
     price: "",
     discountPct: "",
-    inventory: { stock: 0, lowStockAlert: 5 },
+    inventory: { stock: 0, lowStockAlert: 5, sku: "KI-", asin: "edit it code" },
+    dimensions: { weight: 0, length: 0, width: 0, height: 0 }, // ✅ NEW
     visibility: "public",
     assets: { coverUrl: [] },
     descriptionHtml: ""
@@ -30,19 +31,18 @@ export default function AddBook() {
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-
-  // Text Inputs for CSV fields
   const [authorsText, setAuthorsText] = useState("");
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [suggestionsText, setSuggestionsText] = useState("");
   const [whyChooseThisText, setWhyChooseThisText] = useState("");
 
-  // Categories Dropdown Data
+  // ✅ NEW: Dimensions editing state
+  const [dimensionsEditable, setDimensionsEditable] = useState(false);
+
   const [categoryList, setCategoryList] = useState([]);
   const [catOpen, setCatOpen] = useState(false);
 
-  // Fetch categories on mount
   useEffect(() => {
     (async () => {
       try {
@@ -54,12 +54,13 @@ export default function AddBook() {
     })();
   }, []);
 
-  // ---------- Helpers ----------
   const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
   const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...prev.inventory, [k]: v } }));
   const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...prev.assets, [k]: v } }));
 
-  /* ---------------- Images ---------------- */
+  // ✅ NEW: Dimensions setter
+  const setDim = (k, v) => setBook((prev) => ({ ...prev, dimensions: { ...prev.dimensions, [k]: v } }));
+
   async function uploadImages(files) {
     if (!files?.length) return;
     const fd = new FormData();
@@ -102,11 +103,9 @@ export default function AddBook() {
     })(book.assets?.coverUrl || []));
   }
 
-  /* ---------------- Save Logic ---------------- */
   const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
   const splitReasons = (str = "") => str.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
 
-  // Category Selection Helpers
   const selectedFromText = () => splitCsv(categoriesText);
   function toggleCategory(val) {
     const cur = selectedFromText();
@@ -133,8 +132,17 @@ export default function AddBook() {
         price: Number(book.price) || 0,
         discountPct: Number(book.discountPct) || 0,
         inventory: {
+          sku: book.inventory.sku || "",
+          asin: book.inventory.asin || "", // ✅ Include ASIN
           stock: Number(book.inventory.stock) || 0,
           lowStockAlert: Number(book.inventory.lowStockAlert) || 5,
+        },
+        // ✅ NEW: Include dimensions
+        dimensions: {
+          weight: Number(book.dimensions.weight) || 0,
+          length: Number(book.dimensions.length) || 0,
+          width: Number(book.dimensions.width) || 0,
+          height: Number(book.dimensions.height) || 0,
         }
       };
 
@@ -149,7 +157,6 @@ export default function AddBook() {
     }
   }
 
-  /* ---------------- Pricing Logic ---------------- */
   const toNum = (v) => (v === "" || v === null ? NaN : Number(v));
 
   function handlePriceChange(field) {
@@ -181,11 +188,9 @@ export default function AddBook() {
 
   return (
     <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
-
-      {/* Responsive Container */}
+   
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <button
@@ -249,60 +254,157 @@ export default function AddBook() {
             </div>
           </Card>
 
-          {/* Details & Pricing Grid */}
-          <div className="grid lg:grid-cols-1  gap-4">
-            <Card title="Pricing & Inventory">
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <Row label="MRP (₹)">
+          {/* ✅ NEW: Identification Section */}
+          <Card title="Identification">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Row label="SKU" hintRight="Unique identifier">
+                <input
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                  placeholder="e.g. KI-001"
+                  value={book.inventory.sku}
+                  onChange={(e) => setInv("sku", e.target.value)}
+                />
+              </Row>
+              <Row label="ASIN" hintRight="Amazon ID (optional)">
+                <div className="relative">
                   <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                    value={book.mrp}
-                    onChange={handlePriceChange("mrp")}
-                    placeholder="0"
+                    className="w-full bg-gray-100 border border-[#DCE4E0] rounded-xl px-4 py-3 pr-10 text-gray-600 cursor-not-allowed"
+                    placeholder="Leave empty or enter Amazon ID"
+                    value={book.inventory.asin}
+                    readOnly
                   />
-                </Row>
-                <Row label="Sale Price (₹)">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
-                    value={book.price}
-                    onChange={handlePriceChange("price")}
-                    placeholder="0"
-                  />
-                </Row>
-                <Row label="Discount (%)">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
-                    value={book.discountPct}
-                    onChange={handlePriceChange("discountPct")}
-                    placeholder="0"
-                  />
-                </Row>
-              </div>
-              <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
-                <Row label="Stock">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                    value={book.inventory.stock}
-                    onChange={(e) => setInv("stock", e.target.value)}
-                    placeholder="0"
-                  />
-                </Row>
-                <Row label="Low Stock Alert">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                    value={book.inventory.lowStockAlert}
-                    onChange={(e) => setInv("lowStockAlert", e.target.value)}
-                    placeholder="5"
-                  />
-                </Row>
-              </div>
-            </Card>
-          </div>
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
+              </Row>
+            </div>
+          </Card>
+
+          {/* Pricing & Inventory */}
+          <Card title="Pricing & Inventory">
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <Row label="MRP (₹)">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={book.mrp}
+                  onChange={handlePriceChange("mrp")}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Sale Price (₹)">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
+                  value={book.price}
+                  onChange={handlePriceChange("price")}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Discount (%)">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
+                  value={book.discountPct}
+                  onChange={handlePriceChange("discountPct")}
+                  placeholder="0"
+                />
+              </Row>
+            </div>
+            <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
+              <Row label="Stock">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={book.inventory.stock}
+                  onChange={(e) => setInv("stock", e.target.value)}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Low Stock Alert">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={book.inventory.lowStockAlert}
+                  onChange={(e) => setInv("lowStockAlert", e.target.value)}
+                  placeholder="5"
+                />
+              </Row>
+            </div>
+          </Card>
+
+          {/* ✅ NEW: Shipping Dimensions */}
+          <Card title="Shipping Dimensions">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-[#5C756D]">Package dimensions for shipping calculations</p>
+              <button
+                type="button"
+                onClick={() => setDimensionsEditable(!dimensionsEditable)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${dimensionsEditable
+                    ? "bg-[#1A3C34] text-white border-[#1A3C34]"
+                    : "bg-white text-[#2C3E38] border-[#DCE4E0] hover:border-[#1A3C34]"
+                  }`}
+              >
+                {dimensionsEditable ? <Lock className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+                {dimensionsEditable ? "Lock" : "Edit"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Row label="Weight (kg)">
+                <input
+                  type="number"
+                  step="0.001"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34]"
+                      : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions.weight}
+                  onChange={(e) => setDim("weight", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0.000"
+                />
+              </Row>
+              <Row label="Length (cm)">
+                <input
+                  type="number"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34]"
+                      : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions.length}
+                  onChange={(e) => setDim("length", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Width (cm)">
+                <input
+                  type="number"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34]"
+                      : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions.width}
+                  onChange={(e) => setDim("width", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Height (cm)">
+                <input
+                  type="number"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34]"
+                      : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions.height}
+                  onChange={(e) => setDim("height", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0"
+                />
+              </Row>
+            </div>
+          </Card>
 
           {/* Categorization */}
           <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
@@ -473,7 +575,6 @@ export default function AddBook() {
   );
 }
 
-/* ---------------- UI building blocks ---------------- */
 function Card({ title, children }) {
   return (
     <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
@@ -484,13 +585,12 @@ function Card({ title, children }) {
     </div>
   );
 }
-
 function Row({ label, hintRight, children }) {
   return (
-    <div className="mb-4 last:mb-0">
+    <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-bold text-[#2C3E38]">{label}</label>
-        {hintRight ? <span className="text-xs text-[#8BA699] font-medium">{hintRight}</span> : null}
+        <label className="text-sm font-bold text-[#2C3E38]">{label}</label>
+        {hintRight && <span className="text-xs text-[#5C756D]">{hintRight}</span>}
       </div>
       {children}
     </div>

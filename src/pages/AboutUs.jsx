@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 import { Link } from 'react-router-dom';
-import { 
-    BookOpen, Heart, Users, Truck, ShieldCheck, 
-    Sparkles, Target, Lightbulb, TrendingUp, 
+import {
+    BookOpen, Heart, Users, Truck, ShieldCheck,
+    Sparkles, Target, Lightbulb, TrendingUp,
     Award, Mail, Phone, ArrowRight, Star
 } from 'lucide-react';
 
@@ -12,26 +12,25 @@ export default function AboutUs() {
         window.scrollTo(0, 0);
     }, []);
 
-    // Consistent background texture
     const bgImage = "url('/images/terms-bg.png')";
 
     return (
         <div className="bg-[#F4F7F5] font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] min-h-screen">
-            
+
             {/* --- HERO SECTION --- */}
             <div className="relative w-full pt-20 md:pt-24 pb-16 px-6 border-b border-[#E3E8E5] overflow-hidden bg-[#F4F7F5]">
-                
+
                 {/* Background Image Layer */}
-                <div 
-                    className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply" 
+                <div
+                    className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply"
                     style={{
                         backgroundImage: bgImage,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center top',
-                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)' 
+                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)'
                     }}
                 />
-                
+
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#F4F7F5]/60 to-[#F4F7F5] pointer-events-none"></div>
 
@@ -48,9 +47,9 @@ export default function AboutUs() {
                             One Book at a Time
                         </span>
                     </h1>
-                    
+
                     <p className="text-lg md:text-xl text-[#5C756D] max-w-3xl mx-auto leading-relaxed font-light">
-                         At Kiddos Intellect, we believe every child deserves access to quality books that spark curiosity, foster imagination, and build a lifelong love for reading.
+                        At Kiddos Intellect, we believe every child deserves access to quality books that spark curiosity, foster imagination, and build a lifelong love for reading.
                     </p>
                 </div>
             </div>
@@ -79,7 +78,7 @@ export default function AboutUs() {
                         </div>
                     </div>
                     <div className="relative">
-                         <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white rotate-2 hover:rotate-0 transition-transform duration-500 bg-[#DCE4E0]">
+                        <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white rotate-2 hover:rotate-0 transition-transform duration-500 bg-[#DCE4E0]">
                             {/* Replace with your actual About Us image path */}
                             <img src="/images/About-us.png" alt="Our Story" className="w-full h-full object-cover" />
                         </div>
@@ -93,7 +92,7 @@ export default function AboutUs() {
                 <div className="grid md:grid-cols-2 gap-8">
                     <div className="bg-white rounded-3xl p-8 md:p-12 border border-[#E3E8E5] shadow-sm hover:shadow-md transition-shadow group">
                         <div className="w-14 h-14 rounded-2xl bg-[#E8F0EB] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                           <Target className="w-7 h-7 text-[#4A7C59]" />
+                            <Target className="w-7 h-7 text-[#4A7C59]" />
                         </div>
                         <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-4">Our Mission</h3>
                         <p className="text-[#4A5D56] leading-relaxed text-lg">
@@ -103,7 +102,7 @@ export default function AboutUs() {
 
                     <div className="bg-white rounded-3xl p-8 md:p-12 border border-[#E3E8E5] shadow-sm hover:shadow-md transition-shadow group">
                         <div className="w-14 h-14 rounded-2xl bg-[#FAFBF9] border border-[#E3E8E5] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                           <Lightbulb className="w-7 h-7 text-[#1A3C34]" />
+                            <Lightbulb className="w-7 h-7 text-[#1A3C34]" />
                         </div>
                         <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-4">Our Vision</h3>
                         <p className="text-[#4A5D56] leading-relaxed text-lg">
@@ -118,7 +117,7 @@ export default function AboutUs() {
                         <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#1A3C34] mb-6">What Makes Us Different</h2>
                         <div className="w-24 h-1 bg-[#4A7C59] mx-auto rounded-full"></div>
                     </div>
-                    
+
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
                             {

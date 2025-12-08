@@ -5,7 +5,7 @@ import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
-import { Save, Upload, X, ChevronDown, Check, Image as ImageIcon, ArrowLeft } from "lucide-react";
+import { Save, Upload, X, ChevronDown, Check, Image as ImageIcon, ArrowLeft, Edit3, Lock, Unlock } from "lucide-react";
 
 export default function EditBook() {
   const { slug } = useParams();
@@ -17,14 +17,18 @@ export default function EditBook() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Text inputs for array fields
   const [whyChooseThisText, setWhyChooseThisText] = useState("");
-  // free-text versions so commas are allowed while typing
   const [authorsText, setAuthorsText] = useState("");
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [suggestionsText, setSuggestionsText] = useState("");
 
-  // categories dropdown
+  // Lock state for Dimensions
+  const [dimensionsEditable, setDimensionsEditable] = useState(false);
+
+  // Category dropdown logic
   const [categoryList, setCategoryList] = useState([]);
   const [catOpen, setCatOpen] = useState(false);
 
@@ -32,8 +36,7 @@ export default function EditBook() {
     (async () => {
       try {
         setLoading(true);
-
-        // ✅ Use admin route directly with slug - it handles both ID and slug
+        // Use the admin route to get raw data
         const { data } = await api.get(`/books/admin/${slug}`, auth);
         const b = data?.book || null;
 
@@ -42,20 +45,24 @@ export default function EditBook() {
           return;
         }
 
-        // normalize images to array of relative paths
+        // Normalize assets
         const coverArr = Array.isArray(b?.assets?.coverUrl)
           ? b.assets.coverUrl
           : (b?.assets?.coverUrl ? [b.assets.coverUrl] : []);
         const normalizedCovers = coverArr.map(toRelativeFromPublic);
 
-        setBook({ ...b, assets: { ...(b.assets || {}), coverUrl: normalizedCovers } });
+        setBook({ 
+            ...b, 
+            assets: { ...(b.assets || {}), coverUrl: normalizedCovers },
+            inventory: b.inventory || { sku: "", asin: "", stock: 0, lowStockAlert: 5 },
+            dimensions: b.dimensions || { weight: 0, length: 0, width: 0, height: 0 }
+        });
 
+        // Populate text areas
         setAuthorsText((b.authors || []).join(", "));
         setCategoriesText((b.categories || []).join(", "));
         setTagsText((b.tags || []).join(", "));
         setSuggestionsText((b.suggestions || []).join(", "));
-        
-        // Populate the 'Why Choose This' text box
         setWhyChooseThisText((b.whyChooseThis || []).join("\n"));
 
       } catch (error) {
@@ -67,8 +74,8 @@ export default function EditBook() {
     })();
   }, [slug]);
 
+  // Load Categories for dropdown
   useEffect(() => {
-    // fetch categories for dropdown
     let mounted = true;
     (async () => {
       try {
@@ -106,12 +113,13 @@ export default function EditBook() {
     );
   }
 
-  // ---------- safe setters ----------
+  // State Helpers
   const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
   const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
+  const setDim = (k, v) => setBook((prev) => ({ ...prev, dimensions: { ...(prev.dimensions || {}), [k]: v } }));
   const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...(prev.assets || {}), [k]: v } }));
 
-  /* ---------------- Images (multiple) ---------------- */
+  // --- Image Handling ---
   async function uploadImages(files) {
     if (!files?.length) return [];
     const fd = new FormData();
@@ -126,7 +134,7 @@ export default function EditBook() {
         .map(x => x?.path)
         .filter(Boolean)
         .map(toRelativeFromPublic);
-      if (!paths.length) t.info("No images returned from server.");
+      
       setAssets("coverUrl", [...(book.assets?.coverUrl || []), ...paths]);
       return paths;
     } catch (e) {
@@ -157,10 +165,9 @@ export default function EditBook() {
     })(book.assets?.coverUrl || []));
   }
 
-  /* ---------------- Save ---------------- */
+  // --- Helper Functions ---
   const splitCsv = (str = "") => str.split(",").map(s => s.trim()).filter(Boolean);
-
-  // categories helper for dropdown
+  const splitReasons = (str = "") => str.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
   const selectedFromText = () => splitCsv(categoriesText);
 
   function toggleCategoryInEdit(val) {
@@ -172,14 +179,45 @@ export default function EditBook() {
     }
   }
 
-  // Add new function for whyChooseThis that handles both commas and newlines
-  function splitReasons(str = "") {
-    return str
-      .split(/[\n,]/) // Split by newlines OR commas
-      .map(s => s.trim())
-      .filter(Boolean);
+  // --- Pricing Logic ---
+  const toNum = (v) => (v === "" || v === null || v === undefined ? NaN : Number(v));
+
+  function calcDiscountPct(mrp, price) {
+    const M = toNum(mrp), P = toNum(price);
+    if (!isFinite(M) || M <= 0 || !isFinite(P)) return "";
+    const pct = Math.round(((M - P) / M) * 100);
+    return String(Math.min(100, Math.max(0, pct)));
   }
 
+  function calcPriceFromDiscount(mrp, discountPct) {
+    const M = toNum(mrp), D = toNum(discountPct);
+    if (!isFinite(M) || M <= 0 || !isFinite(D)) return "";
+    const price = Math.round(M * (1 - Math.min(100, Math.max(0, D)) / 100));
+    return String(Math.max(0, price));
+  }
+
+  function handlePriceChange(field) {
+    return (e) => {
+      const raw = e.target.value;
+      setBook((prev) => {
+        const next = { ...prev, [field]: raw };
+        const mrp = field === "mrp" ? raw : (prev.mrp ?? "");
+        const price = field === "price" ? raw : (prev.price ?? "");
+        const disc = field === "discountPct" ? raw : (prev.discountPct ?? "");
+
+        // Auto-calculate logic
+        if (field === "mrp" || field === "price") {
+            const newDiscount = calcDiscountPct(mrp === raw ? raw : mrp, price === raw ? raw : price);
+            next.discountPct = newDiscount;
+        } else if (field === "discountPct") {
+            next.price = calcPriceFromDiscount(mrp, disc);
+        }
+        return next;
+      });
+    };
+  }
+
+  // --- Save Handler ---
   async function save(e) {
     e.preventDefault();
     setSaving(true);
@@ -200,8 +238,16 @@ export default function EditBook() {
 
         inventory: {
           sku: book.inventory?.sku,
+          asin: book.inventory?.asin, // Pass back ASIN (even if read-only)
           stock: Number(book.inventory?.stock) || 0,
           lowStockAlert: Number(book.inventory?.lowStockAlert) || 5,
+        },
+
+        dimensions: {
+          weight: Number(book.dimensions?.weight) || 0,
+          length: Number(book.dimensions?.length) || 0,
+          width: Number(book.dimensions?.width) || 0,
+          height: Number(book.dimensions?.height) || 0,
         },
 
         assets: {
@@ -219,6 +265,7 @@ export default function EditBook() {
 
       await api.patch(`/books/${book._id}`, payload, auth);
       t.ok("Saved successfully!");
+      setDimensionsEditable(false); // Re-lock dimensions after save
     } catch (e) {
       t.err(e.response?.data?.error || "Save failed");
     } finally {
@@ -226,66 +273,24 @@ export default function EditBook() {
     }
   }
 
-  /* ---------------- Pricing helpers (unchanged) ---------------- */
-  const toNum = (v) => (v === "" || v === null || v === undefined ? NaN : Number(v));
-
-  function calcDiscountPct(mrp, price) {
-    const M = toNum(mrp), P = toNum(price);
-    if (!isFinite(M) || M <= 0 || !isFinite(P)) return "";
-    const pct = Math.round(((M - P) / M) * 100);
-    return String(Math.min(100, Math.max(0, pct)));
-  }
-  function calcPriceFromDiscount(mrp, discountPct) {
-    const M = toNum(mrp), D = toNum(discountPct);
-    if (!isFinite(M) || M <= 0 || !isFinite(D)) return "";
-    const price = Math.round(M * (1 - Math.min(100, Math.max(0, D)) / 100));
-    return String(Math.max(0, price));
-  }
-
-  function handlePriceChange(field) {
-    return (e) => {
-      const raw = e.target.value;
-      setBook((prev) => {
-        const next = { ...prev, [field]: raw };
-
-        const mrp = field === "mrp" ? raw : (prev.mrp ?? "");
-        const price = field === "price" ? raw : (prev.price ?? "");
-        const disc = field === "discountPct" ? raw : (prev.discountPct ?? "");
-
-        const newDiscount = calcDiscountPct(mrp, price);
-        next.discountPct = newDiscount;
-
-        if (field === "mrp") {
-          next.price = calcPriceFromDiscount(raw, newDiscount);
-        } else if (field === "discountPct") {
-          next.price = calcPriceFromDiscount(mrp, disc);
-        }
-
-        return next;
-      });
-    };
-  }
-
   const selected = selectedFromText();
 
   return (
     <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
-      
-      {/* Responsive Container */}
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
-            <button 
-              onClick={() => navigate(-1)} 
+            <button
+              onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-[#5C756D] hover:text-[#1A3C34] mb-2 transition-colors text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Books
             </button>
             <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34]">Edit Book</h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border ${book.visibility === "public"
               ? "bg-[#E8F0EB] text-[#2F523F] border-[#4A7C59]"
@@ -305,13 +310,12 @@ export default function EditBook() {
         </div>
 
         <form onSubmit={save} className="space-y-8">
-          
+
           {/* Basic Info */}
           <Card title="Basic Information">
-            <Row label="Title" hintRight="Shown in catalog">
+            <Row label="Title" hintRight="Required">
               <input
                 className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
-                placeholder="e.g. Strategic Management MPA-011"
                 value={book.title || ""}
                 onChange={(e) => setField("title", e.target.value)}
               />
@@ -335,61 +339,155 @@ export default function EditBook() {
             </div>
           </Card>
 
-          {/* Details & Pricing Grid */}
-          <div className="grid lg:grid-cols-1 gap-4">
+          {/* Identification Section */}
+          <Card title="Identification">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Row label="SKU" hintRight="Stock Keeping Unit (Editable)">
+                <input
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-mono"
+                  value={book.inventory?.sku || ""}
+                  onChange={(e) => setInv("sku", e.target.value)}
+                />
+              </Row>
+              <Row label="ASIN / Product ID" hintRight="Read-only Identifier">
+                <div className="relative">
+                  <input
+                    className="w-full bg-gray-100 border border-[#DCE4E0] rounded-xl px-4 py-3 pr-10 text-gray-600 cursor-not-allowed font-mono"
+                    value={book.inventory?.asin || ""}
+                    readOnly
+                  />
+                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
+              </Row>
+            </div>
+          </Card>
 
-            <Card title="Pricing & Inventory">
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <Row label="MRP (₹)">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                    value={book.mrp ?? ""}
-                    onChange={handlePriceChange("mrp")}
-                    placeholder="0"
-                  />
-                </Row>
-                <Row label="Sale Price (₹)">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
-                    value={book.price ?? ""}
-                    onChange={handlePriceChange("price")}
-                    placeholder="0"
-                  />
-                </Row>
-                <Row label="Discount (%)">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
-                    value={book.discountPct ?? ""}
-                    onChange={handlePriceChange("discountPct")}
-                    placeholder="0"
-                  />
-                </Row>
-              </div>
-              <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
-                <Row label="Stock">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                    value={book.inventory?.stock ?? ""}
-                    onChange={(e) => setInv("stock", e.target.value)}
-                    placeholder="0"
-                  />
-                </Row>
-                <Row label="Low Stock Alert">
-                  <input
-                    type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                    value={book.inventory?.lowStockAlert ?? ""}
-                    onChange={(e) => setInv("lowStockAlert", e.target.value)}
-                    placeholder="5"
-                  />
-                </Row>
-              </div>
-            </Card>
-          </div>
+          {/* Pricing & Inventory */}
+          <Card title="Pricing & Inventory">
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <Row label="MRP (₹)">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={book.mrp ?? ""}
+                  onChange={handlePriceChange("mrp")}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Sale Price (₹)">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
+                  value={book.price ?? ""}
+                  onChange={handlePriceChange("price")}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Discount (%)">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
+                  value={book.discountPct ?? ""}
+                  onChange={handlePriceChange("discountPct")}
+                  placeholder="0"
+                />
+              </Row>
+            </div>
+            <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
+              <Row label="Stock">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={book.inventory?.stock ?? ""}
+                  onChange={(e) => setInv("stock", e.target.value)}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Low Stock Alert">
+                <input
+                  type="number"
+                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                  value={book.inventory?.lowStockAlert ?? ""}
+                  onChange={(e) => setInv("lowStockAlert", e.target.value)}
+                  placeholder="5"
+                />
+              </Row>
+            </div>
+          </Card>
+
+          {/* Shipping Dimensions (Locked by default) */}
+          <Card title="Shipping Dimensions">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-[#5C756D]">Package dimensions for shipping (Lock/Unlock to edit)</p>
+              <button
+                type="button"
+                onClick={() => setDimensionsEditable(!dimensionsEditable)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${dimensionsEditable
+                    ? "bg-[#1A3C34] text-white border-[#1A3C34]"
+                    : "bg-white text-[#2C3E38] border-[#DCE4E0] hover:border-[#1A3C34]"
+                  }`}
+              >
+                {dimensionsEditable ? <Lock className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+                {dimensionsEditable ? "Lock" : "Edit"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Row label="Weight (kg)">
+                <input
+                  type="number"
+                  step="0.001"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
+                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions?.weight ?? 0}
+                  onChange={(e) => setDim("weight", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0.000"
+                />
+              </Row>
+              <Row label="Length (cm)">
+                <input
+                  type="number"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
+                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions?.length ?? 0}
+                  onChange={(e) => setDim("length", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Width (cm)">
+                <input
+                  type="number"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
+                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions?.width ?? 0}
+                  onChange={(e) => setDim("width", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0"
+                />
+              </Row>
+              <Row label="Height (cm)">
+                <input
+                  type="number"
+                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
+                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
+                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    }`}
+                  value={book.dimensions?.height ?? 0}
+                  onChange={(e) => setDim("height", e.target.value)}
+                  disabled={!dimensionsEditable}
+                  placeholder="0"
+                />
+              </Row>
+            </div>
+          </Card>
 
           {/* Categorization */}
           <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
@@ -445,7 +543,6 @@ export default function EditBook() {
                             </div>
                             <div className="flex-1">
                               <div className="font-medium text-sm text-[#2C3E38]">{c.name}</div>
-                              <div className="text-xs text-[#8BA699]">Books: {c.count ?? 0}</div>
                             </div>
                           </label>
                         );
@@ -457,45 +554,32 @@ export default function EditBook() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm font-bold text-[#2C3E38] block mb-2">Categories (CSV)</label>
+              <Row label="Categories (CSV)">
                 <input
                   className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
                   value={categoriesText}
                   onChange={(e) => setCategoriesText(e.target.value)}
-                  placeholder="e.g. kids, math"
                 />
-              </div>
-              <div>
-                <label className="text-sm font-bold text-[#2C3E38] block mb-2">Tags (CSV)</label>
+              </Row>
+              <Row label="Tags (CSV)">
                 <input
                   className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
                   value={tagsText}
                   onChange={(e) => setTagsText(e.target.value)}
-                  placeholder="e.g. bestseller, new"
                 />
-              </div>
+              </Row>
             </div>
           </div>
 
-          {/* Description & Suggestions */}
+          {/* Content & SEO */}
           <Card title="Content & SEO">
-            <div className="mb-6">
-              <label className="block mb-2 text-sm font-bold text-[#2C3E38]">
-                Suggestion Groups (CSV)
-              </label>
+            <Row label="Suggestion Groups (CSV)" hintRight="For 'You Might Also Like'">
               <input
-                type="text"
+                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
                 value={suggestionsText}
                 onChange={e => setSuggestionsText(e.target.value)}
-                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                placeholder="Hindu Scriptures, Epic Texts"
               />
-              <p className="mt-1.5 text-xs text-[#5C756D] flex items-center gap-1">
-                <span className="bg-[#E8F0EB] text-[#2F523F] px-1.5 rounded text-[10px] font-bold">TIP</span>
-                Books sharing the same group will appear as "You Might Also Like"
-              </p>
-            </div>
+            </Row>
 
             <Row label="Description (HTML supported)">
               <textarea
@@ -504,7 +588,7 @@ export default function EditBook() {
                 onChange={(e) => setField("descriptionHtml", e.target.value)}
               />
             </Row>
-            
+
             <div className="mt-6">
               <label className="block text-sm font-bold text-[#2C3E38] mb-2">
                 "Why Choose This Book" Points
@@ -512,16 +596,15 @@ export default function EditBook() {
               <textarea
                 value={whyChooseThisText}
                 onChange={e => setWhyChooseThisText(e.target.value)}
-                rows={5}
-                placeholder="Enter each point on a new line"
-                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-32 outline-none focus:border-[#1A3C34] font-mono text-sm"
+                placeholder="One point per line"
               />
             </div>
           </Card>
 
           {/* Media & Visibility */}
           <Card title="Media & Settings">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
               <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm">
                 <Upload className="w-4 h-4" />
                 <span>Upload Images</span>
@@ -530,84 +613,42 @@ export default function EditBook() {
               {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
             </div>
 
-            {Array.isArray(book.assets?.coverUrl) && book.assets.coverUrl.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {book.assets.coverUrl.map((p, i) => (
-                  <div key={`${p}-${i}`} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
-                    <img src={assetUrl(p)} alt="" className="h-full w-full object-contain p-2" />
-                    
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                      {i !== 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setAsCover(i)}
-                          className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full hover:bg-[#E8F0EB]"
-                        >
-                          Make Cover
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeImageAt(i)}
-                        className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full hover:bg-red-600"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    
-                    {i === 0 && (
-                      <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">
-                        Cover
+            {book.assets.coverUrl.length > 0 ? (
+               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {book.assets.coverUrl.map((p, i) => (
+                    <div key={i} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
+                      <img src={assetUrl(p)} className="h-full w-full object-contain p-2" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
+                         {i!==0 && <button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>}
+                         <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-[#8BA699]">
-                <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                <p className="text-sm">No images uploaded yet</p>
-              </div>
-            )}
+                      {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                    </div>
+                  ))}
+               </div>
+            ) : <div className="p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-center text-[#8BA699]"><ImageIcon className="mx-auto w-8 h-8 mb-2 opacity-50"/>No images</div>}
 
-            <div className="border-t border-[#E3E8E5] mt-8 pt-6">
-              <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
-              <select
-                className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                value={book.visibility || "public"}
-                onChange={(e) => setField("visibility", e.target.value)}
-              >
-                <option value="public">Public (Visible to everyone)</option>
-                <option value="draft">Draft (Hidden)</option>
-              </select>
-            </div>
+             <div className="mt-8 pt-6 border-t border-[#E3E8E5]">
+               <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
+               <select className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]" value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public (Visible)</option><option value="draft">Draft (Hidden)</option></select>
+             </div>
           </Card>
 
-          {/* Mobile Floating Save Button */}
+          {/* Floating Mobile Save */}
           <div className="fixed bottom-6 right-6 sm:hidden z-50">
-            <button
-              onClick={save}
-              disabled={saving || uploading}
-              className="w-14 h-14 rounded-full bg-[#1A3C34] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"
-            >
-              <Save className="w-6 h-6" />
-            </button>
+            <button type="submit" disabled={saving || uploading} className="w-14 h-14 rounded-full bg-[#1A3C34] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"><Save className="w-6 h-6" /></button>
           </div>
-
         </form>
       </div>
     </div>
   );
 }
 
-/* ---------------- UI building blocks ---------------- */
+// Components
 function Card({ title, children }) {
   return (
     <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
-      <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
-        {title}
-      </div>
+      <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">{title}</div>
       {children}
     </div>
   );
@@ -615,11 +656,11 @@ function Card({ title, children }) {
 
 function Row({ label, hintRight, children }) {
   return (
-    <div className="mb-4 last:mb-0">
-      <div className="flex items-center justify-between mb-2">
-        <label className="block text-sm font-bold text-[#2C3E38]">{label}</label>
-        {hintRight ? <span className="text-xs text-[#8BA699] font-medium">{hintRight}</span> : null}
-      </div>
+    <div className="mb-6">
+      <label className="flex items-center justify-between mb-2 text-sm font-bold text-[#2C3E38]">
+        <span>{label}</span>
+        {hintRight && <span className="text-xs text-[#5C756D] font-normal">{hintRight}</span>}
+      </label>
       {children}
     </div>
   );

@@ -3,9 +3,23 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { assetUrl } from '../../api/asset';
 import { t } from "../../lib/toast";
-import FancyButton from "../../components/button/button";
-import { Trash2, Plus, Eye, EyeOff, TrendingUp, MousePointerClick, Target, Upload, Palette, Image as ImageIcon, X as XIcon } from 'lucide-react';
-import AdminTabs from '../../components/AdminTabs';
+
+import { 
+  Trash2, 
+  Plus, 
+  Eye, 
+  EyeOff, 
+  TrendingUp, 
+  MousePointerClick, 
+  Target, 
+  Upload, 
+  Palette, 
+  Image as ImageIcon, 
+  X as XIcon,
+  Check,
+  Save,
+  LayoutTemplate
+} from 'lucide-react';
 
 export default function PopupSettings() {
     const token = localStorage.getItem("admin_jwt") || "";
@@ -57,8 +71,8 @@ export default function PopupSettings() {
             customDesign: {
                 layout: "left-right",
                 backgroundColor: "#ffffff",
-                textColor: "#000000",
-                accentColor: "#4F46E5",
+                textColor: "#1A3C34",
+                accentColor: "#1A3C34",
                 borderRadius: "16px",
                 padding: "32px",
                 maxWidth: "600px",
@@ -66,7 +80,7 @@ export default function PopupSettings() {
                 titleFontSize: "28px",
                 titleFontWeight: "700",
                 descriptionFontSize: "16px",
-                ctaBackgroundColor: "#4F46E5",
+                ctaBackgroundColor: "#1A3C34",
                 ctaTextColor: "#ffffff",
                 ctaFontSize: "18px",
                 ctaFontWeight: "600",
@@ -120,15 +134,11 @@ export default function PopupSettings() {
     }
 
     function deleteConfig(id) {
-
         setConfigs(configs.filter(c => c._id !== id));
-
     }
 
     async function handleImageUpload(configId, file) {
         if (!file) return;
-
-        // Validate file size (5MB max)
         if (file.size > 5 * 1024 * 1024) {
             t.err("Image must be less than 5MB");
             return;
@@ -137,31 +147,18 @@ export default function PopupSettings() {
         setUploadingImage(configId);
         try {
             const formData = new FormData();
-            formData.append('files', file); // ✅ Use 'files' (plural)
-
-            console.log('📤 Frontend: Starting upload...');
+            formData.append('files', file); 
 
             const response = await api.post('/uploads/image', formData, auth);
 
-            console.log('📦 Frontend: Upload response:', response);
-            console.log('📦 Frontend: Response data:', response.data);
-
             if (response.data.ok && response.data.images && response.data.images.length > 0) {
-                // ✅ Get the URL from the correct field
                 const imageUrl = response.data.images[0].path || response.data.images[0].previewUrl;
-
-                console.log('✅ Frontend: Image URL extracted:', imageUrl);
-
                 updateConfig(configId, 'imageUrl', imageUrl);
                 t.ok("Image uploaded successfully");
             } else {
-                console.log('❌ Frontend: No images in response:', response.data);
                 t.err("Upload failed - no image returned");
             }
         } catch (error) {
-            console.error('❌ Frontend: Upload error:', error);
-            console.error('❌ Frontend: Error response:', error.response?.data);
-            console.error('❌ Frontend: Error details:', error.message);
             t.err("Failed to upload image");
         } finally {
             setUploadingImage(null);
@@ -207,12 +204,17 @@ export default function PopupSettings() {
         }
     }
 
+    // Common Input Class matching the theme
+    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all";
+    const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5";
+
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50">
-                <AdminTabs />
-                <div className="max-w-6xl mx-auto p-6">
-                    <p className="text-gray-600">Loading...</p>
+            <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8">
+                
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#E3E8E5]">
+                    <div className="w-10 h-10 border-4 border-[#1A3C34] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="mt-4 text-[#5C756D] font-medium">Loading settings...</p>
                 </div>
             </div>
         );
@@ -224,265 +226,249 @@ export default function PopupSettings() {
     const avgCTR = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(1) : 0;
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <AdminTabs />
+        <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8 pb-32">
+        
 
-            <div className="max-w-6xl mx-auto p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 className="text-3xl font-bold text-gray-900">Popup Marketing</h2>
-                        <p className="text-gray-600 mt-1">Design and manage promotional popups</p>
-                    </div>
-                    <label className="flex items-center gap-3 cursor-pointer bg-white px-5 py-3 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                        <input
-                            type="checkbox"
-                            checked={enabled}
-                            onChange={(e) => setEnabled(e.target.checked)}
-                            className="w-5 h-5 text-indigo-600"
-                        />
-                        <span className="font-medium text-gray-700">
-                            {enabled ? '🟢 Popups Enabled' : '🔴 Popups Disabled'}
-                        </span>
-                    </label>
-
+            {/* HEADER */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Popup Marketing</h1>
+                    <p className="text-[#5C756D] mt-1 text-sm">Design and manage promotional popups for your store.</p>
                 </div>
-
-                {/* Analytics Summary */}
-                {configs.length > 0 && (
-                    <div className="grid grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white p-5 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-blue-100 rounded-lg">
-                                    <Target className="text-blue-600" size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">Impressions</p>
-                                    <p className="text-2xl font-bold text-gray-900">{totalImpressions.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-green-100 rounded-lg">
-                                    <MousePointerClick className="text-green-600" size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">Clicks</p>
-                                    <p className="text-2xl font-bold text-gray-900">{totalClicks.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-purple-100 rounded-lg">
-                                    <TrendingUp className="text-purple-600" size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">CTR</p>
-                                    <p className="text-2xl font-bold text-gray-900">{avgCTR}%</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white p-5 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-red-100 rounded-lg">
-                                    <XIcon className="text-red-600" size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600 font-medium">Dismissals</p>
-                                    <p className="text-2xl font-bold text-gray-900">{totalDismissals.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        </div>
+                
+                <label className={`
+                    flex items-center gap-3 cursor-pointer px-5 py-3 rounded-xl border transition-all shadow-sm
+                    ${enabled ? "bg-[#1A3C34] border-[#1A3C34]" : "bg-white border-[#E3E8E5] hover:bg-[#F4F7F5]"}
+                `}>
+                    <input
+                        type="checkbox"
+                        checked={enabled}
+                        onChange={(e) => setEnabled(e.target.checked)}
+                        className="hidden"
+                    />
+                    <div className={`w-10 h-5 rounded-full relative transition-colors ${enabled ? "bg-white/20" : "bg-gray-200"}`}>
+                        <div className={`absolute top-1 w-3 h-3 rounded-full transition-transform duration-200 ${enabled ? "left-6 bg-white" : "left-1 bg-gray-400"}`}></div>
                     </div>
-                )}
+                    <span className={`font-bold text-sm ${enabled ? "text-white" : "text-[#5C756D]"}`}>
+                        {enabled ? 'Popups Enabled' : 'Popups Disabled'}
+                    </span>
+                </label>
+            </div>
 
-                {/* Popup Configurations */}
-                <div className="space-y-6 mb-6">
-                    {configs.map((config, idx) => {
-                        const selectedBook = books.find(b => b._id === config.productId);
+            {/* ANALYTICS SUMMARY */}
+            {configs.length > 0 && (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {[
+                        { label: 'Impressions', val: totalImpressions.toLocaleString(), icon: Target, color: 'text-blue-600', bg: 'bg-blue-50' },
+                        { label: 'Clicks', val: totalClicks.toLocaleString(), icon: MousePointerClick, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                        { label: 'CTR', val: `${avgCTR}%`, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+                        { label: 'Dismissals', val: totalDismissals.toLocaleString(), icon: XIcon, color: 'text-red-600', bg: 'bg-red-50' }
+                    ].map((stat, i) => (
+                        <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E3E8E5] flex items-center gap-4">
+                            <div className={`p-3 rounded-xl ${stat.bg}`}>
+                                <stat.icon className={stat.color} size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-[#8BA699]">{stat.label}</p>
+                                <p className="text-2xl font-bold text-[#1A3C34] mt-0.5">{stat.val}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-                        return (
-                            <div key={config._id} className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                {/* Header */}
-                                <div className="flex items-start justify-between mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl font-bold text-gray-900">Popup #{idx + 1}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => updateConfig(config._id, 'isActive', !config.isActive)}
-                                            className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all ${config.isActive
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                                }`}
-                                        >
-                                            {config.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
-                                            {config.isActive ? 'Active' : 'Inactive'}
-                                        </button>
+            {/* POPUP LIST */}
+            <div className="space-y-6">
+                {configs.map((config, idx) => {
+                    const selectedBook = books.find(b => b._id === config.productId);
+
+                    return (
+                        <div key={config._id} className="bg-white border border-[#E3E8E5] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                            
+                            {/* Card Header */}
+                            <div className="flex items-start justify-between mb-6 pb-6 border-b border-[#F4F7F5]">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-lg bg-[#FAFBF9] border border-[#E3E8E5] flex items-center justify-center font-bold text-[#1A3C34]">
+                                        #{idx + 1}
                                     </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg text-[#1A3C34]">{config.title || "Untitled Popup"}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`w-2 h-2 rounded-full ${config.isActive ? "bg-emerald-500" : "bg-gray-300"}`}></span>
+                                            <span className="text-xs font-medium text-[#5C756D]">{config.isActive ? "Active" : "Inactive"}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateConfig(config._id, 'isActive', !config.isActive)}
+                                        className={`
+                                            px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all
+                                            ${config.isActive
+                                                ? 'bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]'
+                                                : 'bg-[#F4F7F5] text-[#5C756D] border border-[#E3E8E5] hover:bg-[#E3E8E5]'
+                                            }
+                                        `}
+                                    >
+                                        {config.isActive ? <Eye size={16} /> : <EyeOff size={16} />}
+                                        {config.isActive ? 'Active' : 'Inactive'}
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => deleteConfig(config._id)}
-                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                                        className="p-2.5 rounded-xl text-[#5C756D] hover:bg-red-50 hover:text-red-600 transition-colors border border-transparent hover:border-red-100"
                                     >
-                                        <Trash2 size={20} />
+                                        <Trash2 size={18} />
                                     </button>
                                 </div>
+                            </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Title */}
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Title <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={config.title}
-                                            onChange={(e) => updateConfig(config._id, 'title', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="Special Offer!"
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Description */}
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                                        <textarea
-                                            value={config.description}
-                                            onChange={(e) => updateConfig(config._id, 'description', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            rows={2}
-                                            placeholder="Limited time offer on our featured product..."
-                                        />
-                                    </div>
-
-                                    {/* Design Type */}
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Design Type</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateConfig(config._id, 'designType', 'custom')}
-                                                className={`p-4 border-2 rounded-lg text-left transition-all ${config.designType === 'custom'
-                                                    ? 'border-indigo-500 bg-indigo-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
-                                            >
-                                                <Palette className={config.designType === 'custom' ? 'text-indigo-600' : 'text-gray-400'} size={24} />
-                                                <h4 className="font-semibold mt-2">Custom Design</h4>
-                                                <p className="text-xs text-gray-600 mt-1">Fully customizable with product data</p>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => updateConfig(config._id, 'designType', 'image')}
-                                                className={`p-4 border-2 rounded-lg text-left transition-all ${config.designType === 'image'
-                                                    ? 'border-indigo-500 bg-indigo-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
-                                            >
-                                                <ImageIcon className={config.designType === 'image' ? 'text-indigo-600' : 'text-gray-400'} size={24} />
-                                                <h4 className="font-semibold mt-2">Image Upload</h4>
-                                                <p className="text-xs text-gray-600 mt-1">Upload a complete popup design</p>
-                                            </button>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Left Column: Configuration */}
+                                <div className="space-y-5">
+                                    
+                                    {/* Basic Info */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="md:col-span-2">
+                                            <label className={labelClass}>Internal Title <span className="text-red-500">*</span></label>
+                                            <input
+                                                type="text"
+                                                value={config.title}
+                                                onChange={(e) => updateConfig(config._id, 'title', e.target.value)}
+                                                className={inputClass}
+                                                placeholder="e.g. Summer Sale Popup"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className={labelClass}>Description / Notes</label>
+                                            <textarea
+                                                value={config.description}
+                                                onChange={(e) => updateConfig(config._id, 'description', e.target.value)}
+                                                className={inputClass}
+                                                rows={2}
+                                                placeholder="Internal notes about this campaign..."
+                                            />
                                         </div>
                                     </div>
 
-                                    {/* CUSTOM DESIGN - Product Selection */}
-                                    {config.designType === 'custom' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Product <span className="text-red-500">*</span>
-                                                </label>
-                                                <select
-                                                    value={config.productId}
-                                                    onChange={(e) => updateConfig(config._id, 'productId', e.target.value)}
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                                    required
+                                    {/* Design Type Selector */}
+                                    <div>
+                                        <label className={labelClass}>Design Mode</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {[
+                                                { id: 'custom', icon: LayoutTemplate, label: 'Smart Template', desc: 'Auto-generates from product' },
+                                                { id: 'image', icon: ImageIcon, label: 'Image Upload', desc: 'Upload a pre-designed banner' }
+                                            ].map(mode => (
+                                                <button
+                                                    key={mode.id}
+                                                    type="button"
+                                                    onClick={() => updateConfig(config._id, 'designType', mode.id)}
+                                                    className={`
+                                                        p-4 rounded-xl text-left border-2 transition-all duration-200
+                                                        ${config.designType === mode.id
+                                                            ? 'border-[#1A3C34] bg-[#F0F7F4]'
+                                                            : 'border-[#E3E8E5] hover:border-[#8BA699] bg-white'
+                                                        }
+                                                    `}
                                                 >
-                                                    <option value="">Select a product</option>
-                                                    {books.map(b => (
-                                                        <option key={b._id} value={b._id}>{b.title}</option>
-                                                    ))}
-                                                </select>
+                                                    <mode.icon className={config.designType === mode.id ? 'text-[#1A3C34]' : 'text-[#8BA699]'} size={24} />
+                                                    <h4 className={`font-bold text-sm mt-3 ${config.designType === mode.id ? 'text-[#1A3C34]' : 'text-[#5C756D]'}`}>{mode.label}</h4>
+                                                    <p className="text-xs text-[#8BA699] mt-1 leading-tight">{mode.desc}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* SMART TEMPLATE CONFIG */}
+                                    {config.designType === 'custom' && (
+                                        <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl p-5 space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <label className={labelClass}>Select Product <span className="text-red-500">*</span></label>
+                                                    <select
+                                                        value={config.productId}
+                                                        onChange={(e) => updateConfig(config._id, 'productId', e.target.value)}
+                                                        className={inputClass}
+                                                    >
+                                                        <option value="">-- Choose a Book --</option>
+                                                        {books.map(b => (
+                                                            <option key={b._id} value={b._id}>{b.title}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className={labelClass}>Discount %</label>
+                                                    <input
+                                                        type="number"
+                                                        value={config.discountPercentage}
+                                                        onChange={(e) => updateConfig(config._id, 'discountPercentage', parseInt(e.target.value) || 0)}
+                                                        className={inputClass}
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div>
+                                                     <label className={labelClass}>CTA Button Text</label>
+                                                     <input
+                                                         type="text"
+                                                         value={config.ctaText}
+                                                         onChange={(e) => updateConfig(config._id, 'ctaText', e.target.value)}
+                                                         className={inputClass}
+                                                         placeholder="Shop Now"
+                                                     />
+                                                </div>
                                             </div>
 
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Discount %</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    max="100"
-                                                    value={config.discountPercentage}
-                                                    onChange={(e) => updateConfig(config._id, 'discountPercentage', parseInt(e.target.value) || 0)}
-                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                                    placeholder="0"
-                                                />
-                                            </div>
-
-                                            {/* Product Preview */}
+                                            {/* Mini Preview */}
                                             {selectedBook && (
-                                                <div className="col-span-2 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                                                    <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-4 p-3 bg-white border border-[#E3E8E5] rounded-lg mt-2">
+                                                    <div className="h-16 w-12 bg-gray-100 rounded shrink-0 overflow-hidden">
                                                         {selectedBook.assets?.coverUrl?.[0] && (
-                                                            <img
-                                                                src={assetUrl(selectedBook.assets.coverUrl[0])}
-                                                                alt={selectedBook.title}
-                                                                className="w-20 h-28 object-cover rounded-lg shadow-md"
-                                                            />
+                                                            <img src={assetUrl(selectedBook.assets.coverUrl[0])} className="h-full w-full object-cover" />
                                                         )}
-                                                        <div>
-                                                            <h4 className="font-semibold text-gray-900">{selectedBook.title}</h4>
-                                                            <p className="text-sm text-gray-600 mt-1">{selectedBook.author}</p>
-                                                            <p className="text-lg font-bold text-indigo-600 mt-2">₹{selectedBook.price}</p>
-                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-[#1A3C34] line-clamp-1">{selectedBook.title}</p>
+                                                        <p className="text-xs text-[#5C756D]">₹{selectedBook.price}</p>
                                                     </div>
                                                 </div>
                                             )}
-                                        </>
+                                        </div>
                                     )}
 
-                                    {/* IMAGE DESIGN - Image Upload */}
+                                    {/* IMAGE UPLOAD CONFIG */}
                                     {config.designType === 'image' && (
-                                        <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                <ImageIcon size={16} className="inline mr-2" />
-                                                Popup Image <span className="text-red-500">*</span>
-                                            </label>
-                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
+                                        <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl p-5">
+                                            <label className={labelClass}>Upload Banner Image</label>
+                                            <div className="border-2 border-dashed border-[#E3E8E5] rounded-xl p-6 text-center hover:border-[#1A3C34] hover:bg-white transition-all">
                                                 {config.imageUrl ? (
-                                                    <div className="relative inline-block">
+                                                    <div className="relative inline-block max-w-full">
                                                         <img
                                                             src={assetUrl(config.imageUrl)}
-                                                            alt="Popup preview"
-                                                            className="max-h-64 mx-auto rounded-lg shadow-lg"
+                                                            alt="Preview"
+                                                            className="max-h-48 rounded-lg shadow-sm"
                                                         />
                                                         <button
-                                                            type="button"
                                                             onClick={() => updateConfig(config._id, 'imageUrl', '')}
-                                                            className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-lg"
+                                                            className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 shadow-md"
                                                         >
-                                                            <XIcon size={16} />
+                                                            <XIcon size={14} />
                                                         </button>
                                                     </div>
                                                 ) : (
                                                     <label className="cursor-pointer block">
                                                         {uploadingImage === config._id ? (
-                                                            <div className="py-8">
-                                                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-                                                                <p className="text-sm text-gray-600 mt-4">Uploading...</p>
+                                                            <div className="py-4">
+                                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A3C34] mx-auto"></div>
+                                                                <p className="text-xs text-[#5C756D] mt-2">Uploading...</p>
                                                             </div>
                                                         ) : (
                                                             <>
-                                                                <Upload size={48} className="mx-auto text-gray-400 mb-3" />
-                                                                <p className="text-base text-gray-700 font-medium mb-2">Click to upload popup image</p>
-                                                                <p className="text-sm text-gray-500">PNG, JPG up to 5MB • Recommended: 800x600px</p>
+                                                                <div className="w-12 h-12 bg-[#F4F7F5] rounded-full flex items-center justify-center mx-auto mb-3">
+                                                                    <Upload size={20} className="text-[#1A3C34]" />
+                                                                </div>
+                                                                <p className="text-sm font-bold text-[#1A3C34]">Click to upload</p>
+                                                                <p className="text-xs text-[#5C756D] mt-1">Recommended: 800x600px • Max 5MB</p>
                                                                 <input
                                                                     type="file"
                                                                     accept="image/*"
@@ -497,437 +483,198 @@ export default function PopupSettings() {
                                                     </label>
                                                 )}
                                             </div>
+                                            <div className="mt-4">
+                                                <label className={labelClass}>Destination Link (Optional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={config.ctaLink}
+                                                    onChange={(e) => updateConfig(config._id, 'ctaLink', e.target.value)}
+                                                    className={inputClass}
+                                                    placeholder="https://..."
+                                                />
+                                            </div>
                                         </div>
                                     )}
+                                </div>
 
-                                    {/* CTA Configuration */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">CTA Button Text</label>
-                                        <input
-                                            type="text"
-                                            value={config.ctaText}
-                                            onChange={(e) => updateConfig(config._id, 'ctaText', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="Shop Now"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">CTA Link (optional)</label>
-                                        <input
-                                            type="text"
-                                            value={config.ctaLink}
-                                            onChange={(e) => updateConfig(config._id, 'ctaLink', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            placeholder="/product/slug or external URL"
-                                        />
-                                    </div>
-
-                                    {/* Trigger Configuration */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Trigger Type</label>
-                                        <select
-                                            value={config.triggerType}
-                                            onChange={(e) => updateConfig(config._id, 'triggerType', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        >
-                                            <option value="time">Time Delay (seconds)</option>
-                                            <option value="scroll">Scroll Percentage</option>
-                                            <option value="exit">Exit Intent</option>
-                                        </select>
-                                    </div>
-
-                                    {config.triggerType !== 'exit' && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Trigger Value ({config.triggerType === 'time' ? 'seconds' : 'scroll %'})
-                                            </label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max={config.triggerType === 'scroll' ? 100 : undefined}
-                                                value={config.triggerValue}
-                                                onChange={(e) => updateConfig(config._id, 'triggerValue', parseInt(e.target.value) || 0)}
-                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                            />
+                                {/* Right Column: Triggers & Targeting */}
+                                <div className="space-y-5">
+                                    <div className="p-5 border border-[#E3E8E5] rounded-xl">
+                                        <h4 className="font-bold text-[#1A3C34] mb-4 flex items-center gap-2">
+                                            <Target size={18} /> Targeting Rules
+                                        </h4>
+                                        
+                                        {/* Triggers */}
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div>
+                                                <label className={labelClass}>Trigger Event</label>
+                                                <select
+                                                    value={config.triggerType}
+                                                    onChange={(e) => updateConfig(config._id, 'triggerType', e.target.value)}
+                                                    className={inputClass}
+                                                >
+                                                    <option value="time">Time Delay</option>
+                                                    <option value="scroll">Scroll %</option>
+                                                    <option value="exit">Exit Intent</option>
+                                                </select>
+                                            </div>
+                                            {config.triggerType !== 'exit' && (
+                                                <div>
+                                                    <label className={labelClass}>Value ({config.triggerType === 'time' ? 'Sec' : '%'})</label>
+                                                    <input
+                                                        type="number"
+                                                        value={config.triggerValue}
+                                                        onChange={(e) => updateConfig(config._id, 'triggerValue', parseInt(e.target.value) || 0)}
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {/* Target Pages */}
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">Show on Pages</label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {['all', 'home', 'products', 'cart'].map(page => (
-                                                <label key={page} className="flex items-center gap-2 cursor-pointer px-4 py-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border">
+                                        {/* Pages */}
+                                        <div className="mb-4">
+                                            <label className={labelClass}>Show on Pages</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['all', 'home', 'products', 'cart'].map(page => (
+                                                    <label key={page} className={`
+                                                        cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold border transition-all select-none
+                                                        ${config.targetPages.includes(page) 
+                                                            ? 'bg-[#1A3C34] text-white border-[#1A3C34]' 
+                                                            : 'bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#8BA699]'
+                                                        }
+                                                    `}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={config.targetPages.includes(page)}
+                                                            onChange={(e) => {
+                                                                const newPages = e.target.checked
+                                                                    ? [...config.targetPages, page]
+                                                                    : config.targetPages.filter(p => p !== page);
+                                                                updateConfig(config._id, 'targetPages', newPages);
+                                                            }}
+                                                            className="hidden"
+                                                        />
+                                                        <span className="capitalize">{page}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Checkbox Options */}
+                                        <div className="space-y-2">
+                                            {[
+                                                { label: 'New Visitors Only', field: 'showToNewVisitors' },
+                                                { label: 'Returning Visitors', field: 'showToReturningVisitors' },
+                                                { label: 'Once per Session', field: 'showOncePerSession' },
+                                                { label: 'Once per Day', field: 'showOncePerDay' },
+                                            ].map((opt, i) => (
+                                                <label key={i} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-[#FAFBF9] transition-colors -ml-2">
+                                                    <div className={`
+                                                        w-5 h-5 rounded border flex items-center justify-center transition-colors
+                                                        ${config[opt.field] ? 'bg-[#1A3C34] border-[#1A3C34]' : 'bg-white border-[#E3E8E5]'}
+                                                    `}>
+                                                        {config[opt.field] && <Check size={12} className="text-white" />}
+                                                    </div>
                                                     <input
                                                         type="checkbox"
-                                                        checked={config.targetPages.includes(page)}
-                                                        onChange={(e) => {
-                                                            const newPages = e.target.checked
-                                                                ? [...config.targetPages, page]
-                                                                : config.targetPages.filter(p => p !== page);
-                                                            updateConfig(config._id, 'targetPages', newPages);
-                                                        }}
-                                                        className="w-4 h-4 text-indigo-600"
+                                                        checked={config[opt.field]}
+                                                        onChange={(e) => updateConfig(config._id, opt.field, e.target.checked)}
+                                                        className="hidden"
                                                     />
-                                                    <span className="capitalize text-sm font-medium text-gray-700">{page}</span>
+                                                    <span className="text-sm text-[#1A3C34]">{opt.label}</span>
                                                 </label>
                                             ))}
                                         </div>
                                     </div>
 
-                                    {/* Visitor Targeting */}
-                                    <div>
-                                        <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border">
-                                            <input
-                                                type="checkbox"
-                                                checked={config.showToNewVisitors}
-                                                onChange={(e) => updateConfig(config._id, 'showToNewVisitors', e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">Show to new visitors</span>
-                                        </label>
-                                    </div>
-
-                                    <div>
-                                        <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border">
-                                            <input
-                                                type="checkbox"
-                                                checked={config.showToReturningVisitors}
-                                                onChange={(e) => updateConfig(config._id, 'showToReturningVisitors', e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">Show to returning visitors</span>
-                                        </label>
-                                    </div>
-
-                                    {/* Frequency Control */}
-                                    <div>
-                                        <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border">
-                                            <input
-                                                type="checkbox"
-                                                checked={config.showOncePerSession}
-                                                onChange={(e) => updateConfig(config._id, 'showOncePerSession', e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">Show once per session</span>
-                                        </label>
-                                    </div>
-
-                                    <div>
-                                        <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border">
-                                            <input
-                                                type="checkbox"
-                                                checked={config.showOncePerDay}
-                                                onChange={(e) => updateConfig(config._id, 'showOncePerDay', e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600"
-                                            />
-                                            <span className="text-sm font-medium text-gray-700">Show once per day</span>
-                                        </label>
-                                    </div>
-
-                                    {/* Date Range */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                                        <input
-                                            type="date"
-                                            value={config.startDate ? config.startDate.split('T')[0] : ''}
-                                            onChange={(e) => updateConfig(config._id, 'startDate', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">End Date (optional)</label>
-                                        <input
-                                            type="date"
-                                            value={config.endDate ? config.endDate.split('T')[0] : ''}
-                                            onChange={(e) => updateConfig(config._id, 'endDate', e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                        />
-                                    </div>
-
-                                    {/* CUSTOM DESIGN CUSTOMIZATION */}
+                                    {/* Advanced Design Toggle */}
                                     {config.designType === 'custom' && (
-                                        <div className="col-span-2 bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-xl border border-purple-200">
+                                        <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl p-4">
                                             <button
                                                 type="button"
                                                 onClick={() => setExpandedConfig(expandedConfig === config._id ? null : config._id)}
-                                                className="flex items-center gap-2 text-lg font-semibold text-purple-900 mb-4 hover:text-purple-700 transition-colors"
+                                                className="flex items-center justify-between w-full text-sm font-bold text-[#1A3C34]"
                                             >
-                                                <Palette size={20} />
-                                                {expandedConfig === config._id ? '🔽 Hide' : '▶️ Show'} Design Customization
+                                                <span className="flex items-center gap-2"><Palette size={16} /> Advanced Styling</span>
+                                                <span className="text-[#5C756D]">{expandedConfig === config._id ? 'Hide' : 'Show'}</span>
                                             </button>
-
+                                            
                                             {expandedConfig === config._id && (
-                                                <div className="grid grid-cols-3 gap-4 mt-4">
-                                                    {/* Layout */}
+                                                <div className="mt-4 pt-4 border-t border-[#E3E8E5] grid grid-cols-2 gap-3">
+                                                    {/* Simplified Design Inputs */}
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Layout</label>
-                                                        <select
-                                                            value={config.customDesign?.layout || 'left-right'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'layout', e.target.value)}
-                                                            className="w-full px-3 py-2 border rounded-lg"
-                                                        >
-                                                            <option value="left-right">Image Left/Right</option>
-                                                            <option value="top-bottom">Image Top/Bottom</option>
-                                                            <option value="centered">Centered</option>
-                                                        </select>
+                                                        <label className={labelClass}>Bg Color</label>
+                                                        <input type="color" value={config.customDesign?.backgroundColor || '#ffffff'} onChange={(e) => updateCustomDesign(config._id, 'backgroundColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
                                                     </div>
-
-                                                    {/* Background Color */}
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Background</label>
-                                                        <input
-                                                            type="color"
-                                                            value={config.customDesign?.backgroundColor || '#ffffff'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'backgroundColor', e.target.value)}
-                                                            className="w-full h-10 border rounded-lg cursor-pointer"
-                                                        />
+                                                        <label className={labelClass}>Text Color</label>
+                                                        <input type="color" value={config.customDesign?.textColor || '#1A3C34'} onChange={(e) => updateCustomDesign(config._id, 'textColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
                                                     </div>
-
-                                                    {/* Text Color */}
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
-                                                        <input
-                                                            type="color"
-                                                            value={config.customDesign?.textColor || '#000000'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'textColor', e.target.value)}
-                                                            className="w-full h-10 border rounded-lg cursor-pointer"
-                                                        />
+                                                        <label className={labelClass}>Button Bg</label>
+                                                        <input type="color" value={config.customDesign?.ctaBackgroundColor || '#1A3C34'} onChange={(e) => updateCustomDesign(config._id, 'ctaBackgroundColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
                                                     </div>
-
-                                                    {/* Accent Color */}
                                                     <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Accent Color</label>
-                                                        <input
-                                                            type="color"
-                                                            value={config.customDesign?.accentColor || '#4F46E5'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'accentColor', e.target.value)}
-                                                            className="w-full h-10 border rounded-lg cursor-pointer"
-                                                        />
+                                                        <label className={labelClass}>Button Text</label>
+                                                        <input type="color" value={config.customDesign?.ctaTextColor || '#ffffff'} onChange={(e) => updateCustomDesign(config._id, 'ctaTextColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
                                                     </div>
-
-                                                    {/* Button Background */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Button Background</label>
-                                                        <input
-                                                            type="color"
-                                                            value={config.customDesign?.ctaBackgroundColor || '#4F46E5'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'ctaBackgroundColor', e.target.value)}
-                                                            className="w-full h-10 border rounded-lg cursor-pointer"
-                                                        />
-                                                    </div>
-
-                                                    {/* Button Text Color */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
-                                                        <input
-                                                            type="color"
-                                                            value={config.customDesign?.ctaTextColor || '#ffffff'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'ctaTextColor', e.target.value)}
-                                                            className="w-full h-10 border rounded-lg cursor-pointer"
-                                                        />
-                                                    </div>
-
-                                                    {/* Border Radius */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Border Radius</label>
-                                                        <input
-                                                            type="text"
-                                                            value={config.customDesign?.borderRadius || '16px'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'borderRadius', e.target.value)}
-                                                            className="w-full px-3 py-2 border rounded-lg"
-                                                            placeholder="16px"
-                                                        />
-                                                    </div>
-
-                                                    {/* Max Width */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Width</label>
-                                                        <input
-                                                            type="text"
-                                                            value={config.customDesign?.maxWidth || '600px'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'maxWidth', e.target.value)}
-                                                            className="w-full px-3 py-2 border rounded-lg"
-                                                            placeholder="600px"
-                                                        />
-                                                    </div>
-
-                                                    {/* Animation Type */}
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Animation</label>
-                                                        <select
-                                                            value={config.customDesign?.animationType || 'slideUp'}
-                                                            onChange={(e) => updateCustomDesign(config._id, 'animationType', e.target.value)}
-                                                            className="w-full px-3 py-2 border rounded-lg"
-                                                        >
-                                                            <option value="slideUp">Slide Up</option>
-                                                            <option value="slideDown">Slide Down</option>
-                                                            <option value="fade">Fade</option>
-                                                            <option value="zoomIn">Zoom In</option>
-                                                        </select>
-                                                    </div>
-
-                                                    {/* Show Product Image */}
-                                                    <div className="col-span-3">
-                                                        <label className="flex items-center gap-2 cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={config.customDesign?.showProductImage !== false}
-                                                                onChange={(e) => updateCustomDesign(config._id, 'showProductImage', e.target.checked)}
-                                                                className="w-4 h-4"
-                                                            />
-                                                            <span className="text-sm font-medium text-gray-700">Show Product Image</span>
-                                                        </label>
-                                                    </div>
-
-                                                    {config.customDesign?.showProductImage !== false && (
-                                                        <>
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-2">Image Position</label>
-                                                                <select
-                                                                    value={config.customDesign?.imagePosition || 'left'}
-                                                                    onChange={(e) => updateCustomDesign(config._id, 'imagePosition', e.target.value)}
-                                                                    className="w-full px-3 py-2 border rounded-lg"
-                                                                >
-                                                                    <option value="left">Left</option>
-                                                                    <option value="right">Right</option>
-                                                                    <option value="top">Top</option>
-                                                                </select>
-                                                            </div>
-
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-2">Image Size</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={config.customDesign?.imageSize || '50%'}
-                                                                    onChange={(e) => updateCustomDesign(config._id, 'imageSize', e.target.value)}
-                                                                    className="w-full px-3 py-2 border rounded-lg"
-                                                                    placeholder="50%"
-                                                                />
-                                                            </div>
-                                                        </>
-                                                    )}
                                                 </div>
                                             )}
                                         </div>
                                     )}
-
-                                    {/* Analytics */}
-                                    {(config.impressions > 0 || config.clicks > 0 || config.dismissals > 0) && (
-                                        <div className="col-span-2 bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-xl border border-indigo-200">
-                                            <div className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                                <TrendingUp size={18} />
-                                                Performance Analytics
-                                            </div>
-                                            <div className="grid grid-cols-4 gap-4">
-                                                <div>
-                                                    <span className="text-xs text-gray-600 block mb-1">Impressions</span>
-                                                    <span className="text-xl font-bold text-gray-900">{config.impressions || 0}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-xs text-gray-600 block mb-1">Clicks</span>
-                                                    <span className="text-xl font-bold text-gray-900">{config.clicks || 0}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-xs text-gray-600 block mb-1">CTR</span>
-                                                    <span className="text-xl font-bold text-green-600">
-                                                        {config.impressions > 0
-                                                            ? ((config.clicks / config.impressions) * 100).toFixed(1)
-                                                            : 0}%
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-xs text-gray-600 block mb-1">Dismissals</span>
-                                                    <span className="text-xl font-bold text-red-600">{config.dismissals || 0}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Empty State */}
-                {configs.length === 0 && (
-                    <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
-                        <div className="text-gray-400 mb-4">
-                            <ImageIcon size={64} className="mx-auto" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">No popups configured yet</h3>
-                        <p className="text-gray-500 mb-6">Create your first promotional popup to engage visitors</p>
-                    </div>
-                )}
-
-                {/* Actions */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 shadow-2xl z-50 backdrop-blur-sm bg-opacity-95">
-                    <div className="max-w-6xl mx-auto px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            {/* Status Info */}
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 rounded-full ${enabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-                                    <span className="text-sm font-semibold text-gray-700">
-                                        {enabled ? '✅ Popups Enabled' : '⚠️ Popups Disabled'}
-                                    </span>
-                                </div>
-                                <div className="h-6 w-px bg-gray-300"></div>
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-semibold">{configs.length}</span> total popups
-                                    {configs.filter(c => c.isActive).length > 0 && (
-                                        <span className="ml-2">
-                                            • <span className="font-semibold text-green-600">{configs.filter(c => c.isActive).length}</span> active
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={addNewConfig}
-                                    className="flex items-center gap-2 px-5 py-2.5 border-2 border-indigo-300 bg-white rounded-lg hover:border-indigo-500 hover:bg-indigo-50 text-indigo-600 font-semibold transition-all"
-                                >
-                                    <Plus size={18} />
-                                    Add New Popup
-                                </button>
-
-                                <button
-                                    onClick={save}
-                                    disabled={saving}
-                                    className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-bold text-white shadow-lg transition-all ${saving
-                                        ? 'bg-gray-400 cursor-not-allowed'
-                                        : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl hover:scale-105 active:scale-95'
-                                        }`}
-                                >
-                                    {saving ? (
-                                        <>
-                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                            </svg>
-                                            Save All Changes
-                                        </>
-                                    )}
-                                </button>
                             </div>
                         </div>
+                    );
+                })}
+            </div>
+
+            {/* EMPTY STATE */}
+            {configs.length === 0 && (
+                <div className="border-2 border-dashed border-[#E3E8E5] rounded-2xl p-16 text-center bg-[#FAFBF9]">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-[#E3E8E5] shadow-sm">
+                        <LayoutTemplate size={32} className="text-[#5C756D]" />
+                    </div>
+                    <h3 className="text-xl font-bold text-[#1A3C34] mb-2">No active popups</h3>
+                    <p className="text-[#5C756D] mb-6 max-w-md mx-auto">Create a popup to promote sales, collect emails, or highlight new books to your visitors.</p>
+                    <button
+                        onClick={addNewConfig}
+                        className="px-6 py-3 bg-[#1A3C34] text-white rounded-xl font-bold hover:bg-[#2F523F] transition-all"
+                    >
+                        Create First Popup
+                    </button>
+                </div>
+            )}
+
+            {/* FIXED ACTION BAR */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#E3E8E5] z-50 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm font-medium text-[#5C756D]">
+                        <span className="flex items-center gap-2">
+                             <span className={`w-2.5 h-2.5 rounded-full ${enabled ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>
+                             {enabled ? 'System Active' : 'System Paused'}
+                        </span>
+                        <span className="h-4 w-px bg-[#E3E8E5]"></span>
+                        <span>{configs.length} Popups ({configs.filter(c => c.isActive).length} Live)</span>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={addNewConfig}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#1A3C34] text-[#1A3C34] font-bold text-sm hover:bg-[#F4F7F5] transition-all"
+                        >
+                            <Plus size={18} /> Add New
+                        </button>
+                        <button
+                            onClick={save}
+                            disabled={saving}
+                            className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={18} />}
+                            {saving ? 'Saving...' : 'Save Changes'}
+                        </button>
                     </div>
                 </div>
-
-                {/* Add padding at bottom so content doesn't hide behind fixed bar */}
-                <div className="h-24"></div>
             </div>
         </div>
     );

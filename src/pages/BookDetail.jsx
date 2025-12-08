@@ -405,11 +405,6 @@ export default function BookDetail() {
                 </div>
               )}
 
-              {/* Delivery Info */}
-              <div className="flex items-center gap-2 text-[#5C756D] text-sm mt-2">
-                <Truck className="w-4 h-4" />
-                <span>Free delivery on all orders</span>
-              </div>
             </div>
 
             {/* Add to Cart Actions */}

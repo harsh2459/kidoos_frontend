@@ -15,7 +15,7 @@ export default function Home() {
 
   return (
     <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
-      <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 space-y-12 lg:space-y-16">
+      <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto">
         {(homepage.blocks || []).map((b, i) => <Block key={i} block={b} />)}
       </div>
       <ScrollToTopButton />
@@ -25,73 +25,117 @@ export default function Home() {
 
 /* ----------------------------- Blocks ---------------------------- */
 function Block({ block }) {
+  // Get spacing settings or use defaults
+  const spacing = block.spacing || {
+    paddingTop: "normal",
+    paddingBottom: "normal",
+    paddingX: "normal",
+    backgroundColor: ""
+  };
+
+  // Convert spacing values to Tailwind classes
+  const getSpacingClasses = () => {
+    const classes = [];
+    // Padding Top
+    if (spacing.paddingTop === "none") classes.push("pt-0");
+    else if (spacing.paddingTop === "small") classes.push("pt-4 md:pt-6");
+    else if (spacing.paddingTop === "normal") classes.push("pt-8 md:pt-12");
+    else if (spacing.paddingTop === "large") classes.push("pt-12 md:pt-20");
+
+    // Padding Bottom
+    if (spacing.paddingBottom === "none") classes.push("pb-0");
+    else if (spacing.paddingBottom === "small") classes.push("pb-4 md:pb-6");
+    else if (spacing.paddingBottom === "normal") classes.push("pb-8 md:pb-12");
+    else if (spacing.paddingBottom === "large") classes.push("pb-12 md:pb-20");
+
+    // Padding X (Horizontal)
+    if (spacing.paddingX === "none") classes.push("px-0");
+    else if (spacing.paddingX === "small") classes.push("px-2 sm:px-4");
+    else if (spacing.paddingX === "normal") classes.push("px-4 sm:px-6 lg:px-8");
+    else if (spacing.paddingX === "large") classes.push("px-8 sm:px-12 lg:px-16");
+
+    return classes.join(" ");
+  };
+
+  const containerClasses = getSpacingClasses();
+  const containerStyle = spacing.backgroundColor
+    ? { backgroundColor: spacing.backgroundColor }
+    : {};
+
   if (block.type === "hero") {
     return (
-      <section className="relative rounded-3xl overflow-hidden bg-[#1A3C34] text-white shadow-xl group min-h-[400px] md:min-h-[500px] grid grid-cols-1 md:grid-cols-2 items-center">
-        {/* Content Side */}
-        <div className="p-8 md:p-12 lg:p-16 z-10 relative">
-          {/* Background Decoration */}
-          <div className="absolute top-0 left-0 w-32 h-32 bg-[#4A7C59]/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-          
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6 leading-tight drop-shadow-sm">
-            {block.title}
-          </h2>
-          <p className="text-[#8BA699] text-lg md:text-xl mb-8 leading-relaxed max-w-lg font-light">
-            {block.subtitle}
-          </p>
-          
-          {block.ctaText && (
-            <Link 
-              to={block.ctaHref || "/catalog"}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#1A3C34] rounded-xl font-bold text-lg hover:bg-[#E8F0EB] transition-all shadow-lg hover:shadow-xl active:scale-95 group-hover:translate-x-1 duration-300"
-            >
-              {block.ctaText}
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          )}
-        </div>
+      <div className={containerClasses} style={containerStyle}>
+        <section className="relative rounded-3xl overflow-hidden bg-[#1A3C34] text-white shadow-xl group min-h-[400px] md:min-h-[500px] grid grid-cols-1 md:grid-cols-2 items-center">
+          {/* Content Side */}
+          <div className="p-8 md:p-12 lg:p-16 z-10 relative">
+            {/* Background Decoration */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-[#4A7C59]/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
 
-        {/* Image Side */}
-        {block.image && (
-          <div className="relative w-full h-64 md:h-full overflow-hidden">
-            <img
-              src={assetUrl(block.image)}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1A3C34]/80 to-transparent md:bg-gradient-to-l"></div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6 leading-tight drop-shadow-sm">
+              {block.title}
+            </h2>
+            <p className="text-[#8BA699] text-lg md:text-xl mb-8 leading-relaxed max-w-lg font-light">
+              {block.subtitle}
+            </p>
+
+            {block.ctaText && (
+              <Link
+                to={block.ctaHref || "/catalog"}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#1A3C34] rounded-xl font-bold text-lg hover:bg-[#E8F0EB] transition-all shadow-lg hover:shadow-xl active:scale-95 group-hover:translate-x-1 duration-300"
+              >
+                {block.ctaText}
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            )}
           </div>
-        )}
-      </section>
+
+          {block.image && (
+            <div className="relative w-full h-64 md:h-full overflow-hidden">
+              <img
+                src={assetUrl(block.image)}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1A3C34]/80 to-transparent md:bg-gradient-to-l"></div>
+            </div>
+          )}
+        </section>
+      </div>
     );
   }
 
   if (block.type === "banner") {
     return (
-      <a
-        href={block.ctaLink || "/"}
-        className="block rounded-theme overflow-hidden shadow-theme group relative"
-      >
-        <img
-          src={assetUrl(block.image)}
-          alt={block.alt || ""}
-          className="w-full object-cover transition-all duration-500 group-hover:brightness-110 group-hover:saturate-150"
-        />
-        {/* Optional: Sliding overlay effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-      </a>
+      <div className={containerClasses} style={containerStyle}>
+        <a
+          href={block.ctaLink || "/"}
+          className="block rounded-theme overflow-hidden shadow-theme group relative"
+        >
+          <img
+            src={assetUrl(block.image)}
+            alt={block.alt || ""}
+            className="w-full object-cover transition-all duration-500 group-hover:brightness-110 group-hover:saturate-150"
+          />
+          {/* Optional: Sliding overlay effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        </a>
+      </div>
     );
   }
 
   if (block.type === "grid") {
-    return <GridSection title={block.title} query={block.query} />;
+    return (
+      <div className={containerClasses} style={containerStyle}>
+        <GridSection title={block.title} query={block.query} />
+      </div>
+    );
   }
 
   if (block.type === "html") {
     return (
-      <section 
-        className="prose prose-stone prose-lg max-w-none text-[#4A5D56] bg-white p-8 rounded-2xl shadow-sm border border-[#E3E8E5]" 
-        dangerouslySetInnerHTML={{ __html: block.html }} 
+      <div
+        style={containerStyle}
+        dangerouslySetInnerHTML={{ __html: block.html }}
       />
     );
   }
@@ -131,7 +175,6 @@ function GridSection({ title, query }) {
 
       setItems(list.slice(0, limit));
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, sort, limit, JSON.stringify(categories)]);
 
   return (
@@ -142,8 +185,8 @@ function GridSection({ title, query }) {
             <span className="w-2 h-8 bg-[#4A7C59] rounded-full"></span>
             {title}
           </h3>
-          <Link 
-            to="/catalog" 
+          <Link
+            to="/catalog"
             className="text-[#4A7C59] hover:text-[#1A3C34] font-medium text-sm flex items-center gap-1 transition-colors"
           >
             View All <ArrowRight className="w-4 h-4" />
@@ -180,7 +223,7 @@ function SimpleShowcaseCard({ book }) {
 
   return (
     <article className="group flex flex-col h-full bg-white rounded-2xl border border-[#E3E8E5] overflow-hidden hover:border-[#4A7C59] hover:shadow-lg transition-all duration-300">
-      
+
       {/* Image Container */}
       <Link
         to={`/book/${book.slug}`}
@@ -204,8 +247,8 @@ function SimpleShowcaseCard({ book }) {
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-grow">
-        <Link 
-          to={`/book/${book.slug}`} 
+        <Link
+          to={`/book/${book.slug}`}
           className="font-serif font-bold text-[#1A3C34] text-base leading-tight line-clamp-2 mb-1 group-hover:text-[#4A7C59] transition-colors"
         >
           {book.title}

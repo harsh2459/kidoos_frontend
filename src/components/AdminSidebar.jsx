@@ -1,11 +1,27 @@
 // src/components/AdminSidebar.jsx
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/Auth";
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  BookOpen,
+  PlusCircle,
+  Layers,
+  CreditCard,
+  Settings,
+  Users,
+  Home,
+  ShieldPlus,
+  LogOut, Target,
+  Milestone,
+  Mail
+} from "lucide-react";
 
 export default function AdminSidebar() {
   const { token, logout } = useAuth();
   const loc = useLocation();
   const isAdmin = !!token;
+
   if (!isAdmin) return null;
 
   return (
@@ -14,40 +30,125 @@ export default function AdminSidebar() {
         hidden md:flex
         fixed left-0 top-0 h-screen w-64
         flex-col
-        bg-surface border-r border-border-subtle
-        shadow-theme
-        z-40
+        bg-white border-r border-[#E3E8E5]
+        shadow-sm z-50
       "
     >
       {/* Brand / Title */}
-      <div className="h-16 px-4 flex items-center gap-2 border-b border-border-subtle">
-        <div className="h-8 w-8 rounded-md bg-surface-subtle grid place-items-center text-xs text-fg-subtle">
+      <div className="h-20 px-6 flex items-center gap-3 border-b border-[#F4F7F5]">
+        <div className="h-10 w-10 rounded-xl bg-[#1A3C34] text-white grid place-items-center font-serif font-bold text-xl shadow-md">
           KI
         </div>
-        <div className="font-semibold">Admin</div>
+        <div className="flex flex-col">
+          <span className="font-bold text-[#1A3C34] leading-tight">Admin</span>
+          <span className="text-[10px] text-[#5C756D] font-medium tracking-wider uppercase">Panel</span>
+        </div>
       </div>
 
       {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        <Section>
-          <Item to="/admin/orders" active={loc.pathname.startsWith("/admin/orders")}>Orders</Item>
-          <Item to="/admin/books" active={loc.pathname.startsWith("/admin/books")}>Books</Item>
-          <Item to="/admin/add-book" active={loc.pathname.startsWith("/admin/add-book")}>Add Book</Item>
-          <Item to="/admin/categories" active={loc.pathname.startsWith("/admin/categories")}>Categories</Item>
-          <Item to="/admin/payments" active={loc.pathname.startsWith("/admin/payments")}>Payments</Item>
-          <Item to="/admin/settings" active={loc.pathname.startsWith("/admin/settings")}>Settings</Item>
-          <Item to="/admin/api-users" active={loc.pathname.startsWith("/admin/api-users")}>API Users</Item>
-          <Item to="/admin/homepage" active={loc.pathname.startsWith("/admin/homepage")}>Homepage</Item>
-          <Item to="/admin/setup" active={loc.pathname.startsWith("/admin/setup")}>Add Admin</Item>
-        </Section>
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+        <SectionHeader title="Store Management" />
+        <Item
+          to="/admin/orders"
+          active={loc.pathname.startsWith("/admin/orders")}
+          icon={ShoppingBag}
+        >
+          Orders
+        </Item>
+        <Item
+          to="/admin/books"
+          active={loc.pathname.startsWith("/admin/books")}
+          icon={BookOpen}
+        >
+          Books
+        </Item>
+        <Item
+          to="/admin/add-book"
+          active={loc.pathname.startsWith("/admin/add-book")}
+          icon={PlusCircle}
+        >
+          Add Book
+        </Item>
+        <Item
+          to="/admin/categories"
+          active={loc.pathname.startsWith("/admin/categories")}
+          icon={Layers}
+        >
+          Categories
+        </Item>
+        <Item
+          to="/admin/settings/popup"
+          active={loc.pathname.startsWith("/admin/settings/popup")}
+          icon={Target}
+        >
+          PopUps
+        </Item>
+
+        <div className="my-4 border-t border-[#F4F7F5]"></div>
+
+        <SectionHeader title="System & Users" />
+        <Item
+          to="/admin/payments"
+          active={loc.pathname.startsWith("/admin/payments")}
+          icon={CreditCard}
+        >
+          Payments
+        </Item>
+        <Item
+          to="/admin/email-senders"
+          active={loc.pathname.startsWith("/admin/email-senders")}
+          icon={Mail}
+        >
+          Senders
+        </Item>
+        <Item
+          to="/admin/email-templates"
+          active={loc.pathname.startsWith("/admin/email-templates")}
+          icon={LayoutDashboard}
+        >
+          Templates
+        </Item>
+        <Item
+          to="/admin/api-users"
+          active={loc.pathname.startsWith("/admin/api-users")}
+          icon={Users}
+        >
+          Blue-Dart Profiles
+        </Item>
+        <Item
+          to="/admin/homepage"
+          active={loc.pathname.startsWith("/admin/homepage")}
+          icon={LayoutDashboard}
+        >
+          Homepage
+        </Item>
+        <Item
+          to="/admin/setup"
+          active={loc.pathname.startsWith("/admin/setup")}
+          icon={ShieldPlus}
+        >
+          Add Admin
+        </Item>
+        <Item
+          to="/admin/settings"
+          active={loc.pathname.startsWith("/admin/settings")}
+          icon={Settings}
+        >
+          Settings
+        </Item>
       </nav>
 
       {/* Footer actions */}
-      <div className="p-3 border-t border-border-subtle">
+      <div className="p-4 border-t border-[#E3E8E5] bg-[#FAFBF9]">
         <button
           onClick={() => logout()}
-          className="w-full text-left px-3 py-2 rounded-lg hover:bg-surface-subtle"
+          className="
+            group flex items-center gap-3 w-full px-4 py-3 rounded-xl 
+            text-[#5C756D] font-bold text-sm transition-all duration-200
+            hover:bg-red-50 hover:text-red-600 hover:shadow-sm
+          "
         >
+          <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
           Logout
         </button>
       </div>
@@ -55,22 +156,29 @@ export default function AdminSidebar() {
   );
 }
 
-function Section({ title, children }) {
+// --- Helper Components ---
+
+function SectionHeader({ title }) {
   return (
-    <div className="mb-3">
-      <div className="px-3 pb-2 pt-1 text-xs uppercase tracking-wide text-fg-muted">{title}</div>
-      <div className="flex flex-col gap-1">{children}</div>
+    <div className="px-4 pb-2 pt-2 text-[11px] font-bold uppercase tracking-widest text-[#8BA699]">
+      {title}
     </div>
   );
 }
 
-function Item({ to, active, children }) {
-  const base = "px-3 py-2 rounded-lg";
-  const cls = active
-    ? `${base} bg-surface-subtle border border-border-subtle`
-    : `${base} hover:bg-surface-subtle`;
+function Item({ to, active, children, icon: Icon }) {
+  // Styles matching the Navbar/AdminTabs logic
+  const base = "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 mb-1";
+
+  // Active: Deep Green BG, White Text
+  const activeClass = "bg-[#1A3C34] text-white shadow-md shadow-[#1A3C34]/20";
+
+  // Inactive: Muted Text, Hover Light Green
+  const inactiveClass = "text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#1A3C34]";
+
   return (
-    <Link to={to} className={cls}>
+    <Link to={to} className={`${base} ${active ? activeClass : inactiveClass}`}>
+      {Icon && <Icon className={`w-5 h-5 ${active ? "text-white" : "text-current"}`} />}
       {children}
     </Link>
   );

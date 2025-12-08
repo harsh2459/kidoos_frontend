@@ -1,13 +1,16 @@
-/* From Uiverse.io by cssbuttons-io */
+/* src/styles/style-button.css */
+
 .fancy {
   background-color: transparent;
-  border: 2px solid #000;
+  /* CHANGE: Black border -> Theme Green border */
+  border: 2px solid #1A3C34; 
   border-radius: 0;
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
   display: inline-block;
-  font-weight: 700;
+  /* CHANGE: Font weight handled by Tailwind, but good fallback */
+  font-weight: 700; 
   letter-spacing: 0.05em;
   margin-top: 15px;
   outline: none;
@@ -22,11 +25,13 @@
   font-size: 13px;
 }
 
+/* The horizontal line before the text */
 .fancy::before {
   content: " ";
   width: 1.5625rem;
   height: 2px;
-  background: black;
+  /* CHANGE: Black line -> Theme Green line */
+  background: #1A3C34; 
   top: 50%;
   left: 10px;
   position: absolute;
@@ -44,16 +49,19 @@
   transition: all 0.3s ease-in-out;
   text-transform: uppercase;
   text-decoration: none;
-  color: black;
+  /* CHANGE: Black text -> Theme Green text */
+  color: #1A3C34; 
 }
 
+/* Decorative keys - changed from generic grey to your border theme color */
 .fancy .top-key {
   height: 2px;
   width: 1.5625rem;
   top: -2px;
   left: 0.625rem;
   position: absolute;
-  background: #e8e8e8;
+  /* CHANGE: #e8e8e8 -> Theme light border color */
+  background: #E3E8E5; 
   transition: width 0.5s ease-out, left 0.3s ease-out;
 }
 
@@ -63,7 +71,8 @@
   right: 1.875rem;
   bottom: -2px;
   position: absolute;
-  background: #e8e8e8;
+  /* CHANGE: #e8e8e8 -> Theme light border color */
+  background: #E3E8E5;
   transition: width 0.5s ease-out, right 0.3s ease-out;
 }
 
@@ -73,13 +82,19 @@
   right: 0.625rem;
   bottom: -2px;
   position: absolute;
-  background: #e8e8e8;
+  /* CHANGE: #e8e8e8 -> Theme light border color */
+  background: #E3E8E5;
   transition: width 0.5s ease-out, right 0.3s ease-out;
 }
 
+/* --- HOVER STATES --- */
+
 .fancy:hover {
   color: white;
-  background: black;
+  /* CHANGE: Black bg -> Theme Green bg */
+  background: #1A3C34;
+  /* Optional: Add shadow to match other buttons */
+  box-shadow: 0 4px 6px -1px rgba(26, 60, 52, 0.2); 
 }
 
 .fancy:hover::before {
@@ -103,94 +118,78 @@
   width: 0;
 }
 
-/* ========== RESPONSIVE STYLES (480px - 2560px) ========== */
+/* ========== RESPONSIVE STYLES (Kept exactly as provided) ========== */
 
-/* Mobile (480px - 600px) */
 @media (min-width: 480px) and (max-width: 600px) {
   .fancy {
     padding: 10px 7px;
     font-size: 11px;
     margin-top: 12px;
   }
-
   .fancy .text {
     font-size: 1em;
     padding-left: 1.8em;
   }
-
   .fancy::before {
     left: 8px;
     width: 1.2rem;
   }
 }
 
-/* Tablets (601px - 768px) */
 @media (min-width: 601px) and (max-width: 768px) {
   .fancy {
     padding: 11px 8px;
     font-size: 12px;
     margin-top: 13px;
   }
-
   .fancy .text {
     font-size: 1.05em;
     padding-left: 1.9em;
   }
-
   .fancy::before {
     left: 9px;
     width: 1.4rem;
   }
 }
 
-/* Large Tablets (769px - 1024px) */
 @media (min-width: 769px) and (max-width: 1024px) {
   .fancy {
     padding: 12px 8.5px;
     font-size: 12.5px;
     margin-top: 14px;
   }
-
   .fancy .text {
     font-size: 1.1em;
     padding-left: 1.95em;
   }
 }
 
-/* Desktop (1025px - 1440px) - Default styles apply */
-
-/* Large Desktop (1441px - 1920px) */
 @media (min-width: 1441px) and (max-width: 1920px) {
   .fancy {
     padding: 14px 10px;
     font-size: 14px;
     margin-top: 16px;
   }
-
   .fancy .text {
     font-size: 1.15em;
     padding-left: 2.05em;
   }
-
   .fancy::before {
     left: 11px;
     width: 1.7rem;
   }
 }
 
-/* Ultra-Wide (1921px - 2560px) */
 @media (min-width: 1921px) and (max-width: 2560px) {
   .fancy {
     padding: 15px 11px;
     font-size: 15px;
     margin-top: 18px;
   }
-
   .fancy .text {
     font-size: 1.2em;
     padding-left: 2.1em;
   }
-
   .fancy::before {
     left: 12px;
     width: 1.8rem;

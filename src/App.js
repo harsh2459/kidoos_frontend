@@ -29,7 +29,6 @@ import EmailSenders from './pages/Admin/EmailSenders';
 import EmailTemplates from './pages/Admin/EmailTemplates';
 import Footer from './components/Footer';
 import AdminLayout from './components/AdminLayout';
-import BlueDartProfiles from './pages/Admin/BlueDartProfiles';
 import AboutUs from './pages/AboutUs';
 import WhatsAppButton from './components/WhatsAppButton';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -48,7 +47,7 @@ import { useCartCleanup } from './hooks/useCartCleanup';
 
 function InnerApp() {
   const loc = useLocation();
-  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact';
+  const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
 
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
@@ -140,7 +139,6 @@ function InnerApp() {
             path="/admin/books"
             element={<AdminGuard><AdminLayout><BooksAdmin /></AdminLayout></AdminGuard>}
           />
-          <Route path="/admin/bluedart-profiles" element={<AdminGuard><AdminLayout><BlueDartProfiles /></AdminLayout></AdminGuard>} />
           <Route
             path="/admin/books/:slug/edit"
             element={<AdminGuard><AdminLayout><EditBook /></AdminLayout></AdminGuard>}
@@ -203,7 +201,7 @@ function InnerApp() {
 }
 
 export default function App() {
-  
+
   useCartCleanup();
   return (
     <SiteProvider>

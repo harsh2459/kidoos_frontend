@@ -1,35 +1,54 @@
-// frontend/src/components/AdminTabs.jsx
 import { NavLink } from "react-router-dom";
+import { 
+  Package, 
+  Users, 
+  Mail, 
+  CreditCard, 
+  Target, 
+  BookOpen, 
+  Settings, 
+  LayoutTemplate 
+} from "lucide-react";
 
 export default function AdminTabs() {
-  const link = "px-3 py-2 rounded-theme hover:bg-white/10";
+  // Configuration for tabs to keep JSX clean and maintainable
+  const tabs = [
+    { path: "/admin/orders", label: "Orders", icon: Package },
+    { path: "/admin/api-users", label: "API Users", icon: Users },
+    { path: "/admin/email-senders", label: "Senders", icon: Mail },
+    { path: "/admin/email-templates", label: "Templates", icon: LayoutTemplate },
+    { path: "/admin/payments", label: "Payments", icon: CreditCard },
+    { path: "/admin/settings/popup", label: "Popups", icon: Target },
+    { path: "/admin/books", label: "Books", icon: BookOpen },
+    { path: "/admin/setup", label: "Setup", icon: Settings },
+  ];
+
+  const baseClass = "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap border";
+  
+  // Style: Deep Green background for active, Ghost/Subtle for inactive (matching Navbar logic)
+  const activeClass = "bg-[#1A3C34] text-white border-[#1A3C34] shadow-md transform scale-[1.02]";
+  const inactiveClass = "bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#1A3C34] hover:text-[#1A3C34] hover:bg-[#F4F7F5]";
+
   return (
-    <div className="flex gap-2 mb-4 overflow-x-auto">
-      <NavLink to="/admin/orders" className={link}>Orders</NavLink>
-      <NavLink to="/admin/api-users" className={link}>API Users</NavLink>
-      <NavLink to="/admin/email-senders" className={link}>Email Senders</NavLink>
-      <NavLink to="/admin/email-templates" className={link}>Email Templates</NavLink>
-      <NavLink to="/admin/payments" className={({ isActive }) =>
-        `${link} ${isActive ? "bg-white/20" : ""}`
-      }>
-        Payments
-      </NavLink>
-      <NavLink to="/admin/settings/popup" className={link}>
-        🎯 Popups
-      </NavLink>
-      <NavLink
-        to="/admin/books"
-        className={({ isActive }) => `${link} ${isActive ? "bg-brand text-brand-foreground" : "text-fg-muted hover:text-fg"}`}
-      >
-        Books
-      </NavLink>
-      <NavLink
-        to="/admin/setup"
-        className={({ isActive }) => `${link} ${isActive ? "bg-brand text-brand-foreground" : "text-fg-muted hover:text-fg"}`}
-      >
-        Setup
-      </NavLink>
+    // Container aligned with Navbar's responsive padding
+    <div className="w-full bg-white border-b border-[#E3E8E5] mb-6 sticky top-[72px] z-40 shadow-sm">
+      <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px]">
+        <nav className="flex items-center gap-3 overflow-x-auto py-4 no-scrollbar mask-gradient">
+          {tabs.map((tab) => (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              className={({ isActive }) => 
+                `${baseClass} ${isActive ? activeClass : inactiveClass}`
+              }
+            >
+              {/* Icon rendering with size matching Navbar icons */}
+              <tab.icon className={`w-4 h-4 ${tab.label === "Popups" ? "text-current" : ""}`} />
+              <span>{tab.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }
-
