@@ -1,4 +1,5 @@
 // src/api/asset.js
+import { prodErrorMap } from "firebase/auth";
 import { api } from "./client";
 
 /** Check if URL is already absolute (Cloudinary, external, etc.) */
@@ -8,7 +9,6 @@ function isAbsoluteUrl(url) {
   return s.startsWith('http://') || s.startsWith('https://');
 }
 
-/** If we get a full URL, reduce to "/public/..." . If already relative, keep it. */
 export function toRelativeFromPublic(input) {
   if (!input) return "";
   const s = String(input).trim();

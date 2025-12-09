@@ -1,3 +1,4 @@
+// src/pages/admin/Orders.jsx
 import { useEffect, useMemo, useState } from "react";
 import { api, BASE_URL } from "../../api/client";
 import { BlueDartAPI } from "../../api/bluedart";
@@ -31,13 +32,7 @@ export default function AdminOrders() {
 
   // Modal States
   const [showShipmentModal, setShowShipmentModal] = useState(false);
-  const [shipmentForm, setShipmentForm] = useState({
-    weight: 0.5,
-    pieces: 1,
-    length: 20,
-    breadth: 15,
-    height: 5
-  });
+  // ✅ REMOVED: shipmentForm (No longer needed for manual inputs)
 
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundForm, setRefundForm] = useState({
@@ -175,13 +170,7 @@ export default function AdminOrders() {
       return;
     }
 
-    setShipmentForm({
-      weight: ids.length * 0.5,
-      pieces: ids.length,
-      length: 20,
-      breadth: 15,
-      height: 5
-    });
+    // ✅ NO FORM RESET NEEDED (Auto-calc happens on backend)
     setShowShipmentModal(true);
   }
 
@@ -196,19 +185,16 @@ export default function AdminOrders() {
 
     setActionLoading(true);
     try {
+      // ✅ SIMPLIFIED PAYLOAD: Just IDs and Profile. Backend handles Dimensions.
       const payload = {
         orderIds: ids,
-        profileId: selectedProfile,
-        weight: Number(shipmentForm.weight),
-        length: Number(shipmentForm.length),
-        breadth: Number(shipmentForm.breadth),
-        height: Number(shipmentForm.height)
+        profileId: selectedProfile
       };
 
       const { data } = await BlueDartAPI.createShipments(
         payload.orderIds,
         payload.profileId,
-        payload,
+        {}, // Empty options object (Backend defaults used)
         auth
       );
 
@@ -225,19 +211,26 @@ export default function AdminOrders() {
           t.success(`✅ Created ${successCount} shipment${successCount > 1 ? 's' : ''}`);
         }
         if (failedCount > 0) {
-          const firstError = results.failed[0]?.error || "Unknown error";
-          t.warn(`⚠️ ${firstError}`);
+          results.failed.forEach((f, idx) => {
+            setTimeout(() => {
+              t.err(`Order ${f.orderId?.slice(-6)}: ${f.error}`);
+            }, idx * 500); // Stagger toasts
+          });
         }
       } else {
         t.err(data.error || "Failed to create shipments");
       }
     } catch (error) {
       console.error('❌ Shipment creation error:', error);
-      t.err(error?.message || "Failed to create shipments. Please try again.");
+      const apiError = error?.response?.data?.error;
+      const suggestion = error?.response?.data?.suggestion;
+
+      t.err(apiError || error?.message || "Failed to create shipments");
+      if (suggestion) setTimeout(() => t.info(suggestion), 800);
     } finally {
       setActionLoading(false);
     }
-  }
+  } 
 
   async function bulkPrintLabels() {
     const ids = ensureSome();
@@ -309,20 +302,18 @@ export default function AdminOrders() {
   async function loadProfiles() {
     try {
       const { data } = await BlueDartAPI.listProfiles(auth);
-      console.log("📦 BlueDart API Response:", data); // Debug log
+      // console.log("📦 BlueDart API Response:", data); 
 
-      const profileList = data.profiles || [];
-      console.log("📋 Profile List:", profileList); // Debug log
+      const profileList = data.data || data.profiles || [];
+      // console.log("📋 Profile List:", profileList); 
 
       setProfiles(profileList);
 
       const defaultProfile = profileList.find(p => p.isDefault);
       if (defaultProfile && !selectedProfile) {
         setSelectedProfile(defaultProfile._id);
-        console.log("✅ Default profile selected:", defaultProfile.name || defaultProfile.profileName);
       } else if (profileList.length > 0 && !selectedProfile) {
         setSelectedProfile(profileList[0]._id);
-        console.log("✅ First profile selected:", profileList[0].name || profileList[0].profileName);
       }
     } catch (error) {
       console.error("❌ Failed to load profiles:", error);
@@ -497,7 +488,6 @@ export default function AdminOrders() {
   // ==================== RENDER ====================
   return (
     <div className="min-h-screen bg-gray-50">
-  
 
       <div className="max-w-[1600px] mx-auto px-6 py-6">
         {/* Header */}
@@ -664,7 +654,7 @@ export default function AdminOrders() {
                 </select>
               </div>
 
-              {/* FIXED BlueDart Profile Dropdown */}
+              {/* BlueDart Profile Dropdown */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-2">
                   BlueDart Profile
@@ -676,7 +666,6 @@ export default function AdminOrders() {
                   value={selectedProfile}
                   onChange={(e) => {
                     setSelectedProfile(e.target.value);
-                    console.log("Profile changed to:", e.target.value);
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -737,30 +726,14 @@ export default function AdminOrders() {
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    DATE
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    ORDER ID
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    ITEMS
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    CUSTOMER
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    AMOUNT
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    STATUS
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    SHIPPING
-                  </th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    ACTIONS
-                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">DATE</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ORDER ID</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ITEMS</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CUSTOMER</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AMOUNT</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">STATUS</th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SHIPPING</th>
+                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -816,62 +789,48 @@ export default function AdminOrders() {
                         <div className="text-sm font-mono font-medium text-gray-900">#{id.slice(-8)}</div>
                       </td>
 
-                      {/* ITEMS COLUMN WITH TOOLTIP */}
+                      {/* ITEMS COLUMN WITH IMAGE */}
                       <td className="px-4 py-3">
-  {o.items?.map((item, i) => {
-    let finalImage = item.image;
-    if (!finalImage) {
-      const liveBook = item.bookId || {};
-      const assets = liveBook.assets || {};
-      if (Array.isArray(assets.coverUrl) && assets.coverUrl.length > 0) {
-        finalImage = assets.coverUrl[0];
-      } else if (typeof assets.coverUrl === "string") {
-        finalImage = assets.coverUrl;
-      }
-    }
-    if (!finalImage) finalImage = "/placeholder.png";
-    
-    const isAbsolute = finalImage.startsWith("http");
-    const cleanBase = BASE_URL.replace(/\/api\/?$/, "");
-    const imgUrl = isAbsolute ? finalImage : `${cleanBase}${finalImage.startsWith('/') ? '' : '/'}${finalImage}`;
-    const displayTitle = item.title || item.bookId?.title || "Unknown Title";
-    
-    // Shorten title
-    const maxTitleLength = 40;
-    const shortTitle = displayTitle.length > maxTitleLength 
-      ? displayTitle.substring(0, maxTitleLength) + "..." 
-      : displayTitle;
-    
-    return (
-      <div key={i} className="flex items-center gap-3 mb-2 group relative">
-        {/* BIGGER IMAGE: Changed from w-10 h-10 to w-16 h-16 */}
-        <img
-          src={imgUrl}
-          alt={displayTitle}
-          className="w-16 h-[6rem] object-cover rounded border border-gray-200 shadow-sm"
-          onError={(e) => e.target.src = '/placeholder.png'}
-        />
-        <div className="flex-1 min-w-0">
-          <p 
-            className="text-sm text-gray-900 cursor-help font-medium" 
-            title={displayTitle}
-          >
-            {shortTitle} 🌱
-          </p>
-          <p className="text-xs text-gray-500">Qty: {item.qty}</p>
-        </div>
-        
-        {/* Hover Tooltip */}
-        {displayTitle.length > maxTitleLength && (
-          <div className="absolute left-0 top-full mt-1 invisible group-hover:visible z-10 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 max-w-xs whitespace-normal shadow-lg">
-            {displayTitle}
-            <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 transform rotate-45"></div>
-          </div>
-        )}
-      </div>
-    );
-  })}
-</td>
+                        {o.items?.map((item, i) => {
+                          let finalImage = item.image;
+                          if (!finalImage) {
+                            const liveBook = item.bookId || {};
+                            const assets = liveBook.assets || {};
+                            if (Array.isArray(assets.coverUrl) && assets.coverUrl.length > 0) {
+                              finalImage = assets.coverUrl[0];
+                            } else if (typeof assets.coverUrl === "string") {
+                              finalImage = assets.coverUrl;
+                            }
+                          }
+                          if (!finalImage) finalImage = "/placeholder.png";
+
+                          const isAbsolute = finalImage.startsWith("http");
+                          const cleanBase = BASE_URL.replace(/\/api\/?$/, "");
+                          const imgUrl = isAbsolute ? finalImage : `${cleanBase}${finalImage.startsWith('/') ? '' : '/'}${finalImage}`;
+                          const displayTitle = item.title || item.bookId?.title || "Unknown Title";
+                          const maxTitleLength = 40;
+                          const shortTitle = displayTitle.length > maxTitleLength
+                            ? displayTitle.substring(0, maxTitleLength) + "..."
+                            : displayTitle;
+
+                          return (
+                            <div key={i} className="flex items-center gap-3 mb-2 group relative">
+                              <img
+                                src={imgUrl}
+                                alt={displayTitle}
+                                className="w-16 h-[6rem] object-cover rounded border border-gray-200 shadow-sm"
+                                onError={(e) => e.target.src = '/placeholder.png'}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-900 cursor-help font-medium" title={displayTitle}>
+                                  {shortTitle} 🌱
+                                </p>
+                                <p className="text-xs text-gray-500">Qty: {item.qty}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{o?.shipping?.name || o?.customer?.name || "—"}</div>
@@ -960,7 +919,7 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Shipment Modal */}
+      {/* Shipment Modal - UPDATED (Removed Manual Inputs) */}
       {showShipmentModal && (
         <div className="fixed z-50 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -977,7 +936,7 @@ export default function AdminOrders() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">Create BlueDart Shipments</h3>
-                      <p className="text-sm text-gray-500">Enter package dimensions</p>
+                      <p className="text-sm text-gray-500">Processing {selected.size} order(s)</p>
                     </div>
                   </div>
                   <button
@@ -990,47 +949,17 @@ export default function AdminOrders() {
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={shipmentForm.weight}
-                      onChange={(e) => setShipmentForm({ ...shipmentForm, weight: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Length (cm)</label>
-                      <input
-                        type="number"
-                        value={shipmentForm.length}
-                        onChange={(e) => setShipmentForm({ ...shipmentForm, length: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Breadth (cm)</label>
-                      <input
-                        type="number"
-                        value={shipmentForm.breadth}
-                        onChange={(e) => setShipmentForm({ ...shipmentForm, breadth: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                      <input
-                        type="number"
-                        value={shipmentForm.height}
-                        onChange={(e) => setShipmentForm({ ...shipmentForm, height: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
+                {/* ✅ INFO BOX instead of Input Fields */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                  <p className="font-medium flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Smart Calculation Enabled
+                  </p>
+                  <p className="mt-2 pl-7">
+                    Package dimensions and weight will be <strong>automatically calculated</strong> based on the number of books in each order.
+                  </p>
                 </div>
+
               </div>
               <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
                 <button
@@ -1045,7 +974,7 @@ export default function AdminOrders() {
                   disabled={actionLoading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {actionLoading ? "Creating..." : "Create Shipments"}
+                  {actionLoading ? "Creating..." : "Confirm & Create"}
                 </button>
               </div>
             </div>

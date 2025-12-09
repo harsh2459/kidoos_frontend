@@ -145,7 +145,7 @@ const CustomerProfile = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <DashboardCard 
             icon={ShoppingBag}
-            title="Order History"
+            title="Order"
             desc="View past orders"
             onClick={() => navigate('/profile/orders')}
             color="green"

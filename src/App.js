@@ -44,7 +44,7 @@ import DynamicPopup from './components/DynamicPopup';
 import PopupSettings from './pages/Admin/PopupSettings';
 import PreSchool from './pages/PreSchool';
 import { useCartCleanup } from './hooks/useCartCleanup';
-
+import Invoice from './pages/Invoice';
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
@@ -78,6 +78,7 @@ function InnerApp() {
           <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
           <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
           <Route path="/preschool" element={<PageGate page="preschool"><PreSchool /></PageGate>} />
+          <Route path="/invoice/:id" element={<Invoice />} />
           <Route
             path="/profile"
             element={

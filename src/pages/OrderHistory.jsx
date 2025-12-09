@@ -6,8 +6,20 @@ import { useCustomer } from "../contexts/CustomerAuth";
 import { 
     Package, Truck, CheckCircle, Clock, XCircle, 
     ArrowLeft, Search, Copy, ExternalLink, RefreshCw, 
-    Calendar, CreditCard, MapPin, ChevronRight, ChevronLeft 
+    Calendar, CreditCard, MapPin, ChevronRight, ChevronLeft,
+    FileText 
 } from "lucide-react";
+
+// Helper to load Razorpay script
+function loadRzp() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) return resolve(true);
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    document.body.appendChild(s);
+  });
+}
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -20,8 +32,6 @@ const OrderHistory = () => {
   const topRef = useRef(null);
   
   const { isCustomer, loading: customerLoading } = useCustomer();
-
-  // Consistent background texture
   const bgImage = "url('/images/terms-bg.png')";
 
   useEffect(() => {
@@ -32,48 +42,79 @@ const OrderHistory = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      
       if (!isCustomer) {
         navigate("/login", { state: { next: "/profile/orders" } });
         return;
       }
-
       const params = { page, limit: 10 };
       if (statusFilter) params.status = statusFilter;
 
-      const res = await api.get("/customer/orders", {
-        meta: { auth: "customer" },
-        params,
-      });
-
+      const res = await api.get("/customer/orders", { meta: { auth: "customer" }, params });
       const data = res?.data || {};
-      const fetchedOrders = Array.isArray(data.orders) ? data.orders : [];
-      
-      setOrders(fetchedOrders);
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
       setTotalPages(Number(data.pagination?.totalPages || 1));
       setTotalOrders(Number(data.pagination?.total || 0));
-      
-      if (topRef.current) {
-        topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (topRef.current) topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
-      console.error("Orders fetch error:", err);
       if (err?.response?.status === 401) {
         localStorage.removeItem("customer_jwt");
-        localStorage.removeItem("customer_profile");
         navigate("/login", { state: { next: "/profile/orders" } });
       }
-    } finally {
-      setLoading(false);
+    } finally { setLoading(false); }
+  };
+
+  const retryPayment = async (order) => {
+    try {
+      const amountToPay = order.payment.dueAmount > 0 
+        ? order.payment.dueAmount 
+        : (order.amount - (order.payment.paidAmount || 0));
+
+      if (amountToPay <= 0) return alert("Order is already paid!");
+
+      const { data } = await api.post("/payments/razorpay/order", {
+        amountInRupees: amountToPay,
+        orderId: order._id,
+        paymentType: order.payment.paymentType,
+      });
+
+      if (!data.ok) throw new Error(data.error);
+
+      await loadRzp();
+      const options = {
+        key: data.key,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        name: "Kiddos Intellect",
+        description: `Retry Order #${String(order._id).slice(-8)}`,
+        order_id: data.order.id,
+        handler: async function (response) {
+          const verifyRes = await api.post("/payments/razorpay/verify", {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            paymentId: data.paymentId,
+          });
+          if (verifyRes.data.ok) {
+            alert("Payment Successful!");
+            fetchOrders();
+          }
+        },
+        theme: { color: "#1A3C34" },
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Payment retry failed. Please try again.");
     }
   };
 
-  const handlePageChange = (newPage) => {
-    if (newPage < 1 || newPage > totalPages || newPage === page) return;
-    setPage(newPage);
-  };
+  const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
+  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+  const openTracking = (awb) => awb ? window.open('https://bluedart.com/tracking', '_blank') : alert("No tracking number");
+  const copyAwb = (awb) => { navigator.clipboard.writeText(awb); alert("AWB Copied!"); };
+  const handlePageChange = (n) => { if (n >= 1 && n <= totalPages) setPage(n); };
 
-  // --- Theme-consistent Status Styles ---
   const getOrderStatusStyles = (status) => {
     const map = {
       pending: { bg: "bg-[#FFF9F0]", text: "text-[#8A6A4B]", border: "border-[#F5E6D3]", icon: Clock },
@@ -87,285 +128,71 @@ const OrderHistory = () => {
     return map[status] || map.pending;
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount || 0);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric', month: 'short', day: 'numeric'
-    });
-  };
-
-  const openTracking = (awbNumber) => {
-    if (!awbNumber) return alert("❌ No tracking number available");
-    window.open('https://bluedart.com/tracking', '_blank');
-  };
-
-  const copyAwbToClipboard = (awbNumber) => {
-    if (!awbNumber) return alert("❌ No AWB number available");
-    navigator.clipboard.writeText(awbNumber).then(() => {
-        alert(`📋 Copied: ${awbNumber}`);
-    });
-  };
-
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
-      
-      {/* --- HEADER SECTION --- */}
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
       <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34] overflow-hidden">
-         {/* Texture Overlay */}
-         <div 
-            className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" 
-            style={{ backgroundImage: bgImage, backgroundSize: 'cover', filter: 'grayscale(100%)' }}
-        />
-        
-        <div className="relative z-10 max-w-7xl 2xl:max-w-[1600px] mx-auto">
-            <button
-                onClick={() => navigate("/profile")}
-                className="flex items-center gap-2 text-[#8BA699] hover:text-white mb-6 transition-colors text-sm font-medium"
-            >
-                <ArrowLeft className="w-4 h-4" /> Back to Profile
-            </button>
+         <div className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" style={{ backgroundImage: bgImage, backgroundSize: 'cover', filter: 'grayscale(100%)' }} />
+         <div className="relative z-10 max-w-7xl 2xl:max-w-[1600px] mx-auto">
+            <button onClick={() => navigate("/profile")} className="flex items-center gap-2 text-[#8BA699] hover:text-white mb-6 transition-colors text-sm font-medium"><ArrowLeft className="w-4 h-4" /> Back to Profile</button>
             <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-                <div>
-                    <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">Order History</h1>
-                    <p className="text-[#8BA699] text-lg font-light">
-                        Track, return, or buy things again.
-                    </p>
-                </div>
-                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
-                    <Package className="w-5 h-5 text-[#4A7C59]" />
-                    <span className="text-white font-medium">
-                        {totalOrders} {totalOrders === 1 ? 'Order' : 'Orders'}
-                    </span>
-                </div>
+                <div><h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">Order History</h1><p className="text-[#8BA699] text-lg font-light">Track, return, or buy things again.</p></div>
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10"><Package className="w-5 h-5 text-[#4A7C59]" /><span className="text-white font-medium">{totalOrders} Orders</span></div>
             </div>
-        </div>
+         </div>
       </div>
-
       <div ref={topRef} />
 
-      {/* --- MAIN CONTENT --- */}
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 -mt-8 relative z-20">
-        
-        {/* Filters */}
         <div className="mb-8 overflow-x-auto pb-2 scrollbar-hide">
             <div className="flex gap-2 min-w-max">
                 {["", "pending", "confirmed", "shipped", "delivered", "cancelled"].map(status => (
-                <button
-                    key={status}
-                    onClick={() => { setStatusFilter(status); setPage(1); }}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${
-                    statusFilter === status
-                        ? "bg-[#1A3C34] text-white border-[#1A3C34] shadow-md"
-                        : "bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#8BA699]"
-                    }`}
-                >
-                    {status === "" ? "All Orders" : status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
+                <button key={status} onClick={() => { setStatusFilter(status); setPage(1); }} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${statusFilter === status ? "bg-[#1A3C34] text-white border-[#1A3C34]" : "bg-white text-[#5C756D] border-[#E3E8E5]"}`}>{status === "" ? "All Orders" : status.charAt(0).toUpperCase() + status.slice(1)}</button>
                 ))}
             </div>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-            <div className="flex flex-col items-center py-20">
-                <div className="w-12 h-12 border-4 border-[#E3E8E5] border-t-[#1A3C34] rounded-full animate-spin mb-4"></div>
-                <p className="text-[#5C756D]">Loading your orders...</p>
-            </div>
-        )}
+        {loading && <div className="text-center py-20"><div className="w-12 h-12 border-4 border-[#1A3C34] rounded-full animate-spin mx-auto mb-4"></div><p>Loading...</p></div>}
+        {!loading && orders.length === 0 && <div className="text-center py-20 bg-white rounded-3xl border border-[#E3E8E5]"><Package className="w-10 h-10 text-[#8BA699] mx-auto mb-4"/><h3 className="text-2xl font-bold text-[#1A3C34]">No orders found</h3><button onClick={() => navigate("/catalog")} className="mt-6 px-8 py-3 bg-[#1A3C34] text-white rounded-xl font-bold">Browse Books</button></div>}
 
-        {/* Empty State */}
-        {!loading && orders.length === 0 && (
-            <div className="text-center py-20 bg-white rounded-3xl border border-[#E3E8E5] shadow-sm">
-                <div className="w-20 h-20 bg-[#F4F7F5] rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Package className="w-10 h-10 text-[#8BA699]" />
-                </div>
-                <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-2">No orders found</h3>
-                <p className="text-[#5C756D] mb-8 max-w-md mx-auto">
-                    {statusFilter ? `You have no ${statusFilter} orders.` : "Looks like you haven't started your reading journey yet."}
-                </p>
-                <button
-                    onClick={() => navigate("/catalog")}
-                    className="px-8 py-3 bg-[#1A3C34] text-white rounded-xl font-bold hover:bg-[#2F523F] transition-all shadow-lg active:scale-95"
-                >
-                    Browse Books
-                </button>
-            </div>
-        )}
-
-        {/* Orders List */}
         <div className="space-y-6">
             {orders.map((order) => {
                 const statusStyle = getOrderStatusStyles(order.status);
                 const StatusIcon = statusStyle.icon;
-
                 return (
-                    <div key={order._id} className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                        
-                        {/* Order Header */}
-                        <div className="bg-[#FAFBF9] px-6 py-4 border-b border-[#E3E8E5] flex flex-wrap gap-y-4 justify-between items-center">
-                            <div className="flex gap-6 md:gap-10 text-sm">
-                                <div>
-                                    <p className="text-[#8BA699] uppercase tracking-wider text-xs font-bold mb-1">Order Placed</p>
-                                    <p className="font-medium text-[#2C3E38] flex items-center gap-1.5">
-                                        <Calendar className="w-4 h-4 text-[#4A7C59]" />
-                                        {formatDate(order.createdAt)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-[#8BA699] uppercase tracking-wider text-xs font-bold mb-1">Total</p>
-                                    <p className="font-bold text-[#1A3C34]">{formatCurrency(order.amount)}</p>
-                                </div>
-                                <div className="hidden sm:block">
-                                    <p className="text-[#8BA699] uppercase tracking-wider text-xs font-bold mb-1">Order ID</p>
-                                    <p className="font-mono text-[#5C756D]">#{String(order._id).slice(-8).toUpperCase()}</p>
-                                </div>
+                    <div key={order._id} className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm overflow-hidden">
+                        <div className="bg-[#FAFBF9] px-6 py-4 border-b border-[#E3E8E5] flex flex-wrap justify-between items-center">
+                            <div className="flex gap-10 text-sm">
+                                <div><p className="text-[#8BA699] text-xs font-bold mb-1">Order Placed</p><p className="font-medium">{formatDate(order.createdAt)}</p></div>
+                                <div><p className="text-[#8BA699] text-xs font-bold mb-1">Total</p><p className="font-bold text-[#1A3C34]">{formatCurrency(order.amount)}</p></div>
+                                <div className="hidden sm:block"><p className="text-[#8BA699] text-xs font-bold mb-1">Order ID</p><p className="font-mono text-[#5C756D]">#{String(order._id).slice(-8).toUpperCase()}</p></div>
                             </div>
-
-                            <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border ${statusStyle.bg} ${statusStyle.border}`}>
-                                <StatusIcon className={`w-4 h-4 ${statusStyle.text}`} />
-                                <span className={`text-xs font-bold uppercase tracking-wider ${statusStyle.text}`}>
-                                    {order.status}
-                                </span>
-                            </div>
+                            <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border ${statusStyle.bg} ${statusStyle.border}`}><StatusIcon className={`w-4 h-4 ${statusStyle.text}`} /><span className={`text-xs font-bold uppercase ${statusStyle.text}`}>{order.status}</span></div>
                         </div>
-
-                        {/* Order Body */}
                         <div className="p-6">
                             <div className="grid lg:grid-cols-3 gap-8">
-                                
-                                {/* 1. Items List */}
                                 <div className="lg:col-span-2 space-y-4">
                                     {order.items?.map((item, idx) => (
-                                        <div key={idx} className="flex gap-4 items-start">
-                                            <div className="w-20 h-24 bg-[#F4F7F5] rounded-lg border border-[#E3E8E5] overflow-hidden flex-shrink-0">
-                                                {item.image ? (
-                                                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-[#8BA699] text-xs">No Img</div>
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-serif font-bold text-[#1A3C34] text-lg leading-tight mb-1">
-                                                    {item.title || "Unknown Book"}
-                                                </h4>
-                                                <p className="text-sm text-[#5C756D] mb-2">
-                                                    Quantity: {item.qty}
-                                                </p>
-                                                <p className="font-bold text-[#1A3C34]">
-                                                    {formatCurrency(item.unitPrice)}
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <div key={idx} className="flex gap-4"><img src={item.image || "/placeholder.png"} className="w-20 h-24 object-cover rounded-lg border border-[#E3E8E5]" /><div className="flex-1"><h4 className="font-bold text-[#1A3C34]">{item.title}</h4><p className="text-sm text-[#5C756D]">Qty: {item.qty}</p><p className="font-bold text-[#1A3C34]">{formatCurrency(item.unitPrice)}</p></div></div>
                                     ))}
                                 </div>
-
-                                {/* 2. Actions & Shipping Info */}
                                 <div className="space-y-6 lg:border-l border-[#E3E8E5] lg:pl-8">
-                                    
-                                    {/* Tracking Card */}
                                     {order.shipping?.bd?.awbNumber ? (
-                                        <div className="bg-[#F4F7F5] rounded-xl p-4 border border-[#DCE4E0]">
-                                            <h5 className="font-bold text-[#1A3C34] mb-3 flex items-center gap-2">
-                                                <Truck className="w-4 h-4" /> Tracking
-                                            </h5>
-                                            <p className="text-xs text-[#8BA699] mb-1 uppercase tracking-wide">AWB Number</p>
-                                            <p className="font-mono font-medium text-[#2C3E38] mb-4 bg-white px-2 py-1 rounded border border-[#E3E8E5] inline-block">
-                                                {order.shipping.bd.awbNumber}
-                                            </p>
-                                            
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <button
-                                                    onClick={() => openTracking(order.shipping.bd.awbNumber)}
-                                                    className="flex items-center justify-center gap-1.5 bg-[#1A3C34] text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-[#2F523F] transition-colors"
-                                                >
-                                                    <ExternalLink className="w-3 h-3" /> Track
-                                                </button>
-                                                <button
-                                                    onClick={() => copyAwbToClipboard(order.shipping.bd.awbNumber)}
-                                                    className="flex items-center justify-center gap-1.5 bg-white border border-[#DCE4E0] text-[#5C756D] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[#E8F0EB] transition-colors"
-                                                >
-                                                    <Copy className="w-3 h-3" /> Copy
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="bg-[#FFF9F0] rounded-xl p-4 border border-[#F5E6D3]">
-                                            <p className="text-sm text-[#8A6A4B] font-medium flex items-center gap-2">
-                                                <Clock className="w-4 h-4" />
-                                                Preparing Shipment
-                                            </p>
-                                            <p className="text-xs text-[#8A6A4B]/80 mt-1">
-                                                Tracking will be available soon.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Shipping Address Summary */}
-                                    {order.shipping && (
-                                        <div>
-                                            <h5 className="font-bold text-[#1A3C34] mb-2 text-sm flex items-center gap-2">
-                                                <MapPin className="w-4 h-4 text-[#4A7C59]" />
-                                                Shipping To
-                                            </h5>
-                                            <p className="text-sm text-[#5C756D] leading-relaxed">
-                                                {order.shipping.name}<br/>
-                                                {order.shipping.city}, {order.shipping.state}
-                                            </p>
-                                        </div>
-                                    )}
+                                        <div className="bg-[#F4F7F5] rounded-xl p-4 border border-[#DCE4E0]"><h5 className="font-bold text-[#1A3C34] mb-3 flex gap-2"><Truck className="w-4 h-4"/> Tracking</h5><p className="font-mono bg-white px-2 py-1 rounded border mb-4">{order.shipping.bd.awbNumber}</p><div className="grid grid-cols-2 gap-2"><button onClick={() => openTracking(order.shipping.bd.awbNumber)} className="bg-[#1A3C34] text-white px-3 py-2 rounded-lg text-xs font-bold">Track</button><button onClick={() => copyAwb(order.shipping.bd.awbNumber)} className="bg-white border text-[#5C756D] px-3 py-2 rounded-lg text-xs font-bold">Copy</button></div></div>
+                                    ) : (<div className="bg-[#FFF9F0] rounded-xl p-4 border border-[#F5E6D3]"><p className="text-sm text-[#8A6A4B] font-medium flex gap-2"><Clock className="w-4 h-4"/> Preparing Shipment</p></div>)}
                                 </div>
                             </div>
                         </div>
-                        
-                        {/* Order Footer */}
-                        {order.payment && (
-                            <div className="bg-[#FAFBF9] px-6 py-3 border-t border-[#E3E8E5] text-xs text-[#8BA699] flex justify-between items-center">
-                                <span>Payment: {order.payment.paymentType?.replace(/_/g, ' ').toUpperCase()}</span>
-                                <span className={`font-bold px-2 py-0.5 rounded border ${
-                                    order.payment.status === 'paid' 
-                                    ? 'bg-green-50 text-green-700 border-green-200' 
-                                    : 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                }`}>
-                                    {order.payment.status?.toUpperCase()}
-                                </span>
-                            </div>
-                        )}
+                        <div className="bg-[#FAFBF9] px-6 py-3 border-t border-[#E3E8E5] flex justify-end gap-3">
+                            <button onClick={() => window.open(`/invoice/${order._id}`, '_blank')} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[#1A3C34] border border-[#1A3C34] rounded-lg hover:bg-[#E8F0EB]"><FileText className="w-4 h-4"/> Invoice</button>
+                            {(order.payment.status === 'pending' || order.payment.status === 'failed') && order.payment.paymentType !== 'full_cod' && (
+                                <button onClick={() => retryPayment(order)} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-[#1A3C34] rounded-lg hover:bg-[#2F523F]"><CreditCard className="w-4 h-4"/> Retry Payment</button>
+                            )}
+                        </div>
                     </div>
                 );
             })}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-            <div className="mt-12 flex justify-center items-center gap-4">
-                <button
-                    onClick={() => handlePageChange(page - 1)}
-                    disabled={page === 1}
-                    className="w-10 h-10 rounded-full bg-white border border-[#E3E8E5] flex items-center justify-center text-[#2C3E38] hover:bg-[#E8F0EB] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                    <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="text-sm font-medium text-[#5C756D]">
-                    Page <span className="font-bold text-[#1A3C34]">{page}</span> of {totalPages}
-                </span>
-                <button
-                    onClick={() => handlePageChange(page + 1)}
-                    disabled={page === totalPages}
-                    className="w-10 h-10 rounded-full bg-white border border-[#E3E8E5] flex items-center justify-center text-[#2C3E38] hover:bg-[#E8F0EB] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                    <ChevronRight className="w-5 h-5" />
-                </button>
-            </div>
-        )}
-
+        {totalPages > 1 && <div className="mt-12 flex justify-center items-center gap-4"><button onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="w-10 h-10 rounded-full bg-white border flex items-center justify-center"><ChevronLeft/></button><span>Page {page} of {totalPages}</span><button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="w-10 h-10 rounded-full bg-white border flex items-center justify-center"><ChevronRight/></button></div>}
       </div>
     </div>
   );

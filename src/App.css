@@ -134,3 +134,24 @@ body {
     font-size: 1.05rem;
   }
 }
+
+@media print {
+  /* Hides the WhatsApp button */
+  .whatsapp-button, 
+  [class*="WhatsAppButton"],
+  a[href*="wa.me"] {
+    display: none !important;
+  }
+
+  /* Hides the Dynamic Popup */
+  .dynamic-popup,
+  [class*="DynamicPopup"] {
+    display: none !important;
+  }
+
+  /* Hides any other fixed/floating elements */
+  .fixed, .absolute {
+    /* Be careful with this one, verify it doesn't hide invoice parts */
+    /* position: static !important; */
+  }
+}
