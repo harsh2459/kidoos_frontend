@@ -1,4 +1,3 @@
-// src/api/client.jsx - FIXED (No infinite loop)
 import axios from "axios";
 
 /** Resolve base URL and normalize to ".../api" */
@@ -9,7 +8,7 @@ function resolveBaseURL() {
     (typeof window !== "undefined" && window.API_BASE) ||
     "https://kiddosintellect.com/api";
     // "http://localhost:5050/api";
-    // "http://192.168.1.39:5050/api";
+    // "http://192.168.1.36:5050/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api");
@@ -94,7 +93,7 @@ api.interceptors.response.use(
   (err) => {
     const status = err?.response?.status;
     const url = String(err?.config?.url || "");
-    
+
     // ✅ Only log errors, not every request
     if (status >= 400) {
       console.error("❌ API Error:", { url, status, error: err?.response?.data });

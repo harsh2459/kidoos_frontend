@@ -1,5 +1,4 @@
-// src/pages/BookDetail.jsx
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useCart } from "../contexts/CartStore";
@@ -8,57 +7,28 @@ import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
-import { ShoppingCart, Check, ChevronRight, ChevronLeft, Star, Tag, Info, Truck, Sparkles } from "lucide-react";
+import { 
+  ShoppingCart, Check, ChevronRight, Star, Info, 
+  Truck, Sparkles, BookOpen, Heart, Brain, Globe, ShieldCheck, Feather,
+  Eye, Ear, Hand, Smile, Zap, PlayCircle, School
+} from "lucide-react";
 
-/* ---- description helpers ---- */
-const addEmojiSpaces = (s = "") =>
-  s.replace(/([\u{1F300}-\u{1FAFF}\u2600-\u27BF])(?=\S)/gu, "$1 ");
-const looksLikeHtml = (s = "") => /<\/?[a-z][\s\S]*>/i.test(s);
-const escapeHtml = (s = "") =>
-  s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const textToBulletHtml = (raw = "") => {
-  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length < 3) return null;
-  const lis = lines.map((ln) => `<li>${addEmojiSpaces(escapeHtml(ln))}</li>`).join("");
-  return `<ul>${lis}</ul>`;
+/* --- ICON MAPPER --- */
+const ICON_MAP = {
+  brain: Brain, heart: Heart, globe: Globe, book: BookOpen, star: Star, 
+  check: Check, shield: ShieldCheck, feather: Feather, eye: Eye, 
+  ear: Ear, hand: Hand, smile: Smile, truck: Truck, zap: Zap
 };
 
 export default function BookDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-
   const [book, setBook] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeImg, setActiveImg] = useState(0);
 
-  // ✅ Get all possible cover images
-  const images = useMemo(() => {
-    if (!book) return [];
-
-    if (book.assets?.coverUrl) {
-      if (Array.isArray(book.assets.coverUrl)) {
-        return book.assets.coverUrl.filter(Boolean);
-      }
-      if (typeof book.assets.coverUrl === 'string') {
-        return [book.assets.coverUrl];
-      }
-    }
-
-    if (book.coverUrl) {
-      if (Array.isArray(book.coverUrl)) {
-        return book.coverUrl.filter(Boolean);
-      }
-      if (typeof book.coverUrl === 'string') {
-        return [book.coverUrl];
-      }
-    }
-
-    return [];
-  }, [book]);
-
-  const [active, setActive] = useState(0);
-
-  // Cart
+  // Cart Logic
   const items = useCart((s) => s.items);
   const add = useCart((s) => s.add);
   const inc = useCart((s) => s.inc);
@@ -66,577 +36,441 @@ export default function BookDetail() {
   const replaceAll = useCart((s) => s.replaceAll);
   const { isCustomer, token } = useCustomer();
 
-  // ✅ Fetch book with suggestions
+  // Scroll Animation Observer
+  const revealRefs = useRef([]);
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 }); // Trigger when 15% visible
+    
+    revealRefs.current.forEach(el => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [book]);
+
+  const addToRefs = (el) => {
+    if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el);
+  };
+
+  // --- FETCH DATA ---
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
+        window.scrollTo(0, 0);
         const { data } = await api.get(`/books/${slug}/suggestions?limit=8`);
-        const b = data?.book || null;
-        const sugg = data?.suggestions || [];
-
-        if (!b) {
+        if (!data?.book) {
           t.err("Book not found");
-          setBook(null);
-          setSuggestions([]);
           return;
         }
-
-        setBook(b);
-        setSuggestions(sugg);
-      } catch (error) {
-        console.error("Failed to load book:", error);
-        try {
-          const { data } = await api.get(`/books/${slug}`);
-          setBook(data.book);
-          setSuggestions([]);
-        } catch (fallbackError) {
-          console.error("Fallback failed:", fallbackError);
-        }
+        setBook(data.book);
+        setSuggestions(data.suggestions || []);
+      } catch (e) {
+        console.error("Fetch error", e);
       } finally {
         setLoading(false);
       }
     })();
   }, [slug]);
 
-  useEffect(() => {
-    setActive(0);
-  }, [images.length]);
+  const images = useMemo(() => {
+    if (!book) return [];
+    let urls = [];
+    if (Array.isArray(book.assets?.coverUrl)) urls = book.assets.coverUrl;
+    else if (typeof book.assets?.coverUrl === 'string') urls = [book.assets.coverUrl];
+    return urls.filter(Boolean).map(url => assetUrl(url));
+  }, [book]);
 
-  // Keyboard navigation
-  const next = useCallback(() => {
-    if (!images.length) return;
-    setActive((i) => (i + 1) % images.length);
-  }, [images.length]);
-
-  const prev = useCallback(() => {
-    if (!images.length) return;
-    setActive((i) => (i - 1 + images.length) % images.length);
-  }, [images.length]);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "ArrowRight") next();
-      if (e.key === "ArrowLeft") prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [next, prev]);
-
-  if (loading) {
-    return (
-      <div className="bg-[#F4F7F5] min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#E3E8E5] border-t-[#1A3C34] rounded-full animate-spin"></div>
-          <p className="text-[#5C756D]">Loading book details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!book) {
-    return (
-      <div className="bg-[#F4F7F5] min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-serif text-[#1A3C34] mb-2">Book Not Found</h2>
-          <button onClick={() => navigate("/catalog")} className="text-[#4A7C59] hover:underline">
-            Return to Catalog
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const id = book._id || book.id;
-  const inCart = items.find((i) => (i.bookId || i.book?._id || i.id) === id);
-  const d = dealFn(book);
-  const mainSrc = images.length ? assetUrl(images[active]) : "";
+  const mainSrc = images.length > 0 ? images[activeImg] : "/images/placeholder-book.png";
+  const d = book ? dealFn(book) : { price: 0, mrp: 0, off: 0 };
+  const inCart = book ? items.find(i => (i.bookId || i.book?._id || i.id) === book._id) : null;
 
   async function handleAddToCart() {
-    window.dispatchEvent(new Event("cart:add"));
-
     if (!isCustomer) {
-      t.info("Please login to add items to your cart");
+      t.info("Please login to add to cart");
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
-
     try {
-      const hasToken = !!localStorage.getItem("customer_jwt");
-      if (!hasToken) {
-        t.err("Session expired, please login again");
-        navigate("/login", { state: { next: "/cart" } });
-        return;
-      }
-
-      const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
+      const res = await CustomerAPI.addToCart(token, { bookId: book._id, qty: 1 });
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Added to cart");
     } catch (e) {
-      console.error("❌ Add to cart failed:", e);
-
-      if (e?.response?.status === 401) {
-        t.err("Session expired, please login again");
-        localStorage.removeItem("customer_jwt");
-        localStorage.removeItem("customer_profile");
-        navigate("/login", { state: { next: "/cart" } });
-        return;
-      }
-
-      console.log("ℹ️ Falling back to local cart");
-      add({
-        ...book,
-        price: book.price || book.pric || book.mrp,
-        mrp: book.mrp || book.price || book.pric,
-        qty: 1
-      }, 1);
-
-      t.warn("Added to local cart (sync with server failed)");
+      add({ ...book, price: d.price, qty: 1 }, 1);
+      t.ok("Added to cart (Local)");
     }
   }
 
   async function handleBuyNow() {
-    if (!isCustomer) {
-      t.info("Please login to continue");
-      navigate("/login", {
-        state: {
-          next: "/checkout",
-          pendingItem: { bookId: id, qty: 1 }
-        }
-      });
-      return;
-    }
-
-    try {
-      if (!inCart) {
-        const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
-        if (res?.data?.cart?.items) {
-          replaceAll(res.data.cart.items);
-        }
-      }
-      navigate("/checkout");
-    } catch (e) {
-      console.error("Buy Now Error", e);
-      t.err("Failed to process buy now");
-    }
+    if (!inCart) await handleAddToCart();
+    navigate("/checkout");
   }
 
-  const primary = (book.descriptionHtml ?? "").trim();
-  const fallback = (book.description ?? "").trim();
-  const rawDesc = primary || fallback;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="animate-spin w-12 h-12 border-4 border-[#1A3C34] rounded-full border-t-transparent"></div></div>;
+  if (!book) return null;
 
-  let finalHtml = null;
-  if (rawDesc && looksLikeHtml(rawDesc)) {
-    finalHtml = rawDesc;
-  } else if (rawDesc) {
-    finalHtml = textToBulletHtml(rawDesc);
-  }
-  const fallbackPlain = addEmojiSpaces(rawDesc);
+  const config = book.layoutConfig || {};
+  const specs = config.specs?.length > 0 ? config.specs : [
+    { label: "Page Count", value: (book.pages || "N/A") + " Pages", icon: "book" },
+    { label: "Age Group", value: "3-10 Years", icon: "smile" },
+    { label: "Language", value: book.language || "English", icon: "globe" },
+    { label: "Binding", value: book.printType === "hardcover" ? "Hardbound" : "Paperback", icon: "shield" },
+  ];
+
+  const faqs = config.faqs?.length > 0 ? config.faqs : [
+    { q: "What age is this suitable for?", a: "This book is designed for ages 3-10, with simple language and engaging visuals." },
+    { q: "Do you ship pan-India?", a: "Yes! We deliver to all pin codes in India within 3-7 business days." },
+    { q: "Is the paper durable?", a: "Absolutely. We use 100 GSM high-quality paper that is tear-resistant and toddler-friendly." }
+  ];
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34]">
+    <div className="min-h-screen font-sans text-[#2C3E38] bg-white overflow-x-hidden">
       
-      {/* Responsive Container 
-        - max-w-7xl for standard desktops
-        - 2xl:max-w-[1800px] for large screens
-        - 3xl:max-w-[2200px] for ultra-wide screens
-      */}
-      <div className="max-w-7xl 2xl:max-w-[1800px] 3xl:max-w-[2200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <style>{`
+        /* --- ANIMATIONS --- */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
         
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-[#8BA699] mb-6 sm:mb-8 font-medium">
-          <button onClick={() => navigate("/catalog")} className="hover:text-[#1A3C34] transition-colors">
-            Catalog
-          </button>
-          <span>/</span>
-          <span className="text-[#1A3C34] truncate max-w-[150px] sm:max-w-[300px] md:max-w-none">{book.title}</span>
-        </div>
+        .slide-in-left { opacity: 0; transform: translateX(-50px); transition: all 1s ease-out; }
+        .slide-in-left.active { opacity: 1; transform: translateX(0); }
+        
+        .slide-in-right { opacity: 0; transform: translateX(50px); transition: all 1s ease-out; }
+        .slide-in-right.active { opacity: 1; transform: translateX(0); }
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 2xl:gap-24 items-start">
-          
-          {/* LEFT: GALLERY */}
-          {/* Sticky positioning on Large screens to follow content */}
-          <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+        /* 3D BOOK STYLES */
+        .perspective-2000 { perspective: 2000px; }
+        .book-3d-wrapper { 
+           transform-style: preserve-3d; 
+           transform: rotateY(-20deg) rotateX(5deg); 
+           transition: transform 0.5s ease-out;
+        }
+        .book-3d-wrapper:hover { transform: rotateY(-10deg) rotateX(2deg) scale(1.02); }
+        
+        .book-spine {
+           background: linear-gradient(90deg, #e0e0e0 0%, #ffffff 40%, #cccccc 100%);
+           transform: rotateY(-90deg) translateX(-16px);
+           transform-origin: left;
+           box-shadow: inset 3px 0 5px rgba(0,0,0,0.15);
+        }
+        
+        .float-anim { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-12px); } 100% { transform: translateY(0px); } }
+        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      `}</style>
+
+      {/* 1. HERO SECTION */}
+      <section className="relative pt-8 pb-16 lg:py-24 overflow-hidden bg-gradient-to-br from-[#F9FBFA] to-[#F0F4F2]">
+        <div className="max-w-[1500px] mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             
-            {/* Main Image */}
-            <div className="relative rounded-2xl overflow-hidden bg-white shadow-sm border border-[#E3E8E5] aspect-[3/4] group w-full max-w-lg mx-auto lg:max-w-none">
-              {mainSrc ? (
-                <img
-                  src={mainSrc}
-                  alt={book.title}
-                  className="absolute inset-0 h-full w-full object-contain p-4 sm:p-6 transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
-                  draggable={false}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#F4F7F5]">
-                  <span className="text-[#8BA699]">No image</span>
+            {/* LEFT: TEXT CONTENT */}
+            <div className="order-2 lg:order-1 reveal" ref={addToRefs}>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#E3E8E5] text-[#1A3C34] text-xs font-bold uppercase tracking-wider mb-6 shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" fill="#D4AF37" />
+                    Best Seller for Ages 3-10
                 </div>
-              )}
 
-              {/* Discount Badge */}
-              {d.off > 0 && (
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-[#E8F0EB] text-[#1A3C34] text-xs sm:text-sm font-bold border border-[#DCE4E0] shadow-sm">
-                  -{d.off}% OFF
+                <h1 className="text-4xl md:text-5xl lg:text-7xl font-serif font-bold text-[#1A3C34] leading-[1.1] mb-4">
+                    {book.title}
+                </h1>
+                {book.subtitle && <p className="text-xl text-[#5C756D] font-light mb-8">{book.subtitle}</p>}
+
+                <div className="flex items-baseline gap-4 mb-8">
+                    <span className="text-5xl font-bold text-[#1A3C34]">₹{d.price}</span>
+                    {d.mrp > d.price && (
+                        <>
+                            <span className="text-2xl text-[#8BA699] line-through">₹{d.mrp}</span>
+                            <span className="px-3 py-1 bg-[#E8F0EB] text-[#4A7C59] font-bold rounded-lg text-sm">
+                                {d.off}% OFF
+                            </span>
+                        </>
+                    )}
                 </div>
-              )}
 
-              {/* Navigation Arrows */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={prev}
-                    className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-[#1A3C34] hover:text-white shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </button>
-                  <button
-                    onClick={next}
-                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/90 hover:bg-[#1A3C34] hover:text-white shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                    aria-label="Next"
-                  >
-                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                  </button>
-                </>
-              )}
+                {/* Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-10 max-w-md">
+                    {!inCart ? (
+                        <>
+                            <button 
+                                onClick={handleAddToCart}
+                                className="flex-1 h-14 bg-white border border-[#1A3C34] text-[#1A3C34] rounded-xl font-bold text-lg hover:bg-[#F4F7F5] transition-all flex items-center justify-center gap-3 active:scale-95"
+                            >
+                                <ShoppingCart className="w-5 h-5" /> Add to Cart
+                            </button>
+                            <button 
+                                onClick={handleBuyNow} 
+                                className="flex-1 h-14 bg-[#1A3C34] text-white rounded-xl font-bold text-lg hover:bg-[#234b41] transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2 active:scale-95"
+                            >
+                                Buy Now <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-[#E3E8E5] shadow-sm w-full">
+                            <button onClick={dec} className="w-12 h-10 rounded-lg bg-[#F4F7F5] font-bold text-xl hover:bg-[#E3E8E5] text-[#1A3C34]">-</button>
+                            <span className="font-bold text-xl flex-1 text-center text-[#1A3C34]">{inCart.qty}</span>
+                            <button onClick={inc} className="w-12 h-10 rounded-lg bg-[#F4F7F5] font-bold text-xl hover:bg-[#E3E8E5] text-[#1A3C34]">+</button>
+                            <button onClick={() => navigate("/checkout")} className="px-6 h-10 bg-[#1A3C34] text-white rounded-lg font-bold ml-2 hover:bg-[#2F523F]">Checkout</button>
+                        </div>
+                    )}
+                </div>
+
+                {/* "Why Choose This Book" Checklist */}
+                {book.whyChooseThis && book.whyChooseThis.length > 0 && (
+                    <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-[#E3E8E5]">
+                        <h3 className="font-bold text-[#1A3C34] mb-4 text-sm uppercase tracking-wider">Why Parents Love This</h3>
+                        <ul className="space-y-3">
+                            {book.whyChooseThis.map((point, i) => (
+                                <li key={i} className="flex items-start gap-3 text-[#4A5D56]">
+                                    <Check className="w-5 h-5 text-[#4A7C59] flex-shrink-0" />
+                                    <span className="leading-snug">{point}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+            {/* RIGHT: 3D BOOK */}
+            <div className="order-1 lg:order-2 flex flex-col items-center justify-center reveal" ref={addToRefs}>
+                <div className="relative w-full max-w-[420px] lg:max-w-[500px] perspective-2000 z-20 mb-16 cursor-pointer group">
+                    <div className="book-3d-wrapper relative w-full">
+                        <div className="book-spine absolute top-[2px] bottom-[2px] left-0 w-[26px] rounded-l-sm z-0"></div>
+                        <img 
+                            src={mainSrc} 
+                            className="w-full h-auto rounded-r-xl rounded-l-sm shadow-[20px_25px_50px_rgba(0,0,0,0.25)] border border-white/20 bg-white relative z-10 block"
+                            alt={book.title}
+                            onError={(e) => { e.currentTarget.src = "/images/placeholder-book.png"; }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none rounded-r-xl z-20"></div>
+                    </div>
+
+                    {/* Floating Badges */}
+                    <div className="absolute top-[8%] right-[-20px] bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-3 z-30 float-anim border border-[#E3E8E5]">
+                        <div className="w-8 h-8 rounded-full bg-[#E8F0EB] flex items-center justify-center"><ShieldCheck className="w-4 h-4 text-[#4A7C59]" /></div>
+                        <div><div className="font-bold text-[#1A3C34] text-xs">Non-Toxic</div><div className="text-[9px] text-[#8BA699] uppercase font-bold tracking-wide">Safe Ink</div></div>
+                    </div>
+                    <div className="absolute bottom-[12%] left-[-20px] bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-3 z-30 float-anim border border-[#E3E8E5]" style={{ animationDelay: "1s" }}>
+                        <div className="w-8 h-8 rounded-full bg-[#E8F0EB] flex items-center justify-center"><Feather className="w-4 h-4 text-[#4A7C59]" /></div>
+                        <div><div className="font-bold text-[#1A3C34] text-xs">Tear Proof</div><div className="text-[9px] text-[#8BA699] uppercase font-bold tracking-wide">Durable</div></div>
+                    </div>
+
+                    {/* DOCK GALLERY */}
+                    {images.length > 1 && (
+                        <div className="absolute -bottom-24 left-0 right-0 flex justify-center gap-3">
+                            {images.map((img, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setActiveImg(i)}
+                                    className={`relative transition-all duration-300 ease-out flex-shrink-0 ${i === activeImg ? "-translate-y-2 scale-110 z-10" : "hover:-translate-y-1 hover:scale-105 opacity-70 hover:opacity-100"}`}
+                                >
+                                    <div className={`w-[60px] h-[85px] sm:w-[80px] sm:h-[110px] rounded-lg overflow-hidden bg-white shadow-md border-[2px] ${i === activeImg ? "border-[#1A3C34] shadow-xl" : "border-transparent"}`}>
+                                        <img src={img} className="w-full h-full object-cover" alt={`View ${i}`} />
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* 2. MARQUEE */}
+      <div className="bg-[#1A3C34] py-3 overflow-hidden whitespace-nowrap text-white">
+        <div className="inline-block" style={{ animation: "scroll 40s linear infinite" }}>
+            {[1,2,3,4,5,6,7,8].map(i => (
+                <span key={i} className="text-white/80 font-bold uppercase tracking-widest text-xs sm:text-sm mx-8 inline-flex items-center gap-3">
+                    <Star className="w-4 h-4 text-[#D4AF37]" fill="#D4AF37" /> Hand-Picked Collection
+                    <span className="text-white/20">|</span>
+                    <Globe className="w-4 h-4" /> English, Hindi & Gujarati
+                    <span className="text-white/20">|</span>
+                    <ShieldCheck className="w-4 h-4" /> 100% Child Safe
+                </span>
+            ))}
+        </div>
+      </div>
+
+      {/* 3. PRODUCT DETAILS */}
+      <section className="py-20 bg-white border-b border-[#E3E8E5]">
+        <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-12 reveal" ref={addToRefs}>
+                <h2 className="text-3xl font-serif font-bold text-[#1A3C34] mb-2">Product Details</h2>
+                <div className="w-16 h-1 bg-[#4A7C59] mx-auto rounded-full"></div>
+            </div>
+            <div className="bg-[#F9FBFA] rounded-2xl p-8 border border-[#E3E8E5] reveal" ref={addToRefs}>
+                <div className="divide-y divide-[#E3E8E5]">
+                    {specs.map((spec, i) => {
+                        const Icon = ICON_MAP[spec.icon] || Info;
+                        return (
+                            <div key={i} className="flex justify-between items-center py-4">
+                                <div className="flex items-center gap-4 font-bold text-[#1A3C34]">
+                                    <Icon className="w-5 h-5 text-[#4A7C59]" /> {spec.label}
+                                </div>
+                                <div className="text-[#5C756D] font-medium">{spec.value}</div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* 4. MISSION SECTION (CLEAN, FULL IMAGE UI) */}
+      {config.story?.text && (
+      <section className="py-24 bg-white overflow-hidden border-t border-[#E3E8E5]">
+        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+            
+            {/* Text: Slide In Left */}
+            <div className="slide-in-left" ref={addToRefs}>
+                <span className="text-[#4A7C59] font-bold tracking-widest uppercase text-xs mb-4 block">Our Mission</span>
+                <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#1A3C34] mb-6 leading-tight">
+                    {config.story.heading}
+                </h2>
+                <p className="text-lg text-[#4A5D56] leading-relaxed mb-8">
+                    {config.story.text}
+                </p>
+                {config.story.quote && (
+                    <div className="border-l-4 border-[#1A3C34] pl-6 py-4 italic text-[#1A3C34] font-medium text-lg bg-[#F9FBFA] rounded-r-lg">
+                        "{config.story.quote}"
+                    </div>
+                )}
             </div>
 
-            {/* Thumbnail Gallery */}
-            {images.length > 1 && (
-              <div className="grid grid-cols-5 sm:grid-cols-6 gap-2 sm:gap-3 max-w-lg mx-auto lg:max-w-none w-full">
-                {images.map((p, idx) => {
-                  const src = assetUrl(p);
-                  const isActive = idx === active;
-                  return (
-                    <button
-                      key={`${p}-${idx}`}
-                      onClick={() => setActive(idx)}
-                      className={`
-                        relative rounded-lg overflow-hidden aspect-square bg-white border-2 transition-all duration-300
-                        ${isActive
-                          ? "border-[#1A3C34] shadow-md scale-105"
-                          : "border-[#E3E8E5] hover:border-[#8BA699] opacity-70 hover:opacity-100"
-                        }
-                      `}
-                    >
-                      <img
-                        src={src}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
-                        draggable={false}
-                      />
-                    </button>
-                  );
+            {/* Image: Slide In Right (CLEAN, FULL VIEW) */}
+            <div className="slide-in-right" ref={addToRefs}>
+                <div className="rounded-2xl overflow-hidden shadow-xl bg-[#F4F7F5] border border-[#E3E8E5]">
+                    <img 
+                        src={config.story.imageUrl || mainSrc}
+                        alt="Our Story" 
+                        // w-full h-auto ensures the full image is shown without cropping
+                        className="w-full h-auto block"
+                        onError={(e) => { e.currentTarget.src = mainSrc; }}
+                    />
+                </div>
+            </div>
+        </div>
+      </section>
+      )}
+
+      {/* 5. CURRICULUM */}
+      {config.curriculum?.length > 0 && (
+      <section className="py-20 bg-[#F9FBFA]">
+        <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16 reveal" ref={addToRefs}>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34] mb-4">What Your Child Learns</h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+                {config.curriculum.map((item, i) => {
+                    const Icon = ICON_MAP[item.icon] || Star;
+                    return (
+                        <div key={i} className="p-8 bg-white rounded-2xl border border-[#E3E8E5] hover:border-[#4A7C59] hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center reveal" ref={addToRefs}>
+                            <div className="w-16 h-16 mx-auto bg-[#F4F7F5] rounded-full flex items-center justify-center mb-6 text-[#1A3C34]">
+                                <Icon className="w-8 h-8" />
+                            </div>
+                            <h3 className="text-xl font-bold text-[#1A3C34] mb-3">{item.title}</h3>
+                            <p className="text-[#5C756D] leading-relaxed">{item.description}</p>
+                        </div>
+                    )
                 })}
-              </div>
-            )}
-
-            {/* WHY CHOOSE THIS BOOK */}
-            {book.whyChooseThis && book.whyChooseThis.length > 0 && (
-              <div className="p-5 sm:p-6 bg-[#E8F0EB] rounded-2xl border border-[#DCE4E0] shadow-sm max-w-lg mx-auto lg:max-w-none w-full">
-                <h3 className="text-lg sm:text-xl font-serif font-bold text-[#1A3C34] mb-4 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#4A7C59] fill-current" />
-                  Why Choose This Book?
-                </h3>
-                <ul className="space-y-3">
-                  {book.whyChooseThis.map((reason, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-[#2C3E38] text-sm sm:text-base leading-relaxed">
-                      <Check className="w-5 h-5 text-[#4A7C59] mt-0.5 flex-shrink-0" />
-                      <span>{reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT: DETAILS */}
-          <div className="flex flex-col">
-            {/* Title & Author */}
-            <div className="mb-6 border-b border-[#E3E8E5] pb-6">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[#1A3C34] leading-tight mb-3">
-                {book.title}
-                {book.subtitle && (
-                  <span className="block text-lg sm:text-xl md:text-2xl font-sans font-normal text-[#5C756D] mt-2">
-                    {book.subtitle}
-                  </span>
-                )}
-              </h1>
-              <p className="text-base sm:text-lg text-[#5C756D] flex flex-wrap items-center gap-2">
-                <span className="text-xs sm:text-sm uppercase tracking-wide">By</span>
-                <span className="font-medium text-[#2C3E38]">{(book.authors || []).join(", ")}</span>
-              </p>
             </div>
-
-            {/* Categories & Tags */}
-            {(book.categories?.length || book.tags?.length) ? (
-              <div className="mb-8 space-y-4">
-                {book.categories?.length ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs sm:text-sm font-medium text-[#8BA699] flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> Categories:
-                    </span>
-                    {book.categories.map((c) => (
-                      <span key={c} className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#E8F0EB] text-[#1A3C34] text-[10px] sm:text-xs font-bold uppercase tracking-wide border border-[#DCE4E0]">
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {/* Pricing Card */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 md:p-8 border border-[#E3E8E5] shadow-sm mb-8">
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1A3C34]">₹{d.price}</span>
-                {d.mrp > d.price && (
-                  <span className="text-lg sm:text-xl line-through text-[#8BA699]">₹{d.mrp}</span>
-                )}
-              </div>
-              
-              {d.save > 0 && (
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#E8F0EB] text-[#2F523F] rounded-lg text-sm font-medium mb-4">
-                  <Check className="w-3 h-3" />
-                  You save ₹{d.save}
-                </div>
-              )}
-
-            </div>
-
-            {/* Add to Cart Actions */}
-            <div className="mb-10">
-              {!inCart ? (
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  {/* Add to Cart */}
-                  <button
-                    onClick={handleAddToCart}
-                    className="flex-1 h-12 sm:h-14 rounded-xl bg-transparent border-2 border-[#1A3C34] text-[#1A3C34] font-bold text-base sm:text-lg hover:bg-[#F4F7F5] transition-all flex items-center justify-center gap-3 group active:scale-95"
-                  >
-                    <ShoppingCart className="w-5 h-5 transition-transform group-hover:scale-110" />
-                    <span>Add to Cart</span>
-                  </button>
-
-                  {/* Buy Now */}
-                  <button
-                    onClick={handleBuyNow}
-                    className="flex-1 h-12 sm:h-14 rounded-xl bg-[#1A3C34] text-white font-bold text-base sm:text-lg hover:bg-[#2F523F] transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-3"
-                  >
-                    <span>Buy Now</span>
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 sm:gap-4 bg-white p-2 rounded-2xl border border-[#E3E8E5] shadow-sm max-w-md">
-                  {/* Quantity Controls */}
-                  <div className="flex items-center gap-3 sm:gap-4 bg-[#F4F7F5] rounded-xl p-1.5 flex-1">
-                    <button
-                      onClick={dec}
-                      id={id}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white text-[#1A3C34] font-bold hover:bg-[#E8F0EB] transition-colors shadow-sm flex items-center justify-center text-lg sm:text-xl"
-                    >
-                      -
-                    </button>
-                    <span className="flex-1 text-center text-base sm:text-lg font-bold text-[#1A3C34]">
-                      {inCart.qty}
-                    </span>
-                    <button
-                      onClick={inc}
-                      id={id}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white text-[#1A3C34] font-bold hover:bg-[#E8F0EB] transition-colors shadow-sm flex items-center justify-center text-lg sm:text-xl"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  {/* Checkout Button */}
-                  <button
-                    onClick={() => navigate("/checkout")}
-                    className="h-10 sm:h-12 px-6 sm:px-8 rounded-xl bg-[#1A3C34] text-white font-bold hover:bg-[#2F523F] transition-all flex items-center gap-2 shadow-md text-sm sm:text-base"
-                  >
-                    Checkout
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="prose prose-stone prose-lg max-w-none text-[#4A5D56] leading-relaxed">
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#1A3C34] mb-4 flex items-center gap-2">
-                <Info className="w-5 h-5" />
-                About this Book
-              </h3>
-              {finalHtml ? (
-                <div
-                  className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl border border-[#E3E8E5] shadow-sm [&_ul]:pl-5 [&_li]:mb-2 text-sm sm:text-base"
-                  dangerouslySetInnerHTML={{ __html: finalHtml }}
-                />
-              ) : (
-                <div className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl border border-[#E3E8E5] shadow-sm whitespace-pre-line text-sm sm:text-base">
-                  {fallbackPlain || "No description available."}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
+      </section>
+      )}
 
-        {/* ✅ SUGGESTIONS SECTION */}
-        {suggestions && suggestions.length > 0 && (
-          <div className="mt-20 border-t border-[#E3E8E5] pt-16">
-            <div className="flex items-end justify-between mb-8">
-              <div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-[#1A3C34] mb-2">You Might Also Like</h2>
-                <p className="text-[#5C756D] text-sm sm:text-base">Curated recommendations based on your selection</p>
-              </div>
-              <span className="hidden sm:block px-4 py-1 rounded-full bg-[#E8F0EB] text-[#2F523F] text-sm font-bold">
-                {suggestions.length} Books
-              </span>
+      {/* 6. TESTIMONIALS */}
+      {config.testimonials?.length > 0 && (
+      <section className="py-24 bg-[#1A3C34] text-white">
+        <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-3xl font-serif font-bold text-center mb-16 reveal" ref={addToRefs}>What Parents Say</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+                {config.testimonials.map((review, i) => (
+                    <div key={i} className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:bg-white/15 transition-all reveal" ref={addToRefs}>
+                        <div className="flex gap-1 mb-6">
+                            {[...Array(review.rating || 5)].map((_, r) => <Star key={r} className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />)}
+                        </div>
+                        <p className="text-lg italic text-[#E8F0EB] mb-8 leading-relaxed">"{review.text}"</p>
+                        <div>
+                            <div className="font-bold text-white">{review.name}</div>
+                            <div className="text-sm text-[#8BA699]">{review.role}</div>
+                        </div>
+                    </div>
+                ))}
             </div>
+        </div>
+      </section>
+      )}
 
-            {/* Responsive Grid: 2 cols on mobile -> 6 cols on Ultra-Wide */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-              {suggestions.map((suggestedBook) => (
-                <SuggestionCard
-                  key={suggestedBook._id}
-                  book={suggestedBook}
-                />
-              ))}
+      
+      {/* 8. YOU MIGHT ALSO LIKE (Complete Your Collection) */}
+      {suggestions.length > 0 && (
+        <section className="py-24 bg-[#F9FBFA] border-t border-[#E3E8E5]">
+            <div className="max-w-7xl mx-auto px-6">
+                <div className="flex items-end justify-between mb-12 reveal" ref={addToRefs}>
+                    <div>
+                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34] mb-2">Complete Your Collection</h2>
+                        <p className="text-[#5C756D]">Other books parents are buying right now.</p>
+                    </div>
+                    <button onClick={() => navigate('/catalog')} className="hidden sm:flex items-center gap-2 text-[#1A3C34] font-bold hover:text-[#4A7C59]">
+                        View All <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 reveal" ref={addToRefs}>
+                    {suggestions.map((s) => {
+                        const sDeal = dealFn(s);
+                        return (
+                            <div 
+                                key={s._id} 
+                                onClick={() => { navigate(`/book/${s.slug}`); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className="group bg-white rounded-2xl border border-[#E3E8E5] overflow-hidden hover:border-[#4A7C59] hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
+                            >
+                                <div className="aspect-[3/4] bg-[#F4F7F5] p-6 relative overflow-hidden">
+                                    <img 
+                                        src={assetUrl(s.assets?.coverUrl?.[0])} 
+                                        alt={s.title}
+                                        className="w-full h-full object-contain drop-shadow-sm transition-transform duration-500 group-hover:scale-110" 
+                                    />
+                                    {sDeal.off > 0 && (
+                                        <span className="absolute top-3 left-3 bg-[#E8F0EB] text-[#1A3C34] text-[10px] font-bold px-2 py-1 rounded border border-[#DCE4E0]">
+                                            -{sDeal.off}%
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="p-4">
+                                    <h3 className="font-serif font-bold text-[#1A3C34] leading-tight line-clamp-2 mb-1 group-hover:text-[#4A7C59] transition-colors">
+                                        {s.title}
+                                    </h3>
+                                    <div className="flex items-center justify-between mt-3">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-[#1A3C34]">₹{sDeal.price}</span>
+                                            {sDeal.mrp > sDeal.price && <span className="text-xs text-[#8BA699] line-through">₹{sDeal.mrp}</span>}
+                                        </div>
+                                        <div className="w-8 h-8 rounded-full bg-[#F4F7F5] flex items-center justify-center text-[#1A3C34] group-hover:bg-[#1A3C34] group-hover:text-white transition-colors">
+                                            <ShoppingCart className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
             </div>
-          </div>
-        )}
+        </section>
+      )}
+
+      {/* Sticky Mobile Bar */}
+      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E3E8E5] p-4 px-6 flex items-center justify-between sm:hidden z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.1)]">
+        <div>
+            <div className="text-[10px] text-[#8BA699] uppercase font-bold tracking-wider">Total</div>
+            <div className="text-xl font-bold text-[#1A3C34]">₹{d.price}</div>
+        </div>
+        <button onClick={handleAddToCart} className="px-8 py-3 bg-[#1A3C34] text-white rounded-lg font-bold shadow-md">
+            Buy Now
+        </button>
       </div>
+
     </div>
-  );
-}
-
-/* ✅ Suggestion Card - Matched to ProductCard Style */
-function SuggestionCard({ book }) {
-  const navigate = useNavigate();
-  const d = dealFn(book);
-
-  const items = useCart((s) => s.items);
-  const replaceAll = useCart((s) => s.replaceAll);
-  const addLocal = useCart((s) => s.add);
-  const { isCustomer, token } = useCustomer();
-
-  const id = book._id || book.id;
-  const inCartItem = items.find((i) => (i.bookId || i.book?._id || i.id) === id);
-  const inCart = !!inCartItem;
-
-  const cover =
-    (Array.isArray(book?.assets?.coverUrl) ? book.assets.coverUrl[0] : book?.assets?.coverUrl) ||
-    "/uploads/placeholder.png";
-
-  const addToCart = async (e) => {
-    e.stopPropagation(); // Prevent opening book detail
-    window.dispatchEvent(new Event("cart:add"));
-
-    if (!isCustomer) {
-      t.info("Please login to add");
-      navigate("/login", { state: { next: "/cart" } });
-      return;
-    }
-
-    try {
-      const hasToken = !!localStorage.getItem("customer_jwt");
-      if (!hasToken) {
-        t.err("Session expired");
-        navigate("/login", { state: { next: "/cart" } });
-        return;
-      }
-
-      const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
-      replaceAll(res?.data?.cart?.items || []);
-      t.ok("Added to cart");
-    } catch (e) {
-      if (e?.response?.status === 401) {
-        t.err("Session expired");
-        localStorage.removeItem("customer_jwt");
-        localStorage.removeItem("customer_profile");
-        navigate("/login", { state: { next: "/cart" } });
-        return;
-      }
-      addLocal({
-        ...book,
-        price: book.price || book.pric || book.mrp,
-        mrp: book.mrp || book.price || book.pric,
-        qty: 1
-      });
-      t.warn("Added to local cart");
-    }
-  };
-
-  const goToCart = (e) => {
-    e.stopPropagation();
-    navigate("/cart");
-  };
-
-  return (
-    <article 
-        onClick={() => {
-            navigate(`/book/${book.slug}`);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        className="group flex flex-col h-full bg-white rounded-xl border border-[#E3E8E5] overflow-hidden hover:border-[#4A7C59] hover:shadow-lg transition-all duration-300 cursor-pointer"
-    >
-      {/* Image */}
-      <div className="relative w-full aspect-[3/4] bg-[#F4F7F5] overflow-hidden">
-        <div className="w-full h-full p-4 flex items-center justify-center">
-            <img
-                src={assetUrl(cover)}
-                alt={book.title}
-                loading="lazy"
-                draggable={false}
-                className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform duration-500 ease-out group-hover:scale-110"
-            />
-        </div>
-        {d.off > 0 && (
-            <span className="absolute top-2 left-2 bg-[#E8F0EB] text-[#1A3C34] text-[10px] font-bold px-2 py-0.5 rounded border border-[#DCE4E0]">
-                -{d.off}%
-            </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-3 flex flex-col flex-grow">
-        <h3 className="font-serif font-bold text-[#1A3C34] text-sm sm:text-base leading-tight line-clamp-2 mb-1 group-hover:text-[#4A7C59] transition-colors">
-          {book.title}
-        </h3>
-        
-        <div className="text-[#8BA699] text-xs line-clamp-1 mb-3">
-          {(book.authors || []).join(", ")}
-        </div>
-
-        <div className="mt-auto flex items-center justify-between gap-2">
-          <div className="flex flex-col">
-            <span className="font-bold text-[#1A3C34] text-sm sm:text-base">₹{d.price}</span>
-            {d.mrp > d.price && (
-                <span className="text-[10px] line-through text-[#8BA699]">₹{d.mrp}</span>
-            )}
-          </div>
-
-          {!inCart ? (
-            <button
-              onClick={addToCart}
-              className="w-8 h-8 rounded-full bg-[#1A3C34] text-white flex items-center justify-center hover:bg-[#2F523F] transition-colors shadow-sm"
-              title="Add to Cart"
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={goToCart}
-              className="w-8 h-8 rounded-full bg-[#E8F0EB] text-[#1A3C34] flex items-center justify-center border border-[#DCE4E0] hover:bg-[#DCE4E0] transition-colors"
-              title="Go to Cart"
-            >
-              <Check className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-    </article>
   );
 }

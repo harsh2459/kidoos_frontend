@@ -49,9 +49,9 @@ export default function Checkout() {
 
   const set = (k, v) => setCust((p) => ({ ...p, [k]: v }));
 
-  /* ------------ FEE LOGIC (Fixed) ------------ */
+  /* ------------ FEE LOGIC ------------ */
   const getBaseZoneFee = (pincode) => {
-    // ✅ FIX: Return 0 if pincode is invalid/empty so fees don't show prematurely
+    // If pincode is invalid/empty, return 0 so fees don't show prematurely
     if (!pincode || String(pincode).length < 6) return 0; 
     
     const pinStr = String(pincode);
@@ -89,7 +89,7 @@ export default function Checkout() {
     if (paymentOption === "half_online_half_cod") {
       baseTotalFee = getBaseZoneFee(cust.pin);
       
-      // ✅ Only apply logic if we have a valid base fee (valid pincode)
+      // Only apply logic if we have a valid base fee (valid pincode)
       if (baseTotalFee > 0) {
         discount = getBulkDiscount(totalQty);
         let totalFeeAfterDiscount = Math.max(0, baseTotalFee - discount);
@@ -216,7 +216,7 @@ export default function Checkout() {
       amount: totals.grand, 
       currency: "INR",
       
-      // ✅ Sending fees separately to backend
+      // ✅ Sending fees separately so Backend stores them correctly
       shippingFee: totals.finalShippingFee,
       serviceFee: totals.finalServiceFee,
       
@@ -233,8 +233,17 @@ export default function Checkout() {
     setPlacing(true);
     try {
       const orderId = await createLocalOrder("razorpay", "created");
+      
+      // ✅ FIX FOR BACKEND LOGIC:
+      // Since the backend DIVIDES Half Payments by 2, we must MULTIPLY by 2 here 
+      // to ensure the customer pays the correct calculated amount.
+      let amountToSend = totals.payNow;
+      if (paymentOption === "half_online_half_cod") {
+        amountToSend = totals.payNow * 2;
+      }
+
       const { data } = await api.post("/payments/razorpay/order", {
-        amountInRupees: totals.payNow,
+        amountInRupees: amountToSend,
         receipt: `web_${orderId}`,
         orderId,
         paymentType: paymentOption,

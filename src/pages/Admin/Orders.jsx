@@ -32,8 +32,6 @@ export default function AdminOrders() {
 
   // Modal States
   const [showShipmentModal, setShowShipmentModal] = useState(false);
-  // ✅ REMOVED: shipmentForm (No longer needed for manual inputs)
-
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundForm, setRefundForm] = useState({
     orderId: '',
@@ -170,7 +168,6 @@ export default function AdminOrders() {
       return;
     }
 
-    // ✅ NO FORM RESET NEEDED (Auto-calc happens on backend)
     setShowShipmentModal(true);
   }
 
@@ -185,7 +182,6 @@ export default function AdminOrders() {
 
     setActionLoading(true);
     try {
-      // ✅ SIMPLIFIED PAYLOAD: Just IDs and Profile. Backend handles Dimensions.
       const payload = {
         orderIds: ids,
         profileId: selectedProfile
@@ -194,7 +190,7 @@ export default function AdminOrders() {
       const { data } = await BlueDartAPI.createShipments(
         payload.orderIds,
         payload.profileId,
-        {}, // Empty options object (Backend defaults used)
+        {}, 
         auth
       );
 
@@ -214,7 +210,7 @@ export default function AdminOrders() {
           results.failed.forEach((f, idx) => {
             setTimeout(() => {
               t.err(`Order ${f.orderId?.slice(-6)}: ${f.error}`);
-            }, idx * 500); // Stagger toasts
+            }, idx * 500); 
           });
         }
       } else {
@@ -302,11 +298,7 @@ export default function AdminOrders() {
   async function loadProfiles() {
     try {
       const { data } = await BlueDartAPI.listProfiles(auth);
-      // console.log("📦 BlueDart API Response:", data); 
-
       const profileList = data.data || data.profiles || [];
-      // console.log("📋 Profile List:", profileList); 
-
       setProfiles(profileList);
 
       const defaultProfile = profileList.find(p => p.isDefault);
@@ -427,7 +419,6 @@ export default function AdminOrders() {
   const getStatusBadge = (orderStatus, paymentStatus) => {
     const badges = [];
 
-    // Order Status Badge
     const orderStatusConfig = {
       'pending': { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Pending' },
       'confirmed': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Confirmed' },
@@ -438,7 +429,6 @@ export default function AdminOrders() {
       'cancelled': { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Cancelled' },
     };
 
-    // Payment Status Badge
     const paymentStatusConfig = {
       'pending': { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Payment Pending' },
       'paid': { bg: 'bg-green-100', text: 'text-green-700', label: 'Paid' },
@@ -450,7 +440,7 @@ export default function AdminOrders() {
 
     if (orderStatus && orderStatusConfig[orderStatus]) {
       badges.push(
-        <span key="order" className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${orderStatusConfig[orderStatus].bg} ${orderStatusConfig[orderStatus].text}`}>
+        <span key="order" className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${orderStatusConfig[orderStatus].bg} ${orderStatusConfig[orderStatus].text}`}>
           {orderStatusConfig[orderStatus].label}
         </span>
       );
@@ -458,7 +448,7 @@ export default function AdminOrders() {
 
     if (paymentStatus && paymentStatusConfig[paymentStatus]) {
       badges.push(
-        <span key="payment" className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${paymentStatusConfig[paymentStatus].bg} ${paymentStatusConfig[paymentStatus].text}`}>
+        <span key="payment" className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${paymentStatusConfig[paymentStatus].bg} ${paymentStatusConfig[paymentStatus].text}`}>
           {paymentStatusConfig[paymentStatus].label}
         </span>
       );
@@ -741,7 +731,7 @@ export default function AdminOrders() {
                   <tr>
                     <td colSpan="9" className="px-6 py-12 text-center">
                       <div className="flex justify-center items-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-md h-8 w-8 border-b-2 border-blue-600"></div>
                         <span className="ml-3 text-gray-600">Loading orders...</span>
                       </div>
                     </td>
@@ -812,7 +802,10 @@ export default function AdminOrders() {
                           const shortTitle = displayTitle.length > maxTitleLength
                             ? displayTitle.substring(0, maxTitleLength) + "..."
                             : displayTitle;
-
+                          
+                          // ✅ GET SKU FROM POPULATED BOOK ID
+                          const sku = item.bookId?.inventory?.sku || "N/A";
+                          
                           return (
                             <div key={i} className="flex items-center gap-3 mb-2 group relative">
                               <img
@@ -826,6 +819,11 @@ export default function AdminOrders() {
                                   {shortTitle} 🌱
                                 </p>
                                 <p className="text-xs text-gray-500">Qty: {item.qty}</p>
+                                
+                                {/* ✅ DISPLAY SKU HERE */}
+                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                  SKU: <span className="text-gray-600 text-[15px]">{sku}</span>
+                                </p>
                               </div>
                             </div>
                           );
@@ -929,7 +927,7 @@ export default function AdminOrders() {
               <div className="bg-white px-6 pt-5 pb-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                    <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-md bg-blue-100">
                       <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>

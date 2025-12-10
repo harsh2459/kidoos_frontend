@@ -5,13 +5,19 @@ import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
-import { Save, Upload, X, ChevronDown, Check, Image as ImageIcon, ArrowLeft, Edit3, Lock, Unlock } from "lucide-react";
+import { 
+  Save, Upload, X, ChevronDown, Check, Image as ImageIcon, 
+  ArrowLeft, Edit3, Lock, Unlock, Layout, Plus, Trash2 
+} from "lucide-react";
 
 export default function EditBook() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
+
+  // ✅ NEW: Tab State
+  const [activeTab, setActiveTab] = useState("general");
 
   const [book, setBook] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -36,7 +42,6 @@ export default function EditBook() {
     (async () => {
       try {
         setLoading(true);
-        // Use the admin route to get raw data
         const { data } = await api.get(`/books/admin/${slug}`, auth);
         const b = data?.book || null;
 
@@ -51,11 +56,21 @@ export default function EditBook() {
           : (b?.assets?.coverUrl ? [b.assets.coverUrl] : []);
         const normalizedCovers = coverArr.map(toRelativeFromPublic);
 
+        // ✅ Initialize layoutConfig if missing
+        const layoutConfig = b.layoutConfig || {
+            story: { heading: "", text: "", quote: "", imageUrl: "" },
+            curriculum: [],
+            specs: [],
+            testimonials: []
+        };
+
         setBook({ 
             ...b, 
             assets: { ...(b.assets || {}), coverUrl: normalizedCovers },
             inventory: b.inventory || { sku: "", asin: "", stock: 0, lowStockAlert: 5 },
-            dimensions: b.dimensions || { weight: 0, length: 0, width: 0, height: 0 }
+            dimensions: b.dimensions || { weight: 0, length: 0, width: 0, height: 0 },
+            templateType: b.templateType || "standard",
+            layoutConfig
         });
 
         // Populate text areas
@@ -89,35 +104,53 @@ export default function EditBook() {
     return () => { mounted = false; };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="bg-[#F4F7F5] min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#E3E8E5] border-t-[#1A3C34] rounded-full animate-spin"></div>
-          <p className="text-[#5C756D]">Loading book details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!book) {
-    return (
-      <div className="bg-[#F4F7F5] min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-serif text-[#1A3C34] mb-2">Book Not Found</h2>
-          <button onClick={() => navigate("/admin/books")} className="text-[#4A7C59] hover:underline">
-            Return to Books List
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // State Helpers
   const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
   const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
   const setDim = (k, v) => setBook((prev) => ({ ...prev, dimensions: { ...(prev.dimensions || {}), [k]: v } }));
   const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...(prev.assets || {}), [k]: v } }));
+
+  // ✅ NEW: Page Builder Helpers
+  const setConfig = (section, key, val) => {
+    setBook(prev => ({
+      ...prev,
+      layoutConfig: {
+        ...prev.layoutConfig,
+        [section]: { ...prev.layoutConfig[section], [key]: val }
+      }
+    }));
+  };
+
+  const updateItem = (section, index, key, val) => {
+    setBook(prev => {
+      const list = [...(prev.layoutConfig[section] || [])];
+      list[index] = { ...list[index], [key]: val };
+      return {
+        ...prev,
+        layoutConfig: { ...prev.layoutConfig, [section]: list }
+      };
+    });
+  };
+
+  const addItem = (section, template) => {
+    setBook(prev => ({
+      ...prev,
+      layoutConfig: {
+        ...prev.layoutConfig,
+        [section]: [...(prev.layoutConfig[section] || []), template]
+      }
+    }));
+  };
+
+  const removeItem = (section, index) => {
+    setBook(prev => ({
+      ...prev,
+      layoutConfig: {
+        ...prev.layoutConfig,
+        [section]: prev.layoutConfig[section].filter((_, i) => i !== index)
+      }
+    }));
+  };
 
   // --- Image Handling ---
   async function uploadImages(files) {
@@ -205,7 +238,6 @@ export default function EditBook() {
         const price = field === "price" ? raw : (prev.price ?? "");
         const disc = field === "discountPct" ? raw : (prev.discountPct ?? "");
 
-        // Auto-calculate logic
         if (field === "mrp" || field === "price") {
             const newDiscount = calcDiscountPct(mrp === raw ? raw : mrp, price === raw ? raw : price);
             next.discountPct = newDiscount;
@@ -238,7 +270,7 @@ export default function EditBook() {
 
         inventory: {
           sku: book.inventory?.sku,
-          asin: book.inventory?.asin, // Pass back ASIN (even if read-only)
+          asin: book.inventory?.asin, 
           stock: Number(book.inventory?.stock) || 0,
           lowStockAlert: Number(book.inventory?.lowStockAlert) || 5,
         },
@@ -261,17 +293,23 @@ export default function EditBook() {
         whyChooseThis: splitReasons(whyChooseThisText),
         suggestions: splitCsv(suggestionsText),
         visibility: (book.visibility || "public").toLowerCase(),
+        
+        // ✅ NEW: Include CMS Data
+        templateType: book.templateType,
+        layoutConfig: book.layoutConfig
       };
 
       await api.patch(`/books/${book._id}`, payload, auth);
       t.ok("Saved successfully!");
-      setDimensionsEditable(false); // Re-lock dimensions after save
+      setDimensionsEditable(false);
     } catch (e) {
       t.err(e.response?.data?.error || "Save failed");
     } finally {
       setSaving(false);
     }
   }
+
+  if (loading || !book) return <div className="p-10 text-center">Loading...</div>;
 
   const selected = selectedFromText();
 
@@ -292,12 +330,16 @@ export default function EditBook() {
           </div>
 
           <div className="flex items-center gap-4">
-            <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider border ${book.visibility === "public"
-              ? "bg-[#E8F0EB] text-[#2F523F] border-[#4A7C59]"
-              : "bg-gray-100 text-gray-600 border-gray-300"
-              }`}>
-              {book.visibility || "draft"}
-            </span>
+            {/* ✅ NEW: Tab Buttons */}
+            <div className="bg-white rounded-lg p-1 flex shadow-sm border border-[#E3E8E5]">
+               <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+                   General Info
+               </button>
+               <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+                   <Layout className="w-4 h-4" /> Page Builder
+               </button>
+            </div>
+
             <button
               onClick={save}
               disabled={saving || uploading}
@@ -311,328 +353,355 @@ export default function EditBook() {
 
         <form onSubmit={save} className="space-y-8">
 
-          {/* Basic Info */}
-          <Card title="Basic Information">
-            <Row label="Title" hintRight="Required">
-              <input
-                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
-                value={book.title || ""}
-                onChange={(e) => setField("title", e.target.value)}
-              />
-            </Row>
+          {/* --- TAB 1: GENERAL INFO (Existing Form) --- */}
+          <div className={activeTab === 'general' ? 'block space-y-8' : 'hidden'}>
+            
+            {/* Basic Info */}
+            <Card title="Basic Information">
+                <Row label="Title" hintRight="Required">
+                <input
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                    value={book.title || ""}
+                    onChange={(e) => setField("title", e.target.value)}
+                />
+                </Row>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <Row label="Subtitle">
-                <input
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
-                  value={book.subtitle || ""}
-                  onChange={(e) => setField("subtitle", e.target.value)}
-                />
-              </Row>
-              <Row label="Authors" hintRight="Comma separated">
-                <input
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
-                  value={authorsText}
-                  onChange={(e) => setAuthorsText(e.target.value)}
-                />
-              </Row>
-            </div>
-          </Card>
+                <div className="grid md:grid-cols-2 gap-6">
+                <Row label="Subtitle">
+                    <input
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                    value={book.subtitle || ""}
+                    onChange={(e) => setField("subtitle", e.target.value)}
+                    />
+                </Row>
+                <Row label="Authors" hintRight="Comma separated">
+                    <input
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                    value={authorsText}
+                    onChange={(e) => setAuthorsText(e.target.value)}
+                    />
+                </Row>
+                </div>
+            </Card>
 
-          {/* Identification Section */}
-          <Card title="Identification">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Row label="SKU" hintRight="Stock Keeping Unit (Editable)">
-                <input
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-mono"
-                  value={book.inventory?.sku || ""}
-                  onChange={(e) => setInv("sku", e.target.value)}
-                />
-              </Row>
-              <Row label="ASIN / Product ID" hintRight="Read-only Identifier">
+            {/* Identification Section */}
+            <Card title="Identification">
+                <div className="grid md:grid-cols-2 gap-6">
+                <Row label="SKU" hintRight="Stock Keeping Unit (Editable)">
+                    <input
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-mono"
+                    value={book.inventory?.sku || ""}
+                    onChange={(e) => setInv("sku", e.target.value)}
+                    />
+                </Row>
+                <Row label="HSN" hintRight="Read-only Identifier">
+                    <div className="relative">
+                    <input
+                        className="w-full bg-gray-100 border border-[#DCE4E0] rounded-xl px-4 py-3 pr-10 text-gray-600 cursor-not-allowed font-mono"
+                        value={book.inventory?.asin || ""}
+                        readOnly
+                    />
+                    <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    </div>
+                </Row>
+                </div>
+            </Card>
+
+            {/* Pricing & Inventory */}
+            <Card title="Pricing & Inventory">
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                <Row label="MRP (₹)">
+                    <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={book.mrp ?? ""}
+                    onChange={handlePriceChange("mrp")}
+                    placeholder="0"
+                    />
+                </Row>
+                <Row label="Sale Price (₹)">
+                    <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
+                    value={book.price ?? ""}
+                    onChange={handlePriceChange("price")}
+                    placeholder="0"
+                    />
+                </Row>
+                <Row label="Discount (%)">
+                    <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
+                    value={book.discountPct ?? ""}
+                    onChange={handlePriceChange("discountPct")}
+                    placeholder="0"
+                    />
+                </Row>
+                </div>
+                <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
+                <Row label="Stock">
+                    <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={book.inventory?.stock ?? ""}
+                    onChange={(e) => setInv("stock", e.target.value)}
+                    placeholder="0"
+                    />
+                </Row>
+                <Row label="Low Stock Alert">
+                    <input
+                    type="number"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={book.inventory?.lowStockAlert ?? ""}
+                    onChange={(e) => setInv("lowStockAlert", e.target.value)}
+                    placeholder="5"
+                    />
+                </Row>
+                </div>
+            </Card>
+
+            {/* Categorization */}
+            <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
+                <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
+                Categorization
+                </div>
+
+                <div className="mb-6">
+                <label className="text-sm font-bold text-[#2C3E38] block mb-2">Select Categories</label>
+
                 <div className="relative">
-                  <input
-                    className="w-full bg-gray-100 border border-[#DCE4E0] rounded-xl px-4 py-3 pr-10 text-gray-600 cursor-not-allowed font-mono"
-                    value={book.inventory?.asin || ""}
-                    readOnly
-                  />
-                  <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                </div>
-              </Row>
-            </div>
-          </Card>
-
-          {/* Pricing & Inventory */}
-          <Card title="Pricing & Inventory">
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <Row label="MRP (₹)">
-                <input
-                  type="number"
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                  value={book.mrp ?? ""}
-                  onChange={handlePriceChange("mrp")}
-                  placeholder="0"
-                />
-              </Row>
-              <Row label="Sale Price (₹)">
-                <input
-                  type="number"
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
-                  value={book.price ?? ""}
-                  onChange={handlePriceChange("price")}
-                  placeholder="0"
-                />
-              </Row>
-              <Row label="Discount (%)">
-                <input
-                  type="number"
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
-                  value={book.discountPct ?? ""}
-                  onChange={handlePriceChange("discountPct")}
-                  placeholder="0"
-                />
-              </Row>
-            </div>
-            <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
-              <Row label="Stock">
-                <input
-                  type="number"
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                  value={book.inventory?.stock ?? ""}
-                  onChange={(e) => setInv("stock", e.target.value)}
-                  placeholder="0"
-                />
-              </Row>
-              <Row label="Low Stock Alert">
-                <input
-                  type="number"
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                  value={book.inventory?.lowStockAlert ?? ""}
-                  onChange={(e) => setInv("lowStockAlert", e.target.value)}
-                  placeholder="5"
-                />
-              </Row>
-            </div>
-          </Card>
-
-          {/* Shipping Dimensions (Locked by default) */}
-          <Card title="Shipping Dimensions">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-[#5C756D]">Package dimensions for shipping (Lock/Unlock to edit)</p>
-              <button
-                type="button"
-                onClick={() => setDimensionsEditable(!dimensionsEditable)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${dimensionsEditable
-                    ? "bg-[#1A3C34] text-white border-[#1A3C34]"
-                    : "bg-white text-[#2C3E38] border-[#DCE4E0] hover:border-[#1A3C34]"
-                  }`}
-              >
-                {dimensionsEditable ? <Lock className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-                {dimensionsEditable ? "Lock" : "Edit"}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Row label="Weight (kg)">
-                <input
-                  type="number"
-                  step="0.001"
-                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
-                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
-                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    }`}
-                  value={book.dimensions?.weight ?? 0}
-                  onChange={(e) => setDim("weight", e.target.value)}
-                  disabled={!dimensionsEditable}
-                  placeholder="0.000"
-                />
-              </Row>
-              <Row label="Length (cm)">
-                <input
-                  type="number"
-                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
-                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
-                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    }`}
-                  value={book.dimensions?.length ?? 0}
-                  onChange={(e) => setDim("length", e.target.value)}
-                  disabled={!dimensionsEditable}
-                  placeholder="0"
-                />
-              </Row>
-              <Row label="Width (cm)">
-                <input
-                  type="number"
-                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
-                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
-                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    }`}
-                  value={book.dimensions?.width ?? 0}
-                  onChange={(e) => setDim("width", e.target.value)}
-                  disabled={!dimensionsEditable}
-                  placeholder="0"
-                />
-              </Row>
-              <Row label="Height (cm)">
-                <input
-                  type="number"
-                  className={`w-full border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none transition-colors ${dimensionsEditable
-                      ? "bg-[#FAFBF9] focus:border-[#1A3C34] text-[#2C3E38]"
-                      : "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    }`}
-                  value={book.dimensions?.height ?? 0}
-                  onChange={(e) => setDim("height", e.target.value)}
-                  disabled={!dimensionsEditable}
-                  placeholder="0"
-                />
-              </Row>
-            </div>
-          </Card>
-
-          {/* Categorization */}
-          <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
-            <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
-              Categorization
-            </div>
-
-            <div className="mb-6">
-              <label className="text-sm font-bold text-[#2C3E38] block mb-2">Select Categories</label>
-
-              <div className="relative">
-                <div
-                  className="flex items-center gap-2 flex-wrap p-3 border border-[#DCE4E0] rounded-xl bg-[#FAFBF9] cursor-pointer min-h-[50px]"
-                  onClick={() => setCatOpen(v => !v)}
-                >
-                  {selected.length === 0 ? (
-                    <span className="text-sm text-[#8BA699]">Choose categories…</span>
-                  ) : (
-                    selected.map((s) => {
-                      const found = categoryList.find(c => c.slug === s || c.name === s);
-                      const label = found?.name || s;
-                      return (
-                        <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#1A3C34] text-white">
-                          {label}
-                          <button
-                            type="button"
-                            onClick={(ev) => { ev.stopPropagation(); toggleCategoryInEdit(s); }}
-                            className="hover:text-red-300"
-                            aria-label={`Remove ${label}`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      );
-                    })
-                  )}
-                  <ChevronDown className="ml-auto w-4 h-4 text-[#8BA699]" />
-                </div>
-
-                {catOpen && (
-                  <div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">
-                    {categoryList.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500">No categories found</div>
+                    <div
+                    className="flex items-center gap-2 flex-wrap p-3 border border-[#DCE4E0] rounded-xl bg-[#FAFBF9] cursor-pointer min-h-[50px]"
+                    onClick={() => setCatOpen(v => !v)}
+                    >
+                    {selected.length === 0 ? (
+                        <span className="text-sm text-[#8BA699]">Choose categories…</span>
                     ) : (
-                      categoryList.map((c) => {
-                        const key = c.slug || c._id || c.name;
-                        const val = c.slug || c.name;
-                        const checked = selected.includes(val) || selected.includes(c.name);
+                        selected.map((s) => {
+                        const found = categoryList.find(c => c.slug === s || c.name === s);
+                        const label = found?.name || s;
                         return (
-                          <label key={key} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors">
-                            <div className={`w-5 h-5 rounded border flex items-center justify-center ${checked ? 'bg-[#1A3C34] border-[#1A3C34]' : 'border-[#DCE4E0] bg-white'}`}>
-                              {checked && <Check className="w-3.5 h-3.5 text-white" />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-medium text-sm text-[#2C3E38]">{c.name}</div>
-                            </div>
-                          </label>
+                            <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#1A3C34] text-white">
+                            {label}
+                            <button
+                                type="button"
+                                onClick={(ev) => { ev.stopPropagation(); toggleCategoryInEdit(s); }}
+                                className="hover:text-red-300"
+                                aria-label={`Remove ${label}`}
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                            </span>
                         );
-                      })
+                        })
                     )}
-                  </div>
-                )}
-              </div>
+                    <ChevronDown className="ml-auto w-4 h-4 text-[#8BA699]" />
+                    </div>
+
+                    {catOpen && (
+                    <div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">
+                        {categoryList.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500">No categories found</div>
+                        ) : (
+                        categoryList.map((c) => {
+                            const key = c.slug || c._id || c.name;
+                            const val = c.slug || c.name;
+                            const checked = selected.includes(val) || selected.includes(c.name);
+                            return (
+                            <label key={key} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${checked ? 'bg-[#1A3C34] border-[#1A3C34]' : 'border-[#DCE4E0] bg-white'}`}>
+                                {checked && <Check className="w-3.5 h-3.5 text-white" />}
+                                </div>
+                                <div className="flex-1">
+                                <div className="font-medium text-sm text-[#2C3E38]">{c.name}</div>
+                                </div>
+                            </label>
+                            );
+                        })
+                        )}
+                    </div>
+                    )}
+                </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                <Row label="Categories (CSV)">
+                    <input
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={categoriesText}
+                    onChange={(e) => setCategoriesText(e.target.value)}
+                    />
+                </Row>
+                <Row label="Tags (CSV)">
+                    <input
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={tagsText}
+                    onChange={(e) => setTagsText(e.target.value)}
+                    />
+                </Row>
+                </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <Row label="Categories (CSV)">
+            {/* Content & SEO */}
+            <Card title="Content & SEO">
+                <Row label="Suggestion Groups (CSV)" hintRight="For 'You Might Also Like'">
                 <input
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                  value={categoriesText}
-                  onChange={(e) => setCategoriesText(e.target.value)}
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    value={suggestionsText}
+                    onChange={e => setSuggestionsText(e.target.value)}
                 />
-              </Row>
-              <Row label="Tags (CSV)">
-                <input
-                  className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                  value={tagsText}
-                  onChange={(e) => setTagsText(e.target.value)}
+                </Row>
+
+                <Row label="Description (HTML supported)">
+                <textarea
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-40 outline-none focus:border-[#1A3C34] font-mono text-sm"
+                    value={book.descriptionHtml || ""}
+                    onChange={(e) => setField("descriptionHtml", e.target.value)}
                 />
-              </Row>
-            </div>
+                </Row>
+
+                <div className="mt-6">
+                <label className="block text-sm font-bold text-[#2C3E38] mb-2">
+                    "Why Choose This Book" Points
+                </label>
+                <textarea
+                    value={whyChooseThisText}
+                    onChange={e => setWhyChooseThisText(e.target.value)}
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-32 outline-none focus:border-[#1A3C34] font-mono text-sm"
+                    placeholder="One point per line"
+                />
+                </div>
+            </Card>
+
+            {/* Media & Visibility */}
+            <Card title="Media & Settings">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload Images</span>
+                    <input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" />
+                </label>
+                {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
+                </div>
+
+                {book.assets.coverUrl.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {book.assets.coverUrl.map((p, i) => (
+                        <div key={i} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
+                        <img src={assetUrl(p)} className="h-full w-full object-contain p-2" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
+                            {i !== 0 && <button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>}
+                            <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
+                        </div>
+                        {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                        </div>
+                    ))}
+                </div>
+                ) : <div className="p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-center text-[#8BA699]"><ImageIcon className="mx-auto w-8 h-8 mb-2 opacity-50"/>No images</div>}
+
+                <div className="mt-8 pt-6 border-t border-[#E3E8E5]">
+                <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
+                <select className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]" value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public (Visible)</option><option value="draft">Draft (Hidden)</option></select>
+                </div>
+            </Card>
           </div>
 
-          {/* Content & SEO */}
-          <Card title="Content & SEO">
-            <Row label="Suggestion Groups (CSV)" hintRight="For 'You Might Also Like'">
-              <input
-                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
-                value={suggestionsText}
-                onChange={e => setSuggestionsText(e.target.value)}
-              />
-            </Row>
+          {/* --- TAB 2: PAGE BUILDER (✅ NEW CMS Fields) --- */}
+          <div className={activeTab === 'builder' ? 'block space-y-8' : 'hidden'}>
+            
+            {/* Theme & Story */}
+            <Card title="Theme & Mission">
+                <div className="mb-6">
+                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">Page Template</label>
+                    <select 
+                        value={book.templateType} 
+                        onChange={e => setField("templateType", e.target.value)}
+                        className="w-full p-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none focus:border-[#1A3C34]"
+                    >
+                        <option value="standard">Standard (Default)</option>
+                        <option value="spiritual">Spiritual (Gold/Green)</option>
+                        <option value="activity">Activity (Blue/Orange)</option>
+                    </select>
+                </div>
 
-            <Row label="Description (HTML supported)">
-              <textarea
-                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-40 outline-none focus:border-[#1A3C34] font-mono text-sm"
-                value={book.descriptionHtml || ""}
-                onChange={(e) => setField("descriptionHtml", e.target.value)}
-              />
-            </Row>
-
-            <div className="mt-6">
-              <label className="block text-sm font-bold text-[#2C3E38] mb-2">
-                "Why Choose This Book" Points
-              </label>
-              <textarea
-                value={whyChooseThisText}
-                onChange={e => setWhyChooseThisText(e.target.value)}
-                className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-32 outline-none focus:border-[#1A3C34] font-mono text-sm"
-                placeholder="One point per line"
-              />
-            </div>
-          </Card>
-
-          {/* Media & Visibility */}
-          <Card title="Media & Settings">
-             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-              <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm">
-                <Upload className="w-4 h-4" />
-                <span>Upload Images</span>
-                <input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" />
-              </label>
-              {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
-            </div>
-
-            {book.assets.coverUrl.length > 0 ? (
-               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {book.assets.coverUrl.map((p, i) => (
-                    <div key={i} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
-                      <img src={assetUrl(p)} className="h-full w-full object-contain p-2" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
-                         {i!==0 && <button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>}
-                         <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
-                      </div>
-                      {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                <div className="space-y-4 border-t border-[#E3E8E5] pt-6">
+                    <h3 className="font-bold text-[#1A3C34]">Mission Section</h3>
+                    <div>
+                      <label className="block text-sm font-bold text-[#2C3E38] mb-2">Heading</label>
+                      <input className="input-field w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none" value={book.layoutConfig?.story?.heading} onChange={e => setConfig("story", "heading", e.target.value)} placeholder="e.g. Why We Created This?" />
                     </div>
-                  ))}
-               </div>
-            ) : <div className="p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-center text-[#8BA699]"><ImageIcon className="mx-auto w-8 h-8 mb-2 opacity-50"/>No images</div>}
+                    <div>
+                        <label className="block text-sm font-bold text-[#2C3E38] mb-2">Main Story Text</label>
+                        <textarea 
+                            className="w-full p-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none h-32"
+                            value={book.layoutConfig?.story?.text}
+                            onChange={e => setConfig("story", "text", e.target.value)}
+                            placeholder="Tell the story behind this book..."
+                        />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-[#2C3E38] mb-2">Highlight Quote</label>
+                      <input className="input-field w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none" value={book.layoutConfig?.story?.quote} onChange={e => setConfig("story", "quote", e.target.value)} placeholder="e.g. A tool for grandparents to bond..." />
+                    </div>
+                </div>
+            </Card>
 
-             <div className="mt-8 pt-6 border-t border-[#E3E8E5]">
-               <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
-               <select className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]" value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public (Visible)</option><option value="draft">Draft (Hidden)</option></select>
-             </div>
-          </Card>
+            {/* Product Specs */}
+            <Card title="Product Specifications">
+                <p className="text-sm text-[#5C756D] mb-4">Generates the details table (e.g. Paper Quality, Binding).</p>
+                {book.layoutConfig?.specs?.map((spec, i) => (
+                    <div key={i} className="flex gap-4 items-center mb-3">
+                        <div className="flex-1 grid grid-cols-2 gap-4">
+                            <input className="input-field w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none" placeholder="Label (e.g. Binding)" value={spec.label} onChange={e => updateItem("specs", i, "label", e.target.value)} />
+                            <input className="input-field w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none" placeholder="Value (e.g. Hardbound)" value={spec.value} onChange={e => updateItem("specs", i, "value", e.target.value)} />
+                        </div>
+                        <button type="button" onClick={() => removeItem("specs", i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
+                    </div>
+                ))}
+                <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+                    <Plus className="w-4 h-4" /> Add Specification
+                </button>
+            </Card>
+
+            {/* Curriculum */}
+            <Card title="Curriculum & Skills">
+                <p className="text-sm text-[#5C756D] mb-4">Add the key learning outcomes (the icon grid).</p>
+                {book.layoutConfig?.curriculum?.map((item, i) => (
+                    <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative group">
+                        <button type="button" onClick={() => removeItem("curriculum", i)} className="absolute top-2 right-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div><label className="text-xs font-bold text-[#2C3E38]">Title</label><input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={item.title} onChange={e => updateItem("curriculum", i, "title", e.target.value)} placeholder="e.g. Cognitive Skills" /></div>
+                            <div><label className="text-xs font-bold text-[#2C3E38]">Icon Name</label><input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={item.icon} onChange={e => updateItem("curriculum", i, "icon", e.target.value)} placeholder="e.g. brain, heart" /></div>
+                        </div>
+                        <div className="mt-3">
+                            <label className="text-xs font-bold text-[#8BA699]">Description</label>
+                            <input className="input-field mt-1 w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={item.description} onChange={e => updateItem("curriculum", i, "description", e.target.value)} placeholder="e.g. Enhances memory and focus..." />
+                        </div>
+                    </div>
+                ))}
+                <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#1A3C34] transition-all flex justify-center items-center gap-2">
+                    <Plus className="w-5 h-5" /> Add Curriculum Point
+                </button>
+            </Card>
+
+            {/* Testimonials */}
+            <Card title="Manual Testimonials">
+                {book.layoutConfig?.testimonials?.map((review, i) => (
+                    <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative">
+                        <button type="button" onClick={() => removeItem("testimonials", i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        <div className="grid md:grid-cols-3 gap-4 mb-3">
+                            <input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" placeholder="Name" value={review.name} onChange={e => updateItem("testimonials", i, "name", e.target.value)} />
+                            <input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" placeholder="Role/Location" value={review.role} onChange={e => updateItem("testimonials", i, "role", e.target.value)} />
+                            <input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" type="number" placeholder="Rating (1-5)" value={review.rating} onChange={e => updateItem("testimonials", i, "rating", e.target.value)} />
+                        </div>
+                        <textarea className="input-field h-20 w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={review.text} onChange={e => updateItem("testimonials", i, "text", e.target.value)} placeholder="Review content..." />
+                    </div>
+                ))}
+                <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+                    <Plus className="w-4 h-4" /> Add Review
+                </button>
+            </Card>
+          </div>
 
           {/* Floating Mobile Save */}
           <div className="fixed bottom-6 right-6 sm:hidden z-50">
@@ -652,7 +721,7 @@ function Card({ title, children }) {
       {children}
     </div>
   );
-}
+} 
 
 function Row({ label, hintRight, children }) {
   return (
