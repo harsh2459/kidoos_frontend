@@ -1,234 +1,518 @@
 // src/pages/Catalog.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "../api/client";
-import FilterBar from "../components/FilterBar";
+import { CategoriesAPI } from "../api/categories"; 
 import ScrollToTopButton from "../components/ScrollToTopButton";
 import ProductCard from "../components/ProductCard";
-import { Loader, SearchX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { 
+  Loader2, 
+  SearchX, 
+  ChevronLeft, 
+  ChevronRight, 
+  Filter,
+  X,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Minus
+} from "lucide-react";
+
+// --- HELPER COMPONENTS ---
+
+// 1. Collapsible Filter Section
+const FilterSection = ({ title, children, onClear, hasActiveFilters }) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <div className="border-b border-[#E3E8E5] py-5 last:border-0">
+      <div className="flex items-center justify-between mb-4">
+        <button 
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 font-serif font-bold text-[#1A3C34] text-lg hover:text-[#4A7C59] transition-colors"
+        >
+          {title}
+          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+        {hasActiveFilters && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); onClear(); }}
+            className="text-[10px] font-bold text-red-500 uppercase tracking-wider hover:underline"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      
+      {isOpen && (
+        <div className="animate-in slide-in-from-top-2 duration-200">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Catalog() {
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState("new");
-  const [rawItems, setRawItems] = useState([]);
-  const [total, setTotal] = useState(0);
+  // --- STATE ---
   const [loading, setLoading] = useState(true);
+  const [books, setBooks] = useState([]);
+  const [total, setTotal] = useState(0);
+  
+  // Filters & Search
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState("new"); 
+  const [selectedCats, setSelectedCats] = useState([]); 
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  
+  // Local UI State
+  const [catSearch, setCatSearch] = useState(""); // Search *inside* categories list
+  
+  // Sidebar Data
+  const [categories, setCategories] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // ✅ Pagination state
+  // Pagination
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
   const totalPages = Math.ceil(total / limit);
+  const topRef = useRef(null);
 
+  // --- 1. LOAD DATA ---
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchCategories();
   }, []);
 
-  async function load() {
+  async function fetchCategories() {
+    try {
+      const res = await CategoriesAPI.list();
+      setCategories(res?.data?.items || []);
+    } catch (err) {
+      console.error("Failed to load categories", err);
+    }
+  }
+
+  // --- 2. LOAD BOOKS ---
+  async function loadBooks() {
     setLoading(true);
     try {
-      const { data } = await api.get("/books", {
-        params: {
-          q,
-          page,
-          limit,
-          sort,
-          visibility: "public"
-        }
-      });
-      setRawItems(Array.isArray(data.items) ? data.items : []);
+      const params = {
+        page,
+        limit,
+        sort,
+        visibility: "public",
+        q: q.trim(),
+      };
+
+      if (selectedCats.length > 0) params.category = selectedCats.join(","); 
+      if (priceRange.min) params.minPrice = priceRange.min;
+      if (priceRange.max) params.maxPrice = priceRange.max;
+
+      const { data } = await api.get("/books", { params });
+      
+      setBooks(Array.isArray(data.items) ? data.items : []);
       setTotal(Number(data.total || 0));
+    } catch (error) {
+      console.error("Failed to load books", error);
     } finally {
       setLoading(false);
     }
   }
 
-  // Initial load
+  // Trigger load on filter changes
   useEffect(() => {
-    load();
-  }, []);
+    const t = setTimeout(loadBooks, q ? 400 : 0);
+    return () => clearTimeout(t);
+  }, [page, sort, selectedCats, q]);
 
-  // Reset to page 1 when search or sort changes
+  // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [q, sort]);
+  }, [q, sort, selectedCats]); // Price handled manually
 
-  // Load when page changes (or search/sort after reset)
-  useEffect(() => {
-    const t = setTimeout(load, q ? 250 : 0);
-    return () => clearTimeout(t);
-  }, [q, sort, page]);
+  // --- HANDLERS ---
 
-  const items = useMemo(() => {
-    const arr = [...rawItems];
-    if (sort === "priceAsc" || sort === "priceDesc") {
-      arr.sort((a, b) => {
-        const pa = Number(a.price ?? a.mrp ?? 0);
-        const pb = Number(b.price ?? b.mrp ?? 0);
-        return sort === "priceAsc" ? pa - pb : pb - pa;
-      });
-    } else {
-      arr.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    }
-    return arr;
-  }, [rawItems, sort]);
+  const toggleCategory = (slug) => {
+    setSelectedCats(prev => 
+      prev.includes(slug) 
+        ? prev.filter(c => c !== slug)
+        : [...prev, slug]
+    );
+  };
 
-  // Pagination Controls
+  const applyPriceFilter = (e) => {
+    if(e) e.preventDefault();
+    setPage(1);
+    loadBooks(); 
+  };
+
+  const setPricePreset = (min, max) => {
+    setPriceRange({ min: min, max: max });
+    // Small delay to allow state update before loading
+    setTimeout(() => {
+        setPage(1);
+        loadBooks();
+    }, 50);
+  };
+
+  const clearFilters = () => {
+    setQ("");
+    setSelectedCats([]);
+    setPriceRange({ min: "", max: "" });
+    setSort("new");
+    setPage(1);
+  };
+
   const goToPage = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisible = 5;
+  // --- SIDEBAR CONTENT ---
+  const SidebarContent = () => {
+    // Filter categories locally by search term
+    const visibleCategories = categories.filter(c => 
+      c.name.toLowerCase().includes(catSearch.toLowerCase())
+    );
 
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      let start = Math.max(2, page - 1);
-      let end = Math.min(totalPages - 1, page + 1);
-      
-      if (start > 2) pages.push('...');
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (end < totalPages - 1) pages.push('...');
-      
-      pages.push(totalPages);
-    }
-    return pages;
+    return (
+      <div className="pr-2">
+        
+        {/* 1. CATEGORIES SECTION */}
+        <FilterSection 
+          title="Categories" 
+          onClear={() => setSelectedCats([])}
+          hasActiveFilters={selectedCats.length > 0}
+        >
+          {/* Mini Search for Categories */}
+          {categories.length > 5 && (
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8BA699]" />
+              <input 
+                value={catSearch}
+                onChange={(e) => setCatSearch(e.target.value)}
+                placeholder="Find category..."
+                className="w-full bg-[#F4F7F5] border border-[#E3E8E5] rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:border-[#1A3C34] transition-colors"
+              />
+            </div>
+          )}
+
+          <div className="space-y-1 max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+            {visibleCategories.map((cat) => {
+              const isChecked = selectedCats.includes(cat.slug);
+              return (
+                <label 
+                  key={cat._id} 
+                  className={`
+                    flex items-center cursor-pointer p-2 rounded-lg transition-all select-none group
+                    ${isChecked ? "bg-[#E8F0EB]" : "hover:bg-[#F4F7F5]"}
+                  `}
+                >
+                  <div className={`
+                    w-4 h-4 rounded border flex items-center justify-center mr-3 transition-all shrink-0
+                    ${isChecked
+                      ? "bg-[#1A3C34] border-[#1A3C34]" 
+                      : "bg-white border-[#8BA699] group-hover:border-[#1A3C34]"}
+                  `}>
+                    {isChecked && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  
+                  <input 
+                    type="checkbox" 
+                    className="hidden"
+                    checked={isChecked}
+                    onChange={() => toggleCategory(cat.slug)}
+                  />
+                  
+                  <span className={`text-sm font-medium flex-1 truncate ${isChecked ? "text-[#1A3C34]" : "text-[#5C756D]"}`}>
+                    {cat.name}
+                  </span>
+                  
+                  {cat.count > 0 && (
+                    <span className="text-[10px] font-bold text-[#8BA699] bg-white px-1.5 py-0.5 rounded border border-[#E3E8E5]">
+                      {cat.count}
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+            {visibleCategories.length === 0 && (
+              <p className="text-sm text-[#8BA699] italic py-2">No categories found.</p>
+            )}
+          </div>
+        </FilterSection>
+
+        {/* 2. PRICE SECTION */}
+        <FilterSection 
+          title="Price Range"
+          onClear={() => { setPriceRange({ min: "", max: "" }); setTimeout(loadBooks, 50); }}
+          hasActiveFilters={priceRange.min || priceRange.max}
+        >
+          <div className="space-y-4">
+            {/* Manual Inputs */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8BA699] text-xs font-bold">₹</span>
+                <input 
+                  type="number"
+                  placeholder="Min"
+                  min="0"
+                  className="w-full pl-6 pr-2 py-2.5 bg-white border border-[#E3E8E5] rounded-xl text-sm font-bold text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/10 focus:border-[#1A3C34] transition-all"
+                  value={priceRange.min}
+                  onChange={e => setPriceRange({...priceRange, min: e.target.value})}
+                />
+              </div>
+              <Minus className="w-4 h-4 text-[#8BA699]" />
+              <div className="relative flex-1 group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8BA699] text-xs font-bold">₹</span>
+                <input 
+                  type="number"
+                  placeholder="Max"
+                  min="0"
+                  className="w-full pl-6 pr-2 py-2.5 bg-white border border-[#E3E8E5] rounded-xl text-sm font-bold text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/10 focus:border-[#1A3C34] transition-all"
+                  value={priceRange.max}
+                  onChange={e => setPriceRange({...priceRange, max: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Quick Chips */}
+            <div className="flex flex-wrap gap-2">
+               {[
+                 { label: "Under ₹250", min: 0, max: 250 },
+                 { label: "₹250 - ₹500", min: 250, max: 500 },
+                 { label: "₹500 - ₹1000", min: 500, max: 1000 },
+                 { label: "Above ₹1000", min: 1000, max: "" },
+               ].map((p, idx) => (
+                 <button
+                   key={idx}
+                   onClick={() => setPricePreset(p.min, p.max)}
+                   className={`
+                     text-xs font-bold px-3 py-1.5 rounded-lg border transition-all
+                     ${(Number(priceRange.min) === p.min && Number(priceRange.max) === (p.max || 0)) // Loose equality check
+                        ? "bg-[#1A3C34] text-white border-[#1A3C34]"
+                        : "bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#1A3C34] hover:text-[#1A3C34]"
+                     }
+                   `}
+                 >
+                   {p.label}
+                 </button>
+               ))}
+            </div>
+
+            <button 
+              onClick={(e) => applyPriceFilter(e)}
+              className="w-full py-3 bg-[#1A3C34] text-white font-bold text-sm rounded-xl shadow-md hover:bg-[#2F523F] active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              Apply Filter
+            </button>
+          </div>
+        </FilterSection>
+      </div>
+    );
   };
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
       
-      {/* --- HERO HEADER --- */}
-      <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34] overflow-hidden">
+      {/* HERO HEADER */}
+      <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34]" ref={topRef}>
         <div 
-            className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" 
-            style={{ backgroundImage: "url('/images/terms-bg.png')", backgroundSize: 'cover', filter: 'grayscale(100%)' }}
+            className="absolute inset-0 z-0 opacity-20 pointer-events-none mix-blend-overlay" 
+            style={{ backgroundImage: "url('/public/assets/pattern.png')", backgroundSize: '200px' }} // Optional Pattern
         />
-        <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto flex flex-col md:flex-row items-end justify-between gap-6">
-          <div>
-            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">
-              Catalog
-            </h1>
-            <p className="text-[#8BA699] text-lg font-light">
-              Explore our collection of {total} curated books.
-            </p>
-          </div>
-          
-          {/* Filter Bar Container */}
-          <div className="w-full md:w-auto">
-            <FilterBar q={q} setQ={setQ} sort={sort} setSort={setSort} />
-          </div>
+        <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto">
+          <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2 tracking-tight">
+            Our Collection
+          </h1>
+          <p className="text-[#8BA699] text-lg font-light">
+            Discover {total} unique books curated for young minds.
+          </p>
         </div>
       </div>
 
-      {/* --- MAIN CONTENT --- */}
       <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 text-[#5C756D]">
-            <div className="w-12 h-12 border-4 border-[#E3E8E5] border-t-[#1A3C34] rounded-full animate-spin mb-4"></div>
-            <p className="text-lg font-medium">Loading library...</p>
+        {/* MOBILE TOOLBAR */}
+        <div className="lg:hidden mb-6 flex gap-3 sticky top-20 z-30">
+          <div className="relative flex-1">
+            <input 
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder="Search books..."
+              className="w-full pl-4 pr-10 py-3 bg-white/90 backdrop-blur-md border border-[#E3E8E5] rounded-xl text-[#1A3C34] shadow-sm focus:outline-none focus:border-[#1A3C34]"
+            />
+            {q && (
+              <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699]">
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-        ) : (
-          <>
-            {/* Items Grid */}
-            {items.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6 md:gap-8">
-                {items.map(b => (
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="px-4 bg-white/90 backdrop-blur-md border border-[#E3E8E5] rounded-xl text-[#1A3C34] shadow-sm flex items-center justify-center relative active:scale-95 transition-transform"
+          >
+            <Filter className="w-5 h-5" />
+            {(selectedCats.length > 0 || priceRange.min || priceRange.max) && (
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            )}
+          </button>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* DESKTOP SIDEBAR */}
+          <aside className="hidden lg:block w-72 shrink-0 space-y-6">
+            {/* Main Search */}
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors" />
+              <input 
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                placeholder="Search by title, author..."
+                className="w-full pl-11 pr-4 py-3 bg-white border border-[#E3E8E5] rounded-xl text-[#1A3C34] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/10 focus:border-[#1A3C34] transition-all"
+              />
+               {q && (
+                <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699] hover:text-[#1A3C34]">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Panel */}
+            <div className="bg-white px-6 py-4 rounded-2xl border border-[#E3E8E5] shadow-sm">
+               <div className="flex items-center justify-between mb-2 pb-4 border-b border-[#E3E8E5]">
+                 <div className="flex items-center gap-2 text-[#1A3C34] font-bold">
+                    <Filter className="w-4 h-4" />
+                    <span>Filters</span>
+                 </div>
+                 {(selectedCats.length > 0 || priceRange.min || priceRange.max || q) && (
+                   <button onClick={clearFilters} className="text-xs font-bold text-red-500 hover:underline">
+                     RESET ALL
+                   </button>
+                 )}
+               </div>
+               <SidebarContent />
+            </div>
+          </aside>
+
+          {/* MAIN GRID */}
+          <div className="flex-1">
+            
+            {/* Sort Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+              <div className="text-sm text-[#5C756D]">
+                Showing <span className="font-bold text-[#1A3C34]">{books.length}</span> of {total} results
+                {(selectedCats.length > 0 || priceRange.min || priceRange.max) && (
+                   <span className="ml-2 text-xs bg-[#E8F0EB] text-[#1A3C34] px-2 py-1 rounded-md border border-[#DCE4E0] font-bold">
+                     Filters Active
+                   </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                  <span className="text-sm text-[#5C756D] hidden sm:block">Sort:</span>
+                  <div className="relative">
+                    <select 
+                        value={sort}
+                        onChange={e => setSort(e.target.value)}
+                        className="appearance-none bg-white border border-[#E3E8E5] text-[#1A3C34] text-sm font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:border-[#1A3C34] shadow-sm hover:border-[#1A3C34] transition-colors"
+                    >
+                        <option value="new">Newest Arrivals</option>
+                        <option value="priceAsc">Price: Low to High</option>
+                        <option value="priceDesc">Price: High to Low</option>
+                        <option value="a-z">Name: A to Z</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1A3C34] pointer-events-none" />
+                  </div>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-32 text-[#5C756D]">
+                <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#1A3C34]" />
+                <p className="font-medium animate-pulse">Updating library...</p>
+              </div>
+            ) : books.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                {books.map(b => (
                   <ProductCard key={b._id} book={b} />
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-32 text-center">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-[#E3E8E5]">
+              // EMPTY STATE
+              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-[#E3E8E5] border-dashed">
+                <div className="w-20 h-20 bg-[#F4F7F5] rounded-full flex items-center justify-center mb-4">
                   <SearchX className="w-10 h-10 text-[#8BA699]" />
                 </div>
-                <h3 className="text-2xl font-serif font-bold text-[#1A3C34] mb-2">No books found</h3>
-                <p className="text-[#5C756D] max-w-md mx-auto">
-                  We couldn't find any books matching your search. Try adjusting your filters or search terms.
+                <h3 className="text-xl font-bold text-[#1A3C34] mb-2">No matches found</h3>
+                <p className="text-[#5C756D] max-w-xs mx-auto mb-6">
+                  We couldn't find any books matching your specific filters.
                 </p>
+                <button 
+                  onClick={clearFilters}
+                  className="px-8 py-3 bg-[#1A3C34] text-white rounded-xl font-bold text-sm shadow-lg hover:bg-[#2F523F] hover:shadow-xl active:scale-95 transition-all"
+                >
+                  Clear All Filters
+                </button>
               </div>
             )}
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-16 flex flex-col items-center gap-6">
-                <div className="flex items-center justify-center gap-2">
-                  {/* First Page */}
-                  <button
-                    onClick={() => goToPage(1)}
-                    disabled={page === 1}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-                    title="First Page"
-                  >
-                    <ChevronsLeft className="w-5 h-5" />
-                  </button>
-
-                  {/* Previous */}
-                  <button
-                    onClick={() => goToPage(page - 1)}
-                    disabled={page === 1}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-                    title="Previous Page"
-                  >
+            {!loading && totalPages > 1 && (
+              <div className="mt-12 flex items-center justify-center gap-4">
+                 <button onClick={() => goToPage(page - 1)} disabled={page === 1} className="p-3 rounded-xl border border-[#E3E8E5] bg-white text-[#1A3C34] hover:bg-[#E8F0EB] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm">
                     <ChevronLeft className="w-5 h-5" />
-                  </button>
-
-                  {/* Page Numbers */}
-                  <div className="flex items-center gap-2 mx-2">
-                    {getPageNumbers().map((pageNum, idx) => (
-                      pageNum === '...' ? (
-                        <span key={`ellipsis-${idx}`} className="text-[#8BA699] px-2">...</span>
-                      ) : (
-                        <button
-                          key={pageNum}
-                          onClick={() => goToPage(pageNum)}
-                          className={`w-10 h-10 flex items-center justify-center rounded-xl font-bold transition-all shadow-sm ${
-                            page === pageNum
-                              ? "bg-[#1A3C34] text-white shadow-md scale-105"
-                              : "bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59]"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      )
-                    ))}
-                  </div>
-
-                  {/* Next */}
-                  <button
-                    onClick={() => goToPage(page + 1)}
-                    disabled={page === totalPages}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-                    title="Next Page"
-                  >
+                 </button>
+                 <span className="font-bold text-[#1A3C34] text-sm bg-white px-4 py-2 rounded-xl border border-[#E3E8E5] shadow-sm">
+                   Page {page} of {totalPages}
+                 </span>
+                 <button onClick={() => goToPage(page + 1)} disabled={page === totalPages} className="p-3 rounded-xl border border-[#E3E8E5] bg-white text-[#1A3C34] hover:bg-[#E8F0EB] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm">
                     <ChevronRight className="w-5 h-5" />
-                  </button>
-
-                  {/* Last Page */}
-                  <button
-                    onClick={() => goToPage(totalPages)}
-                    disabled={page === totalPages}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E3E8E5] text-[#5C756D] hover:bg-[#E8F0EB] hover:text-[#1A3C34] hover:border-[#4A7C59] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
-                    title="Last Page"
-                  >
-                    <ChevronsRight className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <p className="text-sm text-[#8BA699]">
-                  Page <span className="font-bold text-[#1A3C34]">{page}</span> of {totalPages}
-                </p>
+                 </button>
               </div>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
+
+      {/* MOBILE DRAWER */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <div className="absolute inset-y-0 right-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="p-5 border-b border-[#E3E8E5] flex items-center justify-between bg-[#FAFBF9]">
+              <h2 className="font-bold text-[#1A3C34] text-lg flex items-center gap-2">
+                <Filter className="w-5 h-5" /> Filter & Sort
+              </h2>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-[#E8F0EB] rounded-full text-[#1A3C34] hover:bg-[#DCE4E0] transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              <SidebarContent />
+            </div>
+            
+            <div className="p-5 border-t border-[#E3E8E5] bg-white">
+               <button 
+                 onClick={() => setIsSidebarOpen(false)}
+                 className="w-full py-3.5 bg-[#1A3C34] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
+               >
+                 Show {total} Results
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ScrollToTopButton />
     </div>
   );

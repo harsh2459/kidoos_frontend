@@ -1,5 +1,5 @@
 // src/pages/admin/EditBook.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
@@ -7,8 +7,109 @@ import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
 import { 
   Save, Upload, X, ChevronDown, Check, Image as ImageIcon, 
-  ArrowLeft, Edit3, Lock, Unlock, Layout, Plus, Trash2 
+  ArrowLeft, Edit3, Lock, Unlock, Layout, Plus, Trash2,
+  // ✅ NEW: Icons for Selector
+  Star, Brain, Heart, Lightbulb, Zap, Smile, BookOpen, 
+  Pencil, Calculator, Globe, Music, Palette, Puzzle, 
+  Users, Trophy, Target, Sparkles, Clock, Sun, Moon, 
+  Leaf, Anchor, Award, Gift, Camera, Video, Mic, MapPin, 
+  GraduationCap, Medal, Rocket, Compass, Feather, Eye
 } from "lucide-react";
+
+// ✅ NEW: Icon Mapping
+const ICON_MAP = {
+  "star": Star,
+  "brain": Brain,
+  "heart": Heart,
+  "lightbulb": Lightbulb,
+  "zap": Zap,
+  "smile": Smile,
+  "book-open": BookOpen,
+  "pencil": Pencil,
+  "calculator": Calculator,
+  "globe": Globe,
+  "music": Music,
+  "palette": Palette,
+  "puzzle": Puzzle,
+  "users": Users,
+  "trophy": Trophy,
+  "target": Target,
+  "sparkles": Sparkles,
+  "clock": Clock,
+  "sun": Sun,
+  "moon": Moon,
+  "leaf": Leaf,
+  "anchor": Anchor,
+  "award": Award,
+  "gift": Gift,
+  "camera": Camera,
+  "video": Video,
+  "mic": Mic,
+  "map-pin": MapPin,
+  "graduation-cap": GraduationCap,
+  "medal": Medal,
+  "rocket": Rocket,
+  "compass": Compass,
+  "feather": Feather,
+  "eye": Eye
+};
+
+// ✅ NEW: Icon Selector Component
+function IconSelector({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [wrapperRef]);
+
+  const SelectedIcon = ICON_MAP[value] || Star;
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <button 
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded bg-[#E3E8E5] flex items-center justify-center text-[#1A3C34]">
+            <SelectedIcon className="w-4 h-4" />
+          </div>
+          <span className="text-sm font-medium text-[#2C3E38] capitalize">
+            {value || "Select Icon"}
+          </span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-2 w-full sm:w-[300px] bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-60 overflow-y-auto p-2 grid grid-cols-4 gap-2 right-0 sm:left-0">
+          {Object.entries(ICON_MAP).map(([name, IconComponent]) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => {
+                onChange(name);
+                setIsOpen(false);
+              }}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors border ${value === name ? 'bg-[#1A3C34] border-[#1A3C34] text-white' : 'bg-gray-50 border-transparent hover:bg-gray-100 text-[#5C756D]'}`}
+            >
+              <IconComponent className="w-4 h-4" />
+              <span className="text-[10px] truncate w-full text-center capitalize">{name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function EditBook() {
   const { slug } = useParams();
@@ -16,7 +117,7 @@ export default function EditBook() {
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
 
-  // ✅ NEW: Tab State
+  // Tab State
   const [activeTab, setActiveTab] = useState("general");
 
   const [book, setBook] = useState(null);
@@ -24,17 +125,13 @@ export default function EditBook() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // Text inputs for array fields
+  // Text inputs
   const [whyChooseThisText, setWhyChooseThisText] = useState("");
   const [authorsText, setAuthorsText] = useState("");
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [suggestionsText, setSuggestionsText] = useState("");
 
-  // Lock state for Dimensions
-  const [dimensionsEditable, setDimensionsEditable] = useState(false);
-
-  // Category dropdown logic
   const [categoryList, setCategoryList] = useState([]);
   const [catOpen, setCatOpen] = useState(false);
 
@@ -56,7 +153,6 @@ export default function EditBook() {
           : (b?.assets?.coverUrl ? [b.assets.coverUrl] : []);
         const normalizedCovers = coverArr.map(toRelativeFromPublic);
 
-        // ✅ Initialize layoutConfig if missing
         const layoutConfig = b.layoutConfig || {
             story: { heading: "", text: "", quote: "", imageUrl: "" },
             curriculum: [],
@@ -73,7 +169,6 @@ export default function EditBook() {
             layoutConfig
         });
 
-        // Populate text areas
         setAuthorsText((b.authors || []).join(", "));
         setCategoriesText((b.categories || []).join(", "));
         setTagsText((b.tags || []).join(", "));
@@ -89,7 +184,7 @@ export default function EditBook() {
     })();
   }, [slug]);
 
-  // Load Categories for dropdown
+  // Load Categories
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -107,10 +202,9 @@ export default function EditBook() {
   // State Helpers
   const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
   const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...(prev.inventory || {}), [k]: v } }));
-  const setDim = (k, v) => setBook((prev) => ({ ...prev, dimensions: { ...(prev.dimensions || {}), [k]: v } }));
   const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...(prev.assets || {}), [k]: v } }));
 
-  // ✅ NEW: Page Builder Helpers
+  // Page Builder Helpers
   const setConfig = (section, key, val) => {
     setBook(prev => ({
       ...prev,
@@ -294,14 +388,12 @@ export default function EditBook() {
         suggestions: splitCsv(suggestionsText),
         visibility: (book.visibility || "public").toLowerCase(),
         
-        // ✅ NEW: Include CMS Data
         templateType: book.templateType,
         layoutConfig: book.layoutConfig
       };
 
       await api.patch(`/books/${book._id}`, payload, auth);
       t.ok("Saved successfully!");
-      setDimensionsEditable(false);
     } catch (e) {
       t.err(e.response?.data?.error || "Save failed");
     } finally {
@@ -330,7 +422,7 @@ export default function EditBook() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* ✅ NEW: Tab Buttons */}
+            {/* Tab Buttons */}
             <div className="bg-white rounded-lg p-1 flex shadow-sm border border-[#E3E8E5]">
                <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
                    General Info
@@ -353,10 +445,9 @@ export default function EditBook() {
 
         <form onSubmit={save} className="space-y-8">
 
-          {/* --- TAB 1: GENERAL INFO (Existing Form) --- */}
+          {/* --- TAB 1: GENERAL INFO --- */}
           <div className={activeTab === 'general' ? 'block space-y-8' : 'hidden'}>
             
-            {/* Basic Info */}
             <Card title="Basic Information">
                 <Row label="Title" hintRight="Required">
                 <input
@@ -384,7 +475,6 @@ export default function EditBook() {
                 </div>
             </Card>
 
-            {/* Identification Section */}
             <Card title="Identification">
                 <div className="grid md:grid-cols-2 gap-6">
                 <Row label="SKU" hintRight="Stock Keeping Unit (Editable)">
@@ -407,7 +497,6 @@ export default function EditBook() {
                 </div>
             </Card>
 
-            {/* Pricing & Inventory */}
             <Card title="Pricing & Inventory">
                 <div className="grid grid-cols-3 gap-4 mb-6">
                 <Row label="MRP (₹)">
@@ -460,7 +549,6 @@ export default function EditBook() {
                 </div>
             </Card>
 
-            {/* Categorization */}
             <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
                 <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
                 Categorization
@@ -542,7 +630,6 @@ export default function EditBook() {
                 </div>
             </div>
 
-            {/* Content & SEO */}
             <Card title="Content & SEO">
                 <Row label="Suggestion Groups (CSV)" hintRight="For 'You Might Also Like'">
                 <input
@@ -573,7 +660,6 @@ export default function EditBook() {
                 </div>
             </Card>
 
-            {/* Media & Visibility */}
             <Card title="Media & Settings">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                 <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm">
@@ -606,10 +692,9 @@ export default function EditBook() {
             </Card>
           </div>
 
-          {/* --- TAB 2: PAGE BUILDER (✅ NEW CMS Fields) --- */}
+          {/* --- TAB 2: PAGE BUILDER --- */}
           <div className={activeTab === 'builder' ? 'block space-y-8' : 'hidden'}>
             
-            {/* Theme & Story */}
             <Card title="Theme & Mission">
                 <div className="mb-6">
                     <label className="block text-sm font-bold text-[#2C3E38] mb-2">Page Template</label>
@@ -646,7 +731,6 @@ export default function EditBook() {
                 </div>
             </Card>
 
-            {/* Product Specs */}
             <Card title="Product Specifications">
                 <p className="text-sm text-[#5C756D] mb-4">Generates the details table (e.g. Paper Quality, Binding).</p>
                 {book.layoutConfig?.specs?.map((spec, i) => (
@@ -663,15 +747,22 @@ export default function EditBook() {
                 </button>
             </Card>
 
-            {/* Curriculum */}
             <Card title="Curriculum & Skills">
                 <p className="text-sm text-[#5C756D] mb-4">Add the key learning outcomes (the icon grid).</p>
                 {book.layoutConfig?.curriculum?.map((item, i) => (
                     <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative group">
                         <button type="button" onClick={() => removeItem("curriculum", i)} className="absolute top-2 right-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
                         <div className="grid md:grid-cols-2 gap-4">
-                            <div><label className="text-xs font-bold text-[#2C3E38]">Title</label><input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={item.title} onChange={e => updateItem("curriculum", i, "title", e.target.value)} placeholder="e.g. Cognitive Skills" /></div>
-                            <div><label className="text-xs font-bold text-[#2C3E38]">Icon Name</label><input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={item.icon} onChange={e => updateItem("curriculum", i, "icon", e.target.value)} placeholder="e.g. brain, heart" /></div>
+                            <div><label className="text-xs font-bold text-[#2C3E38] mb-1 block">Title</label><input className="input-field w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={item.title} onChange={e => updateItem("curriculum", i, "title", e.target.value)} placeholder="e.g. Cognitive Skills" /></div>
+                            
+                            {/* ✅ NEW: Replaced Text Input with Icon Selector */}
+                            <div>
+                                <label className="text-xs font-bold text-[#2C3E38] mb-1 block">Icon</label>
+                                <IconSelector 
+                                    value={item.icon} 
+                                    onChange={(val) => updateItem("curriculum", i, "icon", val)} 
+                                />
+                            </div>
                         </div>
                         <div className="mt-3">
                             <label className="text-xs font-bold text-[#8BA699]">Description</label>
@@ -684,7 +775,6 @@ export default function EditBook() {
                 </button>
             </Card>
 
-            {/* Testimonials */}
             <Card title="Manual Testimonials">
                 {book.layoutConfig?.testimonials?.map((review, i) => (
                     <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative">
@@ -703,7 +793,6 @@ export default function EditBook() {
             </Card>
           </div>
 
-          {/* Floating Mobile Save */}
           <div className="fixed bottom-6 right-6 sm:hidden z-50">
             <button type="submit" disabled={saving || uploading} className="w-14 h-14 rounded-full bg-[#1A3C34] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"><Save className="w-6 h-6" /></button>
           </div>

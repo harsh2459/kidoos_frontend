@@ -45,6 +45,9 @@ import PopupSettings from './pages/Admin/PopupSettings';
 import PreSchool from './pages/PreSchool';
 import { useCartCleanup } from './hooks/useCartCleanup';
 import Invoice from './pages/Invoice';
+import SnowOverlay from './components/effects/SnowOverlay';
+import AutumnOverlay from './components/effects/AutumnOverlay';
+import SpringOverlay from './components/effects/SpringOverlay';
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
@@ -70,6 +73,9 @@ function InnerApp() {
       <Navbar />
       <main>
         {!isAdminRoute && <DynamicPopup page={getPageName()} />}
+        <SpringOverlay/>
+        <SnowOverlay />
+        <AutumnOverlay />
         <Routes>
           {/* customer auth */}
           <Route path="/login" element={<CustomerAuth />} />
