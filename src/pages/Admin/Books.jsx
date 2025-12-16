@@ -8,15 +8,15 @@ import FancyButton from "../../components/button/button";
 import { saveAs } from "file-saver";
 import { t } from "../../lib/toast";
 
-import { 
-  Search, 
-  Upload, 
-  Download, 
-  Edit2, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
-  ChevronLeft, 
+import {
+  Search,
+  Upload,
+  Download,
+  Edit2,
+  Eye,
+  EyeOff,
+  Trash2,
+  ChevronLeft,
   ChevronRight,
   CheckCircle2,
   XCircle,
@@ -27,13 +27,13 @@ import {
 export default function BooksAdmin() {
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
-  
+
   const [q, setQ] = useState("");
   const [vis, setVis] = useState("all");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooks, setSelectedBooks] = useState([]);
-  
+
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [limit] = useState(50);
@@ -70,16 +70,16 @@ export default function BooksAdmin() {
     }
   }
 
-  useEffect(() => { 
-    load(); 
+  useEffect(() => {
+    load();
   }, []);
 
-  useEffect(() => { 
+  useEffect(() => {
     setPage(1);
-    load(); 
+    load();
   }, [vis, q]);
 
-  useEffect(() => { 
+  useEffect(() => {
     load();
   }, [page]);
 
@@ -118,7 +118,7 @@ export default function BooksAdmin() {
       await api.patch(`/books/${bookId}`, { visibility: status }, auth);
     }
     load();
-    setSelectedBooks([]); 
+    setSelectedBooks([]);
   }
 
   const handleImportClick = () => {
@@ -129,7 +129,12 @@ export default function BooksAdmin() {
     const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
 
-    const validTypes = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "text/csv"];
+    const validTypes = [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
+      "text/csv"
+    ];
+
     if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
       t.err("Invalid file type. Please upload Excel or CSV.");
       return;
@@ -138,32 +143,39 @@ export default function BooksAdmin() {
     const formData = new FormData();
     formData.append("file", file);
 
+    const toastId = t.loading("Importing books...");
+
     try {
-      const toastId = t.loading("Importing books...");
       const response = await api.post("/books/import", formData);
       t.dismiss(toastId);
-      t.ok(`Success: ${response.data.count || 0} books imported.`);
+      t.ok(`Success! ${response.data.count || 0} books imported.`);
       await load();
     } catch (error) {
-      t.dismiss();
+      t.dismiss(toastId);
       t.err(error?.response?.data?.error || "Error importing books");
     } finally {
-        e.target.value = null;
+      e.target.value = null;
     }
   };
 
-  const handleExport = () => {
-    t.loading("Preparing export...");
-    api.get("/books/export", { headers: auth.headers, responseType: 'blob' })
-      .then(response => {
-        t.dismiss();
-        saveAs(response.data, `books_export_${new Date().toISOString().slice(0,10)}.xlsx`);
-        t.ok("Export downloaded.");
-      })
-      .catch(error => {
-        t.dismiss();
-        t.err("Error exporting books.");
+  // ✅ FIXED: Export Handler
+  const handleExport = async () => {
+    const toastId = t.loading("Preparing export...");
+
+    try {
+      const response = await api.get("/books/export", {
+        headers: auth.headers,
+        responseType: 'blob'
       });
+
+      t.dismiss(toastId);
+      saveAs(response.data, `books_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      t.ok("Export downloaded successfully!");
+    } catch (error) {
+      t.dismiss(toastId);
+      console.error("Export error:", error);
+      t.err(error?.response?.data?.error || "Failed to export books");
+    }
   };
 
   const goToPage = (newPage) => {
@@ -195,15 +207,15 @@ export default function BooksAdmin() {
 
   return (
     <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8">
-    
-      
+
+
       {/* --- HEADER --- */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
         <div>
-            <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Books Inventory</h1>
-            <p className="text-[#5C756D] mt-1 text-sm">Manage your catalog, pricing, and visibility.</p>
+          <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Books Inventory</h1>
+          <p className="text-[#5C756D] mt-1 text-sm">Manage your catalog, pricing, and visibility.</p>
         </div>
-        
+
         <div className="flex flex-wrap gap-3 items-center">
           <input
             type="file"
@@ -225,11 +237,11 @@ export default function BooksAdmin() {
       {/* --- CONTROL PANEL (Search & Filters) --- */}
       <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-5 mb-6">
         <div className="flex flex-col lg:flex-row gap-5 items-center justify-between">
-          
+
           {/* SEARCH BAR - IMPROVED */}
           <div className="relative w-full lg:max-w-xl group">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors">
-                
+
             </div>
             <input
               className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl pl-12 pr-4 py-3 text-base text-[#1A3C34] placeholder:text-[#8BA699] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all shadow-inner"
@@ -242,32 +254,32 @@ export default function BooksAdmin() {
 
           {/* FILTER TABS - SEGMENTED STYLE */}
           <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-             {/* Label (Optional, good for clarity) */}
-             <div className="hidden sm:flex items-center gap-2 text-[#5C756D] text-sm font-bold uppercase tracking-wider">
-                <Filter className="w-4 h-4" /> Status
-             </div>
+            {/* Label (Optional, good for clarity) */}
+            <div className="hidden sm:flex items-center gap-2 text-[#5C756D] text-sm font-bold uppercase tracking-wider">
+              <Filter className="w-4 h-4" /> Status
+            </div>
 
-             <div className="flex bg-[#F4F7F5] p-1.5 rounded-xl border border-[#E3E8E5]">
-                {[
-                    { id: 'all', label: 'All Books' },
-                    { id: 'public', label: 'Public' },
-                    { id: 'draft', label: 'Drafts' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setVis(tab.id)}
-                        className={`
+            <div className="flex bg-[#F4F7F5] p-1.5 rounded-xl border border-[#E3E8E5]">
+              {[
+                { id: 'all', label: 'All Books' },
+                { id: 'public', label: 'Public' },
+                { id: 'draft', label: 'Drafts' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setVis(tab.id)}
+                  className={`
                             px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200
-                            ${vis === tab.id 
-                                ? "bg-white text-[#1A3C34] shadow-sm ring-1 ring-[#E3E8E5] scale-[1.02]" 
-                                : "text-[#5C756D] hover:text-[#1A3C34] hover:bg-white/50"
-                            }
+                            ${vis === tab.id
+                      ? "bg-white text-[#1A3C34] shadow-sm ring-1 ring-[#E3E8E5] scale-[1.02]"
+                      : "text-[#5C756D] hover:text-[#1A3C34] hover:bg-white/50"
+                    }
                         `}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-             </div>
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -277,12 +289,12 @@ export default function BooksAdmin() {
         <div className="text-sm text-[#5C756D] font-medium">
           Showing <span className="text-[#1A3C34] font-bold">{items.length}</span> of <span className="text-[#1A3C34] font-bold">{total}</span> results
         </div>
-        
+
         {/* IMPROVED BULK ACTION BUTTONS */}
         {selectedBooks.length > 0 && (
           <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
             <span className="text-xs font-bold uppercase tracking-wider text-[#1A3C34] mr-2">
-                Selected ({selectedBooks.length})
+              Selected ({selectedBooks.length})
             </span>
             <button
               onClick={() => bulkUpdateVisibility("public")}
@@ -337,8 +349,8 @@ export default function BooksAdmin() {
                     const isSelected = selectedBooks.includes(b._id);
 
                     return (
-                      <tr 
-                        key={b._id} 
+                      <tr
+                        key={b._id}
                         className={`
                             group transition-colors duration-150
                             ${isSelected ? "bg-[#F0F7F4]" : "hover:bg-[#FAFBF9]"}
@@ -365,14 +377,14 @@ export default function BooksAdmin() {
                             )}
                           </div>
                         </td>
-                        
+
                         <td className="py-4 px-4 max-w-[250px]">
-                            <div 
-                              className="font-bold text-[#1A3C34] truncate" 
-                              title={b.title}
-                            >
-                              {b.title}
-                            </div>
+                          <div
+                            className="font-bold text-[#1A3C34] truncate"
+                            title={b.title}
+                          >
+                            {b.title}
+                          </div>
                         </td>
 
                         <td className="py-4 px-4">
@@ -382,22 +394,22 @@ export default function BooksAdmin() {
                         </td>
                         <td className="py-4 px-4 font-bold text-[#1A3C34]">₹{b.price}</td>
                         <td className="py-4 px-4">
-                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${b.inventory?.stock > 10 ? "bg-[#E8F5E9] text-[#1A3C34]" : b.inventory?.stock > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
-                                {b.inventory?.stock ?? 0}
-                            </span>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${b.inventory?.stock > 10 ? "bg-[#E8F5E9] text-[#1A3C34]" : b.inventory?.stock > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
+                            {b.inventory?.stock ?? 0}
+                          </span>
                         </td>
                         <td className="py-4 px-4">
                           {b.visibility === "public" ? (
-                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]">
-                                <CheckCircle2 className="w-3 h-3" /> Public
-                             </span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]">
+                              <CheckCircle2 className="w-3 h-3" /> Public
+                            </span>
                           ) : (
-                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F5F5F5] text-[#757575] border border-[#E0E0E0]">
-                                <XCircle className="w-3 h-3" /> Draft
-                             </span>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F5F5F5] text-[#757575] border border-[#E0E0E0]">
+                              <XCircle className="w-3 h-3" /> Draft
+                            </span>
                           )}
                         </td>
-                        
+
                         <td className="py-4 px-6 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Link
@@ -409,11 +421,10 @@ export default function BooksAdmin() {
                             </Link>
                             <button
                               onClick={() => toggleVisibility(b)}
-                              className={`p-2 rounded-lg border border-transparent transition-all ${
-                                b.visibility === "public" 
-                                    ? "text-[#5C756D] hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700" 
-                                    : "text-[#5C756D] hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-                              }`}
+                              className={`p-2 rounded-lg border border-transparent transition-all ${b.visibility === "public"
+                                  ? "text-[#5C756D] hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                                  : "text-[#5C756D] hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                                }`}
                               title={b.visibility === "public" ? "Unpublish" : "Publish"}
                             >
                               {b.visibility === "public" ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -434,9 +445,9 @@ export default function BooksAdmin() {
                     <tr>
                       <td colSpan={8} className="py-16 text-center">
                         <div className="flex flex-col items-center justify-center text-[#5C756D]">
-                            <BookOpen className="w-12 h-12 mb-4 opacity-20" />
-                            <p className="text-lg font-bold text-[#1A3C34]">No books found</p>
-                            <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+                          <BookOpen className="w-12 h-12 mb-4 opacity-20" />
+                          <p className="text-lg font-bold text-[#1A3C34]">No books found</p>
+                          <p className="text-sm mt-1">Try adjusting your search or filters.</p>
                         </div>
                       </td>
                     </tr>
@@ -452,11 +463,10 @@ export default function BooksAdmin() {
               <button
                 onClick={() => goToPage(page - 1)}
                 disabled={page === 1}
-                className={`p-2 rounded-lg border transition-all ${
-                  page === 1
+                className={`p-2 rounded-lg border transition-all ${page === 1
                     ? "bg-[#F4F7F5] text-[#8BA699] border-transparent cursor-not-allowed"
                     : "bg-white text-[#1A3C34] border-[#E3E8E5] hover:bg-[#F4F7F5] shadow-sm"
-                }`}
+                  }`}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -486,11 +496,10 @@ export default function BooksAdmin() {
               <button
                 onClick={() => goToPage(page + 1)}
                 disabled={page === totalPages}
-                className={`p-2 rounded-lg border transition-all ${
-                  page === totalPages
+                className={`p-2 rounded-lg border transition-all ${page === totalPages
                     ? "bg-[#F4F7F5] text-[#8BA699] border-transparent cursor-not-allowed"
                     : "bg-white text-[#1A3C34] border-[#E3E8E5] hover:bg-[#F4F7F5] shadow-sm"
-                }`}
+                  }`}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>

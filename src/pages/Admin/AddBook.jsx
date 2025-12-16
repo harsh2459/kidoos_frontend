@@ -1,4 +1,3 @@
-// src/pages/admin/AddBook.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
@@ -8,7 +7,6 @@ import { t } from "../../lib/toast";
 import { 
   Save, Upload, X, ChevronDown, Check, Image as ImageIcon, 
   ArrowLeft, PlusCircle, Edit3, Lock, Layout, Trash2, Plus,
-  // Icons for Selector
   Star, Brain, Heart, Lightbulb, Zap, Smile, BookOpen, 
   Pencil, Calculator, Globe, Music, Palette, Puzzle, 
   Users, Trophy, Target, Sparkles, Clock, Sun, Moon, 
@@ -16,9 +14,6 @@ import {
   GraduationCap, Medal, Rocket, Compass, Feather, Eye
 } from "lucide-react";
 
-// --- CONSTANTS ---
-
-// ✅ FIXED: Consistent Input Style reused across the form
 const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none text-[#2C3E38]";
 
 const ICON_MAP = {
@@ -31,8 +26,6 @@ const ICON_MAP = {
   "map-pin": MapPin, "graduation-cap": GraduationCap, "medal": Medal,
   "rocket": Rocket, "compass": Compass, "feather": Feather, "eye": Eye
 };
-
-// --- COMPONENTS ---
 
 function IconSelector({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -357,7 +350,7 @@ export default function AddBook() {
         </div>
 
         <form onSubmit={save} className="space-y-8">
-
+ 
           {/* --- TAB 1: GENERAL INFO --- */}
           <div className={activeTab === 'general' ? 'block space-y-8' : 'hidden'}>
             
