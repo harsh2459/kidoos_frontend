@@ -5,10 +5,10 @@ import { useAuth } from "../contexts/Auth";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
-import { 
-  Menu, X, ShoppingBag, User, LogOut, ShieldCheck 
-} from "lucide-react"; 
-
+import {
+  Menu, X, ShoppingBag, User, LogOut, ShieldCheck
+} from "lucide-react";
+import WaveText from "./WaveText";
 export default function Navbar() {
   const loc = useLocation();
   const onAdminPage = loc.pathname.startsWith("/admin");
@@ -43,19 +43,19 @@ export default function Navbar() {
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <header 
+    <header
       className={`
         sticky top-0 z-50 font-sans transition-all duration-300 border-b
-        ${isScrolled 
-          ? "bg-white/95 backdrop-blur-md border-[#E3E8E5] shadow-sm py-2" 
+        ${isScrolled
+          ? "bg-white/95 backdrop-blur-md border-[#E3E8E5] shadow-sm py-2"
           : "bg-white border-transparent py-4"
         }
       `}
     >
-      
+
       {/* Container: Responsive max-width for Mobile to Ultra-Wide */}
       <div className="relative mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 flex items-center justify-between max-w-7xl 2xl:max-w-[1800px]">
-        
+
         {/* LEFT: Brand */}
         {showBrand && (
           <Link to="/" className="flex items-center gap-3 shrink-0 z-50 relative group" onClick={closeMenu}>
@@ -70,7 +70,7 @@ export default function Navbar() {
                 KI
               </div>
             )}
-          
+
           </Link>
         )}
 
@@ -83,7 +83,7 @@ export default function Navbar() {
               { path: "/PreSchool", label: "PRE SCHOOL" }
             ].map((link) => (
               <NavLink key={link.path} to={link.path}>
-                {link.label}
+                <WaveText text={link.label} hoverColor="#000" waveHeight={10} />
               </NavLink>
             ))}
           </nav>
@@ -91,12 +91,12 @@ export default function Navbar() {
 
         {/* RIGHT: Icons & Actions */}
         <div className="flex items-center gap-3 sm:gap-5 z-50 relative">
-          
+
           {/* CART ICON */}
           {showShopUI && nav.includes("cart") && (
-            <Link 
-              to="/cart" 
-              className="relative p-2 text-[#1A3C34] hover:text-[#4A7C59] transition-colors group" 
+            <Link
+              to="/cart"
+              className="relative p-2 text-[#1A3C34] hover:text-[#4A7C59] transition-colors group"
               onClick={closeMenu}
               aria-label="Cart"
             >
@@ -131,7 +131,7 @@ export default function Navbar() {
               to="/login"
               className="hidden sm:inline-flex px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] transition-all shadow-md hover:shadow-lg active:scale-95"
             >
-              Login
+              <WaveText text="Login" hoverColor="#fff" waveHeight={10} />
             </Link>
           )}
 
@@ -144,15 +144,15 @@ export default function Navbar() {
                   <span>Admin</span>
                 </summary>
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#E3E8E5] rounded-xl shadow-xl p-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                    <div className="px-4 py-2 border-b border-[#F4F7F5] text-xs text-[#8BA699]">
-                        Signed in as {admin?.name || "Admin"}
-                    </div>
-                    <button 
-                        onClick={() => logoutAdmin()} 
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg transition-colors"
-                    >
-                        <LogOut className="w-4 h-4" /> Logout
-                    </button>
+                  <div className="px-4 py-2 border-b border-[#F4F7F5] text-xs text-[#8BA699]">
+                    Signed in as {admin?.name || "Admin"}
+                  </div>
+                  <button
+                    onClick={() => logoutAdmin()}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" /> Logout
+                  </button>
                 </div>
               </details>
             </div>
@@ -160,7 +160,7 @@ export default function Navbar() {
 
           {/* HAMBURGER MENU (Mobile/Tablet) */}
           {showShopUI && (
-            <button 
+            <button
               className="lg:hidden p-2 text-[#1A3C34] hover:bg-[#F4F7F5] rounded-lg transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle Menu"
@@ -172,7 +172,7 @@ export default function Navbar() {
       </div>
 
       {/* --- MOBILE DROPDOWN MENU --- */}
-      <div 
+      <div
         className={`
             lg:hidden absolute top-full left-0 w-full bg-white border-b border-[#E3E8E5] shadow-xl 
             transition-all duration-300 ease-in-out origin-top overflow-hidden
@@ -180,28 +180,28 @@ export default function Navbar() {
         `}
       >
         <div className="flex flex-col p-6 space-y-4 text-center">
-          
+
           {[
-              { path: "/catalog", label: "CATALOG" },
-              { path: "/aboutus", label: "ABOUT US" },
-              { path: "/PreSchool", label: "PRE SCHOOL" }
+            { path: "/catalog", label: "CATALOG" },
+            { path: "/aboutus", label: "ABOUT US" },
+            { path: "/PreSchool", label: "PRE SCHOOL" }
           ].map((link) => (
-            <Link 
-                key={link.path}
-                to={link.path} 
-                onClick={closeMenu} 
-                className="text-[#1A3C34] font-serif font-bold text-lg py-2 hover:text-[#4A7C59] transition-colors"
+            <Link
+              key={link.path}
+              to={link.path}
+              onClick={closeMenu}
+              className="text-[#1A3C34] font-serif font-bold text-lg py-2 hover:text-[#4A7C59] transition-colors"
             >
-                {link.label}
+              {link.label}
             </Link>
           ))}
-          
+
           {/* Mobile Actions */}
           <div className="pt-4 border-t border-[#F4F7F5] flex flex-col gap-3 items-center w-full">
             {showLogin && (
-              <Link 
-                to="/login" 
-                onClick={closeMenu} 
+              <Link
+                to="/login"
+                onClick={closeMenu}
                 className="w-full max-w-xs py-3 rounded-xl bg-[#1A3C34] text-white font-bold text-sm shadow-md"
               >
                 Login / Sign Up
@@ -209,19 +209,19 @@ export default function Navbar() {
             )}
 
             {isCustomer && (
-                <Link 
-                    to="/profile" 
-                    onClick={closeMenu}
-                    className="flex items-center gap-2 text-[#1A3C34] font-medium"
-                >
-                    <User className="w-5 h-5" /> My Profile
-                </Link>
+              <Link
+                to="/profile"
+                onClick={closeMenu}
+                className="flex items-center gap-2 text-[#1A3C34] font-medium"
+              >
+                <User className="w-5 h-5" /> My Profile
+              </Link>
             )}
-            
+
             {isAdmin && (
-               <button onClick={logoutAdmin} className="flex items-center gap-2 text-red-600 font-medium py-2">
-                 <LogOut className="w-4 h-4" /> Admin Logout
-               </button>
+              <button onClick={logoutAdmin} className="flex items-center gap-2 text-red-600 font-medium py-2">
+                <LogOut className="w-4 h-4" /> Admin Logout
+              </button>
             )}
           </div>
         </div>
@@ -234,18 +234,18 @@ export default function Navbar() {
 
 // Desktop Nav Link with Left-to-Right Underline Animation
 function NavLink({ to, children }) {
-    return (
-        <Link
-            to={to}
-            className="
+  return (
+    <Link
+      to={to}
+      className="
                 relative py-1 text-sm font-bold tracking-widest text-[#5C756D] hover:text-[#1A3C34] transition-colors duration-300
                 after:content-[''] after:absolute after:left-0 after:bottom-0
                 after:block after:h-[2px] after:w-full after:bg-[#4A7C59]
                 after:origin-left after:scale-x-0 after:transition-transform after:duration-300
                 hover:after:scale-x-100
             "
-        >
-            {children}
-        </Link>
-    );
+    >
+      {children}
+    </Link>
+  );
 }

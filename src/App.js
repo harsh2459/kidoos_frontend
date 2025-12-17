@@ -45,6 +45,8 @@ import PopupSettings from './pages/Admin/PopupSettings';
 import PreSchool from './pages/PreSchool';
 import { useCartCleanup } from './hooks/useCartCleanup';
 import Invoice from './pages/Invoice';
+import GitaHome from './pages/Gita/GitaHome';
+import CatalogSettings from './pages/Admin/CatalogSettings';
 
 
 function InnerApp() {
@@ -81,6 +83,7 @@ function InnerApp() {
           <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
           <Route path="/preschool" element={<PageGate page="preschool"><PreSchool /></PageGate>} />
           <Route path="/invoice/:id" element={<Invoice />} />
+          <Route path="/gita" element={<GitaHome />} />
           <Route
             path="/profile"
             element={
@@ -157,6 +160,10 @@ function InnerApp() {
           <Route
             path="/admin/payments"
             element={<AdminGuard><AdminLayout><PaymentsAdmin /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/catalog"
+            element={<AdminGuard><AdminLayout><CatalogSettings /></AdminLayout></AdminGuard>}
           />
           <Route
             path="/admin/add-book"

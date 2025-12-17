@@ -16,6 +16,7 @@ import {
   Milestone,
   Mail
 } from "lucide-react";
+import WaveText from "./WaveText";
 
 export default function AdminSidebar() {
   const { token, logout } = useAuth();
@@ -53,35 +54,35 @@ export default function AdminSidebar() {
           active={loc.pathname.startsWith("/admin/orders")}
           icon={ShoppingBag}
         >
-          Orders
+          <WaveText text="Orders" hoverColor="#000" />
         </Item>
         <Item
           to="/admin/books"
           active={loc.pathname.startsWith("/admin/books")}
           icon={BookOpen}
         >
-          Books
+          <WaveText text="Books" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/add-book"
           active={loc.pathname.startsWith("/admin/add-book")}
           icon={PlusCircle}
         >
-          Add Book
+          <WaveText text="Add Books" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/categories"
           active={loc.pathname.startsWith("/admin/categories")}
           icon={Layers}
         >
-          Categories
+          <WaveText text="Categories" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/settings/popup"
           active={loc.pathname.startsWith("/admin/settings/popup")}
           icon={Target}
         >
-          PopUps
+          <WaveText text="PopUps" hoverColor="#000"  />
         </Item>
 
         <div className="my-4 border-t border-[#F4F7F5]"></div>
@@ -92,49 +93,56 @@ export default function AdminSidebar() {
           active={loc.pathname.startsWith("/admin/payments")}
           icon={CreditCard}
         >
-          Payments
+          <WaveText text="Payment Api" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/email-senders"
           active={loc.pathname.startsWith("/admin/email-senders")}
           icon={Mail}
         >
-          Senders
+          <WaveText text="Email Senders" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/email-templates"
           active={loc.pathname.startsWith("/admin/email-templates")}
           icon={LayoutDashboard}
         >
-          Templates
+          <WaveText text="Email Templates" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/api-users"
           active={loc.pathname.startsWith("/admin/api-users")}
           icon={Users}
         >
-          Blue-Dart Profiles
+          <WaveText text="Bluedart Profile" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/homepage"
           active={loc.pathname.startsWith("/admin/homepage")}
           icon={LayoutDashboard}
         >
-          Homepage
+          <WaveText text="Homepage" hoverColor="#000"  />
+        </Item>
+        <Item
+          to="/admin/catalog"
+          active={loc.pathname.startsWith("/admin/catalog")}
+          icon={LayoutDashboard}
+        >
+          <WaveText text="Catalog Header" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/setup"
           active={loc.pathname.startsWith("/admin/setup")}
           icon={ShieldPlus}
         >
-          Add Admin
+          <WaveText text="Add Admin" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/settings"
           active={loc.pathname.startsWith("/admin/settings")}
           icon={Settings}
         >
-          Settings
+          <WaveText text="Settings" hoverColor="#000"  />
         </Item>
       </nav>
 
@@ -149,7 +157,7 @@ export default function AdminSidebar() {
           "
         >
           <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          Logout
+          <WaveText text="Logout" hoverColor="#000"  />
         </button>
       </div>
     </aside>

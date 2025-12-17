@@ -1,4 +1,5 @@
-/* === Buy Now button (theme-aware) === */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap');
+
 .buy-btn {
   display: inline-flex;
   align-items: center;

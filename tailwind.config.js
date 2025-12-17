@@ -60,6 +60,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['"Instrument Serif"', 'serif'],
       },
       maxWidth: {
         container: "var(--container)",
