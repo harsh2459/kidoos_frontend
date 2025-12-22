@@ -6,7 +6,8 @@ import { t } from "../../lib/toast";
 import { 
   Save, Upload, Trash2, ArrowUp, ArrowDown, 
   Layout, Type, Image as ImageIcon, Grid,
-  Images, Plus, Layers, LayoutTemplate, Monitor // ✅ Added new icons
+  Images, Plus, Layers, LayoutTemplate, Monitor,
+  Puzzle, Gift // ✅ Icons for Puzzle & Reward
 } from "lucide-react";
 
 export default function HomepageAdmin() {
@@ -30,7 +31,7 @@ export default function HomepageAdmin() {
 
         if (settingsRes.data.ok) {
           const loadedBlocks = (settingsRes.data.homepage?.blocks || []).map(b => {
-             // Migration for Image Slider
+             // Migration helpers for older blocks
              if(b.type === 'slider') {
                  b.sliderHeight = b.sliderHeight || "medium";
                  if(b.slides) {
@@ -42,14 +43,13 @@ export default function HomepageAdmin() {
                      }))
                  }
              }
-             // ✅ Migration for Hero Slider: Ensure new fields exist
              if(b.type === 'hero-slider' && b.slides) {
                  b.slides = b.slides.map(s => ({
                      ...s,
                      image: s.image || "",
                      bgColor: s.bgColor || "#1A3C34",
                      textColor: s.textColor || "#ffffff",
-                     layout: s.layout || 'split', // Default to split
+                     layout: s.layout || 'split', 
                      height: s.height || 'medium',
                      objectFit: s.objectFit || 'cover'
                  }));
@@ -77,6 +77,17 @@ export default function HomepageAdmin() {
         const nb = { ...b };
         if (nb.image) nb.image = toRelativeFromPublic(nb.image);
         if (nb.type === "hero") nb.image = toRelativeFromPublic(nb.image);
+        
+        // ✅ Clean Puzzle Images (Levels + Reward)
+        if (nb.type === "puzzle") {
+            if (nb.rewardImage) nb.rewardImage = toRelativeFromPublic(nb.rewardImage);
+            if (nb.levels) {
+                nb.levels = nb.levels.map(l => ({
+                    ...l,
+                    image: toRelativeFromPublic(l.image)
+                }));
+            }
+        }
         
         if (nb.type === "slider" && Array.isArray(nb.slides)) {
           nb.slides = nb.slides.map(s => ({
@@ -144,9 +155,10 @@ export default function HomepageAdmin() {
         <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-5 mb-8">
            <span className="text-xs font-bold text-[#5C756D] uppercase tracking-wider mb-3 block">Add New Section</span>
            <div className="flex flex-wrap gap-3">
-            <AddButton onClick={() => addBlock("hero")} icon={Layout} label="Hero Banner (Static)" />
-            <AddButton onClick={() => addBlock("hero-slider")} icon={Layers} label="Hero Slider (Dynamic)" />
+            <AddButton onClick={() => addBlock("hero")} icon={Layout} label="Hero Banner" />
+            <AddButton onClick={() => addBlock("hero-slider")} icon={Layers} label="Hero Slider" />
             <AddButton onClick={() => addBlock("slider")} icon={Images} label="Image Slider" />
+            <AddButton onClick={() => addBlock("puzzle")} icon={Puzzle} label="Puzzle Game" /> 
             <AddButton onClick={() => addBlock("banner")} icon={ImageIcon} label="Promo Banner" />
             <AddButton onClick={() => addBlock("grid")} icon={Grid} label="Product Grid" />
             <AddButton onClick={() => addBlock("html")} icon={Type} label="Custom HTML" />
@@ -165,13 +177,14 @@ export default function HomepageAdmin() {
                     b.type === 'hero' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                     b.type === 'hero-slider' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
                     b.type === 'slider' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                    b.type === 'puzzle' ? 'bg-pink-50 text-pink-700 border-pink-200' : 
                     b.type === 'html' ? 'bg-orange-50 text-orange-700 border-orange-200' : 
                     'bg-gray-100 text-gray-700 border-gray-200'
                   }`}>
-                    {b.type === 'html' ? 'Custom Code' : b.type}
+                    {b.type === 'html' ? 'Custom Code' : b.type === 'puzzle' ? 'Game' : b.type}
                   </span>
                   <span className="text-sm font-medium text-[#1A3C34]">
-                    {b.title || (b.type === 'html' ? 'Untitled HTML Block' : 'Untitled Section')}
+                    {b.title || (b.type === 'html' ? 'Untitled HTML Block' : b.type === 'puzzle' ? 'Puzzle Game' : 'Untitled Section')}
                   </span>
                 </div>
 
@@ -241,7 +254,6 @@ function defaultBlock(type) {
     slides: [{ desktopImage: "", mobileImage: "", link: "/catalog", alt: "", objectFit: "cover" }] 
   };
 
-  // ✅ UPDATED: Hero Slider Defaults with Layout Options
   if (type === "hero-slider") return {
     type,
     title: "Hero Slider",
@@ -254,11 +266,25 @@ function defaultBlock(type) {
         ctaLink: "/catalog",
         bgColor: "#1A3C34",
         textColor: "#ffffff",
-        layout: "split", // Default to split view
+        layout: "split",
         height: "medium",
         objectFit: "cover"
       }
     ]
+  };
+
+  // ✅ UPDATED: Progressive Puzzle Block (No manual Coupon/Slug fields)
+  if (type === "puzzle") return { 
+    type, 
+    title: "Puzzle Challenge!", 
+    subtitle: "Complete all 3 levels to unlock a 20% Discount!", 
+    levels: [
+        { difficulty: "easy", image: "", label: "Level 1: Easy", gridSize: 3 },
+        { difficulty: "medium", image: "", label: "Level 2: Medium", gridSize: 4 },
+        { difficulty: "hard", image: "", label: "Level 3: Hard", gridSize: 5, maxMoves: 100 }
+    ],
+    winMessage: "You are a Puzzle Master!",
+    rewardImage: "" // Just the visual reward image
   };
 
   return { type };
@@ -271,11 +297,20 @@ function BlockEditor({ block, onChange, categories }) {
     onChange({ ...block, slides: newSlides });
   };
 
+  const updateLevel = (levelIndex, field, val) => {
+    const newLevels = [...(block.levels || [])];
+    if(!newLevels[0]) newLevels[0] = { difficulty: "easy", gridSize: 3, label: "Level 1" };
+    if(!newLevels[1]) newLevels[1] = { difficulty: "medium", gridSize: 4, label: "Level 2" };
+    if(!newLevels[2]) newLevels[2] = { difficulty: "hard", gridSize: 5, label: "Level 3", maxMoves: 100 };
+    
+    newLevels[levelIndex] = { ...newLevels[levelIndex], [field]: val };
+    onChange({ ...block, levels: newLevels });
+  };
+
   const addSlide = () => {
     if (block.type === 'slider') {
         onChange({ ...block, slides: [...(block.slides || []), { desktopImage: "", mobileImage: "", link: "", alt: "", objectFit: "cover" }] });
     } else if (block.type === 'hero-slider') {
-        // ✅ UPDATED: Add new slide with layout defaults
         onChange({ ...block, slides: [...(block.slides || []), { title: "New Slide", subtitle: "", image: "", ctaText: "Shop", ctaLink: "/catalog", bgColor: "#1A3C34", textColor: "#ffffff", layout: "split", height: "medium", objectFit: "cover" }] });
     }
   };
@@ -294,7 +329,6 @@ function BlockEditor({ block, onChange, categories }) {
         </div>
       );
     
-    // ✅ UPDATED: HERO SLIDER EDITOR WITH LAYOUT CONTROLS
     case "hero-slider":
       return (
         <div className="space-y-6">
@@ -309,7 +343,6 @@ function BlockEditor({ block, onChange, categories }) {
                 <span className="absolute -left-3 -top-3 w-6 h-6 bg-[#1A3C34] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{idx + 1}</span>
                 
                 <div className="space-y-6">
-                    {/* ✅ NEW: LAYOUT CONTROLS */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-[#E3E8E5]">
                         <div>
                             <label className="text-xs font-bold text-[#5C756D] uppercase mb-2 flex items-center gap-1"><LayoutTemplate className="w-3 h-3"/> Layout Type</label>
@@ -378,7 +411,6 @@ function BlockEditor({ block, onChange, categories }) {
         </div>
       );
 
-    // ... (slider, banner, grid cases remain the same)
     case "slider":
       return (
         <div className="space-y-6">
@@ -416,19 +448,82 @@ function BlockEditor({ block, onChange, categories }) {
           </div>
         </div>
       );
+    
+    // ✅ UPDATED: Progressive Puzzle Editor (Simplified Reward Config)
+    case "puzzle":
+      const levels = block.levels || defaultBlock('puzzle').levels;
+      return (
+        <div className="space-y-8">
+           <div className="grid md:grid-cols-2 gap-6">
+                <Input label="Section Title" value={block.title} onChange={v => onChange({ ...block, title: v })} placeholder="e.g. Puzzle Challenge" />
+                <Input label="Subtitle" value={block.subtitle} onChange={v => onChange({ ...block, subtitle: v })} placeholder="Instructions for the kids" />
+           </div>
+
+           <div className="space-y-4">
+               <h3 className="font-bold text-[#1A3C34] flex items-center gap-2 border-b pb-2"><Puzzle className="w-4 h-4" /> Game Levels</h3>
+               
+               {/* Level 1: Easy */}
+               <div className="border border-green-200 bg-green-50/50 p-4 rounded-xl">
+                    <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
+                        <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div> Level 1: Easy (3x3)</span>
+                        <span className="text-[10px] uppercase font-bold bg-green-200 text-green-800 px-2 py-0.5 rounded tracking-wide">Always Unlocked</span>
+                    </div>
+                    <ImageUpload label="Easy Image (3x3)" value={levels[0]?.image} onChange={v => updateLevel(0, 'image', v)} />
+               </div>
+
+               {/* Level 2: Medium */}
+               <div className="border border-yellow-200 bg-yellow-50/50 p-4 rounded-xl">
+                    <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
+                        <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500"></div> Level 2: Medium (4x4)</span>
+                        <span className="text-[10px] uppercase font-bold bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded tracking-wide">Unlocks after Easy</span>
+                    </div>
+                    <ImageUpload label="Medium Image (4x4)" value={levels[1]?.image} onChange={v => updateLevel(1, 'image', v)} />
+               </div>
+
+               {/* Level 3: Hard */}
+               <div className="border border-red-200 bg-red-50/50 p-4 rounded-xl">
+                    <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
+                        <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> Level 3: Hard (5x5)</span>
+                        <span className="text-[10px] uppercase font-bold bg-red-200 text-red-800 px-2 py-0.5 rounded tracking-wide">Unlocks after Medium</span>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <ImageUpload label="Hard Image (5x5)" value={levels[2]?.image} onChange={v => updateLevel(2, 'image', v)} />
+                        </div>
+                        <div>
+                            <label className="text-sm font-bold text-[#2C3E38] block mb-2">Max Moves Allowed</label>
+                            <input 
+                                type="number" 
+                                className="input-base" 
+                                value={levels[2]?.maxMoves || 100} 
+                                onChange={e => updateLevel(2, 'maxMoves', Number(e.target.value))} 
+                            />
+                            <p className="text-xs text-red-500 mt-1 font-medium">Game over if moves exceed this limit.</p>
+                        </div>
+                    </div>
+               </div>
+           </div>
+
+           {/* ✅ Reward Config Section (No slug/coupon fields needed) */}
+           <div className="border-t border-gray-200 pt-6">
+               <h3 className="font-bold text-[#1A3C34] flex items-center gap-2 mb-4"><Gift className="w-4 h-4" /> Winner Rewards</h3>
+               
+               <div className="grid md:grid-cols-2 gap-6">
+                   <div className="md:col-span-2">
+                       <ImageUpload label="Reward Image (Appears on Win)" value={block.rewardImage} onChange={v => onChange({ ...block, rewardImage: v })} />
+                   </div>
+                   
+                   <div className="md:col-span-2">
+                       <Input label="Grand Win Message (Shown after Level 3)" value={block.winMessage} onChange={v => onChange({ ...block, winMessage: v })} placeholder="Champion! You unlocked 20% off!" />
+                   </div>
+               </div>
+           </div>
+        </div>
+      );
+
     case "banner": return (<div className="grid md:grid-cols-2 gap-6"><div className="md:col-span-2"><ImageUpload label="Banner Image" value={block.image} onChange={v => onChange({ ...block, image: v })} /></div><Input label="Button Text" value={block.ctaText} onChange={v => onChange({ ...block, ctaText: v })} /><Input label="Button Link" value={block.ctaLink} onChange={v => onChange({ ...block, ctaLink: v })} /></div>);
     case "grid": return (<div className="grid md:grid-cols-2 gap-6"><Input label="Section Title" value={block.title} onChange={v => onChange({ ...block, title: v })} /><div><label className="text-sm font-bold text-[#2C3E38] block mb-2">Category Filter</label><select className="input-base" value={block.query.category} onChange={e => onChange({ ...block, query: { ...block.query, category: e.target.value } })}><option value="">All Categories</option>{categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}</select></div><Input label="Search Query" value={block.query.q} onChange={v => onChange({ ...block, query: { ...block.query, q: v } })} /><Input label="Limit" type="number" value={block.query.limit} onChange={v => onChange({ ...block, query: { ...block.query, limit: Number(v) || 8 } })} /></div>);
-    
-    case "html": return (
-        <div className="space-y-4">
-            <Input label="Block Name (Admin Only)" value={block.title} onChange={v => onChange({ ...block, title: v })} placeholder="e.g. Vision Section" />
-            <div>
-                <label className="text-sm font-bold text-[#2C3E38] block mb-2">Custom HTML Code</label>
-                <textarea value={block.html} onChange={e => onChange({ ...block, html: e.target.value })} className="input-base h-40 font-mono text-sm" placeholder="<div>...</div>" />
-            </div>
-        </div>
-    );
-    
+    case "html": return (<div className="space-y-4"><Input label="Block Name" value={block.title} onChange={v => onChange({ ...block, title: v })} /><div><label className="text-sm font-bold text-[#2C3E38] block mb-2">HTML</label><textarea value={block.html} onChange={e => onChange({ ...block, html: e.target.value })} className="input-base h-40 font-mono text-sm" /></div></div>);
     default: return null;
   }
 }

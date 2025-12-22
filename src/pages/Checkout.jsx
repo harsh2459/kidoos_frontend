@@ -8,7 +8,8 @@ import { useSite } from "../contexts/SiteConfig";
 import { t } from "../lib/toast";
 import { useCustomer } from "../contexts/CustomerAuth";
 import {
-  MapPin, CreditCard, ArrowLeft, ShieldCheck, Truck, Zap, PartyPopper, ArrowRight
+  MapPin, CreditCard, ArrowLeft, ShieldCheck, Truck, Zap, PartyPopper, Gift, // ✅ Added Gift Icon
+  ArrowRight
 } from "lucide-react";
 
 function loadRzp() {
@@ -36,6 +37,9 @@ export default function Checkout() {
     line1: "", city: "", state: "", pin: "", country: "India",
   });
 
+  // ✅ New State for Puzzle Reward
+  const [hasPuzzleReward, setHasPuzzleReward] = useState(false);
+
   useEffect(() => {
     if (customer) {
       setCust(prev => ({
@@ -45,15 +49,16 @@ export default function Checkout() {
         phone: customer.phone || prev.phone,
       }));
     }
+    // ✅ Check if user won the puzzle
+    const reward = localStorage.getItem('puzzle_reward_claimed');
+    if (reward === 'true') setHasPuzzleReward(true);
   }, [customer]);
 
   const set = (k, v) => setCust((p) => ({ ...p, [k]: v }));
 
   /* ------------ FEE LOGIC ------------ */
   const getBaseZoneFee = (pincode) => {
-    // If pincode is invalid/empty, return 0 so fees don't show prematurely
     if (!pincode || String(pincode).length < 6) return 0; 
-    
     const pinStr = String(pincode);
     if (pinStr.startsWith("394")) return 60; // Surat
     const prefix = parseInt(pinStr.substring(0, 2));
@@ -69,17 +74,34 @@ export default function Checkout() {
     return 0;
   };
 
-  /* ------------ TOTALS ------------ */
+  /* ------------ TOTALS CALCULATION ------------ */
   const totals = useMemo(() => {
     let itemTotal = 0;
     let totalQty = 0;
+    let maxPrice = 0;
+    let maxPriceItemId = null;
 
     items.forEach(i => {
       const price = Number(i.unitPriceSnapshot ?? i.price ?? i.bookId?.price ?? 0);
       const qty = Number(i.qty ?? 1);
       itemTotal += price * qty;
       totalQty += qty;
+
+      // ✅ Find most expensive item for reward application
+      if (price > maxPrice) {
+        maxPrice = price;
+        maxPriceItemId = i._id || i.id;
+      }
     });
+
+    // ✅ Calculate Reward Discount (20% off highest item)
+    let rewardDiscount = 0;
+    if (hasPuzzleReward && maxPrice > 0) {
+        rewardDiscount = Math.round(maxPrice * 0.20);
+    }
+
+    // Apply reward to subtotal before adding fees
+    const subTotalAfterReward = Math.max(0, itemTotal - rewardDiscount);
 
     let finalShippingFee = 0;
     let finalServiceFee = 0;
@@ -88,25 +110,21 @@ export default function Checkout() {
 
     if (paymentOption === "half_online_half_cod") {
       baseTotalFee = getBaseZoneFee(cust.pin);
-      
-      // Only apply logic if we have a valid base fee (valid pincode)
       if (baseTotalFee > 0) {
         discount = getBulkDiscount(totalQty);
         let totalFeeAfterDiscount = Math.max(0, baseTotalFee - discount);
-
-        // Split: Service fixed at 30, rest is Shipping
         finalServiceFee = Math.min(30, totalFeeAfterDiscount);
         finalShippingFee = Math.max(0, totalFeeAfterDiscount - finalServiceFee);
       }
     }
 
-    const grand = itemTotal + finalShippingFee + finalServiceFee;
+    const grand = subTotalAfterReward + finalShippingFee + finalServiceFee;
     let payNow = 0;
     let payLater = 0;
 
     if (paymentOption === "half_online_half_cod") {
-      payLater = itemTotal / 2;
-      payNow = (itemTotal / 2) + finalShippingFee + finalServiceFee;
+      payLater = subTotalAfterReward / 2;
+      payNow = (subTotalAfterReward / 2) + finalShippingFee + finalServiceFee;
     } else {
       payNow = grand;
       payLater = 0;
@@ -121,9 +139,11 @@ export default function Checkout() {
       finalServiceFee,
       grand, 
       payNow, 
-      payLater 
+      payLater,
+      rewardDiscount, // ✅ Return discount amount
+      maxPriceItemId  // ✅ Return ID of discounted item
     };
-  }, [items, paymentOption, cust.pin]);
+  }, [items, paymentOption, cust.pin, hasPuzzleReward]);
 
   /* ------------ NUDGE ------------ */
   const savingsNudge = useMemo(() => {
@@ -197,10 +217,17 @@ export default function Checkout() {
     const mappedItems = items.map((item) => {
       const bookId = getBookIdFromCartItem(item);
       if (!bookId || bookId.startsWith('local_')) throw new Error(`Invalid book ID for "${item.title}"`);
+      
+      // ✅ Apply discount to individual item payload if needed (so DB reflects correct unit price)
+      let finalPrice = item.unitPriceSnapshot || item.price;
+      if (hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId)) {
+          finalPrice = Math.round(finalPrice * 0.8); // 20% Off
+      }
+
       return {
         bookId,
         title: item.title,
-        price: item.unitPriceSnapshot || item.price,
+        price: finalPrice,
         qty: item.qty,
       };
     });
@@ -215,11 +242,8 @@ export default function Checkout() {
       },
       amount: totals.grand, 
       currency: "INR",
-      
-      // ✅ Sending fees separately so Backend stores them correctly
       shippingFee: totals.finalShippingFee,
       serviceFee: totals.finalServiceFee,
-      
       payment: { method: paymentMethod, status: paymentStatus, dueOnDeliveryAmount: totals.payLater },
     };
 
@@ -234,12 +258,9 @@ export default function Checkout() {
     try {
       const orderId = await createLocalOrder("razorpay", "created");
       
-      // ✅ FIX FOR BACKEND LOGIC:
-      // Since the backend DIVIDES Half Payments by 2, we must MULTIPLY by 2 here 
-      // to ensure the customer pays the correct calculated amount.
       let amountToSend = totals.payNow;
       if (paymentOption === "half_online_half_cod") {
-        amountToSend = totals.payNow * 2;
+        amountToSend = totals.payNow * 2; // Logic to handle backend math
       }
 
       const { data } = await api.post("/payments/razorpay/order", {
@@ -271,6 +292,8 @@ export default function Checkout() {
             });
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
               clear();
+              // ✅ CRITICAL: Remove reward flag after successful use
+              localStorage.removeItem('puzzle_reward_claimed'); 
               t.success("Payment successful!");
               navigate("/order-confirmed", { state: { orderId } });
             } else { t.err("Payment verification failed"); }
@@ -426,6 +449,18 @@ export default function Checkout() {
           <div className="lg:col-span-4">
             <div className="bg-white rounded-2xl border border-[#E3E8E5] shadow-sm p-6 lg:p-8 sticky top-24">
               <h2 className="text-xl font-serif font-bold text-[#1A3C34] mb-6">Order Summary</h2>
+              
+              {/* ✅ Reward Banner */}
+              {hasPuzzleReward && (
+                  <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 animate-in fade-in">
+                      <div className="bg-yellow-100 p-2 rounded-full text-yellow-700"><Gift className="w-5 h-5" /></div>
+                      <div>
+                          <h4 className="text-yellow-900 font-bold text-sm">Puzzle Winner Reward!</h4>
+                          <p className="text-yellow-800 text-xs">20% off applied to highest item.</p>
+                      </div>
+                  </div>
+              )}
+
               <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
                 {items.map((item) => (
                   <div key={item._id || item.id} className="flex gap-3">
@@ -436,7 +471,13 @@ export default function Checkout() {
                       <p className="font-medium text-[#1A3C34] text-sm truncate">{item.title}</p>
                       <p className="text-xs text-[#5C756D]">Qty: {item.qty}</p>
                     </div>
-                    <p className="font-bold text-[#1A3C34] text-sm">{fmt(item.unitPriceSnapshot || item.price)}</p>
+                    <div className="text-right">
+                        <p className="font-bold text-[#1A3C34] text-sm">{fmt(item.unitPriceSnapshot || item.price)}</p>
+                        {/* ✅ Discount Tag */}
+                        {hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId) && (
+                            <span className="text-[10px] text-red-500 font-bold bg-red-50 px-1 rounded block mt-1">-20% Off</span>
+                        )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -445,6 +486,14 @@ export default function Checkout() {
                 <div className="flex justify-between text-[#5C756D] text-sm">
                   <span>Subtotal ({totals.totalQty} items)</span><span>{fmt(totals.sub)}</span>
                 </div>
+                
+                {/* ✅ Show Reward Discount Line Item */}
+                {hasPuzzleReward && totals.rewardDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-red-600 font-bold">
+                        <span>Puzzle Reward</span><span>-{fmt(totals.rewardDiscount)}</span>
+                    </div>
+                )}
+
                 {paymentOption === "full_online" ? (
                   <div className="flex justify-between text-[#5C756D] text-sm">
                     <span>Shipping</span><span className="font-bold text-[#4A7C59]">Free</span>

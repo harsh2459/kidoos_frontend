@@ -170,20 +170,6 @@ const GitaHero = () => {
                                 style={{ maxHeight: '85vh' }}
                             />
                         </div>
-
-                        {/* Floating Stickers (They move slightly differently for depth) */}
-                        <div 
-                            className="absolute top-[25%] left-[5%] bg-white w-20 h-20 rounded-full shadow-xl font-bold text-gray-800 flex items-center justify-center z-50 transition-transform duration-200"
-                            style={{ transform: `translateX(${scrollY * -0.02}px) translateY(${bookExitTranslate * 0.8}px)` }}
-                        >
-                            <span className="text-2xl">GB</span>
-                        </div>
-                        <div 
-                            className="absolute bottom-[25%] right-[5%] bg-white w-20 h-20 rounded-full shadow-xl font-bold text-gray-800 flex items-center justify-center z-50 transition-transform duration-200"
-                            style={{ transform: `translateX(${scrollY * 0.02}px) translateY(${bookExitTranslate * 0.8}px)` }}
-                        >
-                            <span className="text-2xl">IN</span>
-                        </div>
                     </div>
 
                 </div>

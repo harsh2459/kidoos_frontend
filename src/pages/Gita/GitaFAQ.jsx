@@ -49,12 +49,8 @@ const GitaFAQ = () => {
             answer: "Yes! We understand you'd like to see what's inside. You can view sample pages by clicking on the book preview section above, or contact our support team and we'll send you a detailed PDF preview of selected pages showcasing the illustration style, content quality, and educational approach."
         },
         {
-            question: "What is your return/refund policy?",
-            answer: "We offer a 7-day return policy. If you're not completely satisfied with your purchase, you can return the book in its original condition within 7 days of delivery for a full refund. We want every family to be thrilled with their kiddos intellect experience, and we stand behind our product quality."
-        },
-        {
             question: "Do you offer bulk discounts for schools or groups?",
-            answer: "Yes! We offer special pricing for bulk orders of 10 or more books. This is perfect for schools, reading clubs, community centers, or gifting to multiple children. Contact our team at support@kiddos intellect.com with your requirements, and we'll provide you with a customized quote."
+            answer: "Yes! We offer special pricing for bulk orders of 50 or more books. This is perfect for schools, reading clubs, community centers, or gifting to multiple children. Contact our team at support@kiddos intellect.com with your requirements, and we'll provide you with a customized quote."
         },
         {
             question: "How is this different from other children's books?",
@@ -166,9 +162,9 @@ const GitaFAQ = () => {
                         We're just a message away!
                     </p>
                     <Link to="/contact">
-                    <button className="bg-[#F59E0B] text-white px-8 py-3 rounded-full font-semibold text-sm hover:bg-[#DC7609] hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
-                        Contact Support
-                    </button>
+                        <button className="bg-[#F59E0B] text-white px-8 py-3 rounded-full font-semibold text-sm hover:bg-[#DC7609] hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            Contact Support
+                        </button>
                     </Link>
                 </div>
 

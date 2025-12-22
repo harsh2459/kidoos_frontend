@@ -47,12 +47,16 @@ import { useCartCleanup } from './hooks/useCartCleanup';
 import Invoice from './pages/Invoice';
 import GitaHome from './pages/Gita/GitaHome';
 import CatalogSettings from './pages/Admin/CatalogSettings';
+import GitaShowcase1 from './pages/gita-deepseek/GitaShowcase';
+import HeroVrindavan from './pages/parallax/HeroVrindavan';
+import Hero from './pages/parallax/Hero';
 
 
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
-
+  const hideNavbarRoutes = ['/intro'];
+  const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
   const getPageName = () => {
@@ -71,7 +75,7 @@ function InnerApp() {
 
   return (
     <>
-      <Navbar />
+      {showNavbar && <Navbar />}
       <main>
         {!isAdminRoute && <DynamicPopup page={getPageName()} />}
         <Routes>
@@ -84,6 +88,8 @@ function InnerApp() {
           <Route path="/preschool" element={<PageGate page="preschool"><PreSchool /></PageGate>} />
           <Route path="/invoice/:id" element={<Invoice />} />
           <Route path="/gita" element={<GitaHome />} />
+          <Route path="/1" element={<GitaShowcase1 />} />
+          <Route path="/intro" element={<Hero />} />
           <Route
             path="/profile"
             element={
