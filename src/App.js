@@ -30,7 +30,6 @@ import EmailTemplates from './pages/Admin/EmailTemplates';
 import Footer from './components/Footer';
 import AdminLayout from './components/AdminLayout';
 import AboutUs from './pages/AboutUs';
-import WhatsAppButton from './components/WhatsAppButton';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import ShippingPolicy from './pages/ShippingPolicy';
 import TermsAndConditions from './pages/Terms&Conditions';
@@ -50,12 +49,13 @@ import CatalogSettings from './pages/Admin/CatalogSettings';
 import GitaShowcase1 from './pages/gita-deepseek/GitaShowcase';
 import HeroVrindavan from './pages/parallax/HeroVrindavan';
 import Hero from './pages/parallax/Hero';
+import HeroSection from './pages/gita_showcash/HeroSection';
 
 
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
-  const hideNavbarRoutes = ['/intro'];
+  const hideNavbarRoutes = ['/intro' ,'/gita'];
   const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
@@ -87,9 +87,10 @@ function InnerApp() {
           <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
           <Route path="/preschool" element={<PageGate page="preschool"><PreSchool /></PageGate>} />
           <Route path="/invoice/:id" element={<Invoice />} />
-          <Route path="/gita" element={<GitaHome />} />
+          <Route path="/gita1" element={<GitaHome />} />
           <Route path="/1" element={<GitaShowcase1 />} />
           <Route path="/intro" element={<Hero />} />
+          <Route path="/gita" element={<HeroSection />} />
           <Route
             path="/profile"
             element={
@@ -194,8 +195,7 @@ function InnerApp() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes >
       </main >
-      {!isAdminRoute && <WhatsAppButton initial={{ x: 20, y: 220 }} phone="919879857529" />
-      }
+      
       {
         showFooter && (
           <Footer
