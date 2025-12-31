@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&display=swap');
 
+
+
 .buy-btn {
   display: inline-flex;
   align-items: center;
@@ -138,8 +140,9 @@ body {
 }
 
 @media print {
+
   /* Hides the WhatsApp button */
-  .whatsapp-button, 
+  .whatsapp-button,
   [class*="WhatsAppButton"],
   a[href*="wa.me"] {
     display: none !important;
@@ -152,7 +155,8 @@ body {
   }
 
   /* Hides any other fixed/floating elements */
-  .fixed, .absolute {
+  .fixed,
+  .absolute {
     /* Be careful with this one, verify it doesn't hide invoice parts */
     /* position: static !important; */
   }

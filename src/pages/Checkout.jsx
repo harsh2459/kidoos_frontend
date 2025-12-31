@@ -1,4 +1,3 @@
-// src/pages/Checkout.jsx
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -8,8 +7,8 @@ import { useSite } from "../contexts/SiteConfig";
 import { t } from "../lib/toast";
 import { useCustomer } from "../contexts/CustomerAuth";
 import {
-  MapPin, CreditCard, ArrowLeft, ShieldCheck, Truck, Zap, PartyPopper, Gift, // ✅ Added Gift Icon
-  ArrowRight
+  MapPin, CreditCard, ArrowLeft, ShieldCheck, Truck, Zap, PartyPopper, Gift,
+  ArrowRight, CheckCircle
 } from "lucide-react";
 
 function loadRzp() {
@@ -30,14 +29,17 @@ export default function Checkout() {
   const { payments } = useSite();
   const { customer, isCustomer } = useCustomer();
   const [paymentOption, setPaymentOption] = useState("full_online");
-  const bgImage = "url('/images/terms-bg.png')";
+
+  // --- VRINDAVAN THEME ASSETS ---
+  const parchmentBg = "url('/images/homepage/parchment-bg.png')";
+  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
 
   const [cust, setCust] = useState({
     name: "", email: "", phone: "",
     line1: "", city: "", state: "", pin: "", country: "India",
   });
 
-  // ✅ New State for Puzzle Reward
+  // State for Puzzle Reward
   const [hasPuzzleReward, setHasPuzzleReward] = useState(false);
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function Checkout() {
         phone: customer.phone || prev.phone,
       }));
     }
-    // ✅ Check if user won the puzzle
+    // Check if user won the puzzle
     const reward = localStorage.getItem('puzzle_reward_claimed');
     if (reward === 'true') setHasPuzzleReward(true);
   }, [customer]);
@@ -87,14 +89,13 @@ export default function Checkout() {
       itemTotal += price * qty;
       totalQty += qty;
 
-      // ✅ Find most expensive item for reward application
       if (price > maxPrice) {
         maxPrice = price;
         maxPriceItemId = i._id || i.id;
       }
     });
 
-    // ✅ Calculate Reward Discount (20% off highest item)
+    // Calculate Reward Discount (20% off highest item)
     let rewardDiscount = 0;
     if (hasPuzzleReward && maxPrice > 0) {
         rewardDiscount = Math.round(maxPrice * 0.20);
@@ -140,8 +141,8 @@ export default function Checkout() {
       grand, 
       payNow, 
       payLater,
-      rewardDiscount, // ✅ Return discount amount
-      maxPriceItemId  // ✅ Return ID of discounted item
+      rewardDiscount, 
+      maxPriceItemId  
     };
   }, [items, paymentOption, cust.pin, hasPuzzleReward]);
 
@@ -218,7 +219,6 @@ export default function Checkout() {
       const bookId = getBookIdFromCartItem(item);
       if (!bookId || bookId.startsWith('local_')) throw new Error(`Invalid book ID for "${item.title}"`);
       
-      // ✅ Apply discount to individual item payload if needed (so DB reflects correct unit price)
       let finalPrice = item.unitPriceSnapshot || item.price;
       if (hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId)) {
           finalPrice = Math.round(finalPrice * 0.8); // 20% Off
@@ -260,7 +260,7 @@ export default function Checkout() {
       
       let amountToSend = totals.payNow;
       if (paymentOption === "half_online_half_cod") {
-        amountToSend = totals.payNow * 2; // Logic to handle backend math
+        amountToSend = totals.payNow * 2; 
       }
 
       const { data } = await api.post("/payments/razorpay/order", {
@@ -292,96 +292,112 @@ export default function Checkout() {
             });
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
               clear();
-              // ✅ CRITICAL: Remove reward flag after successful use
               localStorage.removeItem('puzzle_reward_claimed'); 
               t.success("Payment successful!");
               navigate("/order-confirmed", { state: { orderId } });
             } else { t.err("Payment verification failed"); }
           } catch (e) { t.err("Error verifying payment"); }
         },
-        theme: { color: "#1A3C34" },
+        theme: { color: "#3E2723" },
       });
       rzp.open();
     } catch (e) { t.err(e?.response?.data?.error || e.message || "Payment failed to start"); }
     finally { setPlacing(false); }
   }
 
+  // --- STYLES ---
+  const inputStyle = "w-full pl-4 pr-4 py-3.5 bg-white border border-[#D4AF37]/30 rounded-xl text-[#3E2723] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 outline-none transition-all placeholder-[#8A7A5E]/50 font-medium shadow-sm";
+  const labelStyle = "block text-xs font-bold text-[#8A7A5E] uppercase tracking-wider mb-2 ml-1";
+
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
-      {/* Header */}
-      <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34] overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" style={{ backgroundImage: bgImage, backgroundSize: 'cover', filter: 'grayscale(100%)' }} />
+    <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-20">
+      
+      {/* Global Texture */}
+      <div 
+          className="fixed inset-0 pointer-events-none opacity-100 z-0" 
+          style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+      />
+
+      {/* --- HEADER --- */}
+      <div className="relative w-full pt-28 md:pt-36 pb-16 px-6 border-b border-[#D4AF37]/30 bg-[#3E2723] overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-10 mix-blend-overlay" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#3E2723] to-transparent z-0"></div>
+
         <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-end gap-6">
           <div>
-            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">Secure Checkout</h1>
-            <p className="text-[#8BA699] text-lg font-light">Complete your order details.</p>
+            <h1 className="text-4xl md:text-6xl font-['Playfair_Display'] font-bold text-[#F3E5AB] mb-2 tracking-tight">Secure Checkout</h1>
+            <p className="text-[#D4AF37] text-lg font-light tracking-wide">Complete your sacred acquisition.</p>
           </div>
-          <button onClick={() => navigate("/cart")} className="flex items-center gap-2 text-[#8BA699] hover:text-white transition-colors text-sm font-medium">
+          <button onClick={() => navigate("/cart")} className="flex items-center gap-2 text-[#D4AF37] hover:text-[#F3E5AB] transition-colors text-sm font-bold font-['Cinzel'] tracking-wide">
             <ArrowLeft className="w-4 h-4" /> Back to Cart
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
-          {/* Left Column */}
-          <div className="lg:col-span-8 space-y-8">
+      <div className="relative z-20 max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 -mt-8">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-16">
+          
+          {/* --- LEFT: FORMS --- */}
+          <div className="lg:col-span-8 space-y-10">
+            
             {/* Shipping Form */}
-            <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#E3E8E5] shadow-sm">
-              <div className="flex items-center gap-3 mb-6 border-b border-[#E3E8E5] pb-4">
-                <div className="w-10 h-10 rounded-full bg-[#E8F0EB] flex items-center justify-center text-[#1A3C34]"><MapPin className="w-5 h-5" /></div>
-                <h2 className="text-xl font-serif font-bold text-[#1A3C34]">Shipping Details</h2>
+            <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[2rem] border border-[#D4AF37]/20 shadow-[0_5px_20px_rgba(62,39,35,0.05)]">
+              <div className="flex items-center gap-4 mb-8 border-b border-[#D4AF37]/10 pb-6">
+                <div className="w-12 h-12 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shadow-inner"><MapPin className="w-6 h-6" /></div>
+                <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723]">Shipping Details</h2>
               </div>
+              
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-[#2C3E38] mb-2">Full Name</label>
-                  <input value={cust.name} onChange={(e) => set("name", e.target.value)} className="w-full pl-4 pr-4 py-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl focus:border-[#1A3C34] outline-none transition-all" placeholder="e.g. John Doe" />
+                  <label className={labelStyle}>Full Name</label>
+                  <input value={cust.name} onChange={(e) => set("name", e.target.value)} className={inputStyle} placeholder="e.g. Arjun Kumar" />
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">Email</label>
-                    <input type="email" value={cust.email} onChange={(e) => set("email", e.target.value)} className="w-full pl-4 pr-4 py-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none" placeholder="john@example.com" />
+                    <label className={labelStyle}>Email</label>
+                    <input type="email" value={cust.email} onChange={(e) => set("email", e.target.value)} className={inputStyle} placeholder="arjun@example.com" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">Phone</label>
-                    <input type="tel" maxLength={10} value={cust.phone} onChange={(e) => set("phone", e.target.value)} className="w-full pl-4 pr-4 py-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none" placeholder="10-digit number" />
+                    <label className={labelStyle}>Phone</label>
+                    <input type="tel" maxLength={10} value={cust.phone} onChange={(e) => set("phone", e.target.value)} className={inputStyle} placeholder="10-digit number" />
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">Address</label>
-                    <input value={cust.line1} onChange={(e) => set("line1", e.target.value)} className="w-full px-4 py-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none" placeholder="House No, Building, Street Area" />
+                    <label className={labelStyle}>Address</label>
+                    <input value={cust.line1} onChange={(e) => set("line1", e.target.value)} className={inputStyle} placeholder="House No, Building, Street Area" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">PIN Code</label>
+                    <label className={labelStyle}>PIN Code</label>
                     <div className="relative">
-                      <input value={cust.pin} onChange={(e) => onPinChange(e.target.value)} className="w-full px-4 py-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none" placeholder="6-digit PIN" maxLength={6} />
-                      {pinStatus && <span className={`absolute right-4 top-3.5 text-xs font-bold ${pinStatus === "OK" ? "text-green-600" : "text-blue-600"}`}>{pinStatus}</span>}
+                      <input value={cust.pin} onChange={(e) => onPinChange(e.target.value)} className={inputStyle} placeholder="6-digit PIN" maxLength={6} />
+                      {pinStatus && <span className={`absolute right-4 top-4 text-xs font-bold ${pinStatus === "OK" ? "text-green-600" : "text-[#B0894C]"}`}>{pinStatus}</span>}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">City</label>
-                    <input value={cust.city} className="w-full px-4 py-3 bg-[#E8F0EB] border border-[#DCE4E0] rounded-xl text-[#5C756D]" readOnly />
+                    <label className={labelStyle}>City</label>
+                    <input value={cust.city} className={`${inputStyle} bg-[#FAF7F2] text-[#8A7A5E] cursor-not-allowed`} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">State</label>
-                    <input value={cust.state} className="w-full px-4 py-3 bg-[#E8F0EB] border border-[#DCE4E0] rounded-xl text-[#5C756D]" readOnly />
+                    <label className={labelStyle}>State</label>
+                    <input value={cust.state} className={`${inputStyle} bg-[#FAF7F2] text-[#8A7A5E] cursor-not-allowed`} readOnly />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Smart Savings Nudge */}
+            {/* Smart Savings Nudge (Gold/Parchment Style) */}
             {savingsNudge && (
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-full text-green-700"><PartyPopper className="w-5 h-5" /></div>
+              <div className="bg-gradient-to-r from-[#FFF9E6] to-[#FFF5E0] border border-[#D4AF37]/40 rounded-2xl p-6 flex items-center justify-between shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 opacity-10 pointer-events-none"><PartyPopper className="w-24 h-24 text-[#D4AF37]" /></div>
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="bg-[#D4AF37]/20 p-3 rounded-full text-[#B0894C]"><Gift className="w-6 h-6" /></div>
                   <div>
-                    <h4 className="text-green-800 font-bold text-sm">Bulk Offer Available!</h4>
-                    <p className="text-green-700 text-xs mt-0.5">Add <strong>{savingsNudge.needed} more</strong> books to save <strong>₹{savingsNudge.nextSave}</strong> on service fees!</p>
+                    <h4 className="text-[#3E2723] font-['Cinzel'] font-bold text-lg">Bulk Blessing Available!</h4>
+                    <p className="text-[#8A7A5E] text-sm mt-1">Add <strong>{savingsNudge.needed} more</strong> books to save <strong>₹{savingsNudge.nextSave}</strong> on fees!</p>
                   </div>
                 </div>
-                <button onClick={() => navigate('/catalog')} className="flex items-center gap-1 bg-white border border-green-200 text-green-700 text-xs font-bold px-3 py-2 rounded-lg hover:bg-green-50 transition-colors shadow-sm">
+                <button onClick={() => navigate('/catalog')} className="relative z-10 flex items-center gap-2 bg-white border border-[#D4AF37] text-[#3E2723] text-xs font-bold px-5 py-3 rounded-full hover:bg-[#D4AF37] hover:text-white transition-all shadow-sm font-['Cinzel'] tracking-wide">
                   Shop More <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
@@ -389,55 +405,50 @@ export default function Checkout() {
 
             {/* Payment Method */}
             {hasOnlinePay && (
-              <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#E3E8E5] shadow-sm">
-                <div className="flex items-center gap-3 mb-6 border-b border-[#E3E8E5] pb-4">
-                  <div className="w-10 h-10 rounded-full bg-[#E8F0EB] flex items-center justify-center text-[#1A3C34]"><CreditCard className="w-5 h-5" /></div>
-                  <h2 className="text-xl font-serif font-bold text-[#1A3C34]">Payment Method</h2>
+              <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[2rem] border border-[#D4AF37]/20 shadow-[0_5px_20px_rgba(62,39,35,0.05)]">
+                <div className="flex items-center gap-4 mb-8 border-b border-[#D4AF37]/10 pb-6">
+                  <div className="w-12 h-12 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shadow-inner"><CreditCard className="w-6 h-6" /></div>
+                  <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723]">Payment Method</h2>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* Full Payment */}
-                  <label className={`relative p-5 border-2 rounded-xl cursor-pointer transition-all ${paymentOption === "full_online" ? "border-[#1A3C34] bg-[#F4F7F5] shadow-md scale-[1.01]" : "border-[#E3E8E5] hover:border-[#8BA699] opacity-70 hover:opacity-100"}`}>
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="bg-[#1A3C34] text-white p-2 rounded-lg"><Zap className="w-5 h-5" /></div>
-                      <input type="radio" name="payment" value="full_online" checked={paymentOption === "full_online"} onChange={(e) => setPaymentOption(e.target.value)} className="accent-[#1A3C34] w-5 h-5" />
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Full Payment (Gold Standard) */}
+                  <label className={`relative p-6 border-2 rounded-2xl cursor-pointer transition-all duration-300 group ${paymentOption === "full_online" ? "border-[#D4AF37] bg-[#FFF9E6]/50 shadow-md scale-[1.01]" : "border-[#E3E8E5] hover:border-[#D4AF37]/50"}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-3 rounded-xl transition-colors ${paymentOption === "full_online" ? "bg-[#D4AF37] text-white" : "bg-[#FAF7F2] text-[#8A7A5E]"}`}><Zap className="w-5 h-5" /></div>
+                      <input type="radio" name="payment" value="full_online" checked={paymentOption === "full_online"} onChange={(e) => setPaymentOption(e.target.value)} className="accent-[#D4AF37] w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-[#1A3C34] text-lg mb-1">Full Payment</h4>
-                    <p className="text-xs text-[#5C756D] mb-4">Best value. Instant confirmation.</p>
-                    <div className="flex justify-between items-center text-sm bg-white p-2 rounded-lg border border-[#DCE4E0] mb-2">
-                      <span>Shipping Fee</span><span className="font-bold text-green-600">FREE</span>
+                    <h4 className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mb-1">Full Payment</h4>
+                    <p className="text-xs text-[#8A7A5E] font-medium uppercase tracking-wide mb-6">Best Value. Instant Confirmation.</p>
+                    <div className="flex justify-between items-center text-sm bg-white/60 p-3 rounded-lg border border-[#D4AF37]/20 mb-3">
+                      <span className="font-bold text-[#3E2723]">Shipping Fee</span><span className="font-bold text-[#D4AF37] flex items-center gap-1"><CheckCircle className="w-3 h-3"/> FREE</span>
                     </div>
-                    <div className="text-xl font-bold text-[#1A3C34] text-right">{fmt(totals.sub)}</div>
+                    <div className="text-2xl font-bold text-[#3E2723] text-right font-['Playfair_Display']">{fmt(totals.sub)}</div>
                   </label>
 
-                  {/* Half & Half */}
-                  <label className={`relative p-5 border-2 rounded-xl cursor-pointer transition-all ${paymentOption === "half_online_half_cod" ? "border-[#2c5282] bg-[#ebf8ff] shadow-md scale-[1.01]" : "border-[#E3E8E5] hover:border-[#8BA699] opacity-70 hover:opacity-100"}`}>
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="bg-[#2c5282] text-white p-2 rounded-lg"><Truck className="w-5 h-5" /></div>
-                      <input type="radio" name="payment" value="half_online_half_cod" checked={paymentOption === "half_online_half_cod"} onChange={(e) => setPaymentOption(e.target.value)} className="accent-[#2c5282] w-5 h-5" />
+                  {/* Half & Half (Bronze/Wood Option) */}
+                  <label className={`relative p-6 border-2 rounded-2xl cursor-pointer transition-all duration-300 group ${paymentOption === "half_online_half_cod" ? "border-[#3E2723] bg-[#FAF7F2] shadow-md scale-[1.01]" : "border-[#E3E8E5] hover:border-[#3E2723]/50"}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-3 rounded-xl transition-colors ${paymentOption === "half_online_half_cod" ? "bg-[#3E2723] text-[#F3E5AB]" : "bg-[#FAF7F2] text-[#8A7A5E]"}`}><Truck className="w-5 h-5" /></div>
+                      <input type="radio" name="payment" value="half_online_half_cod" checked={paymentOption === "half_online_half_cod"} onChange={(e) => setPaymentOption(e.target.value)} className="accent-[#3E2723] w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-[#2c5282] text-lg mb-1">Half & Half</h4>
-                    <p className="text-xs text-[#4a5568] mb-4">Pay 50% now, rest on delivery.</p>
-                    <div className="space-y-1 mb-3">
-                      <div className="flex justify-between items-center text-sm bg-white px-2 py-1 rounded border border-[#bee3f8]">
-                        <span className="text-[#4a5568] text-xs">Shipping</span>
-                        <span className="font-bold text-[#2c5282] text-xs">{totals.finalShippingFee > 0 ? `+ ${fmt(totals.finalShippingFee)}` : "-"}</span>
+                    <h4 className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mb-1">Half & Half</h4>
+                    <p className="text-xs text-[#8A7A5E] font-medium uppercase tracking-wide mb-6">Pay 50% Now, Rest on Delivery.</p>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between items-center text-sm bg-white/60 px-3 py-2 rounded-lg border border-[#3E2723]/10">
+                        <span className="text-[#5C4A2E] text-xs">Shipping</span>
+                        <span className="font-bold text-[#3E2723] text-xs">{totals.finalShippingFee > 0 ? `+ ${fmt(totals.finalShippingFee)}` : "-"}</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm bg-white px-2 py-1 rounded border border-[#bee3f8]">
-                        <span className="text-[#4a5568] text-xs">Service Fee</span>
-                        <span className="font-bold text-[#2c5282] text-xs">{totals.finalServiceFee > 0 ? `+ ${fmt(totals.finalServiceFee)}` : "-"}</span>
+                      <div className="flex justify-between items-center text-sm bg-white/60 px-3 py-2 rounded-lg border border-[#3E2723]/10">
+                        <span className="text-[#5C4A2E] text-xs">Service Fee</span>
+                        <span className="font-bold text-[#3E2723] text-xs">{totals.finalServiceFee > 0 ? `+ ${fmt(totals.finalServiceFee)}` : "-"}</span>
                       </div>
                     </div>
-                    {/* Discount Tag */}
-                    {totals.discount > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] text-green-700 font-bold bg-green-100 px-2 py-0.5 rounded mb-2 w-fit">
-                        <PartyPopper className="w-3 h-3" /> Bulk Discount: -{fmt(totals.discount)}
-                      </div>
-                    )}
-                    <div className="flex justify-between items-end">
-                      <div className="text-xs text-right w-full">
-                        <span className="block text-gray-500">Pay Now</span>
-                        <span className="text-lg font-bold text-[#2c5282]">{fmt(totals.payNow)}</span>
-                      </div>
+                    
+                    <div className="flex justify-between items-end border-t border-[#3E2723]/10 pt-3">
+                        <span className="text-xs font-bold uppercase tracking-wide text-[#8A7A5E]">Pay Now</span>
+                        <span className="text-xl font-bold text-[#3E2723] font-['Playfair_Display']">{fmt(totals.payNow)}</span>
                     </div>
                   </label>
                 </div>
@@ -445,93 +456,113 @@ export default function Checkout() {
             )}
           </div>
 
-          {/* Right Column */}
+          {/* Right Column: Order Ledger */}
           <div className="lg:col-span-4">
-            <div className="bg-white rounded-2xl border border-[#E3E8E5] shadow-sm p-6 lg:p-8 sticky top-24">
-              <h2 className="text-xl font-serif font-bold text-[#1A3C34] mb-6">Order Summary</h2>
+            <div className="bg-white/90 backdrop-blur-md rounded-[2rem] border border-[#D4AF37]/30 shadow-[0_10px_40px_rgba(62,39,35,0.08)] p-8 sticky top-28 overflow-hidden">
               
-              {/* ✅ Reward Banner */}
+              {/* Gold Top Bar */}
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C]"></div>
+
+              <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723] mb-8">Order Summary</h2>
+              
+              {/* Reward Banner */}
               {hasPuzzleReward && (
-                  <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 animate-in fade-in">
-                      <div className="bg-yellow-100 p-2 rounded-full text-yellow-700"><Gift className="w-5 h-5" /></div>
+                  <div className="mb-8 bg-gradient-to-r from-[#FFF9E6] to-[#FFF5E0] border border-[#D4AF37] rounded-xl p-4 flex items-center gap-4 shadow-sm animate-in fade-in">
+                      <div className="bg-[#D4AF37] p-2 rounded-full text-white shadow-sm"><Gift className="w-5 h-5" /></div>
                       <div>
-                          <h4 className="text-yellow-900 font-bold text-sm">Puzzle Winner Reward!</h4>
-                          <p className="text-yellow-800 text-xs">20% off applied to highest item.</p>
+                          <h4 className="text-[#3E2723] font-bold text-sm font-['Cinzel']">Puzzle Winner Reward!</h4>
+                          <p className="text-[#8A7A5E] text-xs">20% off applied to highest item.</p>
                       </div>
                   </div>
               )}
 
-              <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+              <div className="space-y-5 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {items.map((item) => (
-                  <div key={item._id || item.id} className="flex gap-3">
-                    <div className="w-12 h-16 bg-[#F4F7F5] rounded border border-[#E3E8E5] overflow-hidden flex-shrink-0">
-                      <img src={assetUrl(item.bookId?.assets?.coverUrl?.[0] || item.image) || "/placeholder.png"} className="w-full h-full object-cover" />
+                  <div key={item._id || item.id} className="flex gap-4">
+                    <div className="w-14 h-20 bg-[#FAF7F2] rounded-lg border border-[#D4AF37]/20 overflow-hidden flex-shrink-0 shadow-inner">
+                      <img src={assetUrl(item.bookId?.assets?.coverUrl?.[0] || item.image) || "/placeholder.png"} className="w-full h-full object-contain p-1" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[#1A3C34] text-sm truncate">{item.title}</p>
-                      <p className="text-xs text-[#5C756D]">Qty: {item.qty}</p>
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <p className="font-bold text-[#3E2723] text-sm font-['Cinzel'] truncate leading-tight mb-1">{item.title}</p>
+                      <p className="text-[10px] text-[#8A7A5E] font-bold uppercase tracking-wider">Qty: {item.qty}</p>
                     </div>
-                    <div className="text-right">
-                        <p className="font-bold text-[#1A3C34] text-sm">{fmt(item.unitPriceSnapshot || item.price)}</p>
-                        {/* ✅ Discount Tag */}
+                    <div className="text-right flex flex-col justify-center">
+                        <p className="font-bold text-[#3E2723] text-sm font-['Playfair_Display']">{fmt(item.unitPriceSnapshot || item.price)}</p>
+                        {/* Discount Tag */}
                         {hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId) && (
-                            <span className="text-[10px] text-red-500 font-bold bg-red-50 px-1 rounded block mt-1">-20% Off</span>
+                            <span className="text-[9px] text-white font-bold bg-[#B0894C] px-1.5 py-0.5 rounded block mt-1">-20% Off</span>
                         )}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-[#E3E8E5] pt-4 space-y-3 mb-6">
-                <div className="flex justify-between text-[#5C756D] text-sm">
-                  <span>Subtotal ({totals.totalQty} items)</span><span>{fmt(totals.sub)}</span>
+              <div className="border-t border-[#D4AF37]/20 pt-6 space-y-4 mb-8">
+                <div className="flex justify-between text-[#5C4A2E] text-sm font-medium">
+                  <span>Subtotal ({totals.totalQty} items)</span><span className="font-bold text-[#3E2723]">{fmt(totals.sub)}</span>
                 </div>
                 
-                {/* ✅ Show Reward Discount Line Item */}
                 {hasPuzzleReward && totals.rewardDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-red-600 font-bold">
+                    <div className="flex justify-between text-sm text-[#B0894C] font-bold">
                         <span>Puzzle Reward</span><span>-{fmt(totals.rewardDiscount)}</span>
                     </div>
                 )}
 
                 {paymentOption === "full_online" ? (
-                  <div className="flex justify-between text-[#5C756D] text-sm">
-                    <span>Shipping</span><span className="font-bold text-[#4A7C59]">Free</span>
+                  <div className="flex justify-between text-[#5C4A2E] text-sm">
+                    <span>Shipping</span><span className="font-bold text-[#D4AF37]">FREE</span>
                   </div>
                 ) : (
                   <>
-                    <div className="flex justify-between text-[#5C756D] text-sm">
-                      <span>Shipping</span><span className="font-bold text-[#2c5282]">{fmt(totals.finalShippingFee)}</span>
+                    <div className="flex justify-between text-[#5C4A2E] text-sm">
+                      <span>Shipping</span><span className="font-bold text-[#3E2723]">{fmt(totals.finalShippingFee)}</span>
                     </div>
-                    <div className="flex justify-between text-[#5C756D] text-sm">
-                      <span>Service Fee</span><span className="font-bold text-[#2c5282]">{fmt(totals.finalServiceFee)}</span>
+                    <div className="flex justify-between text-[#5C4A2E] text-sm">
+                      <span>Service Fee</span><span className="font-bold text-[#3E2723]">{fmt(totals.finalServiceFee)}</span>
                     </div>
                     {totals.discount > 0 && (
-                      <div className="text-xs text-green-600 flex justify-end items-center gap-1">
+                      <div className="text-xs text-[#D4AF37] font-bold flex justify-end items-center gap-1">
                         <PartyPopper className="w-3 h-3" /> Bulk Saving: -{fmt(totals.discount)}
                       </div>
                     )}
                   </>
                 )}
-                <div className="flex justify-between items-center pt-2 border-t border-[#E3E8E5]">
-                  <span className="font-bold text-[#1A3C34] text-lg">Total</span><span className="font-bold text-[#1A3C34] text-xl">{fmt(totals.grand)}</span>
+                
+                <div className="flex justify-between items-center pt-4 border-t border-[#D4AF37]/20">
+                  <span className="font-bold text-[#3E2723] text-lg font-['Cinzel']">Total</span>
+                  <span className="font-bold text-[#3E2723] text-2xl font-['Playfair_Display']">{fmt(totals.grand)}</span>
                 </div>
+
                 {paymentOption === "half_online_half_cod" && (
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mt-2 space-y-2">
-                    <div className="flex justify-between text-sm"><span className="text-blue-800 font-medium">Pay Now (Online)</span><span className="text-blue-800 font-bold">{fmt(totals.payNow)}</span></div>
-                    <div className="flex justify-between text-sm"><span className="text-gray-600">Pay on Delivery</span><span className="text-gray-600 font-medium">{fmt(totals.payLater)}</span></div>
+                  <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#3E2723]/10 mt-2 space-y-2">
+                    <div className="flex justify-between text-sm"><span className="text-[#3E2723] font-bold uppercase text-xs tracking-wider">Pay Now (Online)</span><span className="text-[#3E2723] font-bold">{fmt(totals.payNow)}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-[#8A7A5E] text-xs uppercase tracking-wider">Pay on Delivery</span><span className="text-[#8A7A5E] font-bold">{fmt(totals.payLater)}</span></div>
                   </div>
                 )}
               </div>
 
               {hasOnlinePay ? (
-                <button onClick={placeWithRazorpay} disabled={placing} className={`w-full py-4 text-white rounded-xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 ${paymentOption === 'half_online_half_cod' ? 'bg-[#2c5282] hover:bg-[#2a4365]' : 'bg-[#1A3C34] hover:bg-[#2F523F]'}`}>
+                <button 
+                    onClick={placeWithRazorpay} 
+                    disabled={placing} 
+                    className={`
+                        w-full py-4.5 text-white rounded-full font-bold font-['Cinzel'] tracking-widest uppercase transition-all shadow-[0_10px_25px_rgba(0,0,0,0.1)] active:scale-95 flex items-center justify-center gap-3 disabled:opacity-70 group border border-white/20
+                        ${paymentOption === 'half_online_half_cod' 
+                            ? 'bg-[#3E2723] hover:bg-[#2C1810]' 
+                            : 'bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F]'}
+                    `}
+                >
                   {placing ? "Processing..." : `Pay ${fmt(totals.payNow)}`}
+                  {!placing && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                 </button>
               ) : (
-                <div className="bg-[#FFF9F0] border border-[#F5E6D3] p-3 rounded-lg text-center text-[#8A6A4B] text-sm font-medium">⚠️ Payments currently disabled</div>
+                <div className="bg-[#FFF9F0] border border-[#F5E6D3] p-4 rounded-xl text-center text-[#8A6A4B] text-sm font-bold">⚠️ Payments currently disabled</div>
               )}
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[#8BA699]"><ShieldCheck className="w-3 h-3" /><span>Secure SSL Encryption</span></div>
+              
+              <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[#8A7A5E] font-medium opacity-80">
+                <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+                <span>Secure SSL Encryption</span>
+              </div>
             </div>
           </div>
         </div>

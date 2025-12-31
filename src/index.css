@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 3D Utilities */
+.perspective-\[1000px\] { perspective: 1000px; }
+.transform-style-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-\[-12deg\] { transform: rotateY(-12deg); }
+.rotate-y-\[-90deg\] { transform: rotateY(-90deg); }
+.rotate-y-\[90deg\] { transform: rotateY(90deg); }

@@ -50,12 +50,14 @@ import GitaShowcase1 from './pages/gita-deepseek/GitaShowcase';
 import HeroVrindavan from './pages/parallax/HeroVrindavan';
 import Hero from './pages/parallax/Hero';
 import HeroSection from './pages/gita_showcash/HeroSection';
+import ScrollVideo from './pages/scroll_video/ScrollVideo';
+import CustomCursor from './components/CustomCursor';
 
 
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
-  const hideNavbarRoutes = ['/intro' ,'/gita'];
+  const hideNavbarRoutes = ['/intro' ,'/gita' ,'/scroll'];
   const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
@@ -77,6 +79,7 @@ function InnerApp() {
     <>
       {showNavbar && <Navbar />}
       <main>
+        <CustomCursor />
         {!isAdminRoute && <DynamicPopup page={getPageName()} />}
         <Routes>
           {/* customer auth */}
@@ -91,6 +94,7 @@ function InnerApp() {
           <Route path="/1" element={<GitaShowcase1 />} />
           <Route path="/intro" element={<Hero />} />
           <Route path="/gita" element={<HeroSection />} />
+          <Route path="/scroll" element={<ScrollVideo />} />
           <Route
             path="/profile"
             element={

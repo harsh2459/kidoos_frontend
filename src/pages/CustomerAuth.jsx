@@ -3,12 +3,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI, CustomerOTPAPI } from "../api/customer";
 import GoogleLoginButton from "../components/button/GoogleLoginButton";
+import { KeyRound, User, Mail, Phone, Lock, Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function CustomerAuth() {
   const { login, register } = useCustomer();
   const nav = useNavigate();
   const loc = useLocation();
   const next = loc.state?.next || "/";
+
+  // --- VRINDAVAN THEME ASSETS ---
+  const authBg = "url('/images/auth-spiritual-bg.png')"; 
+  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
 
   const [mode, setMode] = useState("login");
   const [showPwd, setShowPwd] = useState(false);
@@ -44,17 +49,9 @@ export default function CustomerAuth() {
   // Function to check if phone number is fake/invalid
   function isValidRealPhone(phone) {
     const p = phone.trim();
-
-    // Must be exactly 10 digits
     if (!phoneRegex.test(p)) return false;
-
-    // Indian phone numbers must start with 6, 7, 8, or 9
     if (!['6', '7', '8', '9'].includes(p[0])) return false;
-
-    // Check for all same digits (0000000000, 1111111111, etc.)
     if (/^(\d)\1{9}$/.test(p)) return false;
-
-    // Check for obvious sequential patterns
     const sequences = [
       '0123456789', '1234567890', '9876543210', '0987654321',
       '1111111111', '2222222222', '3333333333', '4444444444',
@@ -63,34 +60,20 @@ export default function CustomerAuth() {
       '9988998899', '9879879878', '7897897897', '7778889997',
     ];
     if (sequences.includes(p)) return false;
-
-    // Check if too few unique digits (less than 5 unique digits is suspicious)
     const uniqueDigits = new Set(p.split(''));
     if (uniqueDigits.size < 5) return false;
-
-    // Check for repeated pairs (6677889900, 1122334455)
-    // Must have at least 4 pairs to be considered fake
     const pairs = p.match(/(\d)\1/g) || [];
     if (pairs.length >= 4) return false;
-
-    // Check for consecutive triples in sequence (like 666777888)
     if (/(\d)\1{2}(\d)\2{2}/.test(p)) return false;
-
-    // Check for 4+ consecutive same digits (like 6666 or 7777)
     if (/(\d)\1{3,}/.test(p)) return false;
-
-    // Check for ascending/descending sequences of 5+ digits
     let ascending = 0, descending = 0;
     for (let i = 1; i < p.length; i++) {
       if (parseInt(p[i]) === parseInt(p[i - 1]) + 1) ascending++;
       else ascending = 0;
-
       if (parseInt(p[i]) === parseInt(p[i - 1]) - 1) descending++;
       else descending = 0;
-
       if (ascending >= 4 || descending >= 4) return false;
     }
-
     return true;
   }
 
@@ -112,6 +95,10 @@ export default function CustomerAuth() {
     timerRef.current = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(timerRef.current);
   }, [cooldown]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   function resetOtpFlow() {
     setEmailOtpSent(false);
@@ -199,80 +186,64 @@ export default function CustomerAuth() {
 
     try {
       const f = normalizeForm(form);
-      const pendingItem = loc.state?.pendingItem; // Get pending item from navigation state
+      const pendingItem = loc.state?.pendingItem;
 
       if (mode === "login") {
         if (!f.password || (!f.email && !f.phone)) {
           setErr("Enter password and either Email or Phone");
         } else {
-          // 1. Perform Login
           const res = await login({
             email: f.email || undefined,
             phone: f.phone || undefined,
             password: f.password,
           });
 
-          // 2. Add Pending Item if exists (Buy Now flow)
           if (pendingItem && res?.token) {
             try {
-              console.log("Adding pending item to cart...", pendingItem);
               await CustomerAPI.addToCart(res.token, {
                 bookId: pendingItem.bookId,
                 qty: pendingItem.qty
               });
-              // Note: The cart context usually auto-refreshes or you might need to call replaceAll if your useCustomer doesn't trigger it
             } catch (cartErr) {
               console.error("Failed to add pending item:", cartErr);
-              // Don't block navigation, but maybe warn?
             }
           }
-
-          // 3. Navigate
           nav(next, { replace: true });
         }
 
       } else {
-        // SIGNUP - Both Email and Phone are REQUIRED
+        // SIGNUP Validation
         if (!f.name || !f.password || !f.email || !f.phone) {
           setErr("Name, Email, Phone number and Password are all required");
           setLoading(false);
           return;
         }
-
-        // Validate email format
         if (!emailValid) {
           setErr("Please enter a valid email address");
           setLoading(false);
           return;
         }
-
-        // Validate phone number format
         if (!phoneValid) {
           setErr("Please enter a valid Indian mobile number (starting with 6, 7, 8, or 9)");
           setLoading(false);
           return;
         }
-
-        // Email must be verified for signup
         if (!emailVerified) {
           setErr("Please verify your email before creating the account");
           setLoading(false);
           return;
         }
-
         if (f.password.length < 6) {
           setErr("Password must be at least 6 characters");
           setLoading(false);
           return;
         }
-
         if (f.password !== f.confirmPassword) {
           setErr("Passwords do not match");
           setLoading(false);
           return;
         }
 
-        // 1. Register
         const res = await register({
           name: f.name,
           email: f.email,
@@ -281,7 +252,6 @@ export default function CustomerAuth() {
           emailOtpTicket: f.emailOtpTicket,
         });
 
-        // 2. Add Pending Item if exists (Buy Now flow)
         if (pendingItem && res?.token) {
           try {
             await CustomerAPI.addToCart(res.token, {
@@ -292,8 +262,6 @@ export default function CustomerAuth() {
             console.error("Failed to add pending item:", cartErr);
           }
         }
-
-        // 3. Navigate
         nav(next, { replace: true });
       }
     } catch (e2) {
@@ -303,96 +271,143 @@ export default function CustomerAuth() {
     }
   }
 
+  // Reusable styles for the "Liquid Glass" inputs
+  const glassInputStyle = "w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all text-[#3E2723] placeholder-[#3E2723]/50 shadow-inner";
 
   return (
-    <div className="min-h-[70vh] grid place-items-center px-3 xs:px-4 sm:px-5 md:px-6 py-6 xs:py-7 sm:py-8 md:py-10 lg:py-12">
-      <div className="w-full max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg">
-        <div className="bg-card rounded-theme shadow-theme p-4 xs:p-5 sm:p-6 md:p-7 lg:p-8 border border-border-subtle">
-          {/* Header + tabs */}
-          <div className="mb-3 xs:mb-4 sm:mb-5 md:mb-6">
-            <h1 className="text-xl xs:text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold mb-5 xs:mb-6 sm:mb-7 md:mb-8">
-              {mode === "login" ? "Login" : "Create account"}
+    <div className="min-h-screen grid place-items-center px-4 py-12 relative overflow-hidden font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
+      
+      {/* --- Background Layers --- */}
+      <div 
+          className="absolute inset-0 z-0 pointer-events-none opacity-100" 
+          style={{
+              backgroundImage: authBg,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+          }}
+      />
+      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none"></div> {/* Slight dark overlay for contrast */}
+      <div 
+          className="absolute inset-0 opacity-10 pointer-events-none z-0 mix-blend-overlay" 
+          style={{ backgroundImage: mandalaBg, backgroundSize: '600px', backgroundRepeat: 'repeat' }}
+      ></div>
+
+      <div className="w-full max-w-md relative z-10">
+        
+        {/* --- LIQUID GLASS AUTH CARD --- */}
+        <div className="bg-white/10 backdrop-blur-[20px] rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.2)] p-8 border border-white/20 ring-1 ring-[#D4AF37]/20 relative overflow-hidden">
+          
+          {/* Top Decoration (Shiny edge) */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-70"></div>
+
+          {/* Header */}
+          <div className="mb-8 text-center relative z-10">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-4 border border-white/30 shadow-sm ring-1 ring-[#D4AF37]/20">
+                <KeyRound className="w-6 h-6 text-[#D4AF37] drop-shadow-sm" />
+            </div>
+            <h1 className="text-3xl font-['Cinzel'] font-bold text-[#3E2723] mb-2 drop-shadow-sm">
+              {mode === "login" ? "Welcome Back" : "Join the Family"}
             </h1>
-            <GoogleLoginButton />
-            <p className="text-fg-subtle text-xs xs:text-xs sm:text-sm md:text-sm mt-0.5 xs:mt-1">
+            <p className="text-[#3E2723]/80 text-sm font-medium">
               {mode === "login"
-                ? "Use your customer credentials to continue."
-                : "Sign up to start shopping faster."}
+                ? "Enter your details to access your sacred library."
+                : "Create an account to start your journey."}
             </p>
           </div>
 
-          <div className="flex gap-1.5 xs:gap-2 sm:gap-2 md:gap-3 mb-3 xs:mb-3.5 sm:mb-4">
-            <button onClick={() => switchMode("login")}
-              className={`px-2 xs:px-2.5 sm:px-3 md:px-4 py-1.5 xs:py-2 sm:py-2 md:py-2.5 rounded-lg border text-xs xs:text-xs sm:text-sm md:text-sm ${mode === "login" ? "bg-surface-subtle text-fg border-border" : "bg-surface text-fg-subtle border-border-subtle hover:bg-surface-subtle"}`}>
+          {/* Google Login */}
+          <div className="mb-6 relative z-10">
+            <GoogleLoginButton />
+          </div>
+
+          <div className="relative mb-6 z-10">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#3E2723]/20"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-transparent px-2 text-[#3E2723]/70 font-['Cinzel'] font-bold tracking-widest backdrop-blur-md rounded">Or Continue With</span>
+            </div>
+          </div>
+
+          {/* Tabs (Glassy) */}
+          <div className="flex p-1 bg-white/10 backdrop-blur-md rounded-xl mb-6 border border-white/20 relative z-10">
+            <button 
+                onClick={() => switchMode("login")}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${
+                    mode === "login" 
+                    ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm" 
+                    : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
+                }`}
+            >
               Login
             </button>
-            <button onClick={() => switchMode("signup")}
-              className={`px-2 xs:px-2.5 sm:px-3 md:px-4 py-1.5 xs:py-2 sm:py-2 md:py-2.5 rounded-lg border text-xs xs:text-xs sm:text-sm md:text-sm ${mode === "signup" ? "bg-surface-subtle text-fg border-border" : "bg-surface text-fg-subtle border-border-subtle hover:bg-surface-subtle"}`}>
-              Sign up
+            <button 
+                onClick={() => switchMode("signup")}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${
+                    mode === "signup" 
+                    ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm" 
+                    : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
+                }`}
+            >
+              Sign Up
             </button>
           </div>
 
-          <form onSubmit={submit} className="space-y-3 xs:space-y-3.5 sm:space-y-4 md:space-y-5">
+          <form onSubmit={submit} className="space-y-5 relative z-10">
             {mode === "signup" && (
               <div>
-                <label className="block text-xs xs:text-xs sm:text-sm md:text-sm mb-0.5 xs:mb-1 font-medium">
-                  Name <span className="text-danger">*</span>
+                <label className="block text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-1.5 ml-1">
+                  Full Name <span className="text-red-500">*</span>
                 </label>
-                <input
-                  className="w-full text-xs xs:text-xs sm:text-sm md:text-sm"
-                  placeholder="Your name"
-                  value={form.name}
-                  onChange={(e) => set("name", e.target.value)}
-                  autoFocus
-                  required={mode === "signup"}
-                />
+                <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
+                    <input
+                    className={glassInputStyle}
+                    placeholder="Enter your name"
+                    value={form.name}
+                    onChange={(e) => set("name", e.target.value)}
+                    autoFocus
+                    required={mode === "signup"}
+                    />
+                </div>
               </div>
             )}
 
+            {/* Email Field */}
             <div>
-              <label className="block text-xs xs:text-xs sm:text-sm md:text-sm mb-0.5 xs:mb-1 font-medium">
-                Email {mode === "signup" && <span className="text-danger">*</span>}
+              <label className="block text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-1.5 ml-1">
+                Email Address {mode === "signup" && <span className="text-red-500">*</span>}
               </label>
-
               <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
                 <input
                   type="email"
-                  className="w-full pr-24 xs:pr-28 sm:pr-32 md:pr-36 text-xs xs:text-xs sm:text-sm md:text-sm"
-                  placeholder="you@example.com"
+                  className={`${glassInputStyle} pr-24 disabled:opacity-60`}
+                  placeholder="name@example.com"
                   disabled={emailVerified}
                   value={form.email}
                   onChange={(e) => onEmailChange(e.target.value)}
                   required={mode === "signup"}
                 />
+                
                 {mode === "signup" && (
                   <button
                     type="button"
                     onClick={emailVerified ? undefined : sendEmailOtp}
-                    disabled={
-                      otpSending ||
-                      emailVerified ||
-                      !emailValid ||
-                      cooldown > 0
-                    }
-                    className="absolute right-0.5 xs:right-1 top-1/2 -translate-y-1/2 text-[10px] xs:text-xs sm:text-xs px-2 xs:px-2.5 sm:px-3 py-0.5 xs:py-1 rounded-md border bg-surface hover:bg-surface-subtle disabled:opacity-50"
-                    title={!emailValid ? "Enter a valid email" : ""}
+                    disabled={otpSending || emailVerified || !emailValid || cooldown > 0}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold px-3 py-1.5 rounded-lg bg-white/20 border border-white/30 text-[#3E2723] hover:bg-white/40 disabled:opacity-50 transition-all uppercase tracking-wider backdrop-blur-sm"
                   >
-                    {emailVerified
-                      ? "Verified"
-                      : cooldown > 0
-                        ? `Resend (${cooldown}s)`
-                        : emailOtpSent
-                          ? "Resend"
-                          : "Verify"}
+                    {emailVerified ? "Verified" : cooldown > 0 ? `${cooldown}s` : emailOtpSent ? "Resend" : "Verify"}
                   </button>
                 )}
               </div>
 
+              {/* OTP Input (Glassy) */}
               {mode === "signup" && emailOtpSent && !emailVerified && (
-                <div className="mt-1.5 xs:mt-2 flex gap-1.5 xs:gap-2">
+                <div className="mt-3 flex gap-2 animate-fade-in-up">
                   <input
-                    className="flex-1 text-xs xs:text-xs sm:text-sm md:text-sm"
-                    placeholder="Enter 6-digit code"
+                    className={`flex-1 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#D4AF37] text-center tracking-widest font-bold text-[#3E2723] shadow-inner`}
+                    placeholder="ENTER OTP"
                     value={form.emailOtp}
                     onChange={(e) => set("emailOtp", e.target.value)}
                   />
@@ -400,53 +415,59 @@ export default function CustomerAuth() {
                     type="button"
                     onClick={verifyEmailOtp}
                     disabled={otpVerifying || !form.emailOtp.trim()}
-                    className="px-2 xs:px-2.5 sm:px-3 py-1.5 xs:py-2 rounded-md border bg-surface hover:bg-surface-subtle disabled:opacity-50 text-xs xs:text-xs sm:text-sm"
+                    className="px-6 py-2.5 bg-[#3E2723]/90 text-[#F3E5AB] rounded-xl font-bold hover:bg-[#3E2723] disabled:opacity-50 transition-colors border border-[#D4AF37]/30 backdrop-blur-sm"
                   >
-                    {otpVerifying ? "Checking…" : "Submit OTP"}
+                    {otpVerifying ? "..." : "Confirm"}
                   </button>
                 </div>
               )}
 
               {info && (
-                <div className="mt-1 xs:mt-1.5 sm:mt-2 text-[10px] xs:text-xs sm:text-xs text-success">
-                  {info}
+                <div className="mt-2 text-xs font-medium text-green-800 flex items-center gap-1 bg-green-100/50 backdrop-blur-sm p-2 rounded-lg border border-green-200/50">
+                    <CheckCircle className="w-3 h-3" /> {info}
                 </div>
               )}
             </div>
 
+            {/* Phone Field */}
             <div>
-              <label className="block text-xs xs:text-xs sm:text-sm md:text-sm mb-0.5 xs:mb-1 font-medium">
-                Phone Number {mode === "signup" && <span className="text-danger">*</span>}
+              <label className="block text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-1.5 ml-1">
+                Phone Number {mode === "signup" && <span className="text-red-500">*</span>}
               </label>
-              <input
-                type="tel"
-                className="w-full text-xs xs:text-xs sm:text-sm md:text-sm"
-                placeholder="9999999999"
-                value={form.phone}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  set("phone", value);
-                }}
-                maxLength="10"
-                required={mode === "signup"}
-              />
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
+                <input
+                    type="tel"
+                    className={glassInputStyle}
+                    placeholder="9876543210"
+                    value={form.phone}
+                    onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    set("phone", value);
+                    }}
+                    maxLength="10"
+                    required={mode === "signup"}
+                />
+              </div>
               {mode === "signup" && form.phone && !phoneValid && (
-                <p className="text-[10px] xs:text-xs sm:text-xs text-danger mt-0.5 xs:mt-1">
+                <p className="text-xs text-red-200 mt-1.5 ml-1 font-medium drop-shadow-sm">
                   {form.phone.length === 10
-                    ? "Invalid phone number. Please enter a real mobile number starting with 6, 7, 8, or 9"
-                    : "Please enter a valid 10-digit phone number"}
+                    ? "Invalid number format. Must start with 6, 7, 8, or 9."
+                    : "Please enter a valid 10-digit number."}
                 </p>
               )}
             </div>
 
+            {/* Password Field */}
             <div>
-              <label className="block text-xs xs:text-xs sm:text-sm md:text-sm mb-0.5 xs:mb-1 font-medium">
-                Password <span className="text-danger">*</span>
+              <label className="block text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-1.5 ml-1">
+                Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
                 <input
                   type={showPwd ? "text" : "password"}
-                  className="w-full pr-12 xs:pr-14 sm:pr-16 text-xs xs:text-xs sm:text-sm md:text-sm"
+                  className={`${glassInputStyle} pr-16`}
                   placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => set("password", e.target.value)}
@@ -455,25 +476,29 @@ export default function CustomerAuth() {
                 <button
                   type="button"
                   onClick={() => setShowPwd((s) => !s)}
-                  className="absolute right-1 xs:right-2 top-1/2 -translate-y-1/2 text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded-md border bg-surface hover:bg-surface-subtle"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#3E2723]/70 hover:text-[#3E2723] uppercase tracking-wider"
                 >
                   {showPwd ? "Hide" : "Show"}
                 </button>
               </div>
               {mode === "signup" && (
-                <p className="text-[10px] xs:text-xs sm:text-xs text-fg-subtle mt-0.5 xs:mt-1">Minimum 6 characters</p>
+                <p className="text-xs text-[#3E2723]/70 mt-1.5 ml-1 flex items-center gap-1 font-medium">
+                    <AlertCircle className="w-3 h-3" /> Minimum 6 characters
+                </p>
               )}
             </div>
 
+            {/* Confirm Password */}
             {mode === "signup" && (
               <div>
-                <label className="block text-xs xs:text-xs sm:text-sm md:text-sm mb-0.5 xs:mb-1 font-medium">
-                  Confirm Password <span className="text-danger">*</span>
+                <label className="block text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-1.5 ml-1">
+                  Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
                   <input
                     type={showPwd2 ? "text" : "password"}
-                    className="w-full pr-12 xs:pr-14 sm:pr-16 text-xs xs:text-xs sm:text-sm md:text-sm"
+                    className={`${glassInputStyle} pr-16`}
                     placeholder="••••••••"
                     value={form.confirmPassword}
                     onChange={(e) => set("confirmPassword", e.target.value)}
@@ -482,7 +507,7 @@ export default function CustomerAuth() {
                   <button
                     type="button"
                     onClick={() => setShowPwd2((s) => !s)}
-                    className="absolute right-1 xs:right-2 top-1/2 -translate-y-1/2 text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded-md border bg-surface hover:bg-surface-subtle"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#3E2723]/70 hover:text-[#3E2723] uppercase tracking-wider"
                   >
                     {showPwd2 ? "Hide" : "Show"}
                   </button>
@@ -490,14 +515,30 @@ export default function CustomerAuth() {
               </div>
             )}
 
+            {/* Error Message (Glassy) */}
             {err && (
-              <div className="text-danger bg-danger-soft border border-danger/30 rounded-lg px-2 xs:px-2.5 sm:px-3 py-1.5 xs:py-2 text-xs xs:text-xs sm:text-sm">
+              <div className="p-3 bg-red-100/50 backdrop-blur-sm border border-red-200/50 rounded-xl text-red-800 text-sm flex items-center gap-2 font-medium">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {err}
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="w-full btn-primary text-xs xs:text-xs sm:text-sm md:text-sm lg:text-base">
-              {loading ? "Please wait…" : mode === "login" ? "Login" : "Create account"}
+            {/* Submit Button (Premium Gold Glass) */}
+            <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full py-4 bg-gradient-to-r from-[#C59D5F]/90 to-[#B0894C]/90 backdrop-blur-md text-white rounded-xl font-bold font-['Cinzel'] tracking-widest text-sm uppercase hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-[0_5px_15px_rgba(212,175,55,0.3)] transition-all transform active:scale-95 disabled:opacity-70 border border-[#D4AF37]/50 relative overflow-hidden group"
+            >
+              <span className="relative z-10">
+                {loading 
+                  ? "Processing..." 
+                  : mode === "login" 
+                      ? "Enter the Library" 
+                      : "Create Account"
+                }
+              </span>
+               {/* Shine effect on hover */}
+              <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out z-0"></div>
             </button>
           </form>
         </div>

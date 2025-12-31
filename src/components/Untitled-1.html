@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Mode Contact Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111111;
+            color: #ffffff;
+        }
+
+        .border-thick {
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-center items-center py-20 px-4">
+
+    <main class="w-full max-w-5xl space-y-24">
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div class="space-y-4">
+                <h3 class="text-sm tracking-widest uppercase font-semibold text-gray-400">Reach out to us today</h3>
+                <h1 class="text-6xl font-extrabold uppercase tracking-tight text-gray-200">Locations</h1>
+            </div>
+
+            <div class="space-y-10 text-sm tracking-wide text-gray-300">
+                <div>
+                    <h4 class="font-bold uppercase text-white mb-2">USA</h4>
+                    <p class="font-semibold mb-1">New York</p>
+                    <p class="opacity-70">123 Park Avenue, New York,<br>NY 10010, USA</p>
+                </div>
+                <div>
+                    <h4 class="font-bold uppercase text-white mb-2">UK</h4>
+                    <p class="font-semibold mb-1">London</p>
+                    <p class="opacity-70">456 King Street, London,<br>SW1A 1AA, UK</p>
+                </div>
+                <div>
+                    <h4 class="font-bold uppercase text-white mb-2">Australia</h4>
+                    <p class="font-semibold mb-1">Melbourne</p>
+                    <p class="opacity-70">789 Collins Street,<br>Melbourne, VIC 3000</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="w-full">
+            <form class="space-y-6">
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold uppercase ml-4 mb-2">Name</label>
+                    <input type="text" placeholder="Enter your Name"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-full px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold uppercase ml-4 mb-2">Email</label>
+                    <input type="email" placeholder="Enter a valid email address"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-full px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold uppercase ml-4 mb-2">Message</label>
+                    <textarea placeholder="Enter your message" rows="4"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-3xl px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors resize-none"></textarea>
+                </div>
+                <button
+                    class="bg-white text-black font-bold uppercase tracking-wider text-xs px-10 py-4 rounded-full hover:bg-gray-200 transition-transform hover:scale-105">
+                    Submit
+                </button>
+            </form>
+        </section>
+
+        <section
+            class="flex flex-wrap justify-between items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            <div class="text-xl font-bold tracking-widest uppercase">Crolla</div>
+            <div class="flex items-center gap-2 font-bold text-xl uppercase"><span class="text-yellow-500">❖</span>
+                Binance</div>
+            <div class="text-xl font-bold tracking-widest uppercase italic">EVGA</div>
+            <div class="text-xl font-bold tracking-widest uppercase">TESLA</div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <a href="#"
+                class="group border border-gray-700 rounded-[2rem] p-10 flex flex-col justify-between hover:bg-[#1a1a1a] transition-colors min-h-[200px]">
+                <div class="flex justify-between items-start">
+                    <i data-lucide="instagram" class="w-8 h-8"></i>
+                    <i data-lucide="arrow-up-right"
+                        class="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold uppercase mb-2">Instagram</h2>
+                    <p class="text-gray-500 text-sm">Sample text. Click to select the Text Element.</p>
+                </div>
+            </a>
+
+            <a href="#"
+                class="group border border-gray-700 rounded-[2rem] p-10 flex flex-col justify-between hover:bg-[#1a1a1a] transition-colors min-h-[200px]">
+                <div class="flex justify-between items-start">
+                    <i data-lucide="calendar" class="w-8 h-8"></i>
+                    <i data-lucide="arrow-up-right"
+                        class="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold uppercase mb-2">Booking</h2>
+                    <p class="text-gray-500 text-sm">Sample text. Click to select the Text Element.</p>
+                </div>
+            </a>
+        </section>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

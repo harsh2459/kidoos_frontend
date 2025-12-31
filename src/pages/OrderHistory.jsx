@@ -1,4 +1,3 @@
-// src/pages/OrderHistory.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -32,7 +31,10 @@ const OrderHistory = () => {
   const topRef = useRef(null);
   
   const { isCustomer, loading: customerLoading } = useCustomer();
-  const bgImage = "url('/images/terms-bg.png')";
+
+  // --- VRINDAVAN THEME ASSETS ---
+  const parchmentBg = "url('/images/homepage/parchment-bg.png')";
+  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
 
   useEffect(() => {
     if (customerLoading) return;
@@ -99,7 +101,7 @@ const OrderHistory = () => {
             fetchOrders();
           }
         },
-        theme: { color: "#1A3C34" },
+        theme: { color: "#3E2723" },
       };
       const rzp = new window.Razorpay(options);
       rzp.open();
@@ -115,84 +117,222 @@ const OrderHistory = () => {
   const copyAwb = (awb) => { navigator.clipboard.writeText(awb); alert("AWB Copied!"); };
   const handlePageChange = (n) => { if (n >= 1 && n <= totalPages) setPage(n); };
 
+  // --- THEMED STATUS BADGES ---
   const getOrderStatusStyles = (status) => {
     const map = {
-      pending: { bg: "bg-[#FFF9F0]", text: "text-[#8A6A4B]", border: "border-[#F5E6D3]", icon: Clock },
-      confirmed: { bg: "bg-[#E8F4F8]", text: "text-[#2C5282]", border: "border-[#BEE3F8]", icon: CheckCircle },
-      paid: { bg: "bg-[#E8F0EB]", text: "text-[#2F523F]", border: "border-[#DCE4E0]", icon: CreditCard },
-      shipped: { bg: "bg-[#F0F5FF]", text: "text-[#4338CA]", border: "border-[#E0E7FF]", icon: Truck },
-      delivered: { bg: "bg-[#1A3C34]", text: "text-white", border: "border-[#1A3C34]", icon: Package },
-      refunded: { bg: "bg-[#FFF5F5]", text: "text-[#C53030]", border: "border-[#FED7D7]", icon: RefreshCw },
-      cancelled: { bg: "bg-[#F4F7F5]", text: "text-[#8BA699]", border: "border-[#E3E8E5]", icon: XCircle },
+      pending:   { bg: "bg-[#FFF9E6]", text: "text-[#8A7A5E]", border: "border-[#D4AF37]/30", icon: Clock },
+      confirmed: { bg: "bg-[#E3F2FD]", text: "text-[#1565C0]", border: "border-[#90CAF9]", icon: CheckCircle }, // Keep blue for confirmation
+      paid:      { bg: "bg-[#F1F8E9]", text: "text-[#33691E]", border: "border-[#C5E1A5]", icon: CreditCard },
+      shipped:   { bg: "bg-[#F3E5AB]", text: "text-[#3E2723]", border: "border-[#D4AF37]", icon: Truck },
+      delivered: { bg: "bg-[#3E2723]", text: "text-[#F3E5AB]", border: "border-[#3E2723]", icon: Package },
+      refunded:  { bg: "bg-[#FFEBEE]", text: "text-[#C62828]", border: "border-[#FFCDD2]", icon: RefreshCw },
+      cancelled: { bg: "bg-[#F5F5F5]", text: "text-[#757575]", border: "border-[#E0E0E0]", icon: XCircle },
     };
     return map[status] || map.pending;
   };
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
-      <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34] overflow-hidden">
-         <div className="absolute inset-0 z-0 pointer-events-none opacity-20 mix-blend-soft-light" style={{ backgroundImage: bgImage, backgroundSize: 'cover', filter: 'grayscale(100%)' }} />
-         <div className="relative z-10 max-w-7xl 2xl:max-w-[1600px] mx-auto">
-            <button onClick={() => navigate("/profile")} className="flex items-center gap-2 text-[#8BA699] hover:text-white mb-6 transition-colors text-sm font-medium"><ArrowLeft className="w-4 h-4" /> Back to Profile</button>
+    <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] pb-20 selection:bg-[#F3E5AB] selection:text-[#3E2723]">
+      
+      {/* Background Texture */}
+      <div 
+          className="fixed inset-0 pointer-events-none opacity-100 z-0" 
+          style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+      />
+
+      {/* --- HERO HEADER --- */}
+      <div className="relative w-full pt-28 md:pt-36 pb-16 px-6 border-b border-[#D4AF37]/30 bg-[#3E2723] overflow-hidden">
+         <div className="absolute inset-0 z-0 pointer-events-none opacity-10 mix-blend-overlay" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
+         <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#3E2723] to-transparent z-0"></div>
+
+         <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto">
+            <button onClick={() => navigate("/profile")} className="flex items-center gap-2 text-[#D4AF37] hover:text-[#F3E5AB] mb-6 transition-colors text-sm font-bold font-['Cinzel'] tracking-wide">
+                <ArrowLeft className="w-4 h-4" /> Back to Profile
+            </button>
             <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-                <div><h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2">Order History</h1><p className="text-[#8BA699] text-lg font-light">Track, return, or buy things again.</p></div>
-                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10"><Package className="w-5 h-5 text-[#4A7C59]" /><span className="text-white font-medium">{totalOrders} Orders</span></div>
+                <div>
+                    <h1 className="text-4xl md:text-6xl font-['Playfair_Display'] font-bold text-[#F3E5AB] mb-2 tracking-tight">Order History</h1>
+                    <p className="text-[#D4AF37] text-lg font-light tracking-wide">Track your journey through our sacred collection.</p>
+                </div>
+                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-full border border-[#D4AF37]/30">
+                    <Package className="w-5 h-5 text-[#D4AF37]" />
+                    <span className="text-[#F3E5AB] font-bold font-['Cinzel']">{totalOrders} Orders</span>
+                </div>
             </div>
          </div>
       </div>
       <div ref={topRef} />
 
-      <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 -mt-8 relative z-20">
-        <div className="mb-8 overflow-x-auto pb-2 scrollbar-hide">
-            <div className="flex gap-2 min-w-max">
+      <div className="relative z-20 max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 -mt-8">
+        
+        {/* --- FILTER BAR --- */}
+        <div className="mb-10 overflow-x-auto pb-4 scrollbar-hide">
+            <div className="flex gap-3 min-w-max px-1">
                 {["", "pending", "confirmed", "shipped", "delivered", "cancelled"].map(status => (
-                <button key={status} onClick={() => { setStatusFilter(status); setPage(1); }} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${statusFilter === status ? "bg-[#1A3C34] text-white border-[#1A3C34]" : "bg-white text-[#5C756D] border-[#E3E8E5]"}`}>{status === "" ? "All Orders" : status.charAt(0).toUpperCase() + status.slice(1)}</button>
+                <button 
+                    key={status} 
+                    onClick={() => { setStatusFilter(status); setPage(1); }} 
+                    className={`
+                        px-6 py-2.5 rounded-full text-sm font-bold transition-all border font-['Cinzel'] tracking-wide shadow-sm
+                        ${statusFilter === status 
+                            ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-md transform -translate-y-0.5" 
+                            : "bg-white text-[#5C4A2E] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#3E2723]"}
+                    `}
+                >
+                    {status === "" ? "All Orders" : status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
                 ))}
             </div>
         </div>
 
-        {loading && <div className="text-center py-20"><div className="w-12 h-12 border-4 border-[#1A3C34] rounded-full animate-spin mx-auto mb-4"></div><p>Loading...</p></div>}
-        {!loading && orders.length === 0 && <div className="text-center py-20 bg-white rounded-3xl border border-[#E3E8E5]"><Package className="w-10 h-10 text-[#8BA699] mx-auto mb-4"/><h3 className="text-2xl font-bold text-[#1A3C34]">No orders found</h3><button onClick={() => navigate("/catalog")} className="mt-6 px-8 py-3 bg-[#1A3C34] text-white rounded-xl font-bold">Browse Books</button></div>}
+        {loading && (
+            <div className="text-center py-20">
+                <div className="w-16 h-16 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin mx-auto mb-6"></div>
+                <p className="font-['Cinzel'] text-[#3E2723] animate-pulse font-bold tracking-widest">Retrieving Records...</p>
+            </div>
+        )}
 
-        <div className="space-y-6">
+        {!loading && orders.length === 0 && (
+            <div className="text-center py-24 bg-white/60 backdrop-blur-sm rounded-[2rem] border border-[#D4AF37]/20 shadow-sm">
+                <div className="w-20 h-20 bg-[#FFF9E6] rounded-full flex items-center justify-center mx-auto mb-6 border border-[#D4AF37]/20">
+                    <Package className="w-10 h-10 text-[#D4AF37]" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#3E2723] font-['Cinzel'] mb-2">No orders found</h3>
+                <p className="text-[#8A7A5E] mb-8">Your history is currently empty.</p>
+                <button onClick={() => navigate("/catalog")} className="px-10 py-3.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white rounded-full font-bold font-['Cinzel'] tracking-widest shadow-lg hover:shadow-xl active:scale-95 transition-all border border-[#D4AF37]">
+                    Start Exploring
+                </button>
+            </div>
+        )}
+
+        <div className="space-y-8">
             {orders.map((order) => {
                 const statusStyle = getOrderStatusStyles(order.status);
                 const StatusIcon = statusStyle.icon;
+                
                 return (
-                    <div key={order._id} className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm overflow-hidden">
-                        <div className="bg-[#FAFBF9] px-6 py-4 border-b border-[#E3E8E5] flex flex-wrap justify-between items-center">
-                            <div className="flex gap-10 text-sm">
-                                <div><p className="text-[#8BA699] text-xs font-bold mb-1">Order Placed</p><p className="font-medium">{formatDate(order.createdAt)}</p></div>
-                                <div><p className="text-[#8BA699] text-xs font-bold mb-1">Total</p><p className="font-bold text-[#1A3C34]">{formatCurrency(order.amount)}</p></div>
-                                <div className="hidden sm:block"><p className="text-[#8BA699] text-xs font-bold mb-1">Order ID</p><p className="font-mono text-[#5C756D]">#{String(order._id).slice(-8).toUpperCase()}</p></div>
+                    <div key={order._id} className="bg-white/80 backdrop-blur-sm border border-[#D4AF37]/20 rounded-2xl shadow-[0_5px_15px_rgba(62,39,35,0.05)] overflow-hidden hover:border-[#D4AF37]/50 transition-all hover:shadow-md">
+                        
+                        {/* Order Header */}
+                        <div className="bg-[#FAF7F2] px-6 py-5 border-b border-[#D4AF37]/10 flex flex-wrap justify-between items-center gap-4">
+                            <div className="flex gap-8 md:gap-12 text-sm">
+                                <div>
+                                    <p className="text-[#8A7A5E] text-[10px] font-bold uppercase tracking-wider mb-1">Order Placed</p>
+                                    <p className="font-bold text-[#3E2723] font-['Cinzel']">{formatDate(order.createdAt)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[#8A7A5E] text-[10px] font-bold uppercase tracking-wider mb-1">Total</p>
+                                    <p className="font-bold text-[#3E2723] font-['Playfair_Display'] text-lg">{formatCurrency(order.amount)}</p>
+                                </div>
+                                <div className="hidden sm:block">
+                                    <p className="text-[#8A7A5E] text-[10px] font-bold uppercase tracking-wider mb-1">Order ID</p>
+                                    <p className="font-mono text-[#5C4A2E]">#{String(order._id).slice(-8).toUpperCase()}</p>
+                                </div>
                             </div>
-                            <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border ${statusStyle.bg} ${statusStyle.border}`}><StatusIcon className={`w-4 h-4 ${statusStyle.text}`} /><span className={`text-xs font-bold uppercase ${statusStyle.text}`}>{order.status}</span></div>
+                            
+                            <div className={`px-4 py-1.5 rounded-full flex items-center gap-2 border ${statusStyle.bg} ${statusStyle.border} shadow-sm`}>
+                                <StatusIcon className={`w-4 h-4 ${statusStyle.text}`} />
+                                <span className={`text-xs font-bold uppercase font-['Cinzel'] tracking-wide ${statusStyle.text}`}>{order.status}</span>
+                            </div>
                         </div>
-                        <div className="p-6">
-                            <div className="grid lg:grid-cols-3 gap-8">
-                                <div className="lg:col-span-2 space-y-4">
+
+                        {/* Order Body */}
+                        <div className="p-6 md:p-8">
+                            <div className="grid lg:grid-cols-3 gap-10">
+                                {/* Items List */}
+                                <div className="lg:col-span-2 space-y-6">
                                     {order.items?.map((item, idx) => (
-                                        <div key={idx} className="flex gap-4"><img src={item.image || "/placeholder.png"} className="w-20 h-24 object-cover rounded-lg border border-[#E3E8E5]" /><div className="flex-1"><h4 className="font-bold text-[#1A3C34]">{item.title}</h4><p className="text-sm text-[#5C756D]">Qty: {item.qty}</p><p className="font-bold text-[#1A3C34]">{formatCurrency(item.unitPrice)}</p></div></div>
+                                        <div key={idx} className="flex gap-5 items-center">
+                                            <div className="w-20 h-28 bg-[#FAF7F2] rounded-lg border border-[#D4AF37]/20 overflow-hidden flex-shrink-0 shadow-inner">
+                                                <img src={item.image || "/placeholder.png"} className="w-full h-full object-contain p-1" alt={item.title} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mb-1">{item.title}</h4>
+                                                <p className="text-xs text-[#8A7A5E] font-bold uppercase tracking-wide mb-2">Qty: {item.qty}</p>
+                                                <p className="font-bold text-[#3E2723] font-['Playfair_Display']">{formatCurrency(item.unitPrice)}</p>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
-                                <div className="space-y-6 lg:border-l border-[#E3E8E5] lg:pl-8">
+
+                                {/* Shipping / Tracking Info */}
+                                <div className="space-y-6 lg:border-l border-[#D4AF37]/10 lg:pl-10">
                                     {order.shipping?.bd?.awbNumber ? (
-                                        <div className="bg-[#F4F7F5] rounded-xl p-4 border border-[#DCE4E0]"><h5 className="font-bold text-[#1A3C34] mb-3 flex gap-2"><Truck className="w-4 h-4"/> Tracking</h5><p className="font-mono bg-white px-2 py-1 rounded border mb-4">{order.shipping.bd.awbNumber}</p><div className="grid grid-cols-2 gap-2"><button onClick={() => openTracking(order.shipping.bd.awbNumber)} className="bg-[#1A3C34] text-white px-3 py-2 rounded-lg text-xs font-bold">Track</button><button onClick={() => copyAwb(order.shipping.bd.awbNumber)} className="bg-white border text-[#5C756D] px-3 py-2 rounded-lg text-xs font-bold">Copy</button></div></div>
-                                    ) : (<div className="bg-[#FFF9F0] rounded-xl p-4 border border-[#F5E6D3]"><p className="text-sm text-[#8A6A4B] font-medium flex gap-2"><Clock className="w-4 h-4"/> Preparing Shipment</p></div>)}
+                                        <div className="bg-[#FFF9E6] rounded-xl p-5 border border-[#D4AF37]/30 shadow-sm">
+                                            <h5 className="font-bold text-[#3E2723] mb-4 flex gap-2 items-center font-['Cinzel']">
+                                                <Truck className="w-4 h-4 text-[#D4AF37]"/> Shipment Tracking
+                                            </h5>
+                                            <p className="font-mono bg-white px-3 py-1.5 rounded border border-[#D4AF37]/20 mb-4 text-[#5C4A2E] text-center tracking-wider">
+                                                {order.shipping.bd.awbNumber}
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button onClick={() => openTracking(order.shipping.bd.awbNumber)} className="bg-[#3E2723] text-[#F3E5AB] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#5D4037] transition-colors">
+                                                    Track
+                                                </button>
+                                                <button onClick={() => copyAwb(order.shipping.bd.awbNumber)} className="bg-white border border-[#D4AF37]/30 text-[#8A7A5E] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#3E2723] transition-colors">
+                                                    Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-[#FAF7F2] rounded-xl p-5 border border-[#E3E8E5] text-center">
+                                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border border-[#D4AF37]/10">
+                                                <Clock className="w-5 h-5 text-[#8A7A5E]" />
+                                            </div>
+                                            <p className="text-sm text-[#8A7A5E] font-medium font-['Cinzel']">Preparing for Shipment</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-[#FAFBF9] px-6 py-3 border-t border-[#E3E8E5] flex justify-end gap-3">
-                            <button onClick={() => window.open(`/invoice/${order._id}`, '_blank')} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[#1A3C34] border border-[#1A3C34] rounded-lg hover:bg-[#E8F0EB]"><FileText className="w-4 h-4"/> Invoice</button>
+
+                        {/* Order Actions Footer */}
+                        <div className="bg-[#FAF7F2]/50 px-6 py-4 border-t border-[#D4AF37]/10 flex flex-wrap justify-end gap-4">
+                            <button 
+                                onClick={() => window.open(`/invoice/${order._id}`, '_blank')} 
+                                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-[#3E2723] border border-[#D4AF37]/40 rounded-full hover:bg-[#D4AF37] hover:text-white transition-all font-['Cinzel'] tracking-wide"
+                            >
+                                <FileText className="w-4 h-4"/> Invoice
+                            </button>
+                            
                             {(order.payment.status === 'pending' || order.payment.status === 'failed') && order.payment.paymentType !== 'full_cod' && (
-                                <button onClick={() => retryPayment(order)} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-[#1A3C34] rounded-lg hover:bg-[#2F523F]"><CreditCard className="w-4 h-4"/> Retry Payment</button>
+                                <button 
+                                    onClick={() => retryPayment(order)} 
+                                    className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#C59D5F] to-[#B0894C] rounded-full hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all font-['Cinzel'] tracking-widest border border-[#D4AF37]"
+                                >
+                                    <CreditCard className="w-4 h-4"/> Retry Payment
+                                </button>
                             )}
                         </div>
                     </div>
                 );
             })}
         </div>
-        {totalPages > 1 && <div className="mt-12 flex justify-center items-center gap-4"><button onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="w-10 h-10 rounded-full bg-white border flex items-center justify-center"><ChevronLeft/></button><span>Page {page} of {totalPages}</span><button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="w-10 h-10 rounded-full bg-white border flex items-center justify-center"><ChevronRight/></button></div>}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+            <div className="mt-16 flex justify-center items-center gap-6">
+                <button 
+                    onClick={() => handlePageChange(page - 1)} 
+                    disabled={page === 1} 
+                    className="w-12 h-12 rounded-full bg-white border border-[#D4AF37]/30 flex items-center justify-center text-[#3E2723] hover:bg-[#D4AF37] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm group"
+                >
+                    <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform"/>
+                </button>
+                
+                <span className="text-[#3E2723] font-['Cinzel'] font-bold text-sm bg-white px-6 py-2 rounded-full border border-[#D4AF37]/20 shadow-sm">
+                    Page {page} of {totalPages}
+                </span>
+                
+                <button 
+                    onClick={() => handlePageChange(page + 1)} 
+                    disabled={page === totalPages} 
+                    className="w-12 h-12 rounded-full bg-white border border-[#D4AF37]/30 flex items-center justify-center text-[#3E2723] hover:bg-[#D4AF37] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm group"
+                >
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform"/>
+                </button>
+            </div>
+        )}
       </div>
     </div>
   );

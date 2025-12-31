@@ -1,4 +1,3 @@
-// src/pages/Catalog.jsx
 import { useEffect, useState, useRef } from "react";
 import { api } from "../api/client";
 import { CategoriesAPI } from "../api/categories";
@@ -7,25 +6,31 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 import ProductCard from "../components/ProductCard";
 import {
   Loader2, SearchX, ChevronLeft, ChevronRight,
-  Filter, X, Check, ChevronDown, ChevronUp, Search, Minus
+  Filter, X, Check, ChevronDown, ChevronUp, Search, Minus, BookOpen
 } from "lucide-react";
 import WaveText from "../components/WaveText";
 
-// ... (FilterSection component remains the same) ...
+// --- THEME ASSETS ---
+const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+const parchmentBg = "url('/images/homepage/parchment-bg.png')";
+
+// --- FILTER SECTION COMPONENT ---
 const FilterSection = ({ title, children, onClear, hasActiveFilters }) => {
   const [isOpen, setIsOpen] = useState(true);
   return (
-    <div className="border-b border-[#E3E8E5] py-5 last:border-0">
+    <div className="border-b border-[#D4AF37]/20 py-6 last:border-0">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 font-serif font-bold text-[#1A3C34] text-lg hover:text-[#4A7C59] transition-colors">
+        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-3 font-['Cinzel'] font-bold text-[#3E2723] text-lg hover:text-[#D4AF37] transition-colors">
           {title}
           {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
         {hasActiveFilters && (
-          <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="text-[10px] font-bold text-red-500 uppercase tracking-wider hover:underline">Clear</button>
+          <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="text-[10px] font-bold text-[#B0894C] uppercase tracking-wider hover:text-[#3E2723] border-b border-[#B0894C] hover:border-[#3E2723] transition-all">
+            Clear
+          </button>
         )}
       </div>
-      {isOpen && <div className="animate-in slide-in-from-top-2 duration-200">{children}</div>}
+      {isOpen && <div className="animate-in slide-in-from-top-2 duration-300">{children}</div>}
     </div>
   );
 };
@@ -66,11 +71,9 @@ export default function Catalog() {
 
   async function fetchInitialData() {
     try {
-      // Fetch Categories
       const catsRes = await CategoriesAPI.list();
       setCategories(catsRes?.data?.items || []);
 
-      // Fetch Settings for Slider
       const settingsRes = await api.get("/settings/public");
       if (settingsRes.data?.ok && settingsRes.data?.catalog?.slider) {
         setCatalogSlides(settingsRes.data.catalog.slider);
@@ -107,13 +110,11 @@ export default function Catalog() {
     }
   }
 
-  // Trigger load on filter changes
   useEffect(() => {
     const t = setTimeout(loadBooks, q ? 400 : 0);
     return () => clearTimeout(t);
   }, [page, sort, selectedCats, q]);
 
-  // Reset page when filters change
   useEffect(() => {
     setPage(1);
   }, [q, sort, selectedCats]);
@@ -131,49 +132,59 @@ export default function Catalog() {
   const SidebarContent = () => {
     const visibleCategories = categories.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()));
     return (
-      <div className="pr-2">
+      <div className="pr-2 font-['Lato']">
         <FilterSection title="Categories" onClear={() => setSelectedCats([])} hasActiveFilters={selectedCats.length > 0}>
           {categories.length > 5 && (
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8BA699]" />
-              <input value={catSearch} onChange={(e) => setCatSearch(e.target.value)} placeholder="Find category..." className="w-full bg-[#F4F7F5] border border-[#E3E8E5] rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:border-[#1A3C34] transition-colors" />
+            <div className="relative mb-4 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A7A5E] group-focus-within:text-[#D4AF37] transition-colors" />
+              <input 
+                value={catSearch} 
+                onChange={(e) => setCatSearch(e.target.value)} 
+                placeholder="Find category..." 
+                className="w-full bg-[#FAF7F2] border border-[#D4AF37]/30 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-[#D4AF37] transition-all placeholder-[#8A7A5E]/60 text-[#3E2723]" 
+              />
             </div>
           )}
-          <div className="space-y-1 max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+          <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
             {visibleCategories.map((cat) => {
               const isChecked = selectedCats.includes(cat.slug);
               return (
-                <label key={cat._id} className={`flex items-center cursor-pointer p-2 rounded-lg transition-all select-none group ${isChecked ? "bg-[#E8F0EB]" : "hover:bg-[#F4F7F5]"}`}>
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center mr-3 transition-all shrink-0 ${isChecked ? "bg-[#1A3C34] border-[#1A3C34]" : "bg-white border-[#8BA699] group-hover:border-[#1A3C34]"}`}>
-                    {isChecked && <Check className="w-3 h-3 text-white" />}
+                <label key={cat._id} className={`flex items-center cursor-pointer p-2.5 rounded-lg transition-all select-none group border border-transparent ${isChecked ? "bg-[#FFF9E6] border-[#D4AF37]/20" : "hover:bg-[#FAF7F2]"}`}>
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center mr-3 transition-all shrink-0 shadow-sm ${isChecked ? "bg-[#3E2723] border-[#3E2723]" : "bg-white border-[#D4AF37]/40 group-hover:border-[#3E2723]"}`}>
+                    {isChecked && <Check className="w-3.5 h-3.5 text-[#F3E5AB]" />}
                   </div>
                   <input type="checkbox" className="hidden" checked={isChecked} onChange={() => toggleCategory(cat.slug)} />
-                  <span className={`text-sm font-medium flex-1 truncate ${isChecked ? "text-[#1A3C34]" : "text-[#5C756D]"}`}>{cat.name}</span>
-                  {cat.count > 0 && <span className="text-[10px] font-bold text-[#8BA699] bg-white px-1.5 py-0.5 rounded border border-[#E3E8E5]">{cat.count}</span>}
+                  <span className={`text-sm font-medium flex-1 truncate transition-colors ${isChecked ? "text-[#3E2723] font-bold" : "text-[#5C4A2E] group-hover:text-[#3E2723]"}`}>{cat.name}</span>
+                  {cat.count > 0 && <span className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${isChecked ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723]" : "bg-white text-[#8A7A5E] border-[#D4AF37]/30"}`}>{cat.count}</span>}
                 </label>
               );
             })}
           </div>
         </FilterSection>
+        
         <FilterSection title="Price Range" onClear={() => { setPriceRange({ min: "", max: "" }); setTimeout(loadBooks, 50); }} hasActiveFilters={priceRange.min || priceRange.max}>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
               <div className="relative flex-1 group">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8BA699] text-xs font-bold">₹</span>
-                <input type="number" placeholder="Min" min="0" className="w-full pl-6 pr-2 py-2.5 bg-white border border-[#E3E8E5] rounded-xl text-sm font-bold text-[#1A3C34] focus:outline-none focus:border-[#1A3C34] transition-all" value={priceRange.min} onChange={e => setPriceRange({ ...priceRange, min: e.target.value })} />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D4AF37] text-sm font-bold font-['Cinzel']">₹</span>
+                <input type="number" placeholder="Min" min="0" className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm" value={priceRange.min} onChange={e => setPriceRange({ ...priceRange, min: e.target.value })} />
               </div>
-              <Minus className="w-4 h-4 text-[#8BA699]" />
+              <Minus className="w-4 h-4 text-[#D4AF37]" />
               <div className="relative flex-1 group">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8BA699] text-xs font-bold">₹</span>
-                <input type="number" placeholder="Max" min="0" className="w-full pl-6 pr-2 py-2.5 bg-white border border-[#E3E8E5] rounded-xl text-sm font-bold text-[#1A3C34] focus:outline-none focus:border-[#1A3C34] transition-all" value={priceRange.max} onChange={e => setPriceRange({ ...priceRange, max: e.target.value })} />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D4AF37] text-sm font-bold font-['Cinzel']">₹</span>
+                <input type="number" placeholder="Max" min="0" className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm" value={priceRange.max} onChange={e => setPriceRange({ ...priceRange, max: e.target.value })} />
               </div>
             </div>
+            
             <div className="flex flex-wrap gap-2">
               {[{ label: "Under ₹250", min: 0, max: 250 }, { label: "₹250 - ₹500", min: 250, max: 500 }, { label: "₹500 - ₹1000", min: 500, max: 1000 }, { label: "Above ₹1000", min: 1000, max: "" }].map((p, idx) => (
-                <button key={idx} onClick={() => setPricePreset(p.min, p.max)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${(Number(priceRange.min) === p.min && Number(priceRange.max) === (p.max || 0)) ? "bg-[#1A3C34] text-white border-[#1A3C34]" : "bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#1A3C34] hover:text-[#1A3C34]"}`}>{p.label}</button>
+                <button key={idx} onClick={() => setPricePreset(p.min, p.max)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${(Number(priceRange.min) === p.min && Number(priceRange.max) === (p.max || 0)) ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-md" : "bg-white text-[#5C4A2E] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#3E2723]"}`}>{p.label}</button>
               ))}
             </div>
-            <button onClick={(e) => applyPriceFilter(e)} className="w-full py-3 bg-[#1A3C34] text-white font-bold text-sm rounded-xl shadow-md hover:bg-[#2F523F] transition-all flex items-center justify-center gap-2">Apply Filter</button>
+            
+            <button onClick={(e) => applyPriceFilter(e)} className="w-full py-3.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white font-['Cinzel'] font-bold text-sm tracking-widest uppercase rounded-xl shadow-md hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 border border-[#D4AF37]">
+              Apply Filter
+            </button>
           </div>
         </FilterSection>
       </div>
@@ -181,50 +192,86 @@ export default function Catalog() {
   };
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
+    <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] pb-20 selection:bg-[#F3E5AB] selection:text-[#3E2723]">
+      
+      {/* Background Texture */}
+      <div 
+          className="fixed inset-0 pointer-events-none opacity-100 z-0" 
+          style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+      />
 
-      {/* HERO HEADER (Dynamic Slider or Default Green) */}
-      <div ref={topRef}>
+      {/* HERO HEADER */}
+      <div ref={topRef} className="relative z-10">
         {catalogSlides && catalogSlides.length > 0 ? (
-          // DYNAMIC SLIDER
           <CatalogHeroSlider slides={catalogSlides} totalBooks={total} />
         ) : (
-          // STATIC FALLBACK (Original Green Banner)
-          <div className="relative w-full pt-20 md:pt-28 pb-12 px-6 border-b border-[#E3E8E5] bg-[#1A3C34]">
-            <div className="absolute inset-0 z-0 opacity-20 pointer-events-none mix-blend-overlay" style={{ backgroundImage: "url('/public/assets/pattern.png')", backgroundSize: '200px' }} />
-            <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto">
-              <h1 className="text-3xl md:text-5xl font-serif font-bold text-white mb-2 tracking-tight">Our Collection</h1>
-              <p className="text-[#8BA699] text-lg font-light">Discover {total} unique books curated for young minds.</p>
+          // STATIC FALLBACK (Deep Wood Banner)
+          <div className="relative w-full pt-28 md:pt-36 pb-16 px-6 border-b border-[#D4AF37]/30 bg-[#3E2723] overflow-hidden">
+            <div className="absolute inset-0 z-0 opacity-10 pointer-events-none mix-blend-overlay" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
+            <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#3E2723] to-transparent z-0"></div>
+            
+            <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto text-center md:text-left">
+              <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/10 backdrop-blur-md rounded-full shadow-inner border border-[#D4AF37]/30">
+                 <BookOpen className="w-6 h-6 text-[#F3E5AB]" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-['Playfair_Display'] font-bold text-[#F3E5AB] mb-4 tracking-tight drop-shadow-md">
+                Sacred Collection
+              </h1>
+              <p className="text-[#D4AF37] text-lg md:text-xl font-light tracking-wide max-w-2xl">
+                Discover {total} treasures of wisdom curated for young souls.
+              </p>
             </div>
           </div>
         )}
       </div>
 
-      <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        {/* MOBILE TOOLBAR */}
-        <div className="lg:hidden mb-6 flex gap-3 sticky top-20 z-30">
-          <div className="relative flex-1">
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search books..." className="w-full pl-4 pr-10 py-3 bg-white/90 backdrop-blur-md border border-[#E3E8E5] rounded-xl text-[#1A3C34] shadow-sm focus:outline-none focus:border-[#1A3C34]" />
-            {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699]"><X className="w-4 h-4" /></button>}
+      <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
+        
+        {/* MOBILE TOOLBAR (Glassy) */}
+        <div className="lg:hidden mb-8 flex gap-3 sticky top-[72px] z-30">
+          <div className="relative flex-1 group">
+            <input 
+              value={q} 
+              onChange={e => setQ(e.target.value)} 
+              placeholder="Search books..." 
+              className="w-full pl-5 pr-10 py-3.5 bg-white/90 backdrop-blur-xl border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all font-medium placeholder-[#8A7A5E]" 
+            />
+            {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-5 h-5" /></button>}
           </div>
-          <button onClick={() => setIsSidebarOpen(true)} className="px-4 bg-white/90 backdrop-blur-md border border-[#E3E8E5] rounded-xl text-[#1A3C34] shadow-sm flex items-center justify-center relative active:scale-95 transition-transform">
+          <button onClick={() => setIsSidebarOpen(true)} className="px-5 bg-[#3E2723] text-[#F3E5AB] rounded-xl shadow-md border border-[#D4AF37]/50 flex items-center justify-center relative active:scale-95 transition-all">
             <Filter className="w-5 h-5" />
-            {(selectedCats.length > 0 || priceRange.min || priceRange.max) && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
+            {(selectedCats.length > 0 || priceRange.min || priceRange.max) && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_5px_#D4AF37]" />}
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* DESKTOP SIDEBAR */}
-          <aside className="hidden lg:block w-72 shrink-0 space-y-6">
+        <div className="flex flex-col lg:flex-row gap-10">
+          
+          {/* DESKTOP SIDEBAR (Royal Index) */}
+          <aside className="hidden lg:block w-72 shrink-0 space-y-8">
+            {/* Search */}
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors" />
-              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search by title, author..." className="w-full pl-11 pr-4 py-3 bg-white border border-[#E3E8E5] rounded-xl text-[#1A3C34] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/10 focus:border-[#1A3C34] transition-all" />
-              {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699] hover:text-[#1A3C34]"><X className="w-4 h-4" /></button>}
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A7A5E] group-focus-within:text-[#D4AF37] transition-colors" />
+              <input 
+                value={q} 
+                onChange={e => setQ(e.target.value)} 
+                placeholder="Search titles..." 
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] transition-all font-medium" 
+              />
+              {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-4 h-4" /></button>}
             </div>
-            <div className="bg-white px-6 py-4 rounded-2xl border border-[#E3E8E5] shadow-sm">
-              <div className="flex items-center justify-between mb-2 pb-4 border-b border-[#E3E8E5]">
-                <div className="flex items-center gap-2 text-[#1A3C34] font-bold"><Filter className="w-4 h-4" /><span>Filters</span></div>
-                {(selectedCats.length > 0 || priceRange.min || priceRange.max || q) && <button onClick={clearFilters} className="text-xs font-bold text-red-500 hover:underline">RESET ALL</button>}
+
+            {/* Filters Container */}
+            <div className="bg-white/80 backdrop-blur-sm px-6 py-6 rounded-2xl border border-[#D4AF37]/20 shadow-[0_10px_30px_rgba(62,39,35,0.05)]">
+              <div className="flex items-center justify-between mb-2 pb-4 border-b border-[#D4AF37]/20">
+                <div className="flex items-center gap-2 text-[#3E2723] font-bold font-['Cinzel'] text-lg">
+                  <Filter className="w-5 h-5 text-[#D4AF37]" />
+                  <span>Filters</span>
+                </div>
+                {(selectedCats.length > 0 || priceRange.min || priceRange.max || q) && (
+                  <button onClick={clearFilters} className="text-[10px] font-bold text-[#B0894C] uppercase tracking-wider hover:text-[#3E2723] hover:underline transition-colors">
+                    Reset All
+                  </button>
+                )}
               </div>
               <SidebarContent />
             </div>
@@ -232,65 +279,102 @@ export default function Catalog() {
 
           {/* MAIN GRID */}
           <div className="flex-1">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <div className="text-sm text-[#5C756D]">
-                Showing <span className="font-bold text-[#1A3C34]">{books.length}</span> of {total} results
-                {(selectedCats.length > 0 || priceRange.min || priceRange.max) && <span className="ml-2 text-xs bg-[#E8F0EB] text-[#1A3C34] px-2 py-1 rounded-md border border-[#DCE4E0] font-bold">Filters Active</span>}
+            
+            {/* Sort & Count Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 bg-white/60 p-4 rounded-xl border border-[#D4AF37]/10 shadow-sm backdrop-blur-sm">
+              <div className="text-sm text-[#5C4A2E] font-medium">
+                Showing <span className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mx-1">{books.length}</span> of {total} treasures
+                {(selectedCats.length > 0 || priceRange.min || priceRange.max) && <span className="ml-3 text-[10px] bg-[#3E2723] text-[#F3E5AB] px-2 py-1 rounded border border-[#D4AF37] font-bold uppercase tracking-wide">Filtered</span>}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-[#5C756D] hidden sm:block">Sort:</span>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-[#8A7A5E] hidden sm:block font-bold uppercase tracking-wider">Sort By:</span>
                 <div className="relative">
-                  <select value={sort} onChange={e => setSort(e.target.value)} className="appearance-none bg-white border border-[#E3E8E5] text-[#1A3C34] text-sm font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer focus:outline-none focus:border-[#1A3C34] shadow-sm hover:border-[#1A3C34] transition-colors">
+                  <select 
+                    value={sort} 
+                    onChange={e => setSort(e.target.value)} 
+                    className="appearance-none bg-white border border-[#D4AF37]/30 text-[#3E2723] text-sm font-bold py-2.5 pl-5 pr-10 rounded-lg cursor-pointer focus:outline-none focus:border-[#D4AF37] shadow-sm hover:border-[#D4AF37] transition-colors font-['Cinzel'] uppercase tracking-wide"
+                  >
                     <option value="new">Newest Arrivals</option>
                     <option value="priceAsc">Price: Low to High</option>
                     <option value="priceDesc">Price: High to Low</option>
                     <option value="a-z">Name: A to Z</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1A3C34] pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#D4AF37] pointer-events-none" />
                 </div>
               </div>
             </div>
 
+            {/* Content Grid */}
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-32 text-[#5C756D]">
-                <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#1A3C34]" />
-                <p className="font-medium animate-pulse">Updating library...</p>
+              <div className="flex flex-col items-center justify-center py-32 text-[#8A7A5E]">
+                <div className="relative">
+                    <div className="w-16 h-16 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin mb-6"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-[#3E2723] animate-pulse" />
+                    </div>
+                </div>
+                <p className="font-medium font-['Cinzel'] tracking-widest text-[#3E2723] animate-pulse">Consulting the Archives...</p>
               </div>
             ) : books.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-8">
                 {books.map(b => (<ProductCard key={b._id} book={b} />))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-[#E3E8E5] border-dashed">
-                <div className="w-20 h-20 bg-[#F4F7F5] rounded-full flex items-center justify-center mb-4"><SearchX className="w-10 h-10 text-[#8BA699]" /></div>
-                <h3 className="text-xl font-bold text-[#1A3C34] mb-2">No matches found</h3>
-                <p className="text-[#5C756D] max-w-xs mx-auto mb-6">We couldn't find any books matching your specific filters.</p>
-                <button onClick={clearFilters} className="px-8 py-3 bg-[#1A3C34] text-white rounded-xl font-bold text-sm shadow-lg hover:bg-[#2F523F] hover:shadow-xl active:scale-95 transition-all">Clear All Filters</button>
+              <div className="flex flex-col items-center justify-center py-24 text-center bg-white/60 rounded-3xl border border-[#D4AF37]/20 border-dashed backdrop-blur-sm">
+                <div className="w-24 h-24 bg-[#FFF9E6] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[#D4AF37]/20">
+                    <SearchX className="w-10 h-10 text-[#D4AF37]" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#3E2723] mb-3 font-['Cinzel']">No Treasures Found</h3>
+                <p className="text-[#8A7A5E] max-w-sm mx-auto mb-8 font-light">We couldn't find any books matching your specific criteria. Try adjusting your filters.</p>
+                <button onClick={clearFilters} className="px-8 py-3.5 bg-[#3E2723] text-[#F3E5AB] rounded-xl font-bold text-sm shadow-lg hover:bg-[#5D4037] hover:shadow-xl active:scale-95 transition-all font-['Cinzel'] tracking-widest uppercase border border-[#D4AF37]/30">
+                    Clear All Filters
+                </button>
               </div>
             )}
+
+            {/* Pagination */}
             {!loading && totalPages > 1 && (
-              <div className="mt-12 flex items-center justify-center gap-4">
-                <button onClick={() => goToPage(page - 1)} disabled={page === 1} className="p-3 rounded-xl border border-[#E3E8E5] bg-white text-[#1A3C34] hover:bg-[#E8F0EB] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"><ChevronLeft className="w-5 h-5" /></button>
-                <span className="font-bold text-[#1A3C34] text-sm bg-white px-4 py-2 rounded-xl border border-[#E3E8E5] shadow-sm">Page {page} of {totalPages}</span>
-                <button onClick={() => goToPage(page + 1)} disabled={page === totalPages} className="p-3 rounded-xl border border-[#E3E8E5] bg-white text-[#1A3C34] hover:bg-[#E8F0EB] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"><ChevronRight className="w-5 h-5" /></button>
+              <div className="mt-16 flex items-center justify-center gap-4">
+                <button onClick={() => goToPage(page - 1)} disabled={page === 1} className="p-3.5 rounded-full border border-[#D4AF37]/30 bg-white text-[#3E2723] hover:bg-[#D4AF37] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm group">
+                    <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+                </button>
+                
+                <span className="font-bold text-[#3E2723] text-sm bg-white px-6 py-3 rounded-full border border-[#D4AF37]/30 shadow-sm font-['Cinzel'] tracking-widest">
+                    Page <span className="text-[#D4AF37] text-lg mx-1">{page}</span> of {totalPages}
+                </span>
+                
+                <button onClick={() => goToPage(page + 1)} disabled={page === totalPages} className="p-3.5 rounded-full border border-[#D4AF37]/30 bg-white text-[#3E2723] hover:bg-[#D4AF37] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm group">
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* MOBILE DRAWER */}
+      {/* MOBILE SIDEBAR DRAWER */}
       {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-          <div className="absolute inset-y-0 right-0 w-[85%] max-w-[320px] bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            <div className="p-5 border-b border-[#E3E8E5] flex items-center justify-between bg-[#FAFBF9]">
-              <h2 className="font-bold text-[#1A3C34] text-lg flex items-center gap-2"><Filter className="w-5 h-5" /> Filter & Sort</h2>
-              <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-[#E8F0EB] rounded-full text-[#1A3C34] hover:bg-[#DCE4E0] transition-colors"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-[100] lg:hidden">
+          <div className="absolute inset-0 bg-[#3E2723]/60 backdrop-blur-sm transition-opacity" onClick={() => setIsSidebarOpen(false)} />
+          <div className="absolute inset-y-0 right-0 w-[85%] max-w-[320px] bg-[#FAF7F2] shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 border-l border-[#D4AF37]/30">
+            <div className="p-6 border-b border-[#D4AF37]/20 flex items-center justify-between bg-[#FFF9E6]">
+              <h2 className="font-bold text-[#3E2723] text-xl flex items-center gap-3 font-['Cinzel']">
+                <Filter className="w-5 h-5 text-[#D4AF37]" /> Filter & Sort
+              </h2>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-white rounded-full text-[#3E2723] border border-[#D4AF37]/20 hover:bg-[#D4AF37] hover:text-white transition-all">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6"><SidebarContent /></div>
-            <div className="p-5 border-t border-[#E3E8E5] bg-white">
-              <button onClick={() => setIsSidebarOpen(false)} className="w-full py-3.5 bg-[#1A3C34] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Show {total} Results</button>
+            <div className="flex-1 overflow-y-auto p-6 relative">
+               {/* Watermark in drawer */}
+               <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: mandalaBg, backgroundSize: '300px' }}></div>
+               <div className="relative z-10"><SidebarContent /></div>
+            </div>
+            <div className="p-6 border-t border-[#D4AF37]/20 bg-white">
+              <button onClick={() => setIsSidebarOpen(false)} className="w-full py-4 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all font-['Cinzel'] tracking-widest uppercase text-sm border border-[#D4AF37]">
+                Show {total} Results
+              </button>
             </div>
           </div>
         </div>
@@ -300,7 +384,7 @@ export default function Catalog() {
   );
 }
 
-// ✅ FIXED SLIDER COMPONENT FOR CATALOG
+// --- CATALOG HERO SLIDER ---
 function CatalogHeroSlider({ slides, totalBooks }) {
   const [current, setCurrent] = useState(0);
   const timeoutRef = useRef(null);
@@ -318,7 +402,6 @@ function CatalogHeroSlider({ slides, totalBooks }) {
 
   if (!slides || slides.length === 0) return null;
 
-  // Helper to determine height class
   const getHeight = (h) => {
     switch (h) {
       case 'small': return 'min-h-[300px]';
@@ -329,7 +412,7 @@ function CatalogHeroSlider({ slides, totalBooks }) {
   };
 
   return (
-    <div className={`relative w-full pt-20 md:pt-0 overflow-hidden bg-[#1A3C34] flex items-center group transition-all duration-300 ${getHeight(slides[current].height)}`}>
+    <div className={`relative w-full pt-20 md:pt-0 overflow-hidden bg-[#3E2723] flex items-center group transition-all duration-300 ${getHeight(slides[current].height)}`}>
 
       {slides.map((slide, idx) => {
         const isFull = slide.layout === 'full';
@@ -339,9 +422,11 @@ function CatalogHeroSlider({ slides, totalBooks }) {
           <div
             key={idx}
             className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${current === idx ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-            style={{ backgroundColor: slide.bgColor || '#1A3C34' }}
+            style={{ backgroundColor: slide.bgColor || '#3E2723' }}
           >
-            {/* === TYPE 1: FULL BANNER (Background Image) === */}
+            {/* Pattern Overlay */}
+            <div className="absolute inset-0 z-0 opacity-10 pointer-events-none mix-blend-overlay" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
+
             {isFull && slide.image && (
               <>
                 <img
@@ -353,43 +438,36 @@ function CatalogHeroSlider({ slides, totalBooks }) {
               </>
             )}
 
-            {/* === TYPE 2: SPLIT LAYOUT === */}
-            {!isFull && (
-              <>
-                <div className="absolute inset-0 z-0 opacity-10 pointer-events-none mix-blend-overlay" style={{ backgroundImage: "url('/public/assets/pattern.png')", backgroundSize: '200px' }} />
-
-                {slide.image && (
-                  <div className="absolute inset-0 md:left-1/3 w-full md:w-2/3 h-full">
-                    <img
-                      src={assetUrl(slide.image)}
-                      alt={slide.title}
-                      className={`w-full h-full ${fit === 'contain' ? 'object-contain p-8' : 'object-cover'} object-center opacity-40 md:opacity-100`}
-                    />
-                    {fit === 'cover' && (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          background: `linear-gradient(to right, ${slide.bgColor || '#1A3C34'} 5%, transparent 100%), linear-gradient(to top, ${slide.bgColor || '#1A3C34'} 0%, transparent 50%)`
-                        }}
-                      ></div>
-                    )}
-                  </div>
+            {!isFull && slide.image && (
+              <div className="absolute inset-0 md:left-1/3 w-full md:w-2/3 h-full">
+                <img
+                  src={assetUrl(slide.image)}
+                  alt={slide.title}
+                  className={`w-full h-full ${fit === 'contain' ? 'object-contain p-8' : 'object-cover'} object-center opacity-40 md:opacity-100`}
+                />
+                {fit === 'cover' && (
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `linear-gradient(to right, ${slide.bgColor || '#3E2723'} 5%, transparent 100%), linear-gradient(to top, ${slide.bgColor || '#3E2723'} 0%, transparent 50%)`
+                    }}
+                  ></div>
                 )}
-              </>
+              </div>
             )}
 
             {/* TEXT CONTENT */}
             <div className="relative z-20 max-w-7xl 2xl:max-w-[1800px] mx-auto h-full px-6 md:px-12 flex items-center">
-              <div className={`w-full md:w-1/2 pt-12 md:pt-0 ${isFull ? 'md:mx-auto md:w-2/3 md:text-center text-center' : 'text-left'}`}>
+              <div className={`w-full md:w-1/2 pt-16 md:pt-0 ${isFull ? 'md:mx-auto md:w-2/3 md:text-center text-center' : 'text-left'}`}>
                 <h1
-                  className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight leading-tight drop-shadow-md"
-                  style={{ color: slide.textColor || '#ffffff' }}
+                  className="text-4xl md:text-6xl font-['Playfair_Display'] font-bold mb-6 tracking-tight leading-tight drop-shadow-md"
+                  style={{ color: slide.textColor || '#F3E5AB' }}
                 >
                   {slide.title}
                 </h1>
                 <p
-                  className={`text-lg md:text-xl font-light mb-8 opacity-90 leading-relaxed ${isFull ? 'mx-auto' : ''}`}
-                  style={{ color: slide.textColor || '#ffffff', maxWidth: '600px' }}
+                  className={`text-lg md:text-xl font-light mb-8 opacity-90 leading-relaxed font-['Lato'] ${isFull ? 'mx-auto' : ''}`}
+                  style={{ color: slide.textColor || '#F3E5AB', maxWidth: '600px' }}
                 >
                   {slide.subtitle}
                 </p>
@@ -397,9 +475,9 @@ function CatalogHeroSlider({ slides, totalBooks }) {
                 {slide.ctaText && (
                   <a
                     href={slide.ctaLink || "/catalog"}
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#1A3C34] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-lg active:scale-95"
+                    className="inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white rounded-full font-bold text-lg hover:from-[#D4AF37] hover:to-[#C59D5F] transition-all shadow-lg shadow-[#D4AF37]/20 active:scale-95 font-['Cinzel'] tracking-wide border border-[#F3E5AB]/30"
                   >
-                    <WaveText text={slide.ctaText} hoverColor="#304F48" /> <ChevronRight className="w-5 h-5" />
+                    <WaveText text={slide.ctaText} hoverColor="#3E2723" /> <ChevronRight className="w-5 h-5" />
                   </a>
                 )}
               </div>
@@ -411,11 +489,11 @@ function CatalogHeroSlider({ slides, totalBooks }) {
       {/* Navigation */}
       {slides.length > 1 && (
         <>
-          <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10"><ChevronLeft className="w-6 h-6" /></button>
-          <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10"><ChevronRight className="w-6 h-6" /></button>
+          <button onClick={prevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/20 hover:bg-[#D4AF37] text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10 hover:border-[#D4AF37]"><ChevronLeft className="w-6 h-6" /></button>
+          <button onClick={nextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/20 hover:bg-[#D4AF37] text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10 hover:border-[#D4AF37]"><ChevronRight className="w-6 h-6" /></button>
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
             {slides.map((_, idx) => (
-              <button key={idx} onClick={() => setCurrent(idx)} className={`h-1.5 rounded-full transition-all duration-500 ${current === idx ? "w-8 bg-white" : "w-2 bg-white/40 hover:bg-white/60"}`} />
+              <button key={idx} onClick={() => setCurrent(idx)} className={`h-1.5 rounded-full transition-all duration-500 ${current === idx ? "w-8 bg-[#D4AF37]" : "w-2 bg-white/40 hover:bg-white/60"}`} />
             ))}
           </div>
         </>

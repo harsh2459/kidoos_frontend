@@ -1,174 +1,151 @@
-// src/components/ProductCard.jsx
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ShoppingCart, Check, Star } from "lucide-react";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
-import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
+import { deal as dealFn } from "../lib/Price";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
-import { ShoppingCart, Check } from "lucide-react"; // Using Lucide icons for consistency
 
 export default function ProductCard({ book }) {
-  const d = dealFn(book);
+  // --- 1. HOOKS (MUST BE AT THE VERY TOP) ---
   const navigate = useNavigate();
-
   const items = useCart((s) => s.items);
   const replaceAll = useCart((s) => s.replaceAll);
   const addLocal = useCart((s) => s.add);
+  const { isCustomer, token } = useCustomer();
+  const [imgError, setImgError] = useState(false);
 
+  // --- 2. SAFETY CHECK (After hooks are declared) ---
+  if (!book) return null;
+
+  // --- 3. LOGIC & DATA PREP ---
+  const d = dealFn(book);
   const id = book._id || book.id;
   const inCart = items.some((i) => (i._id || i.id || i.bookId) === id);
 
-  const { isCustomer, token } = useCustomer();
+  // Handle Cover Image
+  const coverPath = Array.isArray(book?.assets?.coverUrl)
+    ? book.assets.coverUrl[0]
+    : book?.assets?.coverUrl;
 
-  const addToCart = async () => {
-    window.dispatchEvent(new Event("cart:add"));
+  const finalCover = !imgError && coverPath 
+    ? assetUrl(coverPath) 
+    : "https://placehold.co/600x800/F4F7F5/A08C5B?text=Book+Cover";
 
+  const addToCart = async (e) => {
+    e.preventDefault(); 
+    e.stopPropagation(); // Stop clicking through to book details
+    
     if (!isCustomer) {
-      t.info("Please login to add items to your cart");
+      t.info("Please login to shop");
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
 
     try {
-      const hasToken = !!localStorage.getItem("customer_jwt");
-      if (!hasToken) {
-        t.err("Session expired, please login again");
-        navigate("/login", { state: { next: "/cart" } });
-        return;
-      }
-
+      if (!token) throw new Error("No token");
       const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
       replaceAll(res?.data?.cart?.items || []);
       t.ok("Added to cart");
-      navigate("/cart");
-
-    } catch (e) {
-      if (e?.response?.status === 401) {
-        t.err("Session expired, please login again");
-        localStorage.removeItem("customer_jwt");
-        localStorage.removeItem("customer_profile");
-        navigate("/login", { state: { next: "/cart" } });
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        t.err("Please login again");
+        navigate("/login");
         return;
       }
-
-      addLocal({
-        ...book,
-        price: book.price || book.pric || book.mrp,
-        mrp: book.mrp || book.price || book.pric,
-        qty: 1
-      });
-      t.warn("Added to local cart (sync with server failed)");
-      navigate("/cart");
+      // Offline/Local fallback
+      addLocal({ ...book, price: d.price, mrp: d.mrp, qty: 1 });
+      t.warn("Added to local cart");
     }
   };
 
-  const goToCart = () => {
-    t.info("Already in your cart");
+  const goToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     navigate("/cart");
   };
 
-  const cover =
-    (Array.isArray(book?.assets?.coverUrl)
-      ? book.assets.coverUrl[0]
-      : book?.assets?.coverUrl) || "/uploads/placeholder.png";
-
+  // --- 4. RENDER (Premium Style) ---
   return (
-    <article className="group flex flex-col h-full bg-white rounded-2xl border border-[#E3E8E5] overflow-hidden hover:border-[#4A7C59] hover:shadow-lg transition-all duration-300">
+    <div className="group relative flex flex-col h-full bg-white rounded-xl shadow-sm border border-[#EBE5D9] hover:shadow-xl hover:border-[#D4AF37] transition-all duration-500 ease-out overflow-hidden">
       
-      {/* 1. IMAGE CONTAINER */}
-      <Link
-        to={`/book/${book.slug}`}
-        title={book.title}
-        className="relative block w-full aspect-[3/4] overflow-hidden bg-[#F4F7F5]"
-      >
-        <div className="w-full h-full p-6 flex items-center justify-center">
-          <img
-            src={assetUrl(cover)}
-            alt={book.title}
-            loading="lazy"
-            draggable={false}
-            className="
-              max-h-full max-w-full object-contain drop-shadow-sm
-              transition-transform duration-500 ease-out
-              group-hover:scale-110
-            "
-          />
-        </div>
-        {/* Discount Badge */}
+      {/* --- IMAGE SECTION --- */}
+      <Link to={`/book/${book.slug}`} className="relative block w-full pt-[10%] pb-4 bg-gradient-to-b from-[#FAF9F6] to-white px-8">
+        {/* Discount Badge (Elegant) */}
         {d.off > 0 && (
-          <span className="absolute top-3 left-3 bg-[#E8F0EB] text-[#1A3C34] text-xs font-bold px-2 py-1 rounded-md border border-[#DCE4E0]">
-            -{d.off}%
+          <span className="absolute top-3 right-3 z-10 bg-[#D4AF37] text-white text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded shadow-sm">
+            {d.off}% Off
           </span>
         )}
+        
+        <div className="relative w-full aspect-[2/3] flex items-end justify-center">
+          <img
+            src={finalCover}
+            alt={book.title}
+            onError={() => setImgError(true)}
+            loading="lazy"
+            className="
+              max-h-full max-w-full object-contain 
+              drop-shadow-xl transform transition-transform duration-500 
+              group-hover:-translate-y-2 group-hover:scale-105 will-change-transform
+            "
+            style={{ filter: "drop-shadow(0 15px 15px rgba(0,0,0,0.15))" }} 
+          />
+        </div>
       </Link>
 
-      {/* 2. TEXT CONTENT */}
-      <div className="p-4 flex flex-col flex-grow">
-        <Link
+      {/* --- DETAILS SECTION --- */}
+      <div className="flex flex-col flex-grow px-5 pb-6 text-center">
+        
+        {/* Title (Serif Font like reference) */}
+        <Link 
           to={`/book/${book.slug}`}
-          className="font-serif font-bold text-[#1A3C34] text-lg leading-tight line-clamp-2 mb-1 hover:text-[#4A7C59] transition-colors"
+          className="font-serif text-[#3E2723] text-xl font-medium leading-tight mb-2 hover:text-[#D4AF37] transition-colors line-clamp-2"
         >
           {book.title}
         </Link>
-        
-        <div className="text-[#5C756D] text-sm line-clamp-1 mb-4">
-          {(book.authors || []).join(", ")}
+
+        {/* Subtitle / Author */}
+        <div className="text-[#8D7F71] text-xs uppercase tracking-widest font-semibold mb-4 line-clamp-1">
+          {book.authors?.length > 0 ? book.authors.join(", ") : "Premium Collection"}
         </div>
 
-        {/* 3. PRICE & ACTION FOOTER */}
-        <div className="mt-auto flex items-center justify-between gap-3">
-          
-          {/* Price Block */}
-          <div className="flex flex-col">
-            <div className="font-bold text-[#1A3C34] text-lg">₹{d.price}</div>
-            {d.mrp > d.price && (
-              <span className="line-through text-xs text-[#8BA699]">₹{d.mrp}</span>
-            )}
+        {/* Price & Action */}
+        <div className="mt-auto w-full">
+          <div className="flex items-center justify-center gap-2 mb-4">
+             <span className="font-serif text-2xl text-[#3E2723]">₹{d.price}</span>
+             {d.mrp > d.price && (
+               <span className="text-sm text-[#A89F91] line-through decoration-[0.5px]">₹{d.mrp}</span>
+             )}
           </div>
 
-          {/* Action Button - Responsive & Stable */}
-          {!inCart ? (
-            <button
-              onClick={addToCart}
-              className="
-                bg-[#1A3C34] text-white hover:bg-[#2F523F]
-                transition-all duration-300 shadow-md hover:shadow-lg active:scale-95
-                flex items-center justify-center
-                
-                /* Mobile: Circle Icon Only */
-                w-10 h-10 rounded-full
-                
-                /* Desktop: Pill Shape with Text */
-                md:w-auto md:h-10 md:px-4 md:rounded-xl
-              "
-              title="Add to cart"
-            >
-              <ShoppingCart className="w-5 h-5 md:mr-2" />
-              <span className="hidden md:inline font-medium text-sm">Add</span>
-            </button>
-          ) : (
-            <button
-              onClick={goToCart}
-              className="
-                bg-[#E8F0EB] text-[#1A3C34] border border-[#DCE4E0]
-                transition-all duration-300 hover:bg-[#DCE4E0] active:scale-95
-                flex items-center justify-center
-                
-                /* Mobile: Circle Icon Only */
-                w-10 h-10 rounded-full
-                
-                /* Desktop: Pill Shape with Text */
-                md:w-auto md:h-10 md:px-4 md:rounded-xl
-              "
-              title="Go to cart"
-            >
-              <Check className="w-5 h-5 md:mr-2" />
-              <span className="hidden md:inline font-medium text-sm">Added</span>
-            </button>
-          )}
+          {/* Gold Button (Reference Style) */}
+          <button
+            onClick={inCart ? goToCart : addToCart}
+            className={`
+              w-full py-3 rounded-lg text-sm font-bold uppercase tracking-wide transition-all duration-300 shadow-md
+              flex items-center justify-center gap-2
+              ${inCart 
+                ? "bg-[#F5F5F0] text-[#3E2723] border border-[#D4AF37]" 
+                : "bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-lg active:scale-95"
+              }
+            `}
+          >
+            {inCart ? (
+              <>
+                <Check className="w-4 h-4" />
+                <span>In Cart</span>
+              </>
+            ) : (
+              <>
+                <span>Shop Now</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
-    </article>
+    </div>
   );
 }

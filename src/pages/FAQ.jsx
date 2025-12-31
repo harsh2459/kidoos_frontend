@@ -19,8 +19,10 @@ const FAQ = () => {
         setOpenIndex(openIndex === index ? null : index);
     };
 
-    // Consistent background texture
-    const bgImage = "url('/images/terms-bg.png')";
+    // VRINDAVAN THEME ASSETS
+    const parchmentBg = "url('/images/homepage/parchment-bg.png')";
+    // Use the NEW Library Image you generated here:
+    const heroBg = "url('/images/faq-library-bg.png')"; 
 
     const faqData = [
         {
@@ -152,36 +154,36 @@ const FAQ = () => {
     ];
 
     return (
-        <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34]">
+        <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
             
             {/* --- HERO SECTION --- */}
-            <div className="relative w-full pt-20 md:pt-24 pb-16 px-6 border-b border-[#E3E8E5] overflow-hidden bg-[#F4F7F5]">
+            <div className="relative w-full pt-28 md:pt-36 pb-20 px-6 border-b border-[#D4AF37]/30 overflow-hidden">
                 
                 {/* Background Image Layer */}
                 <div 
-                    className="absolute inset-0 z-0 pointer-events-none opacity-40 mix-blend-multiply" 
+                    className="absolute inset-0 z-0 pointer-events-none" 
                     style={{
-                        backgroundImage: bgImage,
+                        backgroundImage: heroBg,
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center top',
-                        filter: 'sepia(1) hue-rotate(70deg) saturate(0.5)' 
+                        backgroundPosition: 'center',
+                        opacity: 1 // Full opacity since it's an image
                     }}
                 />
                 
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#F4F7F5]/60 to-[#F4F7F5] pointer-events-none"></div>
+                {/* Gradient Overlay to make text readable */}
+                <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#FAF7F2]/80 via-[#FAF7F2]/70 to-[#FAF7F2] pointer-events-none"></div>
 
                 {/* Content Layer */}
                 <div className="relative z-10 max-w-5xl mx-auto text-center">
-                    <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm ring-1 ring-[#DCE4E0]">
-                        <HelpCircle className="w-8 h-8 md:w-10 md:h-10 text-[#1A3C34]" />
+                    <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/70 backdrop-blur-sm rounded-full shadow-[0_4px_15px_rgba(212,175,55,0.2)] ring-1 ring-[#D4AF37]/40">
+                        <HelpCircle className="w-8 h-8 text-[#D4AF37]" />
                     </div>
                     
-                    <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-[#1A3C34] mb-6 tracking-tight leading-tight drop-shadow-sm">
-                        Frequently Asked Questions
+                    <h1 className="font-['Playfair_Display'] text-5xl md:text-6xl lg:text-7xl font-bold text-[#3E2723] mb-6 tracking-tight leading-tight drop-shadow-sm">
+                        Frequently Asked <span className="text-[#D4AF37] italic">Questions</span>
                     </h1>
                     
-                    <p className="text-lg md:text-xl text-[#5C756D] font-light max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-lg md:text-xl text-[#5C4A2E] font-light max-w-2xl mx-auto leading-relaxed">
                         Find answers to common questions about our products, ordering, shipping, and more.
                         Can't find what you're looking for? Contact our support team!
                     </p>
@@ -189,50 +191,57 @@ const FAQ = () => {
             </div>
 
             {/* --- MAIN CONTENT --- */}
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-                <div className="space-y-12">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 relative">
+                
+                {/* Parchment Background for Content Area */}
+                <div 
+                    className="absolute inset-0 pointer-events-none opacity-40 z-0" 
+                    style={{ backgroundImage: parchmentBg, backgroundSize: 'cover' }}
+                ></div>
+
+                <div className="relative z-10 space-y-16">
                     
                     {/* FAQ Categories Loop */}
                     {faqData.map((category, categoryIndex) => {
                         const IconComponent = category.icon;
                         return (
-                            <section key={categoryIndex} className="bg-white rounded-2xl border border-[#E3E8E5] shadow-sm overflow-hidden">
+                            <section key={categoryIndex} className="bg-white/80 backdrop-blur-sm rounded-2xl border border-[#D4AF37]/20 shadow-[0_5px_25px_rgba(62,39,35,0.05)] overflow-hidden">
                                 
                                 {/* Category Header */}
-                                <div className="flex items-center gap-3 p-6 md:p-8 border-b border-[#E3E8E5] bg-[#FAFBF9]">
-                                    <div className="w-10 h-10 rounded-xl bg-[#E8F0EB] flex items-center justify-center text-[#1A3C34]">
-                                        <IconComponent className="w-5 h-5" />
+                                <div className="flex items-center gap-4 p-6 md:p-8 border-b border-[#D4AF37]/20 bg-gradient-to-r from-[#FFF9E6] to-white">
+                                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-[#D4AF37] border border-[#D4AF37]/30 shadow-sm">
+                                        <IconComponent className="w-6 h-6" />
                                     </div>
-                                    <h2 className="text-xl md:text-2xl font-serif font-bold text-[#1A3C34]">
+                                    <h2 className="text-xl md:text-2xl font-['Cinzel'] font-bold text-[#3E2723]">
                                         {category.category}
                                     </h2>
                                 </div>
 
                                 {/* Accordion Items */}
-                                <div className="divide-y divide-[#E3E8E5]">
+                                <div className="divide-y divide-[#D4AF37]/20">
                                     {category.questions.map((faq, faqIndex) => {
                                         const globalIndex = `${categoryIndex}-${faqIndex}`;
                                         const isOpen = openIndex === globalIndex;
 
                                         return (
-                                            <div key={faqIndex} className="transition-all duration-200">
+                                            <div key={faqIndex} className="transition-all duration-300">
                                                 <button
                                                     onClick={() => toggleAccordion(globalIndex)}
-                                                    className={`w-full px-6 md:px-8 py-5 flex items-center justify-between text-left hover:bg-[#F4F7F5] transition-colors duration-200 ${isOpen ? 'bg-[#F4F7F5]' : ''}`}
+                                                    className={`w-full px-6 md:px-8 py-6 flex items-center justify-between text-left hover:bg-[#FFF9E6]/50 transition-colors duration-200 ${isOpen ? 'bg-[#FFF9E6]' : ''}`}
                                                 >
-                                                    <span className={`font-semibold pr-4 text-base md:text-lg transition-colors ${isOpen ? 'text-[#1A3C34]' : 'text-[#4A5D56]'}`}>
+                                                    <span className={`font-semibold pr-4 text-base md:text-lg transition-colors font-['Lato'] ${isOpen ? 'text-[#3E2723]' : 'text-[#5C4A2E]'}`}>
                                                         {faq.question}
                                                     </span>
                                                     <ChevronDown
-                                                        className={`w-5 h-5 text-[#4A7C59] flex-shrink-0 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`}
+                                                        className={`w-5 h-5 text-[#D4AF37] flex-shrink-0 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`}
                                                     />
                                                 </button>
 
                                                 <div
-                                                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                                                    className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
                                                 >
-                                                    <div className="px-6 md:px-8 pb-6 pt-0">
-                                                        <p className="text-[#5C756D] leading-relaxed text-sm md:text-base border-t border-[#E3E8E5]/50 pt-4">
+                                                    <div className="px-6 md:px-8 pb-8 pt-0">
+                                                        <p className="text-[#5C4A2E] leading-relaxed text-sm md:text-base border-t border-[#D4AF37]/20 pt-4">
                                                             {faq.answer}
                                                         </p>
                                                     </div>
@@ -245,48 +254,54 @@ const FAQ = () => {
                         );
                     })}
 
-                    {/* Still Have Questions Section */}
-                    <div className="bg-[#1A3C34] text-white rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
+                    {/* Still Have Questions Section (Dark Wood Theme) */}
+                    <div className="rounded-[2.5rem] p-10 md:p-16 text-center relative overflow-hidden shadow-2xl"
+                         style={{ background: 'linear-gradient(135deg, #3E2723 0%, #251613 100%)' }}>
+                        
                         {/* Decorative Circle */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#4A7C59]/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#D4AF37]/10 rounded-full blur-2xl pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
+                        <div className="absolute inset-0 border border-[#D4AF37]/30 rounded-[2.5rem] pointer-events-none"></div>
                         
                         <div className="relative z-10 max-w-3xl mx-auto">
-                            <h2 className="text-2xl md:text-4xl font-serif font-bold mb-4">Still Have Questions?</h2>
-                            <p className="text-[#8BA699] mb-8 text-lg font-light leading-relaxed">
+                            <h2 className="text-3xl md:text-4xl font-['Cinzel'] font-bold mb-4 text-[#F3E5AB]">Still Have Questions?</h2>
+                            <p className="text-[#D4AF37]/80 mb-10 text-lg font-light leading-relaxed">
                                 Can't find the answer you're looking for? Our friendly customer support team is here to help!
                                 Reach out to us and we'll get back to you as soon as possible.
                             </p>
                             
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <div className="flex flex-col sm:flex-row gap-5 justify-center items-center">
                                 <a
                                     href="mailto:kiddosintellect@gmail.com"
-                                    className="bg-white text-[#1A3C34] hover:bg-[#E8F0EB] px-8 py-3 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 w-full sm:w-auto justify-center"
+                                    className="bg-white text-[#3E2723] hover:bg-[#FFF9E6] px-10 py-4 rounded-full font-bold transition-all shadow-lg flex items-center gap-3 w-full sm:w-auto justify-center hover:-translate-y-1"
                                 >
-                                    <Mail className="w-4 h-4" />
+                                    <Mail className="w-5 h-5 text-[#D4AF37]" />
                                     Email Us
                                 </a>
                                 <a
                                     href="tel:+919879857529"
-                                    className="bg-transparent border border-[#8BA699] text-white hover:bg-white/10 px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                                    className="bg-transparent border border-[#D4AF37] text-[#F3E5AB] hover:bg-[#D4AF37] hover:text-[#3E2723] px-10 py-4 rounded-full font-bold transition-all flex items-center gap-3 w-full sm:w-auto justify-center hover:-translate-y-1"
                                 >
-                                    <Phone className="w-4 h-4" />
+                                    <Phone className="w-5 h-5" />
                                     Call Us
                                 </a>
                             </div>
                             
-                            <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-[#8BA699]">
-                                <p>Business Hours: Mon - Sat, 9:00 AM - 6:00 PM IST</p>
-                                <p>Email Response: Within 24 hours</p>
+                            <div className="mt-10 pt-6 border-t border-[#D4AF37]/20 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-[#8A7A5E]">
+                                <p className="text-[#F3E5AB]/70">Business Hours: Mon - Sat, 9:00 AM - 6:00 PM IST</p>
+                                <p className="text-[#F3E5AB]/70">Email Response: Within 24 hours</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Quick Links / Related Resources */}
                     <section>
-                        <h2 className="text-2xl font-serif font-bold text-[#1A3C34] mb-6 text-center">
+                        <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723] mb-8 text-center flex items-center justify-center gap-4">
+                            <span className="h-[1px] w-12 bg-[#D4AF37]"></span>
                             Related Resources
+                            <span className="h-[1px] w-12 bg-[#D4AF37]"></span>
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
                                 { title: "Privacy Policy", link: "/privacy", icon: Shield, desc: "Data protection" },
                                 { title: "Shipping Policy", link: "/shipping", icon: Truck, desc: "Delivery info" },
@@ -296,13 +311,13 @@ const FAQ = () => {
                                 <Link
                                     key={idx}
                                     to={item.link}
-                                    className="group p-6 bg-white rounded-xl border border-[#E3E8E5] hover:border-[#4A7C59] hover:shadow-md transition-all duration-300 text-center"
+                                    className="group p-8 bg-white/90 backdrop-blur-sm rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-[0_10px_30px_rgba(212,175,55,0.15)] transition-all duration-300 text-center hover:-translate-y-2"
                                 >
-                                    <div className="w-12 h-12 mx-auto rounded-full bg-[#E8F0EB] group-hover:bg-[#1A3C34] flex items-center justify-center transition-colors duration-300 mb-4">
-                                        <item.icon className="w-6 h-6 text-[#1A3C34] group-hover:text-white transition-colors" />
+                                    <div className="w-14 h-14 mx-auto rounded-full bg-[#FFF9E6] group-hover:bg-[#3E2723] flex items-center justify-center transition-colors duration-300 mb-4 border border-[#D4AF37]/30">
+                                        <item.icon className="w-6 h-6 text-[#D4AF37] group-hover:text-[#F3E5AB] transition-colors" />
                                     </div>
-                                    <h3 className="font-bold text-[#1A3C34] mb-1 group-hover:text-[#4A7C59] transition-colors">{item.title}</h3>
-                                    <p className="text-xs text-[#5C756D] uppercase tracking-wide">{item.desc}</p>
+                                    <h3 className="font-bold font-['Cinzel'] text-[#3E2723] mb-2 group-hover:text-[#B0894C] transition-colors">{item.title}</h3>
+                                    <p className="text-xs text-[#8A7A5E] uppercase tracking-wide font-bold">{item.desc}</p>
                                 </Link>
                             ))}
                         </div>

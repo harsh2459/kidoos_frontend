@@ -326,20 +326,20 @@ export default function BookDetail() {
 
                 <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-start">
                     
-                    {/* LEFT: STATIC MOCKUP (Updated) */}
+                    {/* LEFT: STATIC MOCKUP (UPDATED - CLEANED) */}
                     <div className="lg:col-span-5 flex flex-col items-center relative z-10">
                         <div
                             className="relative w-[280px] md:w-[360px] cursor-pointer group mb-10 transition-transform duration-500 hover:-translate-y-2"
                             onClick={() => setShowFlipbook(true)}
                         >
                             {/* Realistic Shadow behind the book */}
-                            <div className="absolute top-4 left-4 w-full h-full bg-[#1A3C34]/20 rounded-r-2xl rounded-l-md blur-xl transform scale-95 translate-y-2"></div>
+                            <div className="absolute top-4 left-4 w-full h-full bg-[#1A3C34]/20 rounded-xl blur-xl transform scale-95 translate-y-2"></div>
 
-                            {/* Book Image with Spine Border */}
+                            {/* Book Image - REMOVED bg-white and border-l-[8px] */}
                             <img 
                                 src={mainSrc} 
                                 alt={book.title} 
-                                className="relative w-full h-auto rounded-r-2xl rounded-l-sm shadow-2xl border-l-[8px] border-[#e5e5e5] bg-white z-10" 
+                                className="relative w-full h-auto rounded-xl shadow-2xl z-10 block object-cover" 
                             />
                             
                             {/* Overlay Button */}
@@ -350,7 +350,7 @@ export default function BookDetail() {
                             </div>
                         </div>
 
-                        {/* GALLERY STRIP */}
+                        {/* GALLERY STRIP (UPDATED - CLEANED) */}
                         <div className="w-full animate-[fadeIn_1.5s_ease-out]">
                              <div className="flex items-center justify-center gap-4 mb-4">
                                 <div className="h-px bg-[#DCE4E0] flex-1"></div>
@@ -362,9 +362,10 @@ export default function BookDetail() {
                                     <button
                                         key={i}
                                         onClick={() => { setActiveImg(i); setLightboxOpen(true); }}
-                                        className={`relative w-[90px] h-[130px] flex-shrink-0 rounded-xl overflow-hidden border-2 bg-white transition-all duration-300 transform hover:-translate-y-2 hover:shadow-lg hover:rotate-1 ${activeImg === i ? 'border-[#1A3C34] shadow-xl scale-105 ring-2 ring-[#1A3C34]/20' : 'border-[#F0F0F0] shadow-sm opacity-80 hover:opacity-100'}`}
+                                        // REMOVED bg-white and p-1 padding that caused the white frame
+                                        className={`relative w-[90px] h-[130px] flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-lg hover:rotate-1 ${activeImg === i ? 'border-[#1A3C34] shadow-xl scale-105 ring-2 ring-[#1A3C34]/20' : 'border-[#F0F0F0] shadow-sm opacity-80 hover:opacity-100'}`}
                                     >
-                                        <img src={img} className="w-full h-full object-contain p-1" />
+                                        <img src={img} className="w-full h-full object-cover" />
                                     </button>
                                 ))}
                             </div>
