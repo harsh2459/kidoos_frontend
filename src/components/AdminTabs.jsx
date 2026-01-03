@@ -7,7 +7,8 @@ import {
   Target, 
   BookOpen, 
   Settings, 
-  LayoutTemplate 
+  LayoutTemplate, 
+  Sparkles
 } from "lucide-react";
 
 export default function AdminTabs() {
@@ -21,6 +22,7 @@ export default function AdminTabs() {
     { path: "/admin/settings/popup", label: "Popups", icon: Target },
     { path: "/admin/books", label: "Books", icon: BookOpen },
     { path: "/admin/setup", label: "Setup", icon: Settings },
+    { path: "/admin/settings/ai", label: "AI Config", icon: Sparkles },
   ];
 
   const baseClass = "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap border";

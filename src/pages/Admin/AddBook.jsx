@@ -11,7 +11,8 @@ import {
   Pencil, Calculator, Globe, Music, Palette, Puzzle, 
   Users, Trophy, Target, Sparkles, Clock, Sun, Moon, 
   Leaf, Anchor, Award, Gift, Camera, Video, Mic, MapPin, 
-  GraduationCap, Medal, Rocket, Compass, Feather, Eye
+  GraduationCap, Medal, Rocket, Compass, Feather, Eye,
+  Wand2 
 } from "lucide-react";
 
 const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none text-[#2C3E38]";
@@ -88,13 +89,12 @@ export default function AddBook() {
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
 
-  // Tab State
   const [activeTab, setActiveTab] = useState("general");
 
   const [book, setBook] = useState({
     title: "", subtitle: "", language: "English", edition: "", pages: "",
     mrp: "", price: "", discountPct: "",
-    inventory: { stock: 0, lowStockAlert: 5, sku: "KI-", asin: "490110" },
+    inventory: { stock: 0, lowStockAlert: 5, sku: "", asin: "" }, 
     dimensions: { weight: 0, length: 0, width: 0, height: 0 },
     visibility: "public",
     assets: { coverUrl: [] },
@@ -110,9 +110,10 @@ export default function AddBook() {
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false); 
   
-  // Text inputs
-  const [authorsText, setAuthorsText] = useState("");
+  // Text inputs for CSV fields
+  const [authorsText, setAuthorsText] = useState("Kiddos Intellect");
   const [categoriesText, setCategoriesText] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [suggestionsText, setSuggestionsText] = useState("");
@@ -136,7 +137,6 @@ export default function AddBook() {
   const setField = (k, v) => setBook((prev) => ({ ...prev, [k]: v }));
   const setInv = (k, v) => setBook((prev) => ({ ...prev, inventory: { ...prev.inventory, [k]: v } }));
   const setAssets = (k, v) => setBook((prev) => ({ ...prev, assets: { ...prev.assets, [k]: v } }));
-  const setDim = (k, v) => setBook((prev) => ({ ...prev, dimensions: { ...prev.dimensions, [k]: v } }));
 
   // Page Builder Helpers
   const setConfig = (section, key, val) => {
@@ -197,6 +197,7 @@ export default function AddBook() {
         .map(toRelativeFromPublic);
 
       setAssets("coverUrl", [...(book.assets?.coverUrl || []), ...paths]);
+      t.ok("Images uploaded! You can now use AI Auto-Fill.");
     } catch (e) {
       t.err("Upload failed");
     } finally {
@@ -264,6 +265,68 @@ export default function AddBook() {
       });
     };
   }
+  
+  // --- ASK AI HANDLER ---
+  const handleAskAI = async () => {
+    if (book.assets.coverUrl.length === 0) {
+      t.err("Please upload at least one image first!");
+      return;
+    }
+
+    setAnalyzing(true);
+    const toastId = t.loading("AI is reading your book covers...");
+
+    try {
+      const { data } = await api.post("/ai/analyze", { 
+        images: book.assets.coverUrl 
+      }, auth);
+
+      if (!data.ok || !data.data) throw new Error("No data returned from AI");
+
+      const result = data.data;
+
+      setBook(prev => ({
+        ...prev,
+        title: result.title || prev.title,
+        subtitle: result.subtitle || prev.subtitle,
+        language: result.language || "English",
+        // ✅ Ensure Description is mapped
+        descriptionHtml: result.descriptionHtml || prev.descriptionHtml,
+        
+        templateType: result.bookType === "Activity Book" ? "activity" : "standard",
+        
+        layoutConfig: {
+          ...prev.layoutConfig,
+          story: {
+            ...prev.layoutConfig.story,
+            heading: result.layoutConfig?.story?.heading || "Why We Created This?",
+            text: result.layoutConfig?.story?.text || "",
+            quote: result.layoutConfig?.story?.quote || ""
+          },
+          curriculum: result.layoutConfig?.curriculum || [],
+          specs: result.layoutConfig?.specs || [],
+          // ✅ ADDED: Capture Testimonials
+          testimonials: result.layoutConfig?.testimonials || []
+        }
+      }));
+
+      // Update CSV Fields
+      if (result.authors) setAuthorsText(result.authors.join(", "));
+      if (result.categories) setCategoriesText(result.categories.join(", "));
+      if (result.tags) setTagsText(result.tags.join(", "));
+      if (result.whyChooseThis) setWhyChooseThisText(result.whyChooseThis.join("\n"));
+
+      t.dismiss(toastId);
+      t.ok("✨ Book details, story & testimonials auto-filled!");
+
+    } catch (error) {
+      console.error("AI Error:", error);
+      t.dismiss(toastId);
+      t.err("AI Analysis failed. Check console or try again.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   // --- Save Handler ---
   async function save(e) {
@@ -328,6 +391,23 @@ export default function AddBook() {
           </div>
 
           <div className="flex items-center gap-3">
+            
+            {/* AI BUTTON */}
+            <button
+              type="button"
+              onClick={handleAskAI}
+              disabled={book.assets.coverUrl.length === 0 || analyzing}
+              className={`
+                hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95
+                ${book.assets.coverUrl.length > 0 
+                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-purple-200" 
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"}
+              `}
+            >
+              <Wand2 className={`w-4 h-4 ${analyzing ? "animate-spin" : ""}`} />
+              {analyzing ? "Analyzing..." : "Auto-Fill with AI"}
+            </button>
+
             {/* Tab Buttons */}
             <div className="bg-white rounded-lg p-1 flex shadow-sm border border-[#E3E8E5]">
                <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
@@ -354,6 +434,48 @@ export default function AddBook() {
           {/* --- TAB 1: GENERAL INFO --- */}
           <div className={activeTab === 'general' ? 'block space-y-8' : 'hidden'}>
             
+            <Card title="1. Upload Images (Required for AI)">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm"><Upload className="w-4 h-4" /><span>Upload Images</span><input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" /></label>
+                {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
+                
+                {/* Mobile AI Button */}
+                <button
+                  type="button"
+                  onClick={handleAskAI}
+                  disabled={book.assets.coverUrl.length === 0 || analyzing}
+                  className={`sm:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm ${book.assets.coverUrl.length > 0 ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-400"}`}
+                >
+                  <Wand2 className="w-4 h-4" /> {analyzing ? "..." : "Ask AI"}
+                </button>
+              </div>
+
+              {book.assets.coverUrl.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {book.assets.coverUrl.map((p, i) => (
+                    <div key={`${p}-${i}`} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
+                      <img src={assetUrl(p)} className="h-full w-full object-contain p-2" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        {i !== 0 && (<button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>)}
+                        <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
+                      </div>
+                      {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-[#8BA699]">
+                  <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-sm">Upload images to enable AI Auto-Fill</p>
+                </div>
+              )}
+              
+              <div className="border-t border-[#E3E8E5] mt-8 pt-6">
+                  <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
+                  <select className={`${INPUT_STYLE} sm:w-64`} value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public</option><option value="draft">Draft</option></select>
+              </div>
+            </Card>
+
             <Card title="Basic Information">
               <Row label="Title" hintRight="Required">
                 <input required className={INPUT_STYLE} placeholder="e.g. My First Book of Colors" value={book.title} onChange={(e) => setField("title", e.target.value)} />
@@ -383,7 +505,7 @@ export default function AddBook() {
               </div>
             </Card>
 
-            {/* Categorization & Media */}
+            {/* Categorization */}
             <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
               <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">Categorization</div>
               <div className="mb-6">
@@ -406,15 +528,6 @@ export default function AddBook() {
               <div className="mb-6"><label className="block mb-2 text-sm font-bold text-[#2C3E38]">Suggestion Groups (CSV)</label><input type="text" value={suggestionsText} onChange={e => setSuggestionsText(e.target.value)} className={INPUT_STYLE} /></div>
               <Row label="Description"><textarea className={`${INPUT_STYLE} h-40 font-mono text-sm`} value={book.descriptionHtml} onChange={(e) => setField("descriptionHtml", e.target.value)} placeholder="Book description..." /></Row>
               <div className="mt-6"><label className="block text-sm font-bold text-[#2C3E38] mb-2">"Why Choose This Book" Points</label><textarea value={whyChooseThisText} onChange={e => setWhyChooseThisText(e.target.value)} rows={5} className={INPUT_STYLE} /></div>
-            </Card>
-
-            <Card title="Media & Settings">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm"><Upload className="w-4 h-4" /><span>Upload Images</span><input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" /></label>
-                {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
-              </div>
-              {book.assets.coverUrl.length > 0 ? (<div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">{book.assets.coverUrl.map((p, i) => (<div key={`${p}-${i}`} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white"><img src={assetUrl(p)} className="h-full w-full object-contain p-2" /><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">{i !== 0 && (<button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>)}<button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button></div>{i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}</div>))}</div>) : (<div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-[#DCE4E0] rounded-xl bg-[#FAFBF9] text-[#8BA699]"><ImageIcon className="w-8 h-8 mb-2 opacity-50" /><p className="text-sm">No images uploaded yet</p></div>)}
-              <div className="border-t border-[#E3E8E5] mt-8 pt-6"><label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label><select className={`${INPUT_STYLE} sm:w-64`} value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public</option><option value="draft">Draft</option></select></div>
             </Card>
           </div>
 

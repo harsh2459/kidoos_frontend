@@ -14,7 +14,8 @@ import {
   ShieldPlus,
   LogOut, Target,
   Milestone,
-  Mail
+  Mail,
+  Sparkles
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -131,11 +132,11 @@ export default function AdminSidebar() {
           <WaveText text="Catalog Header" hoverColor="#000"  />
         </Item>
         <Item
-          to="/admin/setup"
-          active={loc.pathname.startsWith("/admin/setup")}
-          icon={ShieldPlus}
+          to="/admin/settings/ai"
+          active={loc.pathname.startsWith("/admin/settings/ai")}
+          icon={Sparkles}
         >
-          <WaveText text="Add Admin" hoverColor="#000"  />
+          <WaveText text="AI Settings" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/settings"
@@ -143,6 +144,13 @@ export default function AdminSidebar() {
           icon={Settings}
         >
           <WaveText text="Settings" hoverColor="#000"  />
+        </Item>
+        <Item
+          to="/admin/setup"
+          active={loc.pathname.startsWith("/admin/setup")}
+          icon={ShieldPlus}
+        >
+          <WaveText text="Add Admin" hoverColor="#000"  />
         </Item>
       </nav>
 

@@ -88,7 +88,7 @@ export default function EmailTemplates() {
     if (!window.confirm("Are you sure you want to delete this template?")) return;
     await EmailAPI.deleteTemplate(idOrSlug);
     await load();
-    t.ok("Template deleted");
+    t.success("Template deleted");
   }
 
   const filtered = useMemo(() => {
@@ -191,7 +191,7 @@ export default function EmailTemplates() {
                         {/* Slug Block */}
                         <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-lg px-3 py-2 mb-4 flex items-center justify-between group-hover:border-[#1A3C34]/20 transition-colors">
                             <code className="text-xs font-mono text-[#1A3C34] truncate">{t.slug}</code>
-                            <Copy size={12} className="text-[#8BA699] cursor-pointer hover:text-[#1A3C34]" onClick={() => { navigator.clipboard.writeText(t.slug); t.ok("Copied slug!"); }} />
+                            <Copy size={12} className="text-[#8BA699] cursor-pointer hover:text-[#1A3C34]" onClick={() => { navigator.clipboard.writeText(t.slug); t.success("Copied slug!"); }} />
                         </div>
 
                         {/* Subject Preview */}
@@ -275,7 +275,7 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
             } else {
                 await EmailAPI.createTemplate(payload);
             }
-            t.ok("Template saved successfully");
+            t.success("Template saved successfully");
             onSave();
         } catch (e) {
             t.err(e?.response?.data?.error || "Save failed");
@@ -560,7 +560,7 @@ function TestLabModal({ tpl, onClose }) {
         setSending(true);
         try {
             await EmailAPI.testTemplate(tpl.slug, { to: email, ctx });
-            t.ok(`Test sent to ${email}`);
+            t.success(`Test sent to ${email}`);
         } catch (e) {
             t.err(e?.response?.data?.error || "Test failed");
         } finally {

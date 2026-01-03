@@ -52,6 +52,7 @@ import Hero from './pages/parallax/Hero';
 import HeroSection from './pages/gita_showcash/HeroSection';
 import ScrollVideo from './pages/scroll_video/ScrollVideo';
 import CustomCursor from './components/CustomCursor';
+import AiSettings from './pages/Admin/AiSettings';
 
 
 function InnerApp() {
@@ -195,6 +196,10 @@ function InnerApp() {
           <Route
             path="/admin/settings/popup"
             element={<AdminGuard><AdminLayout><PopupSettings /></AdminLayout></AdminGuard>}
+          />
+          <Route
+            path="/admin/settings/ai"
+            element={<AdminGuard><AdminLayout><AiSettings /></AdminLayout></AdminGuard>}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes >
