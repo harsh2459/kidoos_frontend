@@ -94,7 +94,7 @@ export default function AddBook() {
   const [book, setBook] = useState({
     title: "", subtitle: "", language: "English", edition: "", pages: "",
     mrp: "", price: "", discountPct: "",
-    inventory: { stock: 0, lowStockAlert: 5, sku: "", asin: "" }, 
+    inventory: { stock: 0, lowStockAlert: 5, sku: "", asin: "490110" }, 
     dimensions: { weight: 0, length: 0, width: 0, height: 0 },
     visibility: "public",
     assets: { coverUrl: [] },
@@ -346,7 +346,7 @@ export default function AddBook() {
         discountPct: Number(book.discountPct) || 0,
         inventory: {
           sku: book.inventory.sku || "",
-          asin: book.inventory.asin || "", 
+          asin: book.inventory.asin || "490110", 
           stock: Number(book.inventory.stock) || 0,
           lowStockAlert: Number(book.inventory.lowStockAlert) || 5,
         },
