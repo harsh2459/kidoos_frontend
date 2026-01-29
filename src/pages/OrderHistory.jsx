@@ -113,7 +113,9 @@ const OrderHistory = () => {
 
   const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount || 0);
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
-  const openTracking = (awb) => awb ? window.open('https://bluedart.com/tracking', '_blank') : alert("No tracking number");
+  
+  // ✅ UPDATED: Dynamic Tracking Handler
+  const openTracking = (url) => url ? window.open(url, '_blank') : alert("Tracking URL not available");
   const copyAwb = (awb) => { navigator.clipboard.writeText(awb); alert("AWB Copied!"); };
   const handlePageChange = (n) => { if (n >= 1 && n <= totalPages) setPage(n); };
 
@@ -121,7 +123,7 @@ const OrderHistory = () => {
   const getOrderStatusStyles = (status) => {
     const map = {
       pending:   { bg: "bg-[#FFF9E6]", text: "text-[#8A7A5E]", border: "border-[#D4AF37]/30", icon: Clock },
-      confirmed: { bg: "bg-[#E3F2FD]", text: "text-[#1565C0]", border: "border-[#90CAF9]", icon: CheckCircle }, // Keep blue for confirmation
+      confirmed: { bg: "bg-[#E3F2FD]", text: "text-[#1565C0]", border: "border-[#90CAF9]", icon: CheckCircle }, 
       paid:      { bg: "bg-[#F1F8E9]", text: "text-[#33691E]", border: "border-[#C5E1A5]", icon: CreditCard },
       shipped:   { bg: "bg-[#F3E5AB]", text: "text-[#3E2723]", border: "border-[#D4AF37]", icon: Truck },
       delivered: { bg: "bg-[#3E2723]", text: "text-[#F3E5AB]", border: "border-[#3E2723]", icon: Package },
@@ -210,6 +212,29 @@ const OrderHistory = () => {
                 const statusStyle = getOrderStatusStyles(order.status);
                 const StatusIcon = statusStyle.icon;
                 
+                // ✅ UPDATED: LOGIC TO DETECT BOTH SHIPROCKET AND BLUEDART
+                const bd = order.shipping?.bd;
+                const sr = order.shipping?.shiprocket;
+
+                let trackingData = null;
+
+                // Priority: Shiprocket (if awb exists) -> BlueDart (if awb exists)
+                if (sr?.awb) {
+                  trackingData = {
+                    provider: "Shiprocket",
+                    courier: sr.courierName || "Courier",
+                    awb: sr.awb,
+                    url: `https://shiprocket.co/tracking/${sr.awb}`
+                  };
+                } else if (bd?.awbNumber) {
+                  trackingData = {
+                    provider: "BlueDart",
+                    courier: "BlueDart Express",
+                    awb: bd.awbNumber,
+                    url: "https://bluedart.com/tracking"
+                  };
+                }
+
                 return (
                     <div key={order._id} className="bg-white/80 backdrop-blur-sm border border-[#D4AF37]/20 rounded-2xl shadow-[0_5px_15px_rgba(62,39,35,0.05)] overflow-hidden hover:border-[#D4AF37]/50 transition-all hover:shadow-md">
                         
@@ -257,19 +282,20 @@ const OrderHistory = () => {
 
                                 {/* Shipping / Tracking Info */}
                                 <div className="space-y-6 lg:border-l border-[#D4AF37]/10 lg:pl-10">
-                                    {order.shipping?.bd?.awbNumber ? (
+                                    {trackingData ? (
                                         <div className="bg-[#FFF9E6] rounded-xl p-5 border border-[#D4AF37]/30 shadow-sm">
                                             <h5 className="font-bold text-[#3E2723] mb-4 flex gap-2 items-center font-['Cinzel']">
-                                                <Truck className="w-4 h-4 text-[#D4AF37]"/> Shipment Tracking
+                                                <Truck className="w-4 h-4 text-[#D4AF37]"/> 
+                                                {trackingData.courier}
                                             </h5>
-                                            <p className="font-mono bg-white px-3 py-1.5 rounded border border-[#D4AF37]/20 mb-4 text-[#5C4A2E] text-center tracking-wider">
-                                                {order.shipping.bd.awbNumber}
+                                            <p className="font-mono bg-white px-3 py-1.5 rounded border border-[#D4AF37]/20 mb-4 text-[#5C4A2E] text-center tracking-wider text-sm">
+                                                {trackingData.awb}
                                             </p>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <button onClick={() => openTracking(order.shipping.bd.awbNumber)} className="bg-[#3E2723] text-[#F3E5AB] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#5D4037] transition-colors">
+                                                <button onClick={() => openTracking(trackingData.url)} className="bg-[#3E2723] text-[#F3E5AB] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#5D4037] transition-colors">
                                                     Track
                                                 </button>
-                                                <button onClick={() => copyAwb(order.shipping.bd.awbNumber)} className="bg-white border border-[#D4AF37]/30 text-[#8A7A5E] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#3E2723] transition-colors">
+                                                <button onClick={() => copyAwb(trackingData.awb)} className="bg-white border border-[#D4AF37]/30 text-[#8A7A5E] px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#3E2723] transition-colors">
                                                     Copy
                                                 </button>
                                             </div>

@@ -6,12 +6,11 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "https://kiddosintellect.com/api";
-    // "http://localhost:5050/api";
-    // "http://192.168.1.36:5050/api";
+    // "https://kiddosintellect.com/api";
+        "http://localhost:5050/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
-  const apiIdx = u.toLowerCase().lastIndexOf("/api");
+  const apiIdx = u.toLowerCase().lastIndexOf("/api");      
 
   if (apiIdx === -1) {
     u = `${u}/api`;

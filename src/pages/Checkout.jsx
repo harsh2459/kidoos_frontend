@@ -60,7 +60,7 @@ export default function Checkout() {
 
   /* ------------ FEE LOGIC ------------ */
   const getBaseZoneFee = (pincode) => {
-    if (!pincode || String(pincode).length < 6) return 0; 
+    if (!pincode || String(pincode).length < 6) return 0;
     const pinStr = String(pincode);
     if (pinStr.startsWith("394")) return 60; // Surat
     const prefix = parseInt(pinStr.substring(0, 2));
@@ -98,7 +98,7 @@ export default function Checkout() {
     // Calculate Reward Discount (20% off highest item)
     let rewardDiscount = 0;
     if (hasPuzzleReward && maxPrice > 0) {
-        rewardDiscount = Math.round(maxPrice * 0.20);
+      rewardDiscount = Math.round(maxPrice * 0.20);
     }
 
     // Apply reward to subtotal before adding fees
@@ -131,18 +131,18 @@ export default function Checkout() {
       payLater = 0;
     }
 
-    return { 
-      sub: itemTotal, 
-      totalQty, 
-      baseTotalFee, 
-      discount, 
-      finalShippingFee, 
+    return {
+      sub: itemTotal,
+      totalQty,
+      baseTotalFee,
+      discount,
+      finalShippingFee,
       finalServiceFee,
-      grand, 
-      payNow, 
+      grand,
+      payNow,
       payLater,
-      rewardDiscount, 
-      maxPriceItemId  
+      rewardDiscount,
+      maxPriceItemId
     };
   }, [items, paymentOption, cust.pin, hasPuzzleReward]);
 
@@ -202,6 +202,24 @@ export default function Checkout() {
     if (!cust.name || !cust.phone || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
       t.info("Please fill all shipping details."); return false;
     }
+    if (!/^[a-zA-Z\s]{2,}$/.test(cust.name)) {
+      t.info("Please enter a valid full name.");
+      return false;
+    }
+    
+    if (!/^\d{10}$/.test(cust.phone)) {
+      t.info("Please enter a valid 10-digit phone number.");
+      return false;
+    }
+
+    if (cust.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cust.email)) {
+      t.info("Please enter a valid email address.");
+      return false;
+    }
+    if (pinStatus && pinStatus !== "OK") {
+      t.info("Please enter a valid PIN Code.");
+      return false;
+    }
     if (!/^\d{6}$/.test(cust.pin)) { t.info("Invalid PIN Code."); return false; }
     return true;
   }
@@ -218,10 +236,10 @@ export default function Checkout() {
     const mappedItems = items.map((item) => {
       const bookId = getBookIdFromCartItem(item);
       if (!bookId || bookId.startsWith('local_')) throw new Error(`Invalid book ID for "${item.title}"`);
-      
+
       let finalPrice = item.unitPriceSnapshot || item.price;
       if (hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId)) {
-          finalPrice = Math.round(finalPrice * 0.8); // 20% Off
+        finalPrice = Math.round(finalPrice * 0.8); // 20% Off
       }
 
       return {
@@ -240,7 +258,7 @@ export default function Checkout() {
         address1: cust.line1, city: cust.city, state: cust.state,
         postalCode: cust.pin, country: cust.country, locality: locality || undefined,
       },
-      amount: totals.grand, 
+      amount: totals.grand,
       currency: "INR",
       shippingFee: totals.finalShippingFee,
       serviceFee: totals.finalServiceFee,
@@ -251,16 +269,16 @@ export default function Checkout() {
     if (!data?.ok) throw new Error(data?.error || "Failed to create order");
     return data.orderId || data._id;
   }
-
   async function placeWithRazorpay() {
+    if (placing) return;
     if (!validateShipping()) return;
     setPlacing(true);
     try {
       const orderId = await createLocalOrder("razorpay", "created");
-      
+
       let amountToSend = totals.payNow;
       if (paymentOption === "half_online_half_cod") {
-        amountToSend = totals.payNow * 2; 
+        amountToSend = totals.payNow * 2;
       }
 
       const { data } = await api.post("/payments/razorpay/order", {
@@ -274,10 +292,10 @@ export default function Checkout() {
 
       await loadRzp();
       const rzp = new window.Razorpay({
-        key: data.key, 
-        amount: data.order.amount, 
+        key: data.key,
+        amount: data.order.amount,
         currency: data.order.currency,
-        name: "Kiddos Intellect", 
+        name: "Kiddos Intellect",
         description: `Order ${orderId}`,
         order_id: data.order.id,
         prefill: { name: cust.name || "", email: cust.email || "", contact: cust.phone || "" },
@@ -292,7 +310,7 @@ export default function Checkout() {
             });
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
               clear();
-              localStorage.removeItem('puzzle_reward_claimed'); 
+              localStorage.removeItem('puzzle_reward_claimed');
               t.success("Payment successful!");
               navigate("/order-confirmed", { state: { orderId } });
             } else { t.err("Payment verification failed"); }
@@ -311,11 +329,11 @@ export default function Checkout() {
 
   return (
     <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-20">
-      
+
       {/* Global Texture */}
-      <div 
-          className="fixed inset-0 pointer-events-none opacity-100 z-0" 
-          style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-100 z-0"
+        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
       />
 
       {/* --- HEADER --- */}
@@ -336,17 +354,17 @@ export default function Checkout() {
 
       <div className="relative z-20 max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 -mt-8">
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-16">
-          
+
           {/* --- LEFT: FORMS --- */}
           <div className="lg:col-span-8 space-y-10">
-            
+
             {/* Shipping Form */}
             <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[2rem] border border-[#D4AF37]/20 shadow-[0_5px_20px_rgba(62,39,35,0.05)]">
               <div className="flex items-center gap-4 mb-8 border-b border-[#D4AF37]/10 pb-6">
                 <div className="w-12 h-12 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shadow-inner"><MapPin className="w-6 h-6" /></div>
                 <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723]">Shipping Details</h2>
               </div>
-              
+
               <div className="space-y-6">
                 <div>
                   <label className={labelStyle}>Full Name</label>
@@ -359,7 +377,17 @@ export default function Checkout() {
                   </div>
                   <div>
                     <label className={labelStyle}>Phone</label>
-                    <input type="tel" maxLength={10} value={cust.phone} onChange={(e) => set("phone", e.target.value)} className={inputStyle} placeholder="10-digit number" />
+                    <input
+                      type="tel"
+                      value={cust.phone}
+                      onChange={(e) => {
+                        const onlyDigits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        set("phone", onlyDigits);
+                      }}
+                      className={inputStyle}
+                      placeholder="10-digit number"
+                      maxLength={10}
+                    />
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -410,7 +438,7 @@ export default function Checkout() {
                   <div className="w-12 h-12 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shadow-inner"><CreditCard className="w-6 h-6" /></div>
                   <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723]">Payment Method</h2>
                 </div>
-                
+
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Full Payment (Gold Standard) */}
                   <label className={`relative p-6 border-2 rounded-2xl cursor-pointer transition-all duration-300 group ${paymentOption === "full_online" ? "border-[#D4AF37] bg-[#FFF9E6]/50 shadow-md scale-[1.01]" : "border-[#E3E8E5] hover:border-[#D4AF37]/50"}`}>
@@ -421,7 +449,7 @@ export default function Checkout() {
                     <h4 className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mb-1">Full Payment</h4>
                     <p className="text-xs text-[#8A7A5E] font-medium uppercase tracking-wide mb-6">Best Value. Instant Confirmation.</p>
                     <div className="flex justify-between items-center text-sm bg-white/60 p-3 rounded-lg border border-[#D4AF37]/20 mb-3">
-                      <span className="font-bold text-[#3E2723]">Shipping Fee</span><span className="font-bold text-[#D4AF37] flex items-center gap-1"><CheckCircle className="w-3 h-3"/> FREE</span>
+                      <span className="font-bold text-[#3E2723]">Shipping Fee</span><span className="font-bold text-[#D4AF37] flex items-center gap-1"><CheckCircle className="w-3 h-3" /> FREE</span>
                     </div>
                     <div className="text-2xl font-bold text-[#3E2723] text-right font-['Playfair_Display']">{fmt(totals.sub)}</div>
                   </label>
@@ -434,7 +462,7 @@ export default function Checkout() {
                     </div>
                     <h4 className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mb-1">Half & Half</h4>
                     <p className="text-xs text-[#8A7A5E] font-medium uppercase tracking-wide mb-6">Pay 50% Now, Rest on Delivery.</p>
-                    
+
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between items-center text-sm bg-white/60 px-3 py-2 rounded-lg border border-[#3E2723]/10">
                         <span className="text-[#5C4A2E] text-xs">Shipping</span>
@@ -445,10 +473,10 @@ export default function Checkout() {
                         <span className="font-bold text-[#3E2723] text-xs">{totals.finalServiceFee > 0 ? `+ ${fmt(totals.finalServiceFee)}` : "-"}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between items-end border-t border-[#3E2723]/10 pt-3">
-                        <span className="text-xs font-bold uppercase tracking-wide text-[#8A7A5E]">Pay Now</span>
-                        <span className="text-xl font-bold text-[#3E2723] font-['Playfair_Display']">{fmt(totals.payNow)}</span>
+                      <span className="text-xs font-bold uppercase tracking-wide text-[#8A7A5E]">Pay Now</span>
+                      <span className="text-xl font-bold text-[#3E2723] font-['Playfair_Display']">{fmt(totals.payNow)}</span>
                     </div>
                   </label>
                 </div>
@@ -459,21 +487,21 @@ export default function Checkout() {
           {/* Right Column: Order Ledger */}
           <div className="lg:col-span-4">
             <div className="bg-white/90 backdrop-blur-md rounded-[2rem] border border-[#D4AF37]/30 shadow-[0_10px_40px_rgba(62,39,35,0.08)] p-8 sticky top-28 overflow-hidden">
-              
+
               {/* Gold Top Bar */}
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C]"></div>
 
               <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723] mb-8">Order Summary</h2>
-              
+
               {/* Reward Banner */}
               {hasPuzzleReward && (
-                  <div className="mb-8 bg-gradient-to-r from-[#FFF9E6] to-[#FFF5E0] border border-[#D4AF37] rounded-xl p-4 flex items-center gap-4 shadow-sm animate-in fade-in">
-                      <div className="bg-[#D4AF37] p-2 rounded-full text-white shadow-sm"><Gift className="w-5 h-5" /></div>
-                      <div>
-                          <h4 className="text-[#3E2723] font-bold text-sm font-['Cinzel']">Puzzle Winner Reward!</h4>
-                          <p className="text-[#8A7A5E] text-xs">20% off applied to highest item.</p>
-                      </div>
+                <div className="mb-8 bg-gradient-to-r from-[#FFF9E6] to-[#FFF5E0] border border-[#D4AF37] rounded-xl p-4 flex items-center gap-4 shadow-sm animate-in fade-in">
+                  <div className="bg-[#D4AF37] p-2 rounded-full text-white shadow-sm"><Gift className="w-5 h-5" /></div>
+                  <div>
+                    <h4 className="text-[#3E2723] font-bold text-sm font-['Cinzel']">Puzzle Winner Reward!</h4>
+                    <p className="text-[#8A7A5E] text-xs">20% off applied to highest item.</p>
                   </div>
+                </div>
               )}
 
               <div className="space-y-5 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -487,11 +515,11 @@ export default function Checkout() {
                       <p className="text-[10px] text-[#8A7A5E] font-bold uppercase tracking-wider">Qty: {item.qty}</p>
                     </div>
                     <div className="text-right flex flex-col justify-center">
-                        <p className="font-bold text-[#3E2723] text-sm font-['Playfair_Display']">{fmt(item.unitPriceSnapshot || item.price)}</p>
-                        {/* Discount Tag */}
-                        {hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId) && (
-                            <span className="text-[9px] text-white font-bold bg-[#B0894C] px-1.5 py-0.5 rounded block mt-1">-20% Off</span>
-                        )}
+                      <p className="font-bold text-[#3E2723] text-sm font-['Playfair_Display']">{fmt(item.unitPriceSnapshot || item.price)}</p>
+                      {/* Discount Tag */}
+                      {hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId) && (
+                        <span className="text-[9px] text-white font-bold bg-[#B0894C] px-1.5 py-0.5 rounded block mt-1">-20% Off</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -501,11 +529,11 @@ export default function Checkout() {
                 <div className="flex justify-between text-[#5C4A2E] text-sm font-medium">
                   <span>Subtotal ({totals.totalQty} items)</span><span className="font-bold text-[#3E2723]">{fmt(totals.sub)}</span>
                 </div>
-                
+
                 {hasPuzzleReward && totals.rewardDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-[#B0894C] font-bold">
-                        <span>Puzzle Reward</span><span>-{fmt(totals.rewardDiscount)}</span>
-                    </div>
+                  <div className="flex justify-between text-sm text-[#B0894C] font-bold">
+                    <span>Puzzle Reward</span><span>-{fmt(totals.rewardDiscount)}</span>
+                  </div>
                 )}
 
                 {paymentOption === "full_online" ? (
@@ -527,7 +555,7 @@ export default function Checkout() {
                     )}
                   </>
                 )}
-                
+
                 <div className="flex justify-between items-center pt-4 border-t border-[#D4AF37]/20">
                   <span className="font-bold text-[#3E2723] text-lg font-['Cinzel']">Total</span>
                   <span className="font-bold text-[#3E2723] text-2xl font-['Playfair_Display']">{fmt(totals.grand)}</span>
@@ -542,14 +570,14 @@ export default function Checkout() {
               </div>
 
               {hasOnlinePay ? (
-                <button 
-                    onClick={placeWithRazorpay} 
-                    disabled={placing} 
-                    className={`
+                <button
+                  onClick={placeWithRazorpay}
+                  disabled={placing}
+                  className={`
                         w-full py-4.5 text-white rounded-full font-bold font-['Cinzel'] tracking-widest uppercase transition-all shadow-[0_10px_25px_rgba(0,0,0,0.1)] active:scale-95 flex items-center justify-center gap-3 disabled:opacity-70 group border border-white/20
-                        ${paymentOption === 'half_online_half_cod' 
-                            ? 'bg-[#3E2723] hover:bg-[#2C1810]' 
-                            : 'bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F]'}
+                        ${paymentOption === 'half_online_half_cod'
+                      ? 'bg-[#3E2723] hover:bg-[#2C1810]'
+                      : 'bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F]'}
                     `}
                 >
                   {placing ? "Processing..." : `Pay ${fmt(totals.payNow)}`}
@@ -558,7 +586,7 @@ export default function Checkout() {
               ) : (
                 <div className="bg-[#FFF9F0] border border-[#F5E6D3] p-4 rounded-xl text-center text-[#8A6A4B] text-sm font-bold">⚠️ Payments currently disabled</div>
               )}
-              
+
               <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[#8A7A5E] font-medium opacity-80">
                 <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
                 <span>Secure SSL Encryption</span>

@@ -89,7 +89,7 @@ export default function Navbar() {
             {[
               { path: "/catalog", label: "CATALOG" },
               { path: "/aboutus", label: "ABOUT US" },
-              { path: "/PreSchool", label: "PRE SCHOOL" }
+              { path: "/Sacred Stories", label: "Sacred Stories" }
             ].map((link) => (
               <NavLink key={link.path} to={link.path} isScrolled={isScrolled}>
                 {/* Passing Gold color for hover effect */}

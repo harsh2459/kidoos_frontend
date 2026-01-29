@@ -68,7 +68,6 @@ export default function CustomerProvider({ children }) {
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function login({ email, phone, password }) {

@@ -515,7 +515,32 @@ export default function AddBook() {
                     {selected.length === 0 ? <span className="text-sm text-[#8BA699]">Choose categories…</span> : selected.map((s) => (<span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#1A3C34] text-white">{s}<button type="button" onClick={(ev) => { ev.stopPropagation(); toggleCategory(s); }} className="hover:text-red-300"><X className="w-3 h-3" /></button></span>))}
                     <ChevronDown className="ml-auto w-4 h-4 text-[#8BA699]" />
                   </div>
-                  {catOpen && (<div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">{categoryList.map((c) => { const val = c.slug || c.name; const checked = selected.includes(val) || selected.includes(c.name); return (<label key={c._id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors"><div className={`w-5 h-5 rounded border flex items-center justify-center ${checked ? 'bg-[#1A3C34] border-[#1A3C34]' : 'border-[#DCE4E0] bg-white'}`}>{checked && <Check className="w-3.5 h-3.5 text-white" />}</div><div className="flex-1 font-medium text-sm text-[#2C3E38]">{c.name}</div></label>); })}</div>)}
+                  {catOpen && (<div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">{categoryList.map((c) => {
+  const val = c.slug || c.name;
+  const checked = selected.includes(val) || selected.includes(c.name);
+
+  return (
+    <label
+      key={c._id}
+      onClick={() => toggleCategory(val)}   // ✅ FIX
+      className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors"
+    >
+      <div
+        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+          checked
+            ? 'bg-[#1A3C34] border-[#1A3C34]'
+            : 'border-[#DCE4E0] bg-white'
+        }`}
+      >
+        {checked && <Check className="w-3.5 h-3.5 text-white" />}
+      </div>
+
+      <div className="flex-1 font-medium text-sm text-[#2C3E38]">
+        {c.name}
+      </div>
+    </label>
+  );
+})}</div>)}
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-6">

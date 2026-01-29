@@ -9,7 +9,7 @@ export function SiteProvider({ children }) {
   const [theme, setTheme] = useState({});
   const [homepage, setHomepage] = useState({ blocks: [] });
   const [payments, setPayments] = useState({ providers: [] });
-  const [visibility, setVisibility] = useState({             // <-- NEW
+  const [visibility, setVisibility] = useState({             //  <-- NEW
     publicNav: ["kiddos intellect","theme","admin","cart"],
     pages: {}
   });

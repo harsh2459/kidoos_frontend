@@ -115,7 +115,7 @@ export default function AdminSidebar() {
           active={loc.pathname.startsWith("/admin/api-users")}
           icon={Users}
         >
-          <WaveText text="Bluedart Profile" hoverColor="#000"  />
+          <WaveText text="Shipment Profile" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/homepage"

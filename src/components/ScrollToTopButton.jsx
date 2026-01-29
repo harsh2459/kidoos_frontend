@@ -1,68 +1,70 @@
-// src/components/ScrollToTopButton.jsx
 import { useState, useEffect } from "react";
 import { ArrowUp } from "lucide-react";
 
 export default function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Show button when page is scrolled down
   useEffect(() => {
     const toggleVisibility = () => {
-      if (window.scrollY > 300) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
+      setIsVisible(window.scrollY > 300);
     };
-
     window.addEventListener("scroll", toggleVisibility);
     return () => window.removeEventListener("scroll", toggleVisibility);
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <button
       onClick={scrollToTop}
-      className={`
-        fixed z-50 
-        flex items-center justify-center
-        bg-[#1A3C34] text-white
-        shadow-lg hover:shadow-xl
-        border border-[#4A7C59]/30
-        transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1)
-        
-        /* Responsive Positioning */
-        bottom-6 right-6
-        sm:bottom-8 sm:right-8
-        
-        /* Responsive Sizing */
-        w-10 h-10 rounded-xl
-        sm:w-12 sm:h-12 sm:rounded-2xl
-        
-        /* Hover Effects */
-        hover:-translate-y-1 hover:bg-[#2F523F]
-        active:scale-90
-
-        /* Visibility Transition */
-        ${isVisible 
-          ? 'opacity-100 translate-y-0 scale-100' 
-          : 'opacity-0 translate-y-10 scale-90 pointer-events-none'
-        }
-      `}
       aria-label="Scroll to top"
       title="Back to top"
+      className={`
+        fixed z-50 flex items-center justify-center
+        bg-[#3E2723] text-[#F3E5AB]
+        border border-[#D4AF37]/40
+        transition-all duration-300 ease-out
+
+        /* Position */
+        bottom-4 right-4
+        sm:bottom-5 sm:right-5
+        lg:bottom-6 lg:right-6
+
+        /* 👇 SMALLER SIZE */
+        w-8 h-8 rounded-lg
+        sm:w-9 sm:h-9 sm:rounded-lg
+        md:w-10 md:h-10 md:rounded-xl
+        lg:w-11 lg:h-11 lg:rounded-xl
+
+        /* Shadow */
+        shadow-[0_4px_14px_rgba(62,39,35,0.35)]
+        hover:shadow-[0_8px_24px_rgba(212,175,55,0.45)]
+
+        /* Hover */
+        hover:bg-[#D4AF37]
+        hover:text-[#3E2723]
+        hover:-translate-y-0.5
+        active:scale-90
+
+        /* Visibility */
+        ${
+          isVisible
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 translate-y-6 scale-95 pointer-events-none"
+        }
+      `}
     >
-      {/* Icon with bounce animation on hover */}
-      <ArrowUp className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 group-hover:-translate-y-0.5" />
-      
-      {/* Optional: Subtle glow effect behind (pseudo-element style in CSS-in-JS) */}
-      <div className="absolute inset-0 -z-10 rounded-xl sm:rounded-2xl bg-[#4A7C59] opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-40"></div>
+      {/* Smaller icon */}
+      <ArrowUp
+        className="
+          w-3.5 h-3.5
+          sm:w-4 sm:h-4
+          md:w-4.5 md:h-4.5
+          lg:w-5 lg:h-5
+        "
+      />
     </button>
   );
 }

@@ -4,118 +4,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Mode Contact Clone</title>
+    <title>Contact</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
+        * {
             font-family: 'Inter', sans-serif;
-            background-color: #111111;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            background: #000000;
             color: #ffffff;
         }
 
-        .border-thick {
-            border: 2px solid #333;
+        .input-minimal {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .input-minimal:focus {
+            border-color: rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+
+        .input-minimal::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-minimal {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .card-minimal:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-1px);
         }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col justify-center items-center py-20 px-4">
+<body class="min-h-screen">
 
-    <main class="w-full max-w-5xl space-y-24">
+    <div class="max-w-7xl mx-auto px-6 py-20 md:py-32">
 
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div class="space-y-4">
-                <h3 class="text-sm tracking-widest uppercase font-semibold text-gray-400">Reach out to us today</h3>
-                <h1 class="text-6xl font-extrabold uppercase tracking-tight text-gray-200">Locations</h1>
+        <!-- Hero Section -->
+        <div class="mb-32">
+            <div class="max-w-3xl">
+                <h1 class="text-6xl md:text-8xl font-light tracking-tight mb-6" style="letter-spacing: -0.02em;">
+                    Get in touch
+                </h1>
+                <p class="text-xl text-gray-400 font-light leading-relaxed">
+                    We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                </p>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
+
+            <!-- Form Section -->
+            <div class="lg:col-span-7">
+                <form class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label class="block text-sm font-medium mb-3 text-gray-400">Name</label>
+                            <input type="text" 
+                                class="input-minimal w-full px-0 py-3 text-white border-b border-t-0 border-x-0 rounded-none"
+                                placeholder="Your name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-3 text-gray-400">Email</label>
+                            <input type="email" 
+                                class="input-minimal w-full px-0 py-3 text-white border-b border-t-0 border-x-0 rounded-none"
+                                placeholder="your@email.com">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-3 text-gray-400">Subject</label>
+                        <input type="text" 
+                            class="input-minimal w-full px-0 py-3 text-white border-b border-t-0 border-x-0 rounded-none"
+                            placeholder="How can we help?">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-3 text-gray-400">Message</label>
+                        <textarea rows="4" 
+                            class="input-minimal w-full px-0 py-3 text-white border-b border-t-0 border-x-0 rounded-none resize-none"
+                            placeholder="Tell us more..."></textarea>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="button" 
+                            class="btn-primary px-8 py-3 text-sm font-medium rounded-md inline-flex items-center gap-2">
+                            Send message
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
             </div>
 
-            <div class="space-y-10 text-sm tracking-wide text-gray-300">
+            <!-- Sidebar Info -->
+            <div class="lg:col-span-5 space-y-12">
+                
+                <!-- Locations -->
                 <div>
-                    <h4 class="font-bold uppercase text-white mb-2">USA</h4>
-                    <p class="font-semibold mb-1">New York</p>
-                    <p class="opacity-70">123 Park Avenue, New York,<br>NY 10010, USA</p>
+                    <h3 class="text-sm font-medium text-gray-500 mb-6 uppercase tracking-wider">Locations</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="text-white font-medium mb-1">New York</div>
+                            <div class="text-sm text-gray-400 leading-relaxed">
+                                123 Park Avenue<br>
+                                New York, NY 10010
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-white font-medium mb-1">London</div>
+                            <div class="text-sm text-gray-400 leading-relaxed">
+                                456 King Street<br>
+                                London, SW1A 1AA
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-white font-medium mb-1">Melbourne</div>
+                            <div class="text-sm text-gray-400 leading-relaxed">
+                                789 Collins Street<br>
+                                Melbourne, VIC 3000
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Contact Info -->
                 <div>
-                    <h4 class="font-bold uppercase text-white mb-2">UK</h4>
-                    <p class="font-semibold mb-1">London</p>
-                    <p class="opacity-70">456 King Street, London,<br>SW1A 1AA, UK</p>
+                    <h3 class="text-sm font-medium text-gray-500 mb-6 uppercase tracking-wider">Contact</h3>
+                    <div class="space-y-3">
+                        <a href="mailto:hello@company.com" class="block text-gray-400 hover:text-white transition-colors text-sm">
+                            hello@company.com
+                        </a>
+                        <a href="tel:+1234567890" class="block text-gray-400 hover:text-white transition-colors text-sm">
+                            +1 (234) 567-890
+                        </a>
+                    </div>
                 </div>
+
+                <!-- Social Links -->
                 <div>
-                    <h4 class="font-bold uppercase text-white mb-2">Australia</h4>
-                    <p class="font-semibold mb-1">Melbourne</p>
-                    <p class="opacity-70">789 Collins Street,<br>Melbourne, VIC 3000</p>
+                    <h3 class="text-sm font-medium text-gray-500 mb-6 uppercase tracking-wider">Social</h3>
+                    <div class="space-y-3">
+                        <a href="#" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm group">
+                            <span>Instagram</span>
+                            <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm group">
+                            <span>Twitter</span>
+                            <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                        <a href="#" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm group">
+                            <span>LinkedIn</span>
+                            <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="mt-32 pt-16 border-t border-gray-900">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div>
+                    <p class="text-sm text-gray-500 uppercase tracking-wider mb-4">Trusted by</p>
+                    <div class="flex flex-wrap gap-8 items-center opacity-40">
+                        <span class="text-lg font-medium">CROLLA</span>
+                        <span class="text-lg font-medium">BINANCE</span>
+                        <span class="text-lg font-medium">EVGA</span>
+                        <span class="text-lg font-medium">TESLA</span>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section class="w-full">
-            <form class="space-y-6">
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold uppercase ml-4 mb-2">Name</label>
-                    <input type="text" placeholder="Enter your Name"
-                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-full px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold uppercase ml-4 mb-2">Email</label>
-                    <input type="email" placeholder="Enter a valid email address"
-                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-full px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold uppercase ml-4 mb-2">Message</label>
-                    <textarea placeholder="Enter your message" rows="4"
-                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-3xl px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors resize-none"></textarea>
-                </div>
-                <button
-                    class="bg-white text-black font-bold uppercase tracking-wider text-xs px-10 py-4 rounded-full hover:bg-gray-200 transition-transform hover:scale-105">
-                    Submit
-                </button>
-            </form>
-        </section>
-
-        <section
-            class="flex flex-wrap justify-between items-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            <div class="text-xl font-bold tracking-widest uppercase">Crolla</div>
-            <div class="flex items-center gap-2 font-bold text-xl uppercase"><span class="text-yellow-500">❖</span>
-                Binance</div>
-            <div class="text-xl font-bold tracking-widest uppercase italic">EVGA</div>
-            <div class="text-xl font-bold tracking-widest uppercase">TESLA</div>
-        </section>
-
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="#"
-                class="group border border-gray-700 rounded-[2rem] p-10 flex flex-col justify-between hover:bg-[#1a1a1a] transition-colors min-h-[200px]">
-                <div class="flex justify-between items-start">
-                    <i data-lucide="instagram" class="w-8 h-8"></i>
-                    <i data-lucide="arrow-up-right"
-                        class="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                </div>
-                <div>
-                    <h2 class="text-3xl font-bold uppercase mb-2">Instagram</h2>
-                    <p class="text-gray-500 text-sm">Sample text. Click to select the Text Element.</p>
-                </div>
-            </a>
-
-            <a href="#"
-                class="group border border-gray-700 rounded-[2rem] p-10 flex flex-col justify-between hover:bg-[#1a1a1a] transition-colors min-h-[200px]">
-                <div class="flex justify-between items-start">
-                    <i data-lucide="calendar" class="w-8 h-8"></i>
-                    <i data-lucide="arrow-up-right"
-                        class="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                </div>
-                <div>
-                    <h2 class="text-3xl font-bold uppercase mb-2">Booking</h2>
-                    <p class="text-gray-500 text-sm">Sample text. Click to select the Text Element.</p>
-                </div>
-            </a>
-        </section>
-
-    </main>
+    </div>
 
     <script>
         lucide.createIcons();
     </script>
 </body>
-
-</html>
+</html> 

@@ -1,8 +1,8 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import './styles/classic-light.css';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { ToastContainer } from "react-toastify";
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SiteProvider } from './contexts/SiteConfig';
 import { AuthProvider } from './contexts/Auth';
@@ -47,18 +47,17 @@ import Invoice from './pages/Invoice';
 import GitaHome from './pages/Gita/GitaHome';
 import CatalogSettings from './pages/Admin/CatalogSettings';
 import GitaShowcase1 from './pages/gita-deepseek/GitaShowcase';
-import HeroVrindavan from './pages/parallax/HeroVrindavan';
 import Hero from './pages/parallax/Hero';
 import HeroSection from './pages/gita_showcash/HeroSection';
 import ScrollVideo from './pages/scroll_video/ScrollVideo';
-import CustomCursor from './components/CustomCursor';
 import AiSettings from './pages/Admin/AiSettings';
-
+import Portal from './pages/Vrindavan/Portal';
+import UnderwaterVrindavan from './pages/Vrindavan/UnderwaterVrindavan';
 
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
-  const hideNavbarRoutes = ['/intro' ,'/gita' ,'/scroll'];
+  const hideNavbarRoutes = ['/intro', '/gita', '/scroll', '/j' ,'/water-1'];
   const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
@@ -80,7 +79,6 @@ function InnerApp() {
     <>
       {showNavbar && <Navbar />}
       <main>
-        <CustomCursor />
         {!isAdminRoute && <DynamicPopup page={getPageName()} />}
         <Routes>
           {/* customer auth */}
@@ -93,17 +91,12 @@ function InnerApp() {
           <Route path="/invoice/:id" element={<Invoice />} />
           <Route path="/gita1" element={<GitaHome />} />
           <Route path="/1" element={<GitaShowcase1 />} />
-          <Route path="/intro" element={<Hero />} />
+          <Route path="/Sacred Stories" element={<Hero />} />
           <Route path="/gita" element={<HeroSection />} />
           <Route path="/scroll" element={<ScrollVideo />} />
-          <Route
-            path="/profile"
-            element={
-              <RequireCustomer>
-                <CustomerProfile />
-              </RequireCustomer>
-            }
-          />
+          <Route path="/j" element={<Portal />} />
+          <Route path="/water-1" element={<UnderwaterVrindavan />} />
+          <Route path="/profile" element={<RequireCustomer><CustomerProfile /></RequireCustomer>} />
           <Route
             path="/profile/orders"
             element={
@@ -204,7 +197,7 @@ function InnerApp() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes >
       </main >
-      
+
       {
         showFooter && (
           <Footer
@@ -220,14 +213,13 @@ function InnerApp() {
             ]}
           />
         )
-      }
+      }   
     </>
   );
 }
 
 export default function App() {
-
-  useCartCleanup();
+   useCartCleanup();
   return (
     <SiteProvider>
       <AuthProvider>

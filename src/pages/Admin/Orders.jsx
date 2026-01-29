@@ -4,6 +4,9 @@ import { api, BASE_URL } from "../../api/client";
 import { BlueDartAPI } from "../../api/bluedart";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
+import ShiprocketPanel from "./ShiprocketPanel"; // ✅ IMPORTED
+import { Truck, Printer, Rocket, MapPin } from "lucide-react";
+import { ShipAPI } from "../../api/shiprocket";
 
 function cx(...arr) {
   return arr.filter(Boolean).join(" ");
@@ -190,7 +193,7 @@ export default function AdminOrders() {
       const { data } = await BlueDartAPI.createShipments(
         payload.orderIds,
         payload.profileId,
-        {}, 
+        {},
         auth
       );
 
@@ -210,7 +213,7 @@ export default function AdminOrders() {
           results.failed.forEach((f, idx) => {
             setTimeout(() => {
               t.err(`Order ${f.orderId?.slice(-6)}: ${f.error}`);
-            }, idx * 500); 
+            }, idx * 500);
           });
         }
       } else {
@@ -226,7 +229,7 @@ export default function AdminOrders() {
     } finally {
       setActionLoading(false);
     }
-  } 
+  }
 
   async function bulkPrintLabels() {
     const ids = ensureSome();
@@ -313,40 +316,76 @@ export default function AdminOrders() {
     }
   }
 
+  // ✅ SMART LABEL HANDLER: Detects provider and prints accordingly
   async function handlePrintLabel(order) {
-    const existingLabelUrl = order?.shipping?.bd?.labelUrl;
-    if (existingLabelUrl) {
-      const url = existingLabelUrl.startsWith('http')
-        ? existingLabelUrl
-        : `${BASE_URL}${existingLabelUrl}`;
-      window.open(url, '_blank');
+    const bd = order?.shipping?.bd || {};
+    const sr = order?.shipping?.shiprocket || {};
+
+    // 1. SHIPROCKET LABEL
+    if (sr.awb) {
+      if (sr.labelUrl) {
+        window.open(sr.labelUrl, '_blank');
+      } else {
+        t.info("Fetching Shiprocket Label...");
+        try {
+          const { data } = await ShipAPI.label([order._id], auth);
+          if (data.ok && data.data?.label_url) {
+            window.open(data.data.label_url, '_blank');
+          } else {
+            t.err("Label not found");
+          }
+        } catch (e) {
+          t.err("Failed to fetch Shiprocket label");
+        }
+      }
       return;
     }
 
-    const awb = order?.shipping?.bd?.awbNumber;
-    if (!awb) return t.warn("No AWB found");
-
-    t.info("Generating Label...");
-    try {
-      const { data } = await BlueDartAPI.generateLabel(order._id, auth);
-      if (data.ok && data.data?.downloadUrl) {
-        t.success("Label Generated");
-        const newLabelUrl = data.data.downloadUrl;
-        const fullUrl = newLabelUrl.startsWith('http')
-          ? newLabelUrl
-          : `${BASE_URL}${newLabelUrl}`;
-        window.open(fullUrl, '_blank');
-        load();
-      } else {
-        t.err("Failed to generate label");
+    // 2. BLUEDART LABEL
+    if (bd.awbNumber) {
+      const existingLabelUrl = bd.labelUrl;
+      if (existingLabelUrl) {
+        const url = existingLabelUrl.startsWith('http') ? existingLabelUrl : `${BASE_URL}${existingLabelUrl}`;
+        window.open(url, '_blank');
+        return;
       }
-    } catch (e) {
-      t.err(e.message || "Error printing label");
+
+      t.info("Generating BlueDart Label...");
+      try {
+        const { data } = await BlueDartAPI.generateLabel(order._id, auth);
+        if (data.ok && data.data?.downloadUrl) {
+          const newLabelUrl = data.data.downloadUrl;
+          const fullUrl = newLabelUrl.startsWith('http') ? newLabelUrl : `${BASE_URL}${newLabelUrl}`;
+          window.open(fullUrl, '_blank');
+          load();
+        } else {
+          t.err("Failed to generate label");
+        }
+      } catch (e) {
+        t.err(e.message || "Error printing label");
+      }
     }
   }
 
   async function trackOrder(order) {
-    const awb = order?.shipping?.bd?.awbNumber;
+    const bd = order?.shipping?.bd || {};
+    const sr = order?.shipping?.shiprocket || {};
+
+    // 1. Shiprocket Tracking
+    if (sr.awb) {
+      try {
+        // Calls the new ShipAPI.track function
+        const { data } = await ShipAPI.track(sr.awb, auth);
+        t.success(`Status: ${data?.data?.tracking_data?.shipment_status_current || "Updated"}`);
+        await load(); // Refresh to show new status in table
+      } catch (error) {
+        t.err("Failed to update Shiprocket tracking");
+      }
+      return;
+    }
+
+    // 2. BlueDart Tracking
+    const awb = bd.awbNumber;
     if (!awb) {
       t.info("No AWB number found");
       return;
@@ -676,26 +715,31 @@ export default function AdminOrders() {
 
             {/* Bulk Actions */}
             {hasSelection && (
-              <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 flex-wrap">
+                {/* BlueDart Actions */}
                 <button
                   onClick={openShipmentModal}
                   disabled={actionLoading || !selectedProfile}
                   className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Create Shipments ({selected.size})
+                  Create (BlueDart) ({selected.size})
                 </button>
                 <button
                   onClick={bulkPrintLabels}
                   disabled={actionLoading}
                   className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
                 >
-                  Print Labels ({selected.size})
+                  Print BlueDart Labels
                 </button>
+
+                {/* ✅ SHIPROCKET PANEL INSERTED HERE */}
+                <ShiprocketPanel selected={selected} auth={auth} onSuccess={load} />
+
                 <button
                   onClick={() => setSelected(new Set())}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
+                  className="ml-auto px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
                 >
-                  Clear
+                  Clear Selection
                 </button>
               </div>
             )}
@@ -749,8 +793,12 @@ export default function AdminOrders() {
                 {!loading && items.map((o) => {
                   const id = String(o._id);
                   const dt = o.createdAt ? new Date(o.createdAt) : null;
-                  const bd = o?.shipping?.bd || {};
                   const rupees = Number(o.amount || 0).toFixed(2);
+                  const bd = o?.shipping?.bd || {};
+                  const sr = o?.shipping?.shiprocket || {};
+                  const activeShipment = sr.awb ? { provider: 'shiprocket', awb: sr.awb, status: sr.status, courier: sr.courierName }
+                    : bd.awbNumber ? { provider: 'bluedart', awb: bd.awbNumber, status: bd.status, courier: 'BlueDart' }
+                      : null;
 
                   return (
                     <tr key={id} className={cx(
@@ -802,10 +850,10 @@ export default function AdminOrders() {
                           const shortTitle = displayTitle.length > maxTitleLength
                             ? displayTitle.substring(0, maxTitleLength) + "..."
                             : displayTitle;
-                          
+
                           // ✅ GET SKU FROM POPULATED BOOK ID
                           const sku = item.bookId?.inventory?.sku || "N/A";
-                          
+
                           return (
                             <div key={i} className="flex items-center gap-3 mb-2 group relative">
                               <img
@@ -819,7 +867,7 @@ export default function AdminOrders() {
                                   {shortTitle} 🌱
                                 </p>
                                 <p className="text-xs text-gray-500">Qty: {item.qty}</p>
-                                
+
                                 {/* ✅ DISPLAY SKU HERE */}
                                 <p className="text-[10px] text-gray-400 font-mono mt-0.5">
                                   SKU: <span className="text-gray-600 text-[15px]">{sku}</span>
@@ -846,65 +894,47 @@ export default function AdminOrders() {
                         {getStatusBadge(o.status, o.payment?.status)}
                       </td>
 
+                      {/* ✅ UPDATED SHIPPING COLUMN */}
                       <td className="px-6 py-4">
-                        {bd.awbNumber ? (
+                        {activeShipment ? (
                           <div className="space-y-1">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs font-mono text-green-600">● {bd.awbNumber}</span>
+                            <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${activeShipment.provider === 'shiprocket' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                              {activeShipment.provider === 'shiprocket' ? <Rocket size={10} /> : <Truck size={10} />}
+                              {activeShipment.provider}
                             </div>
-                            {bd.status && (
-                              <span className="text-xs text-purple-600 font-medium">{bd.status}</span>
-                            )}
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-mono text-gray-900 font-medium">{activeShipment.awb}</span>
+                            </div>
+                            {activeShipment.courier && <div className="text-[10px] text-gray-500">{activeShipment.courier}</div>}
+                            {activeShipment.status && <span className="text-xs text-green-600 font-medium">{activeShipment.status}</span>}
                           </div>
                         ) : (
                           <span className="text-xs text-gray-400">No AWB</span>
                         )}
                       </td>
 
+                      {/* ✅ UPDATED ACTIONS COLUMN */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1">
-                          {bd.awbNumber ? (
+                          {activeShipment ? (
                             <>
-                              <button
-                                onClick={() => handlePrintLabel(o)}
-                                title="Print Label"
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                              >
-                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                              <button onClick={() => handlePrintLabel(o)} title="Print Label" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <Printer className="w-4 h-4 text-gray-600" />
                               </button>
-                              <button
-                                onClick={() => trackOrder(o)}
-                                title="Track"
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                              >
-                                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+
+                              <button onClick={() => trackOrder(o)} title="Track Order" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <MapPin className="w-4 h-4 text-gray-600" />
                               </button>
+
                             </>
                           ) : canCreateShipment(o) ? (
-                            <button
-                              onClick={() => {
-                                setSelected(new Set([id]));
-                                setTimeout(() => openShipmentModal(), 100);
-                              }}
-                              className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
-                            >
+                            <button onClick={() => { setSelected(new Set([id])); setTimeout(() => openShipmentModal(), 100); }} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700">
                               Create Shipment
                             </button>
                           ) : null}
 
                           {canRefund(o) && (
-                            <button
-                              onClick={() => openRefundModal(o)}
-                              title="Refund"
-                              className="px-3 py-1.5 border border-red-300 text-red-600 text-xs font-medium rounded-lg hover:bg-red-50"
-                            >
-                              Refund
-                            </button>
+                            <button onClick={() => openRefundModal(o)} title="Refund" className="px-3 py-1.5 border border-red-300 text-red-600 text-xs font-medium rounded-lg hover:bg-red-50">Refund</button>
                           )}
                         </div>
                       </td>
@@ -917,7 +947,7 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* Shipment Modal - UPDATED (Removed Manual Inputs) */}
+      {/* Shipment Modal */}
       {showShipmentModal && (
         <div className="fixed z-50 inset-0 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -947,7 +977,6 @@ export default function AdminOrders() {
                   </button>
                 </div>
 
-                {/* ✅ INFO BOX instead of Input Fields */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                   <p className="font-medium flex items-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>

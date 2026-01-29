@@ -11,7 +11,6 @@ import {
   RefreshCw, Trophy, Lock, AlertTriangle, CheckCircle, Gift, Copy, Quote,
   Sparkles, Puzzle as PuzzleIcon, Crown
 } from "lucide-react";
-import confetti from "canvas-confetti";
 
 // --- THEME ASSETS ---
 const parchmentBg = "url('/images/homepage/parchment-bg.png')";
@@ -19,23 +18,34 @@ const mandalaBg = "url('/images/homepage/mandala-bg.png')";
 
 export default function Home() {
   const { homepage } = useSite();
-
+  const isReady =
+    Array.isArray(homepage?.blocks) && homepage.blocks.length > 0;
   return (
     <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-20 overflow-x-hidden">
-      
+
       {/* Global Background Texture */}
-      <div 
-          className="fixed inset-0 pointer-events-none opacity-100 z-0" 
-          style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-100 z-0"
+        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
       />
 
-      <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto relative z-10">
-        {(homepage.blocks || []).map((b, i) => <Block key={i} block={b} />)}
-      </div>
+      {/* ✅ FIRST PAINT */}
+      {!isReady && <HomeSkeleton />}
+
+      {/* ✅ REAL CONTENT */}
+      {isReady && (
+        <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto relative z-10">
+          {homepage.blocks.map((b, i) => (
+            <Block key={i} block={b} />
+          ))}
+        </div>
+      )}
       <ScrollToTopButton />
     </div>
   );
 }
+
+
 
 /* ----------------------------- Blocks Renderer ---------------------------- */
 function Block({ block }) {
@@ -76,7 +86,7 @@ function Block({ block }) {
         <section className="relative rounded-[2.5rem] overflow-hidden bg-[#3E2723] text-[#F3E5AB] shadow-[0_20px_50px_rgba(62,39,35,0.3)] group min-h-[400px] md:min-h-[500px] grid grid-cols-1 md:grid-cols-2 items-center border border-[#D4AF37]/30">
           {/* Texture Overlay */}
           <div className="absolute inset-0 z-0 opacity-10 mix-blend-overlay pointer-events-none" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
-          
+
           <div className="p-8 md:p-12 lg:p-16 z-10 relative">
             <div className="absolute top-0 left-0 w-32 h-32 bg-[#D4AF37] rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-40"></div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-['Playfair_Display'] font-bold mb-4 md:mb-6 leading-tight drop-shadow-md text-white">{block.title}</h2>
@@ -128,7 +138,7 @@ function Block({ block }) {
       <div className={containerClasses} style={containerStyle}>
         <div className="text-center mb-10">
           <div className="inline-block p-3 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 mb-4 shadow-sm">
-             <PuzzleIcon className="w-8 h-8 text-[#D4AF37]" />
+            <PuzzleIcon className="w-8 h-8 text-[#D4AF37]" />
           </div>
           <h2 className="text-3xl md:text-5xl font-['Cinzel'] font-bold text-[#3E2723] mb-3">
             {block.title}
@@ -156,7 +166,7 @@ function Block({ block }) {
             style={{ backgroundImage: `url(${imageUrl})` }}
             aria-hidden="true"
           ></div>
-          
+
           {/* Main Image */}
           <img
             src={imageUrl}
@@ -263,12 +273,23 @@ function ProgressivePuzzleGame({ levels, grandWinMessage = "A Royal Victory!", r
     }
   };
 
-  const handleWin = () => {
+  const handleWin = async () => {
     setIsLevelComplete(true);
-    const particleCount = currentLevelIdx === 0 ? 50 : currentLevelIdx === 1 ? 100 : 300;
-    confetti({ particleCount, spread: 70, origin: { y: 0.6 }, colors: ['#D4AF37', '#F3E5AB', '#3E2723'] });
+
+    const { default: confetti } = await import("canvas-confetti");
+
+    const particleCount =
+      currentLevelIdx === 0 ? 50 : currentLevelIdx === 1 ? 100 : 300;
+
+    confetti({
+      particleCount,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#D4AF37", "#F3E5AB", "#3E2723"],
+    });
+
     if (currentLevelIdx >= levels.length - 1) {
-      localStorage.setItem('puzzle_reward_claimed', 'true');
+      localStorage.setItem("puzzle_reward_claimed", "true");
       setTimeout(() => setIsGameComplete(true), 1200);
     }
   };
@@ -292,7 +313,7 @@ function ProgressivePuzzleGame({ levels, grandWinMessage = "A Royal Victory!", r
         {/* Board Frame */}
         <div className="relative bg-[#2C1810] p-4 rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.4)] w-full max-w-[500px] aspect-square select-none border-4 border-[#3E2723] ring-1 ring-[#D4AF37]/50">
           <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: mandalaBg }}></div>
-          
+
           <div
             className="grid w-full h-full gap-1.5 bg-[#2C1810] relative z-10"
             style={{
@@ -339,7 +360,7 @@ function ProgressivePuzzleGame({ levels, grandWinMessage = "A Royal Victory!", r
           {isLevelComplete && !isGameComplete && (
             <div className="absolute inset-0 z-20 bg-[#2C1810]/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center text-white animate-in fade-in p-6 text-center border border-[#D4AF37]/30">
               <div className="w-20 h-20 bg-[#D4AF37] rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(212,175,55,0.4)] animate-bounce">
-                 <Trophy className="w-10 h-10 text-[#2C1810]" />
+                <Trophy className="w-10 h-10 text-[#2C1810]" />
               </div>
               <h3 className="text-3xl font-bold mb-2 font-['Cinzel'] text-[#F3E5AB]">Level Conquered!</h3>
               <p className="mb-8 opacity-80 font-['Lato'] text-lg">Wisdom flows to those who persist.</p>
@@ -390,7 +411,7 @@ function ProgressivePuzzleGame({ levels, grandWinMessage = "A Royal Victory!", r
       {/* RIGHT: Stats Sidebar (Royal Ledger) */}
       <div className="bg-white/80 backdrop-blur-sm p-8 rounded-[2rem] border border-[#D4AF37]/20 shadow-sm h-full w-full flex flex-col justify-center">
         <h3 className="font-['Cinzel'] font-bold text-2xl text-[#3E2723] mb-8 border-b border-[#D4AF37]/20 pb-4 flex items-center gap-2">
-            <Crown className="w-6 h-6 text-[#D4AF37]" /> Your Progress
+          <Crown className="w-6 h-6 text-[#D4AF37]" /> Your Progress
         </h3>
 
         <div className="space-y-8">
@@ -649,5 +670,31 @@ function SimpleShowcaseCard({ book }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto relative z-10 px-4 sm:px-6 lg:px-8">
+      {/* Hero Skeleton */}
+      <div className="pt-12 pb-12">
+        <div className="rounded-[2.5rem] bg-[#3E2723]/10 h-[400px] md:h-[500px] animate-pulse" />
+      </div>
+
+      {/* Section Skeletons */}
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="py-12">
+          <div className="h-8 w-64 bg-[#3E2723]/10 rounded mb-6 animate-pulse" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((j) => (
+              <div
+                key={j}
+                className="h-64 rounded-2xl bg-[#3E2723]/10 animate-pulse"
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

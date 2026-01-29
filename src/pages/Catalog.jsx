@@ -46,9 +46,12 @@ export default function Catalog() {
 
   // Filters & Search
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("new");
+  const [sort, setSort] = useState("oldest"); // Default to oldest
   const [selectedCats, setSelectedCats] = useState([]);
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  
+  // Price filter state
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" }); 
+  const [tempPriceRange, setTempPriceRange] = useState({ min: "", max: "" });
 
   // Local UI State
   const [catSearch, setCatSearch] = useState("");
@@ -56,7 +59,8 @@ export default function Catalog() {
   // Sidebar Data
   const [categories, setCategories] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const minPriceRef = useRef(null);
+  const maxPriceRef = useRef(null);
   // Pagination
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
@@ -101,7 +105,11 @@ export default function Catalog() {
 
       const { data } = await api.get("/books", { params });
 
-      setBooks(Array.isArray(data.items) ? data.items : []);
+      setBooks(
+        Array.isArray(data.items)
+          ? [...data.items] // Shows Oldest First (1, 2, 3...)
+          : []
+      );
       setTotal(Number(data.total || 0));
     } catch (error) {
       console.error("Failed to load books", error);
@@ -113,7 +121,8 @@ export default function Catalog() {
   useEffect(() => {
     const t = setTimeout(loadBooks, q ? 400 : 0);
     return () => clearTimeout(t);
-  }, [page, sort, selectedCats, q]);
+  }, [page, sort, selectedCats, q]); 
+  // Note: priceRange removed from dependency so it only triggers on "Apply" button
 
   useEffect(() => {
     setPage(1);
@@ -123,25 +132,44 @@ export default function Catalog() {
   const toggleCategory = (slug) => {
     setSelectedCats(prev => prev.includes(slug) ? prev.filter(c => c !== slug) : [...prev, slug]);
   };
-  const applyPriceFilter = (e) => { if (e) e.preventDefault(); setPage(1); loadBooks(); };
-  const setPricePreset = (min, max) => { setPriceRange({ min: min, max: max }); setTimeout(() => { setPage(1); loadBooks(); }, 50); };
-  const clearFilters = () => { setQ(""); setSelectedCats([]); setPriceRange({ min: "", max: "" }); setSort("new"); setPage(1); };
+  
+  const applyPriceFilter = (e) => { 
+    if (e) e.preventDefault(); 
+    setPriceRange(tempPriceRange); 
+    setPage(1); 
+    loadBooks(); 
+  };
+
+  const setPricePreset = (min, max) => { 
+    setTempPriceRange({ min: min, max: max });
+    setPriceRange({ min: min, max: max }); 
+    setTimeout(() => { setPage(1); loadBooks(); }, 50); 
+  };
+
+  const clearFilters = () => { 
+    setQ(""); 
+    setSelectedCats([]); 
+    setPriceRange({ min: "", max: "" }); 
+    setTempPriceRange({ min: "", max: "" });
+    setSort("oldest"); 
+    setPage(1); 
+  };
+
   const goToPage = (newPage) => { if (newPage >= 1 && newPage <= totalPages) { setPage(newPage); topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
 
-  // --- SIDEBAR CONTENT ---
-  const SidebarContent = () => {
+  // --- SIDEBAR CONTENT (As Render Function to fix Focus Issue) ---
+  const renderSidebarContent = () => {
     const visibleCategories = categories.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()));
     return (
       <div className="pr-2 font-['Lato']">
         <FilterSection title="Categories" onClear={() => setSelectedCats([])} hasActiveFilters={selectedCats.length > 0}>
           {categories.length > 5 && (
             <div className="relative mb-4 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A7A5E] group-focus-within:text-[#D4AF37] transition-colors" />
-              <input 
-                value={catSearch} 
-                onChange={(e) => setCatSearch(e.target.value)} 
-                placeholder="Find category..." 
-                className="w-full bg-[#FAF7F2] border border-[#D4AF37]/30 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-[#D4AF37] transition-all placeholder-[#8A7A5E]/60 text-[#3E2723]" 
+              <input
+                value={catSearch}
+                onChange={(e) => setCatSearch(e.target.value)}
+                placeholder="Find category..."
+                className="w-full bg-[#FAF7F2] border border-[#D4AF37]/30 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-[#D4AF37] transition-all placeholder-[#8A7A5E]/60 text-[#3E2723]"
               />
             </div>
           )}
@@ -161,27 +189,45 @@ export default function Catalog() {
             })}
           </div>
         </FilterSection>
-        
-        <FilterSection title="Price Range" onClear={() => { setPriceRange({ min: "", max: "" }); setTimeout(loadBooks, 50); }} hasActiveFilters={priceRange.min || priceRange.max}>
+
+        <FilterSection title="Price Range" onClear={() => { setPriceRange({ min: "", max: "" }); setTempPriceRange({ min: "", max: "" }); setTimeout(loadBooks, 50); }} hasActiveFilters={priceRange.min || priceRange.max}>
           <div className="space-y-5">
             <div className="flex items-center gap-3">
               <div className="relative flex-1 group">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D4AF37] text-sm font-bold font-['Cinzel']">₹</span>
-                <input type="number" placeholder="Min" min="0" className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm" value={priceRange.min} onChange={e => setPriceRange({ ...priceRange, min: e.target.value })} />
+                <input
+                  ref={minPriceRef}
+                  type="number"
+                  placeholder="Min"
+                  min="0"
+                  value={tempPriceRange.min}
+                  onChange={(e) =>
+                    setTempPriceRange(prev => ({ ...prev, min: e.target.value }))
+                  }
+                  className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm"
+                />
               </div>
               <Minus className="w-4 h-4 text-[#D4AF37]" />
               <div className="relative flex-1 group">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#D4AF37] text-sm font-bold font-['Cinzel']">₹</span>
-                <input type="number" placeholder="Max" min="0" className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm" value={priceRange.max} onChange={e => setPriceRange({ ...priceRange, max: e.target.value })} />
+                <input
+                  ref={maxPriceRef}
+                  type="number"
+                  placeholder="Max"
+                  min="0"
+                  value={tempPriceRange.max}
+                  onChange={(e) =>
+                    setTempPriceRange(prev => ({ ...prev, max: e.target.value }))
+                  }
+                  className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm"
+                />
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {[{ label: "Under ₹250", min: 0, max: 250 }, { label: "₹250 - ₹500", min: 250, max: 500 }, { label: "₹500 - ₹1000", min: 500, max: 1000 }, { label: "Above ₹1000", min: 1000, max: "" }].map((p, idx) => (
                 <button key={idx} onClick={() => setPricePreset(p.min, p.max)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${(Number(priceRange.min) === p.min && Number(priceRange.max) === (p.max || 0)) ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-md" : "bg-white text-[#5C4A2E] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#3E2723]"}`}>{p.label}</button>
               ))}
             </div>
-            
+
             <button onClick={(e) => applyPriceFilter(e)} className="w-full py-3.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white font-['Cinzel'] font-bold text-sm tracking-widest uppercase rounded-xl shadow-md hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 border border-[#D4AF37]">
               Apply Filter
             </button>
@@ -193,11 +239,11 @@ export default function Catalog() {
 
   return (
     <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] pb-20 selection:bg-[#F3E5AB] selection:text-[#3E2723]">
-      
+
       {/* Background Texture */}
-      <div 
-          className="fixed inset-0 pointer-events-none opacity-100 z-0" 
-          style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-100 z-0"
+        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
       />
 
       {/* HERO HEADER */}
@@ -209,10 +255,10 @@ export default function Catalog() {
           <div className="relative w-full pt-28 md:pt-36 pb-16 px-6 border-b border-[#D4AF37]/30 bg-[#3E2723] overflow-hidden">
             <div className="absolute inset-0 z-0 opacity-10 pointer-events-none mix-blend-overlay" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
             <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#3E2723] to-transparent z-0"></div>
-            
+
             <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto text-center md:text-left">
               <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/10 backdrop-blur-md rounded-full shadow-inner border border-[#D4AF37]/30">
-                 <BookOpen className="w-6 h-6 text-[#F3E5AB]" />
+                <BookOpen className="w-6 h-6 text-[#F3E5AB]" />
               </div>
               <h1 className="text-4xl md:text-6xl font-['Playfair_Display'] font-bold text-[#F3E5AB] mb-4 tracking-tight drop-shadow-md">
                 Sacred Collection
@@ -226,15 +272,15 @@ export default function Catalog() {
       </div>
 
       <div className="relative z-10 max-w-7xl 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
-        
+
         {/* MOBILE TOOLBAR (Glassy) */}
         <div className="lg:hidden mb-8 flex gap-3 sticky top-[72px] z-30">
           <div className="relative flex-1 group">
-            <input 
-              value={q} 
-              onChange={e => setQ(e.target.value)} 
-              placeholder="Search books..." 
-              className="w-full pl-5 pr-10 py-3.5 bg-white/90 backdrop-blur-xl border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all font-medium placeholder-[#8A7A5E]" 
+            <input
+              value={q}
+              onChange={e => setQ(e.target.value)}
+              placeholder="Search books..."
+              className="w-full pl-5 pr-10 py-3.5 bg-white/90 backdrop-blur-xl border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all font-medium placeholder-[#8A7A5E]"
             />
             {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-5 h-5" /></button>}
           </div>
@@ -245,17 +291,17 @@ export default function Catalog() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          
+
           {/* DESKTOP SIDEBAR (Royal Index) */}
           <aside className="hidden lg:block w-72 shrink-0 space-y-8">
             {/* Search */}
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A7A5E] group-focus-within:text-[#D4AF37] transition-colors" />
-              <input 
-                value={q} 
-                onChange={e => setQ(e.target.value)} 
-                placeholder="Search titles..." 
-                className="w-full pl-12 pr-4 py-3.5 bg-white border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] transition-all font-medium" 
+              {/* <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A7A5E] group-focus-within:text-[#D4AF37] transition-colors" /> */}
+              <input
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                placeholder="Search titles..."
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] transition-all font-medium"
               />
               {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-4 h-4" /></button>}
             </div>
@@ -273,28 +319,31 @@ export default function Catalog() {
                   </button>
                 )}
               </div>
-              <SidebarContent />
+              
+              {/* UPDATED: Called as function to preserve focus */}
+              {renderSidebarContent()}
             </div>
           </aside>
 
           {/* MAIN GRID */}
           <div className="flex-1">
-            
+
             {/* Sort & Count Bar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 bg-white/60 p-4 rounded-xl border border-[#D4AF37]/10 shadow-sm backdrop-blur-sm">
               <div className="text-sm text-[#5C4A2E] font-medium">
                 Showing <span className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mx-1">{books.length}</span> of {total} treasures
                 {(selectedCats.length > 0 || priceRange.min || priceRange.max) && <span className="ml-3 text-[10px] bg-[#3E2723] text-[#F3E5AB] px-2 py-1 rounded border border-[#D4AF37] font-bold uppercase tracking-wide">Filtered</span>}
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <span className="text-sm text-[#8A7A5E] hidden sm:block font-bold uppercase tracking-wider">Sort By:</span>
                 <div className="relative">
-                  <select 
-                    value={sort} 
-                    onChange={e => setSort(e.target.value)} 
+                  <select
+                    value={sort}
+                    onChange={e => setSort(e.target.value)}
                     className="appearance-none bg-white border border-[#D4AF37]/30 text-[#3E2723] text-sm font-bold py-2.5 pl-5 pr-10 rounded-lg cursor-pointer focus:outline-none focus:border-[#D4AF37] shadow-sm hover:border-[#D4AF37] transition-colors font-['Cinzel'] uppercase tracking-wide"
                   >
+                    <option value="oldest">Oldest Arrivals</option>
                     <option value="new">Newest Arrivals</option>
                     <option value="priceAsc">Price: Low to High</option>
                     <option value="priceDesc">Price: High to Low</option>
@@ -309,10 +358,10 @@ export default function Catalog() {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-32 text-[#8A7A5E]">
                 <div className="relative">
-                    <div className="w-16 h-16 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin mb-6"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 text-[#3E2723] animate-pulse" />
-                    </div>
+                  <div className="w-16 h-16 border-4 border-[#D4AF37]/20 border-t-[#D4AF37] rounded-full animate-spin mb-6"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-[#3E2723] animate-pulse" />
+                  </div>
                 </div>
                 <p className="font-medium font-['Cinzel'] tracking-widest text-[#3E2723] animate-pulse">Consulting the Archives...</p>
               </div>
@@ -323,12 +372,12 @@ export default function Catalog() {
             ) : (
               <div className="flex flex-col items-center justify-center py-24 text-center bg-white/60 rounded-3xl border border-[#D4AF37]/20 border-dashed backdrop-blur-sm">
                 <div className="w-24 h-24 bg-[#FFF9E6] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[#D4AF37]/20">
-                    <SearchX className="w-10 h-10 text-[#D4AF37]" />
+                  <SearchX className="w-10 h-10 text-[#D4AF37]" />
                 </div>
                 <h3 className="text-2xl font-bold text-[#3E2723] mb-3 font-['Cinzel']">No Treasures Found</h3>
                 <p className="text-[#8A7A5E] max-w-sm mx-auto mb-8 font-light">We couldn't find any books matching your specific criteria. Try adjusting your filters.</p>
                 <button onClick={clearFilters} className="px-8 py-3.5 bg-[#3E2723] text-[#F3E5AB] rounded-xl font-bold text-sm shadow-lg hover:bg-[#5D4037] hover:shadow-xl active:scale-95 transition-all font-['Cinzel'] tracking-widest uppercase border border-[#D4AF37]/30">
-                    Clear All Filters
+                  Clear All Filters
                 </button>
               </div>
             )}
@@ -337,15 +386,15 @@ export default function Catalog() {
             {!loading && totalPages > 1 && (
               <div className="mt-16 flex items-center justify-center gap-4">
                 <button onClick={() => goToPage(page - 1)} disabled={page === 1} className="p-3.5 rounded-full border border-[#D4AF37]/30 bg-white text-[#3E2723] hover:bg-[#D4AF37] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm group">
-                    <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+                  <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
                 </button>
-                
+
                 <span className="font-bold text-[#3E2723] text-sm bg-white px-6 py-3 rounded-full border border-[#D4AF37]/30 shadow-sm font-['Cinzel'] tracking-widest">
-                    Page <span className="text-[#D4AF37] text-lg mx-1">{page}</span> of {totalPages}
+                  Page <span className="text-[#D4AF37] text-lg mx-1">{page}</span> of {totalPages}
                 </span>
-                
+
                 <button onClick={() => goToPage(page + 1)} disabled={page === totalPages} className="p-3.5 rounded-full border border-[#D4AF37]/30 bg-white text-[#3E2723] hover:bg-[#D4AF37] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm group">
-                    <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             )}
@@ -367,9 +416,12 @@ export default function Catalog() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 relative">
-               {/* Watermark in drawer */}
-               <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: mandalaBg, backgroundSize: '300px' }}></div>
-               <div className="relative z-10"><SidebarContent /></div>
+              {/* Watermark in drawer */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: mandalaBg, backgroundSize: '300px' }}></div>
+              <div className="relative z-10">
+                {/* UPDATED: Called as function here too */}
+                {renderSidebarContent()}
+              </div>
             </div>
             <div className="p-6 border-t border-[#D4AF37]/20 bg-white">
               <button onClick={() => setIsSidebarOpen(false)} className="w-full py-4 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all font-['Cinzel'] tracking-widest uppercase text-sm border border-[#D4AF37]">
@@ -500,4 +552,4 @@ function CatalogHeroSlider({ slides, totalBooks }) {
       )}
     </div>
   );
-}
+} 
