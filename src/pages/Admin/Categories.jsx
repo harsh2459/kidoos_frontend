@@ -142,7 +142,7 @@ export default function AdminCategories() {
             
             {/* SEARCH BAR FOR LIST */}
             <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] w-5 h-5 group-focus-within:text-[#1A3C34] transition-colors" />
+                
                 <input
                     className="w-full bg-white border border-[#E3E8E5] rounded-xl pl-12 pr-4 py-3 text-[#1A3C34] placeholder:text-[#8BA699] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all shadow-sm"
                     placeholder="Search categories..."

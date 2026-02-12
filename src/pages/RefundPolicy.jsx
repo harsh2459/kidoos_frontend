@@ -49,7 +49,7 @@ const RefundPolicy = () => {
 
     // VRINDAVAN THEME ASSETS
     const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-    const heroBg = "url('/images/refund-scales-bg.png')"; // New Hero Image
+    const heroBg = "url('/images/refund-scales-bg.png')";
     const mandalaBg = "url('/images/homepage/mandala-bg.png')";
 
     return (

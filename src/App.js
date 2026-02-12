@@ -53,6 +53,7 @@ import ScrollVideo from './pages/scroll_video/ScrollVideo';
 import AiSettings from './pages/Admin/AiSettings';
 import Portal from './pages/Vrindavan/Portal';
 import UnderwaterVrindavan from './pages/Vrindavan/UnderwaterVrindavan';
+import Dashboard from "./pages/Admin/Dashboard";
 
 function InnerApp() {
   const loc = useLocation();
@@ -143,6 +144,10 @@ function InnerApp() {
             element={<AdminGuard><AdminLayout><ApiUsers /></AdminLayout></AdminGuard>}
           />
           <Route
+            path="/admin/dashboard"
+            element={<AdminGuard><AdminLayout><Dashboard /></AdminLayout></AdminGuard>}
+          />
+          <Route
             path="/admin/orders"
             element={<AdminGuard><AdminLayout><AdminOrders /></AdminLayout></AdminGuard>}
           />
@@ -191,7 +196,7 @@ function InnerApp() {
             element={<AdminGuard><AdminLayout><PopupSettings /></AdminLayout></AdminGuard>}
           />
           <Route
-            path="/admin/settings/ai"
+            path="/admin/ai-settings"
             element={<AdminGuard><AdminLayout><AiSettings /></AdminLayout></AdminGuard>}
           />
           <Route path="*" element={<Navigate to="/" replace />} />

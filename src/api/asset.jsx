@@ -12,7 +12,7 @@ function isAbsoluteUrl(url) {
 export function toRelativeFromPublic(input) {
   if (!input) return "";
   const s = String(input).trim();
-  
+   
   // If it's an absolute URL (Cloudinary), return as-is
   if (isAbsoluteUrl(s)) return s;
   

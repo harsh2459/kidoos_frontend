@@ -42,14 +42,21 @@ export default function AdminSidebar() {
           KI
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-[#1A3C34] leading-tight">Admin</span>
-          <span className="text-[10px] text-[#5C756D] font-medium tracking-wider uppercase">Panel</span>
+          <span className="font-bold text-[#1A3C34] leading-tight"></span>
+          <span className="text-[10px] text-[#5C756D] font-medium tracking-wider uppercase"></span>
         </div>
       </div>
 
       {/* Nav sections */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
         <SectionHeader title="Store Management" />
+        <Item
+          to="/admin/dashboard"
+          active={loc.pathname.startsWith("/admin/dashboard")}
+          icon={LayoutDashboard}
+        >
+          <WaveText text="Dashboard" hoverColor="#000" />
+        </Item>
         <Item
           to="/admin/orders"
           active={loc.pathname.startsWith("/admin/orders")}
@@ -132,8 +139,8 @@ export default function AdminSidebar() {
           <WaveText text="Catalog Header" hoverColor="#000"  />
         </Item>
         <Item
-          to="/admin/settings/ai"
-          active={loc.pathname.startsWith("/admin/settings/ai")}
+          to="/admin/ai-settings"
+          active={loc.pathname.startsWith("/admin/ai-settings")}
           icon={Sparkles}
         >
           <WaveText text="AI Settings" hoverColor="#000"  />

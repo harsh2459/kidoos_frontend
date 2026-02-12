@@ -206,7 +206,7 @@ export default function Checkout() {
       t.info("Please enter a valid full name.");
       return false;
     }
-    
+
     if (!/^\d{10}$/.test(cust.phone)) {
       t.info("Please enter a valid 10-digit phone number.");
       return false;
@@ -308,7 +308,19 @@ export default function Checkout() {
               razorpay_signature: response.razorpay_signature,
               paymentId: data.paymentId,
             });
+
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
+              if (window.fbq) {
+                window.fbq('track', 'Purchase', {
+                  value: totals.grand,
+                  currency: 'INR',
+                  content_ids: items.map(i => getBookIdFromCartItem(i)),
+                  content_type: 'product'
+                });
+                console.log("Meta Pixel 'Purchase' event sent!"); // Confirm it ran
+              } else {
+                console.warn("Meta Pixel (window.fbq) not found! Is the base pixel installed?");
+              }
               clear();
               localStorage.removeItem('puzzle_reward_claimed');
               t.success("Payment successful!");

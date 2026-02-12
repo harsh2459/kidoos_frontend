@@ -196,7 +196,6 @@ export default function Footer({ contact }) {
               </li>
             </ul>
           </div>
-
         </div>
       </div>
 

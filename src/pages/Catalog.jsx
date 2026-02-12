@@ -6,7 +6,7 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 import ProductCard from "../components/ProductCard";
 import {
   Loader2, SearchX, ChevronLeft, ChevronRight,
-  Filter, X, Check, ChevronDown, ChevronUp, Search, Minus, BookOpen
+  Filter, X, Check, ChevronDown, ChevronUp,  Minus, BookOpen
 } from "lucide-react";
 import WaveText from "../components/WaveText";
 
@@ -18,14 +18,14 @@ const parchmentBg = "url('/images/homepage/parchment-bg.png')";
 const FilterSection = ({ title, children, onClear, hasActiveFilters }) => {
   const [isOpen, setIsOpen] = useState(true);
   return (
-    <div className="border-b border-[#D4AF37]/20 py-6 last:border-0">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-3 font-['Cinzel'] font-bold text-[#3E2723] text-lg hover:text-[#D4AF37] transition-colors">
+    <div className="border-b border-[#D4AF37]/20 py-6 lg:py-8 xl:py-10 last:border-0">
+      <div className="flex items-center justify-between mb-4 lg:mb-6">
+        <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-3 font-['Cinzel'] font-bold text-[#3E2723] text-lg lg:text-xl xl:text-2xl hover:text-[#D4AF37] transition-colors">
           {title}
-          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {isOpen ? <ChevronUp className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6" /> : <ChevronDown className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6" />}
         </button>
         {hasActiveFilters && (
-          <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="text-[10px] font-bold text-[#B0894C] uppercase tracking-wider hover:text-[#3E2723] border-b border-[#B0894C] hover:border-[#3E2723] transition-all">
+          <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="text-[10px] lg:text-xs xl:text-sm font-bold text-[#B0894C] uppercase tracking-wider hover:text-[#3E2723] border-b border-[#B0894C] hover:border-[#3E2723] transition-all">
             Clear
           </button>
         )}
@@ -48,9 +48,9 @@ export default function Catalog() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("oldest"); // Default to oldest
   const [selectedCats, setSelectedCats] = useState([]);
-  
+
   // Price filter state
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" }); 
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [tempPriceRange, setTempPriceRange] = useState({ min: "", max: "" });
 
   // Local UI State
@@ -121,7 +121,7 @@ export default function Catalog() {
   useEffect(() => {
     const t = setTimeout(loadBooks, q ? 400 : 0);
     return () => clearTimeout(t);
-  }, [page, sort, selectedCats, q]); 
+  }, [page, sort, selectedCats, q]);
   // Note: priceRange removed from dependency so it only triggers on "Apply" button
 
   useEffect(() => {
@@ -132,27 +132,27 @@ export default function Catalog() {
   const toggleCategory = (slug) => {
     setSelectedCats(prev => prev.includes(slug) ? prev.filter(c => c !== slug) : [...prev, slug]);
   };
-  
-  const applyPriceFilter = (e) => { 
-    if (e) e.preventDefault(); 
-    setPriceRange(tempPriceRange); 
-    setPage(1); 
-    loadBooks(); 
+
+  const applyPriceFilter = (e) => {
+    if (e) e.preventDefault();
+    setPriceRange(tempPriceRange);
+    setPage(1);
+    loadBooks();
   };
 
-  const setPricePreset = (min, max) => { 
+  const setPricePreset = (min, max) => {
     setTempPriceRange({ min: min, max: max });
-    setPriceRange({ min: min, max: max }); 
-    setTimeout(() => { setPage(1); loadBooks(); }, 50); 
+    setPriceRange({ min: min, max: max });
+    setTimeout(() => { setPage(1); loadBooks(); }, 50);
   };
 
-  const clearFilters = () => { 
-    setQ(""); 
-    setSelectedCats([]); 
-    setPriceRange({ min: "", max: "" }); 
+  const clearFilters = () => {
+    setQ("");
+    setSelectedCats([]);
+    setPriceRange({ min: "", max: "" });
     setTempPriceRange({ min: "", max: "" });
-    setSort("oldest"); 
-    setPage(1); 
+    setSort("oldest");
+    setPage(1);
   };
 
   const goToPage = (newPage) => { if (newPage >= 1 && newPage <= totalPages) { setPage(newPage); topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
@@ -165,11 +165,12 @@ export default function Catalog() {
         <FilterSection title="Categories" onClear={() => setSelectedCats([])} hasActiveFilters={selectedCats.length > 0}>
           {categories.length > 5 && (
             <div className="relative mb-4 group">
+              
               <input
                 value={catSearch}
                 onChange={(e) => setCatSearch(e.target.value)}
                 placeholder="Find category..."
-                className="w-full bg-[#FAF7F2] border border-[#D4AF37]/30 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-[#D4AF37] transition-all placeholder-[#8A7A5E]/60 text-[#3E2723]"
+                className="w-full bg-[#FAF7F2] border border-[#D4AF37]/30 rounded-lg lg:rounded-xl xl:rounded-2xl pl-10 lg:pl-12 xl:pl-14 pr-3 lg:pr-4 xl:pr-5 py-3 lg:py-4 xl:py-5 text-sm lg:text-base xl:text-lg focus:outline-none focus:border-[#D4AF37] transition-all placeholder-[#8A7A5E]/60 text-[#3E2723] focus:bg-white focus:shadow-md"
               />
             </div>
           )}
@@ -191,8 +192,8 @@ export default function Catalog() {
         </FilterSection>
 
         <FilterSection title="Price Range" onClear={() => { setPriceRange({ min: "", max: "" }); setTempPriceRange({ min: "", max: "" }); setTimeout(loadBooks, 50); }} hasActiveFilters={priceRange.min || priceRange.max}>
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
+          <div className="space-y-5 lg:space-y-6 xl:space-y-7">
+            <div className="flex items-center gap-3 lg:gap-4">
               <div className="relative flex-1 group">
                 <input
                   ref={minPriceRef}
@@ -203,10 +204,10 @@ export default function Catalog() {
                   onChange={(e) =>
                     setTempPriceRange(prev => ({ ...prev, min: e.target.value }))
                   }
-                  className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm"
+                  className="w-full pl-7 lg:pl-8 xl:pl-9 pr-2 lg:pr-3 py-3 lg:py-4 xl:py-5 bg-white border border-[#D4AF37]/30 rounded-xl lg:rounded-2xl text-sm lg:text-base xl:text-lg font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm"
                 />
               </div>
-              <Minus className="w-4 h-4 text-[#D4AF37]" />
+              <Minus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 text-[#D4AF37]" />
               <div className="relative flex-1 group">
                 <input
                   ref={maxPriceRef}
@@ -217,18 +218,18 @@ export default function Catalog() {
                   onChange={(e) =>
                     setTempPriceRange(prev => ({ ...prev, max: e.target.value }))
                   }
-                  className="w-full pl-7 pr-2 py-2.5 bg-white border border-[#D4AF37]/30 rounded-xl text-sm font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm"
+                  className="w-full pl-7 lg:pl-8 xl:pl-9 pr-2 lg:pr-3 py-3 lg:py-4 xl:py-5 bg-white border border-[#D4AF37]/30 rounded-xl lg:rounded-2xl text-sm lg:text-base xl:text-lg font-bold text-[#3E2723] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all shadow-sm"
                 />
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 lg:gap-3">
               {[{ label: "Under ₹250", min: 0, max: 250 }, { label: "₹250 - ₹500", min: 250, max: 500 }, { label: "₹500 - ₹1000", min: 500, max: 1000 }, { label: "Above ₹1000", min: 1000, max: "" }].map((p, idx) => (
-                <button key={idx} onClick={() => setPricePreset(p.min, p.max)} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${(Number(priceRange.min) === p.min && Number(priceRange.max) === (p.max || 0)) ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-md" : "bg-white text-[#5C4A2E] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#3E2723]"}`}>{p.label}</button>
+                <button key={idx} onClick={() => setPricePreset(p.min, p.max)} className={`text-xs lg:text-sm xl:text-base font-bold px-3 lg:px-4 xl:px-5 py-2 lg:py-2.5 xl:py-3 rounded-lg lg:rounded-xl border transition-all ${(Number(priceRange.min) === p.min && Number(priceRange.max) === (p.max || 0)) ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-md" : "bg-white text-[#5C4A2E] border-[#D4AF37]/30 hover:border-[#D4AF37] hover:text-[#3E2723]"}`}>{p.label}</button>
               ))}
             </div>
 
-            <button onClick={(e) => applyPriceFilter(e)} className="w-full py-3.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white font-['Cinzel'] font-bold text-sm tracking-widest uppercase rounded-xl shadow-md hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 border border-[#D4AF37]">
+            <button onClick={(e) => applyPriceFilter(e)} className="w-full py-4 lg:py-5 xl:py-6 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white font-['Cinzel'] font-bold text-sm lg:text-base xl:text-lg tracking-widest uppercase rounded-xl lg:rounded-2xl shadow-md hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 border border-[#D4AF37]">
               Apply Filter
             </button>
           </div>
@@ -280,12 +281,12 @@ export default function Catalog() {
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Search books..."
-              className="w-full pl-5 pr-10 py-3.5 bg-white/90 backdrop-blur-xl border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-md focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all font-medium placeholder-[#8A7A5E]"
+              className="w-full pl-6 pr-12 py-5 bg-white/90 backdrop-blur-xl border-2 border-[#D4AF37]/30 rounded-2xl text-[#3E2723] text-lg shadow-lg focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all font-medium placeholder-[#8A7A5E]"
             />
-            {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-5 h-5" /></button>}
+            {q && <button onClick={() => setQ("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-6 h-6" /></button>}
           </div>
-          <button onClick={() => setIsSidebarOpen(true)} className="px-5 bg-[#3E2723] text-[#F3E5AB] rounded-xl shadow-md border border-[#D4AF37]/50 flex items-center justify-center relative active:scale-95 transition-all">
-            <Filter className="w-5 h-5" />
+          <button onClick={() => setIsSidebarOpen(true)} className="px-5 md:px-6 lg:px-7 py-4 md:py-5 lg:py-6 bg-[#3E2723] text-[#F3E5AB] rounded-xl md:rounded-2xl lg:rounded-3xl shadow-md border border-[#D4AF37]/50 flex items-center justify-center relative active:scale-95 transition-all">
+            <Filter className="w-5 h-5 md:w-6 md:h-6" />
             {(selectedCats.length > 0 || priceRange.min || priceRange.max) && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#D4AF37] rounded-full animate-pulse shadow-[0_0_5px_#D4AF37]" />}
           </button>
         </div>
@@ -293,33 +294,39 @@ export default function Catalog() {
         <div className="flex flex-col lg:flex-row gap-10">
 
           {/* DESKTOP SIDEBAR (Royal Index) */}
-          <aside className="hidden lg:block w-72 shrink-0 space-y-8">
+          <aside className="hidden lg:block w-80 shrink-0 space-y-6 sticky top-28 h-fit self-start transition-all duration-300">
             {/* Search */}
             <div className="relative group">
-              {/* <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8A7A5E] group-focus-within:text-[#D4AF37] transition-colors" /> */}
               <input
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 placeholder="Search titles..."
-                className="w-full pl-12 pr-4 py-3.5 bg-white border border-[#D4AF37]/30 rounded-xl text-[#3E2723] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37] transition-all font-medium"
+                className="w-full pl-6 pr-12 py-6 lg:py-7 bg-white border-2 border-[#D4AF37]/30 rounded-2xl text-[#3E2723] text-xl lg:text-2xl shadow-[0_5px_20px_rgba(62,39,35,0.08)] focus:outline-none focus:ring-4 focus:ring-[#D4AF37]/15 focus:border-[#D4AF37] transition-all font-semibold placeholder-[#8A7A5E]/50 leading-normal"
               />
-              {q && <button onClick={() => setQ("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-4 h-4" /></button>}
+              {q && (
+                <button
+                  onClick={() => setQ("")}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 p-2 text-[#8A7A5E] hover:text-[#3E2723] transition-colors"
+                >
+                  <X className="w-6 h-6 lg:w-7 lg:h-7" />
+                </button>
+              )}
             </div>
 
             {/* Filters Container */}
-            <div className="bg-white/80 backdrop-blur-sm px-6 py-6 rounded-2xl border border-[#D4AF37]/20 shadow-[0_10px_30px_rgba(62,39,35,0.05)]">
-              <div className="flex items-center justify-between mb-2 pb-4 border-b border-[#D4AF37]/20">
-                <div className="flex items-center gap-2 text-[#3E2723] font-bold font-['Cinzel'] text-lg">
-                  <Filter className="w-5 h-5 text-[#D4AF37]" />
+            <div className="bg-white/80 backdrop-blur-sm px-6 lg:px-8 xl:px-10 py-6 lg:py-8 xl:py-10 rounded-2xl lg:rounded-3xl border border-[#D4AF37]/20 shadow-[0_10px_30px_rgba(62,39,35,0.05)]">
+              <div className="flex items-center justify-between mb-2 pb-4 lg:pb-6 border-b border-[#D4AF37]/20">
+                <div className="flex items-center gap-2 lg:gap-3 text-[#3E2723] font-bold font-['Cinzel'] text-lg lg:text-xl xl:text-2xl">
+                  <Filter className="w-5 h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 text-[#D4AF37]" />
                   <span>Filters</span>
                 </div>
                 {(selectedCats.length > 0 || priceRange.min || priceRange.max || q) && (
-                  <button onClick={clearFilters} className="text-[10px] font-bold text-[#B0894C] uppercase tracking-wider hover:text-[#3E2723] hover:underline transition-colors">
+                  <button onClick={clearFilters} className="text-[10px] lg:text-xs xl:text-sm font-bold text-[#B0894C] uppercase tracking-wider hover:text-[#3E2723] hover:underline transition-colors">
                     Reset All
                   </button>
                 )}
               </div>
-              
+
               {/* UPDATED: Called as function to preserve focus */}
               {renderSidebarContent()}
             </div>
@@ -552,4 +559,4 @@ function CatalogHeroSlider({ slides, totalBooks }) {
       )}
     </div>
   );
-} 
+}

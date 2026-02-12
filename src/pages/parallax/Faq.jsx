@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Faq = () => {
   const [openIndex, setOpenIndex] = useState(0);
@@ -79,10 +80,12 @@ const Faq = () => {
         <div className="mt-20 p-8 rounded-3xl bg-[#F5F5F7] text-center">
             <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">Still have questions?</h3>
             <p className="text-gray-500 mb-6">Our team is just a message away.</p>
+            <Link to="/contact">
             <button className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-full font-semibold text-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white transition-all shadow-sm">
                 <MessageCircle className="w-4 h-4" />
                 Contact Support
-            </button>
+              </button>
+            </Link>
         </div>
 
       </div>

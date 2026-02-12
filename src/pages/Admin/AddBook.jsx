@@ -4,15 +4,15 @@ import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import { assetUrl, toRelativeFromPublic } from "../../api/asset";
 import { t } from "../../lib/toast";
-import { 
-  Save, Upload, X, ChevronDown, Check, Image as ImageIcon, 
+import {
+  Save, Upload, X, ChevronDown, Check, Image as ImageIcon,
   ArrowLeft, PlusCircle, Edit3, Lock, Layout, Trash2, Plus,
-  Star, Brain, Heart, Lightbulb, Zap, Smile, BookOpen, 
-  Pencil, Calculator, Globe, Music, Palette, Puzzle, 
-  Users, Trophy, Target, Sparkles, Clock, Sun, Moon, 
-  Leaf, Anchor, Award, Gift, Camera, Video, Mic, MapPin, 
+  Star, Brain, Heart, Lightbulb, Zap, Smile, BookOpen,
+  Pencil, Calculator, Globe, Music, Palette, Puzzle,
+  Users, Trophy, Target, Sparkles, Clock, Sun, Moon,
+  Leaf, Anchor, Award, Gift, Camera, Video, Mic, MapPin,
   GraduationCap, Medal, Rocket, Compass, Feather, Eye,
-  Wand2 
+  Wand2
 } from "lucide-react";
 
 const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none text-[#2C3E38]";
@@ -46,7 +46,7 @@ function IconSelector({ value, onChange }) {
 
   return (
     <div className="relative w-full" ref={wrapperRef}>
-      <button 
+      <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
@@ -88,13 +88,12 @@ export default function AddBook() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
-
   const [activeTab, setActiveTab] = useState("general");
 
   const [book, setBook] = useState({
     title: "", subtitle: "", language: "English", edition: "", pages: "",
     mrp: "", price: "", discountPct: "",
-    inventory: { stock: 0, lowStockAlert: 5, sku: "", asin: "490110" }, 
+    inventory: { stock: 0, lowStockAlert: 5, sku: "", asin: "490110" },
     dimensions: { weight: 0, length: 0, width: 0, height: 0 },
     visibility: "public",
     assets: { coverUrl: [] },
@@ -103,15 +102,22 @@ export default function AddBook() {
     layoutConfig: {
       story: { heading: "Why We Created This?", text: "", quote: "", imageUrl: "" },
       curriculum: [],
-      specs: [],
+      specs: [
+        { label: "Binding", value: "Paperback" },
+        { label: "Weight", value: "50g" },
+        { label: "Height", value: "24 cm" },
+        { label: "Width", value: "30 cm" },
+        { label: "Thickness", value: "2 cm" }
+      ],
       testimonials: []
     }
   });
+  
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false); 
-  
+  const [analyzing, setAnalyzing] = useState(false);
+
   // Text inputs for CSV fields
   const [authorsText, setAuthorsText] = useState("Kiddos Intellect");
   const [categoriesText, setCategoriesText] = useState("");
@@ -265,7 +271,7 @@ export default function AddBook() {
       });
     };
   }
-  
+
   // --- ASK AI HANDLER ---
   const handleAskAI = async () => {
     if (book.assets.coverUrl.length === 0) {
@@ -277,8 +283,8 @@ export default function AddBook() {
     const toastId = t.loading("AI is reading your book covers...");
 
     try {
-      const { data } = await api.post("/ai/analyze", { 
-        images: book.assets.coverUrl 
+      const { data } = await api.post("/ai/analyze", {
+        images: book.assets.coverUrl
       }, auth);
 
       if (!data.ok || !data.data) throw new Error("No data returned from AI");
@@ -292,9 +298,9 @@ export default function AddBook() {
         language: result.language || "English",
         // ✅ Ensure Description is mapped
         descriptionHtml: result.descriptionHtml || prev.descriptionHtml,
-        
+
         templateType: result.bookType === "Activity Book" ? "activity" : "standard",
-        
+
         layoutConfig: {
           ...prev.layoutConfig,
           story: {
@@ -346,7 +352,7 @@ export default function AddBook() {
         discountPct: Number(book.discountPct) || 0,
         inventory: {
           sku: book.inventory.sku || "",
-          asin: book.inventory.asin || "490110", 
+          asin: book.inventory.asin || "490110",
           stock: Number(book.inventory.stock) || 0,
           lowStockAlert: Number(book.inventory.lowStockAlert) || 5,
         },
@@ -361,6 +367,7 @@ export default function AddBook() {
       };
 
       await api.post("/books", payload, auth);
+    
       t.ok("Book created successfully!");
       navigate("/admin/books");
     } catch (e) {
@@ -375,7 +382,7 @@ export default function AddBook() {
 
   return (
     <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
-   
+
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
         {/* Header with Tabs */}
@@ -391,7 +398,7 @@ export default function AddBook() {
           </div>
 
           <div className="flex items-center gap-3">
-            
+
             {/* AI BUTTON */}
             <button
               type="button"
@@ -399,8 +406,8 @@ export default function AddBook() {
               disabled={book.assets.coverUrl.length === 0 || analyzing}
               className={`
                 hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95
-                ${book.assets.coverUrl.length > 0 
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-purple-200" 
+                ${book.assets.coverUrl.length > 0
+                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 shadow-purple-200"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"}
               `}
             >
@@ -410,12 +417,12 @@ export default function AddBook() {
 
             {/* Tab Buttons */}
             <div className="bg-white rounded-lg p-1 flex shadow-sm border border-[#E3E8E5]">
-               <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
-                   General Info
-               </button>
-               <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
-                   <Layout className="w-4 h-4" /> Page Builder
-               </button>
+              <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+                General Info
+              </button>
+              <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+                <Layout className="w-4 h-4" /> Page Builder
+              </button>
             </div>
 
             <button
@@ -430,15 +437,15 @@ export default function AddBook() {
         </div>
 
         <form onSubmit={save} className="space-y-8">
- 
+
           {/* --- TAB 1: GENERAL INFO --- */}
           <div className={activeTab === 'general' ? 'block space-y-8' : 'hidden'}>
-            
+
             <Card title="1. Upload Images (Required for AI)">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                 <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm"><Upload className="w-4 h-4" /><span>Upload Images</span><input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" /></label>
                 {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
-                
+
                 {/* Mobile AI Button */}
                 <button
                   type="button"
@@ -469,10 +476,10 @@ export default function AddBook() {
                   <p className="text-sm">Upload images to enable AI Auto-Fill</p>
                 </div>
               )}
-              
+
               <div className="border-t border-[#E3E8E5] mt-8 pt-6">
-                  <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
-                  <select className={`${INPUT_STYLE} sm:w-64`} value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public</option><option value="draft">Draft</option></select>
+                <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
+                <select className={`${INPUT_STYLE} sm:w-64`} value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public</option><option value="draft">Draft</option></select>
               </div>
             </Card>
 
@@ -516,31 +523,30 @@ export default function AddBook() {
                     <ChevronDown className="ml-auto w-4 h-4 text-[#8BA699]" />
                   </div>
                   {catOpen && (<div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">{categoryList.map((c) => {
-  const val = c.slug || c.name;
-  const checked = selected.includes(val) || selected.includes(c.name);
+                    const val = c.slug || c.name;
+                    const checked = selected.includes(val) || selected.includes(c.name);
 
-  return (
-    <label
-      key={c._id}
-      onClick={() => toggleCategory(val)}   // ✅ FIX
-      className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors"
-    >
-      <div
-        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-          checked
-            ? 'bg-[#1A3C34] border-[#1A3C34]'
-            : 'border-[#DCE4E0] bg-white'
-        }`}
-      >
-        {checked && <Check className="w-3.5 h-3.5 text-white" />}
-      </div>
+                    return (
+                      <label
+                        key={c._id}
+                        onClick={() => toggleCategory(val)}   // ✅ FIX
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors"
+                      >
+                        <div
+                          className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${checked
+                            ? 'bg-[#1A3C34] border-[#1A3C34]'
+                            : 'border-[#DCE4E0] bg-white'
+                            }`}
+                        >
+                          {checked && <Check className="w-3.5 h-3.5 text-white" />}
+                        </div>
 
-      <div className="flex-1 font-medium text-sm text-[#2C3E38]">
-        {c.name}
-      </div>
-    </label>
-  );
-})}</div>)}
+                        <div className="flex-1 font-medium text-sm text-[#2C3E38]">
+                          {c.name}
+                        </div>
+                      </label>
+                    );
+                  })}</div>)}
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-6">
@@ -558,108 +564,108 @@ export default function AddBook() {
 
           {/* --- TAB 2: PAGE BUILDER --- */}
           <div className={activeTab === 'builder' ? 'block space-y-8' : 'hidden'}>
-            
+
             {/* 1. Theme Selection */}
             <Card title="Theme & Mission">
-                <div className="mb-6">
-                    <label className="block text-sm font-bold text-[#2C3E38] mb-2">Page Template</label>
-                    <select 
-                        value={book.templateType} 
-                        onChange={e => setField("templateType", e.target.value)}
-                        className={INPUT_STYLE}
-                    >
-                        <option value="standard">Standard (Default)</option>
-                        <option value="spiritual">Spiritual (Gold/Green)</option>
-                        <option value="activity">Activity (Blue/Orange)</option>
-                    </select>
-                </div>
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-[#2C3E38] mb-2">Page Template</label>
+                <select
+                  value={book.templateType}
+                  onChange={e => setField("templateType", e.target.value)}
+                  className={INPUT_STYLE}
+                >
+                  <option value="standard">Standard (Default)</option>
+                  <option value="spiritual">Spiritual (Gold/Green)</option>
+                  <option value="activity">Activity (Blue/Orange)</option>
+                </select>
+              </div>
 
-                <div className="space-y-4 border-t border-[#E3E8E5] pt-6">
-                    <h3 className="font-bold text-[#1A3C34]">Mission Section</h3>
-                    <div>
-                      <label className="block text-sm font-bold text-[#2C3E38] mb-2">Heading</label>
-                      <input className={INPUT_STYLE} value={book.layoutConfig?.story?.heading} onChange={e => setConfig("story", "heading", e.target.value)} placeholder="e.g. Why We Created This?" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-bold text-[#2C3E38] mb-2">Main Story Text</label>
-                        <textarea 
-                            className={`${INPUT_STYLE} h-32`}
-                            value={book.layoutConfig?.story?.text}
-                            onChange={e => setConfig("story", "text", e.target.value)}
-                            placeholder="Tell the story behind this book..."
-                        />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-[#2C3E38] mb-2">Highlight Quote</label>
-                      <input className={INPUT_STYLE} value={book.layoutConfig?.story?.quote} onChange={e => setConfig("story", "quote", e.target.value)} placeholder="e.g. A tool for grandparents to bond..." />
-                    </div>
+              <div className="space-y-4 border-t border-[#E3E8E5] pt-6">
+                <h3 className="font-bold text-[#1A3C34]">Mission Section</h3>
+                <div>
+                  <label className="block text-sm font-bold text-[#2C3E38] mb-2">Heading</label>
+                  <input className={INPUT_STYLE} value={book.layoutConfig?.story?.heading} onChange={e => setConfig("story", "heading", e.target.value)} placeholder="e.g. Why We Created This?" />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#2C3E38] mb-2">Main Story Text</label>
+                  <textarea
+                    className={`${INPUT_STYLE} h-32`}
+                    value={book.layoutConfig?.story?.text}
+                    onChange={e => setConfig("story", "text", e.target.value)}
+                    placeholder="Tell the story behind this book..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#2C3E38] mb-2">Highlight Quote</label>
+                  <input className={INPUT_STYLE} value={book.layoutConfig?.story?.quote} onChange={e => setConfig("story", "quote", e.target.value)} placeholder="e.g. A tool for grandparents to bond..." />
+                </div>
+              </div>
             </Card>
 
             {/* 2. Product Specs */}
             <Card title="Product Specifications">
-                <p className="text-sm text-[#5C756D] mb-4">Generates the details table (e.g. Paper Quality, Binding).</p>
-                {book.layoutConfig?.specs?.map((spec, i) => (
-                    <div key={i} className="flex gap-4 items-center mb-3">
-                        <div className="flex-1 grid grid-cols-2 gap-4">
-                            <input className={INPUT_STYLE} placeholder="Label (e.g. Binding)" value={spec.label} onChange={e => updateItem("specs", i, "label", e.target.value)} />
-                            <input className={INPUT_STYLE} placeholder="Value (e.g. Hardbound)" value={spec.value} onChange={e => updateItem("specs", i, "value", e.target.value)} />
-                        </div>
-                        <button type="button" onClick={() => removeItem("specs", i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
-                    </div>
-                ))}
-                <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
-                    <Plus className="w-4 h-4" /> Add Specification
-                </button>
+              <p className="text-sm text-[#5C756D] mb-4">Generates the details table (e.g. Paper Quality, Binding).</p>
+              {book.layoutConfig?.specs?.map((spec, i) => (
+                <div key={i} className="flex gap-4 items-center mb-3">
+                  <div className="flex-1 grid grid-cols-2 gap-4">
+                    <input className={INPUT_STYLE} placeholder="Label (e.g. Binding)" value={spec.label} onChange={e => updateItem("specs", i, "label", e.target.value)} />
+                    <input className={INPUT_STYLE} placeholder="Value (e.g. Hardbound)" value={spec.value} onChange={e => updateItem("specs", i, "value", e.target.value)} />
+                  </div>
+                  <button type="button" onClick={() => removeItem("specs", i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+                <Plus className="w-4 h-4" /> Add Specification
+              </button>
             </Card>
 
             {/* 3. Curriculum / Skills */}
             <Card title="Curriculum & Skills">
-                <p className="text-sm text-[#5C756D] mb-4">Add the key learning outcomes (the icon grid).</p>
-                {book.layoutConfig?.curriculum?.map((item, i) => (
-                    <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative group">
-                        <button type="button" onClick={() => removeItem("curriculum", i)} className="absolute top-2 right-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-bold text-[#2C3E38] mb-1 block">Title</label>
-                                <input className={INPUT_STYLE} value={item.title} onChange={e => updateItem("curriculum", i, "title", e.target.value)} placeholder="e.g. Cognitive Skills" />
-                            </div>
-                            
-                            <div>
-                                <label className="text-xs font-bold text-[#2C3E38] mb-1 block">Icon</label>
-                                <IconSelector 
-                                    value={item.icon} 
-                                    onChange={(val) => updateItem("curriculum", i, "icon", val)} 
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-3">
-                            <label className="text-xs font-bold text-[#8BA699]">Description</label>
-                            <input className={`${INPUT_STYLE} mt-1`} value={item.description} onChange={e => updateItem("curriculum", i, "description", e.target.value)} placeholder="e.g. Enhances memory and focus..." />
-                        </div>
+              <p className="text-sm text-[#5C756D] mb-4">Add the key learning outcomes (the icon grid).</p>
+              {book.layoutConfig?.curriculum?.map((item, i) => (
+                <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative group">
+                  <button type="button" onClick={() => removeItem("curriculum", i)} className="absolute top-2 right-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-[#2C3E38] mb-1 block">Title</label>
+                      <input className={INPUT_STYLE} value={item.title} onChange={e => updateItem("curriculum", i, "title", e.target.value)} placeholder="e.g. Cognitive Skills" />
                     </div>
-                ))}
-                <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#1A3C34] transition-all flex justify-center items-center gap-2">
-                    <Plus className="w-5 h-5" /> Add Curriculum Point
-                </button>
+
+                    <div>
+                      <label className="text-xs font-bold text-[#2C3E38] mb-1 block">Icon</label>
+                      <IconSelector
+                        value={item.icon}
+                        onChange={(val) => updateItem("curriculum", i, "icon", val)}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-xs font-bold text-[#8BA699]">Description</label>
+                    <input className={`${INPUT_STYLE} mt-1`} value={item.description} onChange={e => updateItem("curriculum", i, "description", e.target.value)} placeholder="e.g. Enhances memory and focus..." />
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#1A3C34] transition-all flex justify-center items-center gap-2">
+                <Plus className="w-5 h-5" /> Add Curriculum Point
+              </button>
             </Card>
 
             {/* 4. Testimonials */}
             <Card title="Manual Testimonials">
-                {book.layoutConfig?.testimonials?.map((review, i) => (
-                    <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative">
-                        <button type="button" onClick={() => removeItem("testimonials", i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                        <div className="grid md:grid-cols-3 gap-4 mb-3">
-                            <input className={INPUT_STYLE} placeholder="Name" value={review.name} onChange={e => updateItem("testimonials", i, "name", e.target.value)} />
-                            <input className={INPUT_STYLE} placeholder="Role/Location" value={review.role} onChange={e => updateItem("testimonials", i, "role", e.target.value)} />
-                            <input className={INPUT_STYLE} type="number" placeholder="Rating (1-5)" value={review.rating} onChange={e => updateItem("testimonials", i, "rating", e.target.value)} />
-                        </div>
-                        <textarea className={`${INPUT_STYLE} h-20`} value={review.text} onChange={e => updateItem("testimonials", i, "text", e.target.value)} placeholder="Review content..." />
-                    </div>
-                ))}
-                <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
-                    <Plus className="w-4 h-4" /> Add Review
-                </button>
+              {book.layoutConfig?.testimonials?.map((review, i) => (
+                <div key={i} className="p-4 bg-[#FAFBF9] rounded-xl border border-[#E3E8E5] mb-4 relative">
+                  <button type="button" onClick={() => removeItem("testimonials", i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                  <div className="grid md:grid-cols-3 gap-4 mb-3">
+                    <input className={INPUT_STYLE} placeholder="Name" value={review.name} onChange={e => updateItem("testimonials", i, "name", e.target.value)} />
+                    <input className={INPUT_STYLE} placeholder="Role/Location" value={review.role} onChange={e => updateItem("testimonials", i, "role", e.target.value)} />
+                    <input className={INPUT_STYLE} type="number" placeholder="Rating (1-5)" value={review.rating} onChange={e => updateItem("testimonials", i, "rating", e.target.value)} />
+                  </div>
+                  <textarea className={`${INPUT_STYLE} h-20`} value={review.text} onChange={e => updateItem("testimonials", i, "text", e.target.value)} placeholder="Review content..." />
+                </div>
+              ))}
+              <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+                <Plus className="w-4 h-4" /> Add Review
+              </button>
             </Card>
           </div>
 

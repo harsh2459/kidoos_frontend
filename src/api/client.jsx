@@ -1,46 +1,45 @@
 import axios from "axios";
 
-/** Resolve base URL and normalize to ".../api" */
 function resolveBaseURL() {
   let u =
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    // "https://kiddosintellect.com/api";
-        "http://localhost:5050/api";
+    "https://kiddosintellect.com/api";
+        // "http://localhost:5050/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
-  const apiIdx = u.toLowerCase().lastIndexOf("/api");      
+  const apiIdx = u.toLowerCase().lastIndexOf("/api"); 
 
   if (apiIdx === -1) {
     u = `${u}/api`;
-  } else if (apiIdx !== u.length - 4) {
+  } else if (apiIdx !== u.length - 4) { 
     u = u.slice(0, apiIdx + 4);
-  }
+  } 
   return u;
 }
 
 const BASE_URL = resolveBaseURL();
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 20000,
-  headers: {
-    Accept: "application/json"
-  },
-  validateStatus: (s) => (s >= 200 && s < 300) || s === 304 || s === 400 || s === 401 || s === 422,
-});
+  const api = axios.create({
+    baseURL: BASE_URL,
+    timeout: 20000,
+    headers: {
+      Accept: "application/json"
+    },
+    validateStatus: (s) => (s >= 200 && s < 300) || s === 304 || s === 400 || s === 401 || s === 422,
+  });
 
-function getTokens() {
+function getTokens() {  
   try {
     return {
-      admin: localStorage.getItem("admin_jwt") || "",
-      customer: localStorage.getItem("customer_jwt") || "",
+      admin: localStorage.getItem("admin_jwt"),
+      customer: localStorage.getItem("customer_jwt"),
     };
   } catch {
     return { admin: "", customer: "" };
   }
-}
+} 
 
 /** ✅ IMPROVED: Attach tokens based on URL pattern and meta.auth */
 api.interceptors.request.use((config) => {
@@ -52,10 +51,11 @@ api.interceptors.request.use((config) => {
   if (metaAuth === "admin") {
     token = getTokens().admin;
   } else if (metaAuth === "customer") {
-    token = getTokens().customer;
+    token = getTokens().customer; 
   } else if (metaAuth === "none") {
     token = "";
   }
+  
   // ✅ Priority 2: Auto-detect from URL pattern
   else if (url.startsWith("/customer/")) {
     token = getTokens().customer;
@@ -116,7 +116,7 @@ api.interceptors.response.use(
           localStorage.removeItem("admin_jwt");
           if (typeof window !== "undefined" && window.location.pathname !== "/admin/login") {
             window.location.href = "/admin/login";
-          }
+          } 
         }
       } catch (e) {
         console.error("Error handling 401:", e);

@@ -6,7 +6,8 @@ import { useCustomer } from "../contexts/CustomerAuth";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
 import {
-  Menu, X, ShoppingBag, User, LogOut, ShieldCheck, Search
+  Menu, X, ShoppingBag, User, LogOut, ShieldCheck, Search,
+  Home
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -101,14 +102,6 @@ export default function Navbar() {
 
         {/* RIGHT: Icons & Actions */}
         <div className="flex items-center gap-3 sm:gap-5 z-50 relative">
-
-          {/* SEARCH ICON (Optional Addition for functionality) */}
-          {showShopUI && (
-             <button className="p-2 text-[#3E2723] hover:text-[#D4AF37] transition-colors rounded-full hover:bg-[#D4AF37]/10 hidden sm:block">
-               <Search className="w-5 h-5" />
-             </button>
-          )}
-
           {/* CART ICON */}
           {showShopUI && nav.includes("cart") && (
             <Link
@@ -155,15 +148,17 @@ export default function Navbar() {
           {/* ADMIN CHIP */}
           {isAdmin && (
             <div className="relative hidden sm:block">
-              <details className="group relative">
+              <details className="group relative mt-[9px]">
                 <summary className="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition-all text-sm font-medium text-[#3E2723]">
                   <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
                   <span className="font-['Cinzel'] font-bold">Admin</span>
                 </summary>
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-[#D4AF37]/30 rounded-xl shadow-[0_10px_30px_rgba(62,39,35,0.1)] p-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-4 py-2 border-b border-[#F4F7F5] text-xs text-[#8A7A5E] font-['Lato']">
-                    Signed in as {admin?.name || "Admin"}
-                  </div>
+                <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-[#D4AF37]/30 rounded-xl shadow-[0_10px_30px_rgba(62,39,35,0.1)] p-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <Link to="/admin/orders">
+                    <button className="w-full text-left px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 flex items-center gap-2 rounded-lg transition-colors font-medium">
+                      <Home className="w-4 h-4" /> AdminPage
+                    </button>
+                  </Link>
                   <button
                     onClick={() => logoutAdmin()}
                     className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 rounded-lg transition-colors font-medium"
@@ -196,14 +191,14 @@ export default function Navbar() {
             ${isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}
         `}
         style={{
-            backgroundImage: `url('/images/homepage/parchment-bg.png')`, // Ensure this path is correct
-            backgroundSize: 'cover'
+          backgroundImage: `url('/images/homepage/parchment-bg.png')`, // Ensure this path is correct
+          backgroundSize: 'cover'
         }}
       >
         {/* Mandala Watermark inside menu */}
-        <div 
-            className="absolute inset-0 opacity-10 pointer-events-none" 
-            style={{ backgroundImage: mandalaBg, backgroundSize: '300px', backgroundRepeat: 'repeat' }}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ backgroundImage: mandalaBg, backgroundSize: '300px', backgroundRepeat: 'repeat' }}
         ></div>
 
         <div className="flex flex-col p-8 space-y-6 text-center relative z-10">

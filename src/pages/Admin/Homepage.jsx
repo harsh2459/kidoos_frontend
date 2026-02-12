@@ -7,7 +7,7 @@ import {
   Save, Upload, Trash2, ArrowUp, ArrowDown, 
   Layout, Type, Image as ImageIcon, Grid,
   Images, Plus, Layers, LayoutTemplate, Monitor,
-  Puzzle, Gift // ✅ Icons for Puzzle & Reward
+  Puzzle, Gift 
 } from "lucide-react";
 
 export default function HomepageAdmin() {
@@ -31,7 +31,7 @@ export default function HomepageAdmin() {
 
         if (settingsRes.data.ok) {
           const loadedBlocks = (settingsRes.data.homepage?.blocks || []).map(b => {
-             // Migration helpers for older blocks
+             // Migration helpers
              if(b.type === 'slider') {
                  b.sliderHeight = b.sliderHeight || "medium";
                  if(b.slides) {
@@ -78,7 +78,6 @@ export default function HomepageAdmin() {
         if (nb.image) nb.image = toRelativeFromPublic(nb.image);
         if (nb.type === "hero") nb.image = toRelativeFromPublic(nb.image);
         
-        // ✅ Clean Puzzle Images (Levels + Reward)
         if (nb.type === "puzzle") {
             if (nb.rewardImage) nb.rewardImage = toRelativeFromPublic(nb.rewardImage);
             if (nb.levels) {
@@ -170,7 +169,6 @@ export default function HomepageAdmin() {
           {blocks.map((b, i) => (
             <div key={i} className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm overflow-hidden transition-all hover:shadow-md group">
               
-              {/* Block Header */}
               <div className="bg-[#FAFBF9] border-b border-[#E3E8E5] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border ${
@@ -204,7 +202,6 @@ export default function HomepageAdmin() {
                 </div>
               </div>
 
-              {/* Block Content */}
               <div className="p-6">
                 <BlockEditor 
                   block={b} 
@@ -223,7 +220,6 @@ export default function HomepageAdmin() {
           )}
         </div>
       </div>
-      
       <style>{`
         .input-base { width: 100%; background-color: #FAFBF9; border: 1px solid #DCE4E0; border-radius: 0.75rem; padding: 0.75rem 1rem; outline: none; transition: all; }
         .input-base:focus { border-color: #1A3C34; ring: 2px solid rgba(26,60,52,0.2); }
@@ -273,7 +269,6 @@ function defaultBlock(type) {
     ]
   };
 
-  // ✅ UPDATED: Progressive Puzzle Block (No manual Coupon/Slug fields)
   if (type === "puzzle") return { 
     type, 
     title: "Puzzle Challenge!", 
@@ -284,7 +279,7 @@ function defaultBlock(type) {
         { difficulty: "hard", image: "", label: "Level 3: Hard", gridSize: 5, maxMoves: 100 }
     ],
     winMessage: "You are a Puzzle Master!",
-    rewardImage: "" // Just the visual reward image
+    rewardImage: "" 
   };
 
   return { type };
@@ -449,7 +444,6 @@ function BlockEditor({ block, onChange, categories }) {
         </div>
       );
     
-    // ✅ UPDATED: Progressive Puzzle Editor (Simplified Reward Config)
     case "puzzle":
       const levels = block.levels || defaultBlock('puzzle').levels;
       return (
@@ -461,8 +455,6 @@ function BlockEditor({ block, onChange, categories }) {
 
            <div className="space-y-4">
                <h3 className="font-bold text-[#1A3C34] flex items-center gap-2 border-b pb-2"><Puzzle className="w-4 h-4" /> Game Levels</h3>
-               
-               {/* Level 1: Easy */}
                <div className="border border-green-200 bg-green-50/50 p-4 rounded-xl">
                     <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
                         <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div> Level 1: Easy (3x3)</span>
@@ -471,7 +463,6 @@ function BlockEditor({ block, onChange, categories }) {
                     <ImageUpload label="Easy Image (3x3)" value={levels[0]?.image} onChange={v => updateLevel(0, 'image', v)} />
                </div>
 
-               {/* Level 2: Medium */}
                <div className="border border-yellow-200 bg-yellow-50/50 p-4 rounded-xl">
                     <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
                         <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500"></div> Level 2: Medium (4x4)</span>
@@ -480,7 +471,6 @@ function BlockEditor({ block, onChange, categories }) {
                     <ImageUpload label="Medium Image (4x4)" value={levels[1]?.image} onChange={v => updateLevel(1, 'image', v)} />
                </div>
 
-               {/* Level 3: Hard */}
                <div className="border border-red-200 bg-red-50/50 p-4 rounded-xl">
                     <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
                         <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> Level 3: Hard (5x5)</span>
@@ -492,27 +482,19 @@ function BlockEditor({ block, onChange, categories }) {
                         </div>
                         <div>
                             <label className="text-sm font-bold text-[#2C3E38] block mb-2">Max Moves Allowed</label>
-                            <input 
-                                type="number" 
-                                className="input-base" 
-                                value={levels[2]?.maxMoves || 100} 
-                                onChange={e => updateLevel(2, 'maxMoves', Number(e.target.value))} 
-                            />
+                            <input type="number" className="input-base" value={levels[2]?.maxMoves || 100} onChange={e => updateLevel(2, 'maxMoves', Number(e.target.value))} />
                             <p className="text-xs text-red-500 mt-1 font-medium">Game over if moves exceed this limit.</p>
                         </div>
                     </div>
                </div>
            </div>
 
-           {/* ✅ Reward Config Section (No slug/coupon fields needed) */}
            <div className="border-t border-gray-200 pt-6">
                <h3 className="font-bold text-[#1A3C34] flex items-center gap-2 mb-4"><Gift className="w-4 h-4" /> Winner Rewards</h3>
-               
                <div className="grid md:grid-cols-2 gap-6">
                    <div className="md:col-span-2">
                        <ImageUpload label="Reward Image (Appears on Win)" value={block.rewardImage} onChange={v => onChange({ ...block, rewardImage: v })} />
                    </div>
-                   
                    <div className="md:col-span-2">
                        <Input label="Grand Win Message (Shown after Level 3)" value={block.winMessage} onChange={v => onChange({ ...block, winMessage: v })} placeholder="Champion! You unlocked 20% off!" />
                    </div>
@@ -522,7 +504,46 @@ function BlockEditor({ block, onChange, categories }) {
       );
 
     case "banner": return (<div className="grid md:grid-cols-2 gap-6"><div className="md:col-span-2"><ImageUpload label="Banner Image" value={block.image} onChange={v => onChange({ ...block, image: v })} /></div><Input label="Button Text" value={block.ctaText} onChange={v => onChange({ ...block, ctaText: v })} /><Input label="Button Link" value={block.ctaLink} onChange={v => onChange({ ...block, ctaLink: v })} /></div>);
-    case "grid": return (<div className="grid md:grid-cols-2 gap-6"><Input label="Section Title" value={block.title} onChange={v => onChange({ ...block, title: v })} /><div><label className="text-sm font-bold text-[#2C3E38] block mb-2">Category Filter</label><select className="input-base" value={block.query.category} onChange={e => onChange({ ...block, query: { ...block.query, category: e.target.value } })}><option value="">All Categories</option>{categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}</select></div><Input label="Search Query" value={block.query.q} onChange={v => onChange({ ...block, query: { ...block.query, q: v } })} /><Input label="Limit" type="number" value={block.query.limit} onChange={v => onChange({ ...block, query: { ...block.query, limit: Number(v) || 8 } })} /></div>);
+    
+    // ✅ ADDED SORT FILTER HERE
+    case "grid": return (
+      <div className="grid md:grid-cols-2 gap-6">
+        <Input label="Section Title" value={block.title} onChange={v => onChange({ ...block, title: v })} />
+        
+        {/* Category Filter */}
+        <div>
+          <label className="text-sm font-bold text-[#2C3E38] block mb-2">Category Filter</label>
+          <select 
+            className="input-base" 
+            value={block.query.category} 
+            onChange={e => onChange({ ...block, query: { ...block.query, category: e.target.value } })}
+          >
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c._id} value={c.slug}>{c.name}</option>)}
+          </select>
+        </div>
+
+        {/* ✅ NEW SORT SELECTOR */}
+        <div>
+          <label className="text-sm font-bold text-[#2C3E38] block mb-2">Sort Order</label>
+          <select
+            className="input-base"
+            value={block.query.sort || "new"}
+            onChange={e => onChange({ ...block, query: { ...block.query, sort: e.target.value } })}
+          >
+            <option value="new">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="priceAsc">Price: Low to High</option>
+            <option value="priceDesc">Price: High to Low</option>
+            <option value="a-z">Name: A to Z</option>
+          </select>
+        </div>
+
+        <Input label="Search Query" value={block.query.q} onChange={v => onChange({ ...block, query: { ...block.query, q: v } })} />
+        <Input label="Limit" type="number" value={block.query.limit} onChange={v => onChange({ ...block, query: { ...block.query, limit: Number(v) || 8 } })} />
+      </div>
+    );
+    
     case "html": return (<div className="space-y-4"><Input label="Block Name" value={block.title} onChange={v => onChange({ ...block, title: v })} /><div><label className="text-sm font-bold text-[#2C3E38] block mb-2">HTML</label><textarea value={block.html} onChange={e => onChange({ ...block, html: e.target.value })} className="input-base h-40 font-mono text-sm" /></div></div>);
     default: return null;
   }

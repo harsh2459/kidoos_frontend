@@ -33,6 +33,7 @@
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
     "react-tsparticles": "^2.12.2",
+    "recharts": "^3.7.0",
     "slugify": "^1.6.6",
     "styled-components": "^6.1.19",
     "tailwind-merge": "^3.4.0",

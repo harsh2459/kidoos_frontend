@@ -35,6 +35,8 @@ export default function AdminOrders() {
 
   // Modal States
   const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [showProviderModal, setShowProviderModal] = useState(false);
+  const [providerOrderId, setProviderOrderId] = useState(null);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundForm, setRefundForm] = useState({
     orderId: '',
@@ -240,28 +242,36 @@ export default function AdminOrders() {
     );
 
     if (ordersWithAwb.length === 0) {
-      t.warn("No shipments found in selection. Create Shipments first.");
+      t.warn("No BlueDart shipments found in selection. Create Shipments first.");
       return;
     }
 
-    t.info(`Opening ${ordersWithAwb.length} labels...`);
+    const orderIds = ordersWithAwb.map(o => String(o._id));
+    t.info(`Generating ${orderIds.length} label(s)...`);
+    setActionLoading(true);
 
-    for (const order of ordersWithAwb) {
-      let url = order.shipping?.bd?.labelUrl;
-      if (url) {
-        const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-        window.open(fullUrl, '_blank');
-      } else {
-        try {
-          const { data } = await BlueDartAPI.generateLabel(order._id, auth);
-          if (data.ok && data.data?.downloadUrl) {
-            window.open(data.data.downloadUrl, '_blank');
+    try {
+      const { data } = await BlueDartAPI.bulkGenerateLabels(orderIds, auth);
+      if (data.ok) {
+        const labels = data.data?.success || [];
+        const failed = data.data?.failed || [];
+
+        for (const label of labels) {
+          if (label.pdf) {
+            openBase64Pdf(label.pdf);
+            await new Promise(r => setTimeout(r, 300));
           }
-        } catch (e) {
-          console.error("Could not fetch label for", order._id);
         }
+
+        if (labels.length > 0) t.success(`Opened ${labels.length} label(s)`);
+        if (failed.length > 0) t.warn(`${failed.length} label(s) failed`);
+      } else {
+        t.err(data.error || "Bulk label generation failed");
       }
-      await new Promise(r => setTimeout(r, 300));
+    } catch (e) {
+      t.err(e.message || "Failed to generate labels");
+    } finally {
+      setActionLoading(false);
     }
   }
 
@@ -316,7 +326,20 @@ export default function AdminOrders() {
     }
   }
 
-  // ✅ SMART LABEL HANDLER: Detects provider and prints accordingly
+  // Opens a base64 PDF in a new tab
+  function openBase64Pdf(base64) {
+    const byteChars = atob(base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) {
+      byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
+  // Smart label handler: Detects provider and prints accordingly
   async function handlePrintLabel(order) {
     const bd = order?.shipping?.bd || {};
     const sr = order?.shipping?.shiprocket || {};
@@ -341,23 +364,13 @@ export default function AdminOrders() {
       return;
     }
 
-    // 2. BLUEDART LABEL
+    // 2. BLUEDART LABEL - Generate on demand
     if (bd.awbNumber) {
-      const existingLabelUrl = bd.labelUrl;
-      if (existingLabelUrl) {
-        const url = existingLabelUrl.startsWith('http') ? existingLabelUrl : `${BASE_URL}${existingLabelUrl}`;
-        window.open(url, '_blank');
-        return;
-      }
-
       t.info("Generating BlueDart Label...");
       try {
-        const { data } = await BlueDartAPI.generateLabel(order._id, auth);
-        if (data.ok && data.data?.downloadUrl) {
-          const newLabelUrl = data.data.downloadUrl;
-          const fullUrl = newLabelUrl.startsWith('http') ? newLabelUrl : `${BASE_URL}${newLabelUrl}`;
-          window.open(fullUrl, '_blank');
-          load();
+        const { data } = await BlueDartAPI.generateLabelOnDemand(order._id, auth);
+        if (data.ok && data.data?.pdf) {
+          openBase64Pdf(data.data.pdf);
         } else {
           t.err("Failed to generate label");
         }
@@ -498,12 +511,49 @@ export default function AdminOrders() {
 
   const canCreateShipment = (order) => {
     const paymentStatus = order.payment?.status;
-    const hasAwb = order.shipping?.bd?.awbNumber;
+    const hasAwb = order.shipping?.bd?.awbNumber || order.shipping?.shiprocket?.awb;
     const isPaymentComplete = paymentStatus === 'paid' ||
       (paymentStatus === 'partially_paid' && order.payment?.mode === 'half');
 
     return order.status === 'confirmed' && !hasAwb && isPaymentComplete;
   };
+
+  // Opens the provider choice modal for a single order
+  function openProviderChoice(orderId) {
+    setProviderOrderId(orderId);
+    setShowProviderModal(true);
+  }
+
+  // Handle provider selection from the modal
+  async function handleProviderSelect(provider) {
+    const id = providerOrderId;
+    setShowProviderModal(false);
+    setProviderOrderId(null);
+
+    if (provider === 'bluedart') {
+      setSelected(new Set([id]));
+      setTimeout(() => openShipmentModal(), 100);
+    } else if (provider === 'shiprocket') {
+      setActionLoading(true);
+      try {
+        const data = await ShipAPI.create([id], auth);
+        if (data.ok) {
+          const results = data.data;
+          const success = results.success?.length || 0;
+          const failed = results.failed?.length || 0;
+          if (success > 0) t.success(`Shiprocket shipment created!`);
+          if (failed > 0) t.err(`Failed: ${results.failed[0]?.error || 'Check logs'}`);
+          await load();
+        } else {
+          t.err(data.error || "Shiprocket creation failed");
+        }
+      } catch (e) {
+        t.err(e.response?.data?.error || "Shiprocket creation failed");
+      } finally {
+        setActionLoading(false);
+      }
+    }
+  }
 
   const canRefund = (order) => {
     const paymentStatus = order.payment?.status;
@@ -609,36 +659,36 @@ export default function AdminOrders() {
         {/* Search and Filters */}
         <div className="flex gap-3 mb-6">
           <div className="flex-1 relative">
-            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
             <input
               type="text"
               placeholder="Search by Order ID, Customer, Phone, AWB..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="w-full pl-10 pr-4 py-[16px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-5 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className={cx(
+              "flex items-center gap-2 px-5 py-3 border rounded-xl text-sm font-medium transition-colors shadow-sm",
+              showFilters
+                ? "border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100"
+                : "border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            )}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
             Filters
-            {showFilters && (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            )}
+            <svg className={cx("w-4 h-4 transition-transform", showFilters && "rotate-180")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
         </div>
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-2">Date Filter</label>
@@ -713,46 +763,58 @@ export default function AdminOrders() {
               </div>
             </div>
 
-            {/* Bulk Actions */}
-            {hasSelection && (
-              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 flex-wrap">
-                {/* BlueDart Actions */}
-                <button
-                  onClick={openShipmentModal}
-                  disabled={actionLoading || !selectedProfile}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Create (BlueDart) ({selected.size})
-                </button>
-                <button
-                  onClick={bulkPrintLabels}
-                  disabled={actionLoading}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
-                >
-                  Print BlueDart Labels
-                </button>
+          </div>
+        )}
 
-                {/* ✅ SHIPROCKET PANEL INSERTED HERE */}
-                <ShiprocketPanel selected={selected} auth={auth} onSuccess={load} />
+        {/* Bulk Actions Bar - Always visible when orders are selected */}
+        {hasSelection && (
+          <div className="bg-white rounded-lg border border-blue-200 shadow-sm p-4 mb-6 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {selected.size} selected
+            </div>
 
-                <button
-                  onClick={() => setSelected(new Set())}
-                  className="ml-auto px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
-                >
-                  Clear Selection
-                </button>
-              </div>
-            )}
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            {/* BlueDart Actions */}
+            <button
+              onClick={openShipmentModal}
+              disabled={actionLoading || !selectedProfile}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Truck className="w-4 h-4" />
+              BlueDart ({selected.size})
+            </button>
+            <button
+              onClick={bulkPrintLabels}
+              disabled={actionLoading}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Printer className="w-4 h-4" />
+              Print Labels
+            </button>
+
+            {/* Shiprocket Actions */}
+            <ShiprocketPanel selected={selected} auth={auth} onSuccess={load} />
+
+            <button
+              onClick={() => setSelected(new Set())}
+              className="ml-auto px-4 py-2 border border-gray-300 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Clear
+            </button>
           </div>
         )}
 
         {/* Orders Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-white">
+              <thead className="bg-gray-50/80">
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-left w-12">
+                  <th scope="col" className="px-6 py-3.5 text-left w-12">
                     <input
                       type="checkbox"
                       checked={allOnPageIds.length > 0 && allOnPageIds.every(id => selected.has(id))}
@@ -760,23 +822,23 @@ export default function AdminOrders() {
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">DATE</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ORDER ID</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ITEMS</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">CUSTOMER</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">AMOUNT</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">STATUS</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">SHIPPING</th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Order ID</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Items</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Shipping</th>
+                  <th scope="col" className="px-6 py-3.5 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading && (
                   <tr>
-                    <td colSpan="9" className="px-6 py-12 text-center">
-                      <div className="flex justify-center items-center">
-                        <div className="animate-spin rounded-md h-8 w-8 border-b-2 border-blue-600"></div>
-                        <span className="ml-3 text-gray-600">Loading orders...</span>
+                    <td colSpan="9" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-blue-600"></div>
+                        <span className="text-sm text-gray-500">Loading orders...</span>
                       </div>
                     </td>
                   </tr>
@@ -784,8 +846,14 @@ export default function AdminOrders() {
 
                 {!loading && items.length === 0 && (
                   <tr>
-                    <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
-                      No orders found
+                    <td colSpan="9" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                        <p className="text-sm font-medium text-gray-500">No orders found</p>
+                        <p className="text-xs text-gray-400">Try adjusting your filters or search</p>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -928,7 +996,11 @@ export default function AdminOrders() {
 
                             </>
                           ) : canCreateShipment(o) ? (
-                            <button onClick={() => { setSelected(new Set([id])); setTimeout(() => openShipmentModal(), 100); }} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700">
+                            <button
+                              onClick={() => openProviderChoice(id)}
+                              disabled={actionLoading}
+                              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-all"
+                            >
                               Create Shipment
                             </button>
                           ) : null}
@@ -944,6 +1016,34 @@ export default function AdminOrders() {
               </tbody>
             </table>
           </div>
+
+          {/* Table Footer */}
+          {!loading && items.length > 0 && (
+            <div className="px-6 py-3.5 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                Showing <span className="font-medium text-gray-700">{items.length}</span> of <span className="font-medium text-gray-700">{total}</span> orders
+              </p>
+              {total > 20 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-xs text-gray-600 font-medium px-2">Page {page}</span>
+                  <button
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={items.length < 20}
+                    className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1096,6 +1196,64 @@ export default function AdminOrders() {
                   {actionLoading ? "Processing..." : "Process Refund"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Provider Choice Modal */}
+      {showProviderModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" onClick={() => setShowProviderModal(false)}></div>
+
+            <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+              <div className="text-center mb-6">
+                <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 mb-3">
+                  <Truck className="h-7 w-7 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Choose Shipping Provider</h3>
+                <p className="text-sm text-gray-500 mt-1">Select a provider to create the shipment</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleProviderSelect('bluedart')}
+                  disabled={!selectedProfile}
+                  className="flex flex-col items-center gap-3 p-5 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                    <Truck className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">BlueDart</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Express Delivery</p>
+                  </div>
+                  {!selectedProfile && (
+                    <p className="text-[10px] text-red-500">No profile selected</p>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleProviderSelect('shiprocket')}
+                  className="flex flex-col items-center gap-3 p-5 border-2 border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                    <Rocket className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">Shiprocket</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Multi-Courier</p>
+                  </div>
+                </button>
+              </div>
+
+              <button
+                onClick={() => setShowProviderModal(false)}
+                className="w-full mt-4 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

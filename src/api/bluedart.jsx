@@ -65,10 +65,22 @@ export const BlueDartAPI = {
       api.post("/bluedart/shipment/cancel", { awbNumber, reason, orderId }, auth)
     ),
 
-  // Generate shipping label PDF
+  // Generate shipping label PDF (legacy - returns stored URL)
   generateLabel: (orderId, auth) =>
     handleApiCall(() =>
       api.post(`/labels/generate/${orderId}`, {}, auth)
+    ),
+
+  // On-demand label generation - returns base64 PDF
+  generateLabelOnDemand: (orderId, auth) =>
+    handleApiCall(() =>
+      api.post(`/labels/on-demand/${orderId}`, {}, auth)
+    ),
+
+  // Bulk on-demand label generation - returns array of base64 PDFs
+  bulkGenerateLabels: (orderIds, auth) =>
+    handleApiCall(() =>
+      api.post(`/labels/bulk-generate`, { orderIds }, auth)
     ),
 
   // Get download URL for label
