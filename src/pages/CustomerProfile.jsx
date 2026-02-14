@@ -17,8 +17,8 @@ const CustomerProfile = () => {
   const [loading, setLoading] = useState(true);
 
   // --- VRINDAVAN THEME ASSETS ---
-  const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+  const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+  const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
   useEffect(() => {
     // Wait a bit for context to load

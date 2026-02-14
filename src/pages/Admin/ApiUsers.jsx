@@ -137,12 +137,12 @@ export default function ApiUsers() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Shipping Profiles</h1>
+                    <h1 className="text-3xl font-bold text-[#384959] tracking-tight">Shipping Profiles</h1>
                     <p className="text-[#5C756D] mt-1 text-sm">Manage API credentials for your courier partners.</p>
                 </div>
                 <button 
                     onClick={activeService === 'bluedart' ? openBdNew : openSrNew} 
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] shadow-md transition-all active:scale-95"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] shadow-md transition-all active:scale-95"
                 >
                     <Plus className="w-5 h-5" /> Add {activeService === 'bluedart' ? 'BlueDart' : 'Shiprocket'} Profile
                 </button>
@@ -154,8 +154,8 @@ export default function ApiUsers() {
                     onClick={() => setActiveService("bluedart")}
                     className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-all ${
                         activeService === "bluedart" 
-                        ? "border-[#1A3C34] text-[#1A3C34]" 
-                        : "border-transparent text-[#8BA699] hover:text-[#1A3C34]"
+                        ? "border-[#384959] text-[#384959]" 
+                        : "border-transparent text-[#8BA699] hover:text-[#384959]"
                     }`}
                 >
                     <Truck className="w-4 h-4" /> BlueDart
@@ -164,8 +164,8 @@ export default function ApiUsers() {
                     onClick={() => setActiveService("shiprocket")}
                     className={`flex items-center gap-2 px-6 py-3 text-sm font-bold border-b-2 transition-all ${
                         activeService === "shiprocket" 
-                        ? "border-[#1A3C34] text-[#1A3C34]" 
-                        : "border-transparent text-[#8BA699] hover:text-[#1A3C34]"
+                        ? "border-[#384959] text-[#384959]" 
+                        : "border-transparent text-[#8BA699] hover:text-[#384959]"
                     }`}
                 >
                     <Rocket className="w-4 h-4" /> Shiprocket
@@ -189,34 +189,34 @@ export default function ApiUsers() {
                             </thead>
                             <tbody className="divide-y divide-[#F4F7F5]">
                                 {bdLoading ? (
-                                    <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1A3C34]" /></td></tr>
+                                    <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#384959]" /></td></tr>
                                 ) : bdList.length === 0 ? (
                                     <tr><td colSpan={6} className="py-20 text-center text-[#5C756D]"><p>No BlueDart profiles found.</p></td></tr>
                                 ) : bdList.map((p) => (
                                     <tr key={p._id} className="group hover:bg-[#FAFBF9] transition-colors">
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border ${p.isDefault ? "bg-[#1A3C34] text-white border-[#1A3C34]" : "bg-[#E8F5E9] text-[#1A3C34] border-[#C8E6C9]"}`}>
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border ${p.isDefault ? "bg-[#384959] text-white border-[#384959]" : "bg-[#E8F5E9] text-[#384959] border-[#C8E6C9]"}`}>
                                                     {p.isDefault ? <Star className="w-4 h-4 fill-current" /> : String(p.label).slice(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-[#1A3C34]">{p.label}</div>
+                                                    <div className="font-bold text-[#384959]">{p.label}</div>
                                                     {p.isDefault && <span className="text-[10px] font-bold text-[#5C756D]">Primary Account</span>}
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="group/copy flex items-center gap-2">
-                                                <div className="font-mono text-xs text-[#1A3C34] bg-[#F4F7F5] px-2 py-1 rounded-md border border-[#E3E8E5]">{p.clientName}</div>
-                                                <button onClick={() => copyToClipboard(p.clientName)} className="text-[#8BA699] hover:text-[#1A3C34] opacity-0 group-hover/copy:opacity-100 transition-opacity"><Copy size={12} /></button>
+                                                <div className="font-mono text-xs text-[#384959] bg-[#F4F7F5] px-2 py-1 rounded-md border border-[#E3E8E5]">{p.clientName}</div>
+                                                <button onClick={() => copyToClipboard(p.clientName)} className="text-[#8BA699] hover:text-[#384959] opacity-0 group-hover/copy:opacity-100 transition-opacity"><Copy size={12} /></button>
                                             </div>
                                         </td>
                                         <td className="py-4 px-4 hidden lg:table-cell text-[#5C756D]"><div className="flex items-center gap-1.5 text-xs"><Box className="w-3.5 h-3.5" />{p.defaults?.length}x{p.defaults?.breadth}x{p.defaults?.height}cm • {p.defaults?.weight}kg</div></td>
                                         <td className="py-4 px-4 hidden md:table-cell"><div className="text-xs text-[#5C756D] max-w-[200px] truncate flex items-center gap-2"><Building2 className="w-3.5 h-3.5 shrink-0" /><span className="truncate">{p.consigner?.name || "—"}</span></div></td>
-                                        <td className="py-4 px-4"><span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]"><CheckCircle2 className="w-3 h-3" /> Active</span></td>
+                                        <td className="py-4 px-4"><span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#384959] border border-[#C8E6C9]"><CheckCircle2 className="w-3 h-3" /> Active</span></td>
                                         <td className="py-4 px-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => setBdEditing(p)} className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#1A3C34] border border-transparent hover:border-[#E3E8E5] transition-all"><Edit3 className="w-4 h-4" /></button>
+                                                <button onClick={() => setBdEditing(p)} className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#384959] border border-transparent hover:border-[#E3E8E5] transition-all"><Edit3 className="w-4 h-4" /></button>
                                                 {!p.isDefault && <button onClick={() => handleDelete('bd', p._id)} className="p-2 rounded-lg text-[#5C756D] hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 transition-all"><Trash2 className="w-4 h-4" /></button>}
                                             </div>
                                         </td>
@@ -245,40 +245,40 @@ export default function ApiUsers() {
                             </thead>
                             <tbody className="divide-y divide-[#F4F7F5]">
                                 {srLoading ? (
-                                    <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1A3C34]" /></td></tr>
+                                    <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-[#384959]" /></td></tr>
                                 ) : srList.length === 0 ? (
                                     <tr><td colSpan={6} className="py-20 text-center text-[#5C756D]"><p>No Shiprocket profiles found.</p></td></tr>
                                 ) : srList.map((p) => (
                                     <tr key={p._id} className="group hover:bg-[#FAFBF9] transition-colors">
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border ${p.active ? "bg-[#1A3C34] text-white border-[#1A3C34]" : "bg-[#E8F5E9] text-[#1A3C34] border-[#C8E6C9]"}`}>
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border ${p.active ? "bg-[#384959] text-white border-[#384959]" : "bg-[#E8F5E9] text-[#384959] border-[#C8E6C9]"}`}>
                                                     {p.active ? <Zap className="w-4 h-4 fill-current" /> : String(p.label).slice(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <div className="font-bold text-[#1A3C34]">{p.label}</div>
+                                                    <div className="font-bold text-[#384959]">{p.label}</div>
                                                     {p.active && <span className="text-[10px] font-bold text-[#5C756D]">Active Account</span>}
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-4 text-[#1A3C34] font-mono text-xs">{p.email}</td>
+                                        <td className="py-4 px-4 text-[#384959] font-mono text-xs">{p.email}</td>
                                         <td className="py-4 px-4 text-[#5C756D] font-medium">{p.pickupLocation}</td>
                                         <td className="py-4 px-4 hidden lg:table-cell text-[#5C756D]">
                                             <div className="flex items-center gap-1.5 text-xs"><Box className="w-3.5 h-3.5" />{p.defaults?.length}x{p.defaults?.breadth}x{p.defaults?.height}cm • {p.defaults?.weight}kg</div>
                                         </td>
                                         <td className="py-4 px-4">
                                             {p.active ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]"><CheckCircle2 className="w-3 h-3" /> Active</span>
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#384959] border border-[#C8E6C9]"><CheckCircle2 className="w-3 h-3" /> Active</span>
                                             ) : (
-                                                <button onClick={() => handleSrActivate(p._id)} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F4F7F5] text-[#5C756D] border border-[#E3E8E5] hover:bg-[#1A3C34] hover:text-white transition-colors">Activate</button>
+                                                <button onClick={() => handleSrActivate(p._id)} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F4F7F5] text-[#5C756D] border border-[#E3E8E5] hover:bg-[#384959] hover:text-white transition-colors">Activate</button>
                                             )}
                                         </td>
                                         <td className="py-4 px-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => handleSrTest(p._id)} disabled={testingConnection === p._id} className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#1A3C34] border border-transparent hover:border-[#E3E8E5] transition-all" title="Test Connection">
+                                                <button onClick={() => handleSrTest(p._id)} disabled={testingConnection === p._id} className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#384959] border border-transparent hover:border-[#E3E8E5] transition-all" title="Test Connection">
                                                     {testingConnection === p._id ? <Loader2 className="w-4 h-4 animate-spin"/> : <RefreshCw className="w-4 h-4" />}
                                                 </button>
-                                                <button onClick={() => setSrEditing(p)} className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#1A3C34] border border-transparent hover:border-[#E3E8E5] transition-all"><Edit3 className="w-4 h-4" /></button>
+                                                <button onClick={() => setSrEditing(p)} className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#384959] border border-transparent hover:border-[#E3E8E5] transition-all"><Edit3 className="w-4 h-4" /></button>
                                                 {!p.active && <button onClick={() => handleDelete('sr', p._id)} className="p-2 rounded-lg text-[#5C756D] hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 transition-all"><Trash2 className="w-4 h-4" /></button>}
                                             </div>
                                         </td>
@@ -305,7 +305,7 @@ export default function ApiUsers() {
                         <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4 border border-red-100">
                             <AlertTriangle className="w-6 h-6 text-red-500" />
                         </div>
-                        <h3 className="text-lg font-bold text-[#1A3C34] mb-2">Delete Profile?</h3>
+                        <h3 className="text-lg font-bold text-[#384959] mb-2">Delete Profile?</h3>
                         <p className="text-[#5C756D] text-sm mb-6 leading-relaxed">Are you sure you want to delete this profile?</p>
                         <div className="flex gap-3">
                             <button onClick={() => setShowConfirm(null)} className="flex-1 px-4 py-2.5 text-[#5C756D] font-bold text-sm border border-[#E3E8E5] rounded-xl hover:bg-[#F4F7F5]">Cancel</button>
@@ -342,7 +342,7 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
         } catch (error) { t.error("Failed to save profile"); } finally { setSaving(false); }
     }
 
-    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699]";
+    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699]";
     const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5";
 
     return (
@@ -350,12 +350,12 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="px-6 py-4 border-b border-[#F4F7F5] bg-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#E8F5E9] text-[#1A3C34] rounded-lg"><Truck className="w-5 h-5" /></div>
-                        <div><h2 className="text-lg font-bold text-[#1A3C34]">{form._id ? "Edit BlueDart Profile" : "New BlueDart Profile"}</h2><p className="text-xs text-[#5C756D]">{form.label || "Untitled Profile"}</p></div>
+                        <div className="p-2 bg-[#E8F5E9] text-[#384959] rounded-lg"><Truck className="w-5 h-5" /></div>
+                        <div><h2 className="text-lg font-bold text-[#384959]">{form._id ? "Edit BlueDart Profile" : "New BlueDart Profile"}</h2><p className="text-xs text-[#5C756D]">{form.label || "Untitled Profile"}</p></div>
                     </div>
                     <div className="flex bg-[#F4F7F5] p-1 rounded-xl">
                         {[ { id: "credentials", label: "Credentials", icon: Key }, { id: "defaults", label: "Defaults", icon: Package }, { id: "warehouse", label: "Warehouse", icon: MapPin } ].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab.id ? "bg-white text-[#1A3C34] shadow-sm" : "text-[#5C756D] hover:text-[#1A3C34]"}`}><tab.icon size={14} /> <span className="hidden sm:inline">{tab.label}</span></button>
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab.id ? "bg-white text-[#384959] shadow-sm" : "text-[#5C756D] hover:text-[#384959]"}`}><tab.icon size={14} /> <span className="hidden sm:inline">{tab.label}</span></button>
                         ))}
                     </div>
                     <button onClick={onClose} className="p-2 text-[#5C756D] hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -364,7 +364,7 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
                     {activeTab === "credentials" && (
                         <div className="max-w-2xl mx-auto space-y-6">
                             <div className="bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm space-y-5">
-                                <h3 className="font-bold text-[#1A3C34] border-b border-[#F4F7F5] pb-2">Profile Identity</h3>
+                                <h3 className="font-bold text-[#384959] border-b border-[#F4F7F5] pb-2">Profile Identity</h3>
                                 <div className="grid grid-cols-2 gap-5">
                                     <div><label className={labelClass}>Profile Label</label><input className={inputClass} value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="Standard Delivery" /></div>
                                     <div><label className={labelClass}>Client Name / ID</label><input className={`${inputClass} font-mono`} value={form.clientName} onChange={e => setForm({ ...form, clientName: e.target.value })} placeholder="SUR96891" /></div>
@@ -372,8 +372,8 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
                             </div>
                             <div className="bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm space-y-5">
                                 <div className="flex items-center justify-between border-b border-[#F4F7F5] pb-2">
-                                    <h3 className="font-bold text-[#1A3C34]">API Secrets</h3>
-                                    <button onClick={() => setShowSecrets(!showSecrets)} className="text-xs font-bold text-[#5C756D] flex items-center gap-1 hover:text-[#1A3C34]">{showSecrets ? <EyeOff size={12} /> : <Eye size={12} />}{showSecrets ? "Hide Secrets" : "Show Secrets"}</button>
+                                    <h3 className="font-bold text-[#384959]">API Secrets</h3>
+                                    <button onClick={() => setShowSecrets(!showSecrets)} className="text-xs font-bold text-[#5C756D] flex items-center gap-1 hover:text-[#384959]">{showSecrets ? <EyeOff size={12} /> : <Eye size={12} />}{showSecrets ? "Hide Secrets" : "Show Secrets"}</button>
                                 </div>
                                 <div><label className={labelClass}>Shipping API Key</label><div className="relative"><input type={showSecrets ? "text" : "password"} className={`${inputClass} pr-10 font-mono`} value={form.shippingKey} onChange={e => setForm({ ...form, shippingKey: e.target.value })} /><Key className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699] w-4 h-4" /></div></div>
                                 <div><label className={labelClass}>Tracking API Key</label><div className="relative"><input type={showSecrets ? "text" : "password"} className={`${inputClass} pr-10 font-mono`} value={form.trackingKey} onChange={e => setForm({ ...form, trackingKey: e.target.value })} /><Key className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699] w-4 h-4" /></div></div>
@@ -382,7 +382,7 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
                     )}
                     {activeTab === "defaults" && (
                         <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm">
-                            <h3 className="font-bold text-[#1A3C34] mb-4">Standard Package Size</h3>
+                            <h3 className="font-bold text-[#384959] mb-4">Standard Package Size</h3>
                             <div className="grid grid-cols-2 gap-5">
                                 <div><label className={labelClass}>Weight (kg)</label><input type="number" step="0.1" className={inputClass} value={form.defaults.weight} onChange={e => setForm({ ...form, defaults: { ...form.defaults, weight: Number(e.target.value) } })} /></div>
                                 <div><label className={labelClass}>Length (cm)</label><input type="number" className={inputClass} value={form.defaults.length} onChange={e => setForm({ ...form, defaults: { ...form.defaults, length: Number(e.target.value) } })} /></div>
@@ -393,7 +393,7 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
                     )}
                     {activeTab === "warehouse" && (
                          <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm space-y-5">
-                            <h3 className="font-bold text-[#1A3C34] border-b border-[#F4F7F5] pb-2">Consigner Details</h3>
+                            <h3 className="font-bold text-[#384959] border-b border-[#F4F7F5] pb-2">Consigner Details</h3>
                             <div className="grid grid-cols-2 gap-5">
                                 <div><label className={labelClass}>Company Name</label><input className={inputClass} value={form.consigner.name} onChange={e => setForm({ ...form, consigner: { ...form.consigner, name: e.target.value } })} /></div>
                                 <div><label className={labelClass}>Phone</label><input className={inputClass} value={form.consigner.phone} onChange={e => setForm({ ...form, consigner: { ...form.consigner, phone: e.target.value } })} /></div>
@@ -406,15 +406,15 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
                 </div>
                 <div className="px-6 py-4 border-t border-[#F4F7F5] bg-white flex items-center justify-between">
                      <label className="flex items-center gap-3 cursor-pointer select-none">
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${form.isDefault ? 'bg-[#1A3C34] border-[#1A3C34]' : 'bg-white border-[#E3E8E5]'}`}>
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${form.isDefault ? 'bg-[#384959] border-[#384959]' : 'bg-white border-[#E3E8E5]'}`}>
                             {form.isDefault && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                         </div>
                         <input type="checkbox" className="hidden" checked={form.isDefault} onChange={e => setForm({ ...form, isDefault: e.target.checked })} />
-                        <span className="text-sm font-bold text-[#1A3C34]">Set as Primary Profile</span>
+                        <span className="text-sm font-bold text-[#384959]">Set as Primary Profile</span>
                     </label>
                     <div className="flex gap-3">
                         <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-[#E3E8E5] text-[#5C756D] font-bold text-sm hover:bg-[#F4F7F5] transition-all">Cancel</button>
-                        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] shadow-lg active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                        <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] shadow-lg active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {saving ? "Saving..." : "Save Profile"}
                         </button>
                     </div>
@@ -451,7 +451,7 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
     }
 
     // Using standard project styles
-    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699]";
+    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699]";
     const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5";
 
     return (
@@ -461,13 +461,13 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-[#F4F7F5] bg-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#E8F5E9] text-[#1A3C34] rounded-lg"><Rocket className="w-5 h-5" /></div>
-                        <div><h2 className="text-lg font-bold text-[#1A3C34]">{form._id ? "Edit Shiprocket Profile" : "New Shiprocket Profile"}</h2><p className="text-xs text-[#5C756D]">{form.label || "Untitled Profile"}</p></div>
+                        <div className="p-2 bg-[#E8F5E9] text-[#384959] rounded-lg"><Rocket className="w-5 h-5" /></div>
+                        <div><h2 className="text-lg font-bold text-[#384959]">{form._id ? "Edit Shiprocket Profile" : "New Shiprocket Profile"}</h2><p className="text-xs text-[#5C756D]">{form.label || "Untitled Profile"}</p></div>
                     </div>
                     {/* Tabs */}
                     <div className="flex bg-[#F4F7F5] p-1 rounded-xl">
                         {[ { id: "credentials", label: "Credentials", icon: Key }, { id: "defaults", label: "Defaults", icon: Package } ].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab.id ? "bg-white text-[#1A3C34] shadow-sm" : "text-[#5C756D] hover:text-[#1A3C34]"}`}><tab.icon size={14} /> <span className="hidden sm:inline">{tab.label}</span></button>
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab.id ? "bg-white text-[#384959] shadow-sm" : "text-[#5C756D] hover:text-[#384959]"}`}><tab.icon size={14} /> <span className="hidden sm:inline">{tab.label}</span></button>
                         ))}
                     </div>
                     <button onClick={onClose} className="p-2 text-[#5C756D] hover:bg-gray-100 rounded-lg"><X size={20} /></button>
@@ -478,7 +478,7 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
                     {activeTab === "credentials" && (
                         <div className="max-w-2xl mx-auto space-y-6">
                             <div className="bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm space-y-5">
-                                <h3 className="font-bold text-[#1A3C34] border-b border-[#F4F7F5] pb-2">Profile Identity</h3>
+                                <h3 className="font-bold text-[#384959] border-b border-[#F4F7F5] pb-2">Profile Identity</h3>
                                 <div className="grid grid-cols-2 gap-5">
                                     <div className="col-span-2">
                                         <label className={labelClass}>Profile Label (Internal Use)</label>
@@ -497,7 +497,7 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
                                         <label className={labelClass}>Shiprocket Password</label>
                                         <div className="relative">
                                             <input type={showPassword ? "text" : "password"} className={`${inputClass} pr-10`} value={form.password || ""} onChange={e => setForm({ ...form, password: e.target.value })} placeholder={form._id ? "Leave empty to keep unchanged" : "Password"} />
-                                            <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699] hover:text-[#1A3C34]">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                                            <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BA699] hover:text-[#384959]">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -507,7 +507,7 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
 
                     {activeTab === "defaults" && (
                         <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm">
-                            <h3 className="font-bold text-[#1A3C34] mb-4">Default Dimensions</h3>
+                            <h3 className="font-bold text-[#384959] mb-4">Default Dimensions</h3>
                             <p className="text-xs text-[#5C756D] mb-6">These dimensions will be used if your Book product doesn't have specific dimensions set.</p>
                             <div className="grid grid-cols-2 gap-5">
                                 <div><label className={labelClass}>Weight (kg)</label><input type="number" step="0.1" className={inputClass} value={form.defaults.weight} onChange={e => setForm({ ...form, defaults: { ...form.defaults, weight: Number(e.target.value) } })} /></div>
@@ -522,7 +522,7 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
                 {/* Footer */}
                 <div className="px-6 py-4 border-t border-[#F4F7F5] bg-white flex items-center justify-end gap-3">
                     <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-[#E3E8E5] text-[#5C756D] font-bold text-sm hover:bg-[#F4F7F5] transition-all">Cancel</button>
-                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] shadow-lg active:scale-95 transition-all disabled:opacity-70">
+                    <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] shadow-lg active:scale-95 transition-all disabled:opacity-70">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {saving ? "Saving..." : "Save Profile"}
                     </button>
                 </div>

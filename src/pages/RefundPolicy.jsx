@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { 
-    RefreshCw, XCircle, CheckCircle, AlertTriangle, CreditCard, 
-    Package, Mail, Phone, Shield, FileText, Clock, Ban, Info, ChevronRight 
+import {
+    RefreshCw, XCircle, CheckCircle, AlertTriangle, CreditCard,
+    Package, Mail, Phone, Shield, FileText, Clock, Ban, Info, ChevronRight
 } from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
+import SEO from '../components/SEO';
 
 const RefundPolicy = () => {
     const [activeSection, setActiveSection] = useState('overview');
@@ -48,13 +49,22 @@ const RefundPolicy = () => {
     ];
 
     // VRINDAVAN THEME ASSETS
-    const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-    const heroBg = "url('/images/refund-scales-bg.png')";
-    const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+    const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+    const heroBg = "url('/images-webp/refund-scales-bg.webp')";
+    const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
     return (
         <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
-            
+            <SEO
+                title="Refund & Return Policy | Kiddos Intellect"
+                description="Understand our refund and return policy for children's books and educational materials. Easy returns, quick refunds, and excellent customer service."
+                keywords="refund policy, return policy, book returns, money back guarantee, customer satisfaction"
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "Refund Policy", url: "/refund" }
+                ]}
+            />
+
             {/* --- HERO SECTION --- */}
             <div className="relative w-full pt-28 md:pt-36 pb-20 px-6 border-b border-[#D4AF37]/30 overflow-hidden">
                 

@@ -96,12 +96,12 @@ const learningOutcomes = [
 
 // UPDATED CATEGORIES WITH IMAGE PATHS (Generate these images!)
 const categories = [
-  { name: "Mythology Books", img: "/images/pre_school/cat-mythology.png", desc: "Epics & Legends" },
-  { name: "Religious Books", img: "/images/pre_school/cat-religious.png", desc: "Spiritual Roots" },
-  { name: "Moral Stories", img: "/images/pre_school/cat-moral.png", desc: "Character Building" },
-  { name: "Activity Books", img: "/images/pre_school/cat-activity.png", desc: "Creative Skills" },
-  { name: "Knowledge Builders", img: "/images/pre_school/cat-knowledge.png", desc: "General IQ" },
-  { name: "Bilingual Books", img: "/images/pre_school/cat-bilingual.png", desc: "Language Mastery" }
+  { name: "Mythology Books", img: "/images-webp/pre_school/cat-mythology.webp", desc: "Epics & Legends" },
+  { name: "Religious Books", img: "/images-webp/pre_school/cat-religious.webp", desc: "Spiritual Roots" },
+  { name: "Moral Stories", img: "/images-webp/pre_school/cat-moral.webp", desc: "Character Building" },
+  { name: "Activity Books", img: "/images-webp/pre_school/cat-activity.webp", desc: "Creative Skills" },
+  { name: "Knowledge Builders", img: "/images-webp/pre_school/cat-knowledge.webp", desc: "General IQ" },
+  { name: "Bilingual Books", img: "/images-webp/pre_school/cat-bilingual.webp", desc: "Language Mastery" }
 ];
 
 const whyMythologyMatters = [
@@ -204,13 +204,13 @@ export default function PreSchool() {
   };
 
   // VRINDAVAN THEME ASSETS (Multiple Images)
-  const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-  const heroBg = "url('/images/pre_school/preschool-hero-bg.png')"; 
-  const mandalaBg = "url('/images/pre_school/mandala-bg.png')";
-  const cosmicBg = "url('/images/pre_school/cosmic-wisdom-bg.png')";
+  const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+  const heroBg = "url('/images-webp/pre_school/preschool-hero-bg.webp')"; 
+  const mandalaBg = "url('/images-webp/pre_school/mandala-bg.webp')";
+  const cosmicBg = "url('/images-webp/pre_school/cosmic-wisdom-bg.webp')";
   // New Section Backgrounds
-  const benefitsBg = "url('/images/pre_school/benefits-cows-bg.png')"; // Generate this!
-  const testimonialsBg = "url('/images/pre_school/testimonials-flowers-bg.png')"; // Generate this!
+  const benefitsBg = "url('/images-webp/pre_school/benefits-cows-bg.webp')"; // Generate this!
+  const testimonialsBg = "url('/images-webp/pre_school/testimonials-flowers-bg.webp')"; // Generate this!
 
   return (
     <div className="bg-[#FAF7F2] font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] overflow-x-hidden relative">

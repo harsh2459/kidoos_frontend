@@ -1,24 +1,57 @@
-import React, { useLayoutEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { Sparkles, Layers, ShieldCheck, Globe, ArrowRight, Feather, Star, Link } from 'lucide-react';
 import Testimonials from './Testimonials';
 import Faq from './Faq';
 
 // --- ASSETS (Using Public Folder Strings) ---
-const BOOK_ENG = "/images/3d-english.png";
-const BOOK_HIN = "/images/3d_hindi.png";
-const BOOK_GUJ = "/images/3d_gujarati.png";
-const ART_BG = "/images/art-bg.png";
-
-gsap.registerPlugin(ScrollTrigger);
+const BOOK_ENG = "/images-webp/3d-english.webp";
+const BOOK_HIN = "/images-webp/3d_hindi.webp";
+const BOOK_GUJ = "/images-webp/3d_gujarati.webp";
+const ART_BG = "/images-webp/art-bg.webp";
 
 // --- 1. HERO SECTION ---
 const HeroSection = () => {
   const containerRef = useRef(null);
   const textRef = useRef(null);
+  const [gsapLoaded, setGsapLoaded] = useState(false);
+  const gsapRef = useRef(null);
+  const ScrollTriggerRef = useRef(null);
+
+  // Load GSAP dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGsap = async () => {
+      try {
+        const [gsapModule, scrollTriggerModule] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger")
+        ]);
+
+        if (mounted) {
+          gsapRef.current = gsapModule.gsap;
+          ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+          gsapModule.gsap.registerPlugin(scrollTriggerModule.ScrollTrigger);
+          setGsapLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load GSAP:", error);
+      }
+    };
+
+    loadGsap();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useLayoutEffect(() => {
+    if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+    const gsap = gsapRef.current;
+    const ScrollTrigger = ScrollTriggerRef.current;
+
     const ctx = gsap.context(() => {
       gsap.to(textRef.current, {
         yPercent: -30,
@@ -33,7 +66,7 @@ const HeroSection = () => {
       });
     }, containerRef);
     return () => ctx.revert();
-  }, []);
+  }, [gsapLoaded]);
 
   return (
     <section ref={containerRef} className="relative h-screen flex flex-col items-center justify-center bg-[#F5F5F7] overflow-hidden">

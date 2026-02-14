@@ -7,7 +7,7 @@ import {
     RefreshCw, CheckCircle, AlertTriangle, Search
 } from "lucide-react";
 
-const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none text-[#2C3E38]";
+const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none text-[#2C3E38]";
 
 export default function AiSettings() {
     const { token } = useAuth();
@@ -111,15 +111,15 @@ export default function AiSettings() {
         <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
             <div className="max-w-5xl mx-auto px-4 py-8">
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-serif font-bold text-[#1A3C34]">AI Configuration</h1>
-                    <button onClick={save} disabled={saving} className="px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold hover:bg-[#2F523F] flex gap-2">
+                    <h1 className="text-3xl font-serif font-bold text-[#384959]">AI Configuration</h1>
+                    <button onClick={save} disabled={saving} className="px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold hover:bg-[#6A89A7] flex gap-2">
                         <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
                     </button>
                 </div>
 
                 <div className="flex gap-4 mb-6 border-b border-[#E3E8E5]">
-                    <button onClick={() => setActiveTab("keys")} className={`pb-3 px-1 font-bold border-b-2 ${activeTab === "keys" ? "border-[#1A3C34] text-[#1A3C34]" : "border-transparent text-gray-400"}`}>API Keys & Model</button>
-                    <button onClick={() => setActiveTab("prompt")} className={`pb-3 px-1 font-bold border-b-2 ${activeTab === "prompt" ? "border-[#1A3C34] text-[#1A3C34]" : "border-transparent text-gray-400"}`}>Prompt</button>
+                    <button onClick={() => setActiveTab("keys")} className={`pb-3 px-1 font-bold border-b-2 ${activeTab === "keys" ? "border-[#384959] text-[#384959]" : "border-transparent text-gray-400"}`}>API Keys & Model</button>
+                    <button onClick={() => setActiveTab("prompt")} className={`pb-3 px-1 font-bold border-b-2 ${activeTab === "prompt" ? "border-[#384959] text-[#384959]" : "border-transparent text-gray-400"}`}>Prompt</button>
                 </div>
 
                 {activeTab === "keys" && (
@@ -167,13 +167,13 @@ export default function AiSettings() {
                             <div className="flex gap-3 mb-4">
                                 <input className={INPUT_STYLE} placeholder="Label" value={newLabel} onChange={e => setNewLabel(e.target.value)} />
                                 <input className={INPUT_STYLE} placeholder="API Key (AIza...)" value={newKey} onChange={e => setNewKey(e.target.value)} />
-                                <button onClick={addKey} className="px-4 bg-[#1A3C34] text-white rounded-xl"><Plus/></button>
+                                <button onClick={addKey} className="px-4 bg-[#384959] text-white rounded-xl"><Plus/></button>
                             </div>
                             <div className="space-y-2">
                                 {config.keys.map((k, i) => (
                                     <div key={i} className={`flex justify-between p-3 border rounded-xl ${k.isExhausted ? 'bg-red-50' : 'bg-white'}`}>
                                         <div className="flex gap-3 items-center">
-                                            <div className={`w-2 h-2 rounded-full ${k.isExhausted ? 'bg-red-500' : 'bg-green-500'}`} />
+                                            <div className={`w-2 h-2 rounded-full ${k.isExhausted ? 'bg-red-500' : 'bg-blue-500'}`} />
                                             <span className="font-bold text-sm">{k.label}</span>
                                             <span className="text-xs font-mono text-gray-400">{k.key.slice(0,8)}...</span>
                                         </div>
@@ -197,7 +197,7 @@ export default function AiSettings() {
                             <strong> Warning:</strong> Be careful not to break the JSON structure instructions.
                         </p>
                         <textarea 
-                            className="w-full h-[500px] bg-[#2C3E38] text-[#E3E8E5] font-mono text-sm p-6 rounded-xl border border-[#1A3C34] focus:ring-2 focus:ring-[#1A3C34]/50 outline-none leading-relaxed"
+                            className="w-full h-[500px] bg-[#2C3E38] text-[#E3E8E5] font-mono text-sm p-6 rounded-xl border border-[#384959] focus:ring-2 focus:ring-[#384959]/50 outline-none leading-relaxed"
                             value={prompt} 
                             onChange={e => setPrompt(e.target.value)} 
                             spellCheck="false"
@@ -207,7 +207,7 @@ export default function AiSettings() {
                                 onClick={() => {
                                     if (window.confirm("Reset prompt to default?")) setPrompt(DEFAULT_PROMPT_BACKUP);
                                 }}
-                                className="text-xs font-bold text-[#5C756D] hover:text-[#1A3C34] underline"
+                                className="text-xs font-bold text-[#5C756D] hover:text-[#384959] underline"
                             >
                                 Reset to Default
                             </button>

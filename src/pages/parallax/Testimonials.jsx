@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Star, Quote } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -10,6 +9,31 @@ function cn(...inputs) {
 }
 
 const Testimonials = () => {
+  // --- DYNAMIC IMPORT STATE ---
+  const [FramerMotion, setFramerMotion] = useState(null);
+
+  // Load framer-motion dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadFramerMotion = async () => {
+      try {
+        const module = await import('framer-motion');
+        if (mounted) {
+          setFramerMotion(module);
+        }
+      } catch (error) {
+        console.error('Failed to load framer-motion:', error);
+      }
+    };
+
+    loadFramerMotion();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // --- DATA PREPARATION ---
   // 1. Flatten the nested array since we don't need grid layouts anymore.
   const rawTestimonials = [
@@ -62,6 +86,21 @@ const Testimonials = () => {
     // Resume auto-rotation after 15 seconds of inactivity
     setTimeout(() => setIsPaused(false), 15000);
   };
+
+  // Show loading state while framer-motion is loading
+  if (!FramerMotion) {
+    return (
+      <section className="py-32 px-4 md:px-8 bg-[#F5F5F7] overflow-hidden">
+        <div className="max-w-[1200px] mx-auto relative">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-orange-500 border-r-transparent"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const { motion, AnimatePresence } = FramerMotion;
 
   return (
     <section className="py-32 px-4 md:px-8 bg-[#F5F5F7] overflow-hidden">

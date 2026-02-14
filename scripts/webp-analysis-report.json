@@ -1,0 +1,236 @@
+{
+  "totalWebPFiles": 90,
+  "totalReferences": 69,
+  "availableCount": 52,
+  "missingCount": 17,
+  "available": [
+    {
+      "original": "/images/contact/contant_bg.png",
+      "webp": "contact/contant_bg.webp"
+    },
+    {
+      "original": "/images/flower_contant.png",
+      "webp": "flower_contant.webp"
+    },
+    {
+      "original": "/images/image_59eec6.jpg",
+      "webp": "image_59eec6.webp"
+    },
+    {
+      "original": "/images/homepage/parchment-bg.png",
+      "webp": "homepage/parchment-bg.webp"
+    },
+    {
+      "original": "/images/homepage/mandala-bg.png",
+      "webp": "homepage/mandala-bg.webp"
+    },
+    {
+      "original": "/images/homepage/footer-vrindavan-bg.png",
+      "webp": "homepage/footer-vrindavan-bg.webp"
+    },
+    {
+      "original": "/images/vrundaven/image_ffc064.png",
+      "webp": "vrundaven/image_ffc064.webp"
+    },
+    {
+      "original": "/images/grape-vine.png",
+      "webp": "grape-vine.webp"
+    },
+    {
+      "original": "/images/golden-plant.png",
+      "webp": "golden-plant.webp"
+    },
+    {
+      "original": "/images/vrundaven/blue_orb.png",
+      "webp": "vrundaven/blue_orb.webp"
+    },
+    {
+      "original": "/images/vrundaven/fire_orb.png",
+      "webp": "vrundaven/fire_orb.webp"
+    },
+    {
+      "original": "/images/vrundaven/green_orb.png",
+      "webp": "vrundaven/green_orb.webp"
+    },
+    {
+      "original": "/images/vrundaven/yellow_orb.png",
+      "webp": "vrundaven/yellow_orb.webp"
+    },
+    {
+      "original": "/images/terms-decree-bg.png",
+      "webp": "terms-decree-bg.webp"
+    },
+    {
+      "original": "/images/shipping-map-bg.png",
+      "webp": "shipping-map-bg.webp"
+    },
+    {
+      "original": "/images/refund-scales-bg.png",
+      "webp": "refund-scales-bg.webp"
+    },
+    {
+      "original": "/images/privacy-scroll-bg.png",
+      "webp": "privacy-scroll-bg.webp"
+    },
+    {
+      "original": "/images/pre_school/cat-mythology.png",
+      "webp": "pre_school/cat-mythology.webp"
+    },
+    {
+      "original": "/images/pre_school/cat-religious.png",
+      "webp": "pre_school/cat-religious.webp"
+    },
+    {
+      "original": "/images/pre_school/cat-moral.png",
+      "webp": "pre_school/cat-moral.webp"
+    },
+    {
+      "original": "/images/pre_school/cat-activity.png",
+      "webp": "pre_school/cat-activity.webp"
+    },
+    {
+      "original": "/images/pre_school/cat-knowledge.png",
+      "webp": "pre_school/cat-knowledge.webp"
+    },
+    {
+      "original": "/images/pre_school/cat-bilingual.png",
+      "webp": "pre_school/cat-bilingual.webp"
+    },
+    {
+      "original": "/images/pre_school/preschool-hero-bg.png",
+      "webp": "pre_school/preschool-hero-bg.webp"
+    },
+    {
+      "original": "/images/pre_school/mandala-bg.png",
+      "webp": "pre_school/mandala-bg.webp"
+    },
+    {
+      "original": "/images/pre_school/cosmic-wisdom-bg.png",
+      "webp": "pre_school/cosmic-wisdom-bg.webp"
+    },
+    {
+      "original": "/images/pre_school/benefits-cows-bg.png",
+      "webp": "pre_school/benefits-cows-bg.webp"
+    },
+    {
+      "original": "/images/pre_school/testimonials-flowers-bg.png",
+      "webp": "pre_school/testimonials-flowers-bg.webp"
+    },
+    {
+      "original": "/images/HindiGita3D.png",
+      "webp": "HindiGita3D.webp"
+    },
+    {
+      "original": "/images/EnglishGita3D.png",
+      "webp": "EnglishGita3D.webp"
+    },
+    {
+      "original": "/images/GujratiGita3D.png",
+      "webp": "GujratiGita3D.webp"
+    },
+    {
+      "original": "/images/vision-background.png",
+      "webp": "vision-background.webp"
+    },
+    {
+      "original": "/images/vision-child-reading.png",
+      "webp": "vision-child-reading.webp"
+    },
+    {
+      "original": "/images/Sacred_book_glowing.png",
+      "webp": "Sacred_book_glowing.webp"
+    },
+    {
+      "original": "/images/Lotus_and_Diya_on_altar.png",
+      "webp": "Lotus_and_Diya_on_altar.webp"
+    },
+    {
+      "original": "/images/auth-spiritual-bg.png",
+      "webp": "auth-spiritual-bg.webp"
+    },
+    {
+      "original": "/images/about/ancient-scripture-bg.png",
+      "webp": "about/ancient-scripture-bg.webp"
+    },
+    {
+      "original": "/images/about/sacred-garden-pattern.png",
+      "webp": "about/sacred-garden-pattern.webp"
+    },
+    {
+      "original": "/images/About-us.png",
+      "webp": "About-us.webp"
+    },
+    {
+      "original": "/images/gita-english/Bento_grid_right.jpg",
+      "webp": "gita-english/Bento_grid_right.webp"
+    },
+    {
+      "original": "/images/gita-english-hero.png",
+      "webp": "gita-english-hero.webp"
+    },
+    {
+      "original": "/images/1.jpg",
+      "webp": "1.webp"
+    },
+    {
+      "original": "/images/illustration-water-ripple.png",
+      "webp": "illustration-water-ripple.webp"
+    },
+    {
+      "original": "/images/texture-parchment-wash.png",
+      "webp": "texture-parchment-wash.webp"
+    },
+    {
+      "original": "/images/back-image.png",
+      "webp": "back-image.webp"
+    },
+    {
+      "original": "/images/foreground-cutout.png",
+      "webp": "foreground-cutout.webp"
+    },
+    {
+      "original": "/images/faq-library-bg.png",
+      "webp": "faq-library-bg.webp"
+    },
+    {
+      "original": "/images/3d-english.png",
+      "webp": "3d-english.webp"
+    },
+    {
+      "original": "/images/3d_hindi.png",
+      "webp": "3d_hindi.webp"
+    },
+    {
+      "original": "/images/3d_gujarati.png",
+      "webp": "3d_gujarati.webp"
+    },
+    {
+      "original": "/images/art-bg.png",
+      "webp": "art-bg.webp"
+    },
+    {
+      "original": "/images/gita_showcash.png",
+      "webp": "gita_showcash.webp"
+    }
+  ],
+  "missing": [
+    "/images/homepage/parchment-noise.png",
+    "/images/catalog-banner.jpg",
+    "/images/vrindavan-layer-3.png",
+    "/images/image_4.png",
+    "/images/gita-inside-english-1.jpg",
+    "/images/gita-inside-english-2.jpg",
+    "/images/gita-inside-english-3.jpg",
+    "/images/gita-inside-english-4.jpg",
+    "/images/gita-inside-english-5.jpg",
+    "/images/gita-inside-english-6.jpg",
+    "/images/gita-inside-english-7.jpg",
+    "/images/gita-inside-english-8.jpg",
+    "/images/gita-inside-english-9.jpg",
+    "/images/gita-inside-english-10.jpg",
+    "/images/Dark_background.png",
+    "/images/logo.jpg",
+    "/images/homepage/hero-banner.jpg"
+  ],
+  "conversionRate": 75
+}

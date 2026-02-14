@@ -31,8 +31,8 @@ export default function Checkout() {
   const [paymentOption, setPaymentOption] = useState("full_online");
 
   // --- VRINDAVAN THEME ASSETS ---
-  const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+  const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+  const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
   const [cust, setCust] = useState({
     name: "", email: "", phone: "",
@@ -310,22 +310,35 @@ export default function Checkout() {
             });
 
             if (verifyRes?.data?.ok && verifyRes?.data?.verified) {
+              // ✅ Fire Meta Purchase Event - Payment Verified Successfully
               if (window.fbq) {
                 window.fbq('track', 'Purchase', {
-                  value: totals.grand,
+                  value: totals.payNow,  // Amount actually paid in this transaction
                   currency: 'INR',
                   content_ids: items.map(i => getBookIdFromCartItem(i)),
-                  content_type: 'product'
+                  content_type: 'product',
+                  num_items: totals.totalQty,
+                  // Additional tracking data
+                  content_name: `Order ${orderId}`,
+                  payment_method: paymentOption
                 });
-                console.log("Meta Pixel 'Purchase' event sent!"); // Confirm it ran
+                console.log("✅ Meta Pixel 'Purchase' event fired:", {
+                  value: totals.payNow,
+                  orderId,
+                  items: items.length
+                });
               } else {
-                console.warn("Meta Pixel (window.fbq) not found! Is the base pixel installed?");
+                console.warn("⚠️ Meta Pixel (window.fbq) not found! Ensure base pixel is installed in index.html");
               }
+              
               clear();
               localStorage.removeItem('puzzle_reward_claimed');
               t.success("Payment successful!");
               navigate("/order-confirmed", { state: { orderId } });
-            } else { t.err("Payment verification failed"); }
+            } else { 
+              console.error("❌ Payment verification failed");
+              t.err("Payment verification failed"); 
+            }
           } catch (e) { t.err("Error verifying payment"); }
         },
         theme: { color: "#3E2723" },

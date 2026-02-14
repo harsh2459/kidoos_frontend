@@ -14,39 +14,39 @@ const isValidBook = (book) => {
     console.error("❌ CartStore: Cannot add null/undefined to cart");
     return false;
   }
-  
+    
   const id = book._id || book.id;
   if (!id) {
     console.error("❌ CartStore: Book missing _id:", book);
     return false;
   }
-  
+
   // ✅ Check if ID is a valid MongoDB ObjectId (24 hex characters)
   const isValidId = /^[0-9a-fA-F]{24}$/.test(String(id));
   if (!isValidId) {
     console.error(`❌ CartStore: Invalid book ID format: "${id}"`);
     return false;
   }
-  
+
   if (!book.title) {
     console.warn("⚠️ CartStore: Book missing title:", book);
   }
-  
+
   if (!book.price || Number(book.price) <= 0) {
     console.error("❌ CartStore: Book has invalid price:", book);
     return false;
   }
-  
+
   return true;
 };
 
 // ✅ NEW: Normalize book to cart item format (matching server structure)
 const normalizeToCartItem = (book, qty = 1) => {
   const bookId = book._id || book.id;
-  
+
   // Generate a temporary cart item ID (will be replaced by server on sync)
   const tempCartItemId = `local_${bookId}_${Date.now()}`;
-  
+
   return {
     _id: tempCartItemId,        // Cart item ID (temporary)
     bookId: bookId,             // ✅ CRITICAL: Store actual book ID here
@@ -76,51 +76,51 @@ const getBookId = (item) => {
       return item.bookId;
     }
   }
-  
+
   // Priority 2: book._id (alternative server format)
   if (item.book?._id) {
     return item.book._id;
   }
-  
+
   // Priority 3: _id (but only if it looks like a book ID, not a cart item ID)
   if (item._id && !item._id.startsWith('local_')) {
     return item._id;
   }
-  
+
   // Fallback
   return item.id;
 };
 
 export const useCart = create((set, get) => ({
   items: load(),
-  
-  replaceAll: (items) => set(() => { 
-    save(items || []); 
-    return { items: items || [] }; 
+
+  replaceAll: (items) => set(() => {
+    save(items || []);
+    return { items: items || [] };
   }),
-  
+
   add: (book, qty = 1) => {
     // ✅ CRITICAL: Validate book before adding
     if (!isValidBook(book)) {
       console.error("❌ CartStore: Refusing to add invalid book to cart");
       return;
     }
-    
+
     return set((state) => {
       const bookId = book._id || book.id;
-      
+
       // ✅ Find existing item by bookId (not cart item _id)
-      const existingItemIndex = state.items.findIndex(item => 
+      const existingItemIndex = state.items.findIndex(item =>
         getBookId(item) === bookId
       );
-      
+
       let items;
-      
+
       if (existingItemIndex >= 0) {
         // Update existing item
         items = state.items.map((item, index) =>
-          index === existingItemIndex 
-            ? { ...item, qty: Math.min(999, (item.qty || 1) + qty) } 
+          index === existingItemIndex
+            ? { ...item, qty: Math.min(999, (item.qty || 1) + qty) }
             : item
         );
         console.log(`✅ CartStore: Updated quantity for "${book.title}"`);
@@ -130,7 +130,7 @@ export const useCart = create((set, get) => ({
         items = [...state.items, cartItem];
         console.log(`✅ CartStore: Added "${book.title}" to cart (Book ID: ${bookId}, Cart Item ID: ${cartItem._id})`);
       }
-      
+
       save(items);
       return { items };
     });
@@ -138,24 +138,24 @@ export const useCart = create((set, get) => ({
 
   setQty: (itemId, qty) => set((state) => {
     const n = Math.max(1, Math.min(999, Number(qty) || 1));
-    
+
     // ✅ Find by either cart item _id OR bookId
     const items = state.items.map(item => {
       const matchesCartItemId = item._id === itemId;
       const matchesBookId = getBookId(item) === itemId;
-      
+
       if (matchesCartItemId || matchesBookId) {
         return { ...item, qty: n };
       }
       return item;
     });
-    
+
     save(items);
     return { items };
   }),
 
   inc: (itemId) => {
-    const item = get().items.find(i => 
+    const item = get().items.find(i =>
       i._id === itemId || getBookId(i) === itemId
     );
     const currentQty = item?.qty || 0;
@@ -163,7 +163,7 @@ export const useCart = create((set, get) => ({
   },
 
   dec: (itemId) => {
-    const item = get().items.find(i => 
+    const item = get().items.find(i =>
       i._id === itemId || getBookId(i) === itemId
     );
     const currentQty = item?.qty || 0;
@@ -177,18 +177,18 @@ export const useCart = create((set, get) => ({
       const matchesBookId = getBookId(item) === itemId;
       return !(matchesCartItemId || matchesBookId);
     });
-    
+
     save(items);
     console.log(`✅ CartStore: Removed item with ID: ${itemId}`);
     return { items };
   }),
 
-  clear: () => set(() => { 
-    save([]); 
+  clear: () => set(() => {
+    save([]);
     console.log("✅ CartStore: Cart cleared");
-    return { items: [] }; 
+    return { items: [] };
   }),
-  
+
   // ✅ NEW: Clean invalid items from cart (synchronous, no API calls)
   cleanInvalidItems: () => {
     const state = get();
@@ -196,7 +196,7 @@ export const useCart = create((set, get) => ({
       const bookId = getBookId(item);
       return isValidBook({ ...item, _id: bookId });
     });
-    
+
     if (validItems.length < state.items.length) {
       const removed = state.items.length - validItems.length;
       console.warn(`⚠️ CartStore: Removed ${removed} invalid item(s) from cart`);
@@ -204,10 +204,10 @@ export const useCart = create((set, get) => ({
       set({ items: validItems });
       return validItems;
     }
-    
+
     return state.items; // No changes needed
   },
-  
+
   // ✅ NEW: Debug helper to inspect cart structure
   debugCart: () => {
     const state = get();

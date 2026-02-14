@@ -13,7 +13,7 @@ const GitaPricing = () => {
       // We use specific gradients for each card to make them distinct but cohesive
       bgGradient: 'from-blue-50 to-white',
       btnColor: 'bg-[#051A12] hover:bg-[#F59E0B]',
-      img: '/images/gita-english-hero.png' // Use your specific book cover images here
+      img: '/images-webp/gita-english-hero.webp' // Use your specific book cover images here
     },
     {
       lang: 'Hindi',
@@ -24,7 +24,7 @@ const GitaPricing = () => {
       features: ['Shuddh Hindi', 'Cultural Context', 'Moral Stories', 'Hardcover'],
       bgGradient: 'from-orange-50 to-white',
       btnColor: 'bg-[#051A12] hover:bg-[#F59E0B]',
-      img: '/images/gita-english-hero.png'
+      img: '/images-webp/gita-english-hero.webp'
     },
     {
       lang: 'Gujarati',
@@ -35,7 +35,7 @@ const GitaPricing = () => {
       features: ['Authentic Gujarati', 'Family Bonding', 'Daily Prayers', 'Hardcover'],
       bgGradient: 'from-green-50 to-white',
       btnColor: 'bg-[#051A12] hover:bg-[#F59E0B]',
-      img: '/images/gita-english-hero.png'
+      img: '/images-webp/gita-english-hero.webp'
     }
   ];
 

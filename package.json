@@ -6,15 +6,11 @@
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
-    "@studio-freight/lenis": "^1.0.42",
     "@tailwindcss/vite": "^4.1.12",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "@tsparticles/react": "^3.0.0",
-    "@tsparticles/slim": "^3.9.1",
-    "animejs": "^3.2.2",
     "axios": "^1.11.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
@@ -26,19 +22,19 @@
     "lucide-react": "^0.553.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-helmet-async": "^2.0.5",
     "react-icons": "^5.5.0",
     "react-pageflip": "^2.0.3",
     "react-parallax-tilt": "^1.7.315",
     "react-router-dom": "^7.8.2",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
-    "react-tsparticles": "^2.12.2",
     "recharts": "^3.7.0",
     "slugify": "^1.6.6",
     "styled-components": "^6.1.19",
+    "swiper": "^12.1.0",
     "tailwind-merge": "^3.4.0",
     "three": "^0.182.0",
-    "tsparticles-slim": "^2.12.0",
     "web-vitals": "^2.1.4",
     "zustand": "^5.0.8"
   },
@@ -47,7 +43,9 @@
     "tunnel": "lt --port 3000 --subdomain harsh1798harsh2459",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "generate-sitemap": "node src/scripts/generate-sitemap.js",
+    "prebuild": "npm run generate-sitemap"
   },
   "eslintConfig": {
     "extends": [
@@ -71,7 +69,11 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.16",
     "autoprefixer": "^10.4.21",
+    "glob": "^13.0.3",
+    "imagemin": "^9.0.1",
+    "imagemin-webp": "^8.0.0",
     "postcss": "^8.5.6",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.19"
   }
 }

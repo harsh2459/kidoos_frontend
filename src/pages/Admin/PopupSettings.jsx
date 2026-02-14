@@ -71,8 +71,8 @@ export default function PopupSettings() {
             customDesign: {
                 layout: "left-right",
                 backgroundColor: "#ffffff",
-                textColor: "#1A3C34",
-                accentColor: "#1A3C34",
+                textColor: "#384959",
+                accentColor: "#384959",
                 borderRadius: "16px",
                 padding: "32px",
                 maxWidth: "600px",
@@ -80,7 +80,7 @@ export default function PopupSettings() {
                 titleFontSize: "28px",
                 titleFontWeight: "700",
                 descriptionFontSize: "16px",
-                ctaBackgroundColor: "#1A3C34",
+                ctaBackgroundColor: "#384959",
                 ctaTextColor: "#ffffff",
                 ctaFontSize: "18px",
                 ctaFontWeight: "600",
@@ -205,7 +205,7 @@ export default function PopupSettings() {
     }
 
     // Common Input Class matching the theme
-    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all";
+    const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all";
     const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5";
 
     if (loading) {
@@ -213,7 +213,7 @@ export default function PopupSettings() {
             <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8">
                 
                 <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#E3E8E5]">
-                    <div className="w-10 h-10 border-4 border-[#1A3C34] border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-10 h-10 border-4 border-[#384959] border-t-transparent rounded-full animate-spin"></div>
                     <p className="mt-4 text-[#5C756D] font-medium">Loading settings...</p>
                 </div>
             </div>
@@ -232,13 +232,13 @@ export default function PopupSettings() {
             {/* HEADER */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Popup Marketing</h1>
+                    <h1 className="text-3xl font-bold text-[#384959] tracking-tight">Popup Marketing</h1>
                     <p className="text-[#5C756D] mt-1 text-sm">Design and manage promotional popups for your store.</p>
                 </div>
                 
                 <label className={`
                     flex items-center gap-3 cursor-pointer px-5 py-3 rounded-xl border transition-all shadow-sm
-                    ${enabled ? "bg-[#1A3C34] border-[#1A3C34]" : "bg-white border-[#E3E8E5] hover:bg-[#F4F7F5]"}
+                    ${enabled ? "bg-[#384959] border-[#384959]" : "bg-white border-[#E3E8E5] hover:bg-[#F4F7F5]"}
                 `}>
                     <input
                         type="checkbox"
@@ -270,7 +270,7 @@ export default function PopupSettings() {
                             </div>
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wider text-[#8BA699]">{stat.label}</p>
-                                <p className="text-2xl font-bold text-[#1A3C34] mt-0.5">{stat.val}</p>
+                                <p className="text-2xl font-bold text-[#384959] mt-0.5">{stat.val}</p>
                             </div>
                         </div>
                     ))}
@@ -288,11 +288,11 @@ export default function PopupSettings() {
                             {/* Card Header */}
                             <div className="flex items-start justify-between mb-6 pb-6 border-b border-[#F4F7F5]">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-lg bg-[#FAFBF9] border border-[#E3E8E5] flex items-center justify-center font-bold text-[#1A3C34]">
+                                    <div className="h-10 w-10 rounded-lg bg-[#FAFBF9] border border-[#E3E8E5] flex items-center justify-center font-bold text-[#384959]">
                                         #{idx + 1}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-lg text-[#1A3C34]">{config.title || "Untitled Popup"}</h3>
+                                        <h3 className="font-bold text-lg text-[#384959]">{config.title || "Untitled Popup"}</h3>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className={`w-2 h-2 rounded-full ${config.isActive ? "bg-emerald-500" : "bg-gray-300"}`}></span>
                                             <span className="text-xs font-medium text-[#5C756D]">{config.isActive ? "Active" : "Inactive"}</span>
@@ -306,7 +306,7 @@ export default function PopupSettings() {
                                         className={`
                                             px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all
                                             ${config.isActive
-                                                ? 'bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]'
+                                                ? 'bg-[#E8F5E9] text-[#384959] border border-[#C8E6C9]'
                                                 : 'bg-[#F4F7F5] text-[#5C756D] border border-[#E3E8E5] hover:bg-[#E3E8E5]'
                                             }
                                         `}
@@ -367,13 +367,13 @@ export default function PopupSettings() {
                                                     className={`
                                                         p-4 rounded-xl text-left border-2 transition-all duration-200
                                                         ${config.designType === mode.id
-                                                            ? 'border-[#1A3C34] bg-[#F0F7F4]'
+                                                            ? 'border-[#384959] bg-[#F0F7F4]'
                                                             : 'border-[#E3E8E5] hover:border-[#8BA699] bg-white'
                                                         }
                                                     `}
                                                 >
-                                                    <mode.icon className={config.designType === mode.id ? 'text-[#1A3C34]' : 'text-[#8BA699]'} size={24} />
-                                                    <h4 className={`font-bold text-sm mt-3 ${config.designType === mode.id ? 'text-[#1A3C34]' : 'text-[#5C756D]'}`}>{mode.label}</h4>
+                                                    <mode.icon className={config.designType === mode.id ? 'text-[#384959]' : 'text-[#8BA699]'} size={24} />
+                                                    <h4 className={`font-bold text-sm mt-3 ${config.designType === mode.id ? 'text-[#384959]' : 'text-[#5C756D]'}`}>{mode.label}</h4>
                                                     <p className="text-xs text-[#8BA699] mt-1 leading-tight">{mode.desc}</p>
                                                 </button>
                                             ))}
@@ -428,7 +428,7 @@ export default function PopupSettings() {
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-[#1A3C34] line-clamp-1">{selectedBook.title}</p>
+                                                        <p className="text-sm font-bold text-[#384959] line-clamp-1">{selectedBook.title}</p>
                                                         <p className="text-xs text-[#5C756D]">₹{selectedBook.price}</p>
                                                     </div>
                                                 </div>
@@ -440,7 +440,7 @@ export default function PopupSettings() {
                                     {config.designType === 'image' && (
                                         <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl p-5">
                                             <label className={labelClass}>Upload Banner Image</label>
-                                            <div className="border-2 border-dashed border-[#E3E8E5] rounded-xl p-6 text-center hover:border-[#1A3C34] hover:bg-white transition-all">
+                                            <div className="border-2 border-dashed border-[#E3E8E5] rounded-xl p-6 text-center hover:border-[#384959] hover:bg-white transition-all">
                                                 {config.imageUrl ? (
                                                     <div className="relative inline-block max-w-full">
                                                         <img
@@ -459,15 +459,15 @@ export default function PopupSettings() {
                                                     <label className="cursor-pointer block">
                                                         {uploadingImage === config._id ? (
                                                             <div className="py-4">
-                                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A3C34] mx-auto"></div>
+                                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#384959] mx-auto"></div>
                                                                 <p className="text-xs text-[#5C756D] mt-2">Uploading...</p>
                                                             </div>
                                                         ) : (
                                                             <>
                                                                 <div className="w-12 h-12 bg-[#F4F7F5] rounded-full flex items-center justify-center mx-auto mb-3">
-                                                                    <Upload size={20} className="text-[#1A3C34]" />
+                                                                    <Upload size={20} className="text-[#384959]" />
                                                                 </div>
-                                                                <p className="text-sm font-bold text-[#1A3C34]">Click to upload</p>
+                                                                <p className="text-sm font-bold text-[#384959]">Click to upload</p>
                                                                 <p className="text-xs text-[#5C756D] mt-1">Recommended: 800x600px • Max 5MB</p>
                                                                 <input
                                                                     type="file"
@@ -500,7 +500,7 @@ export default function PopupSettings() {
                                 {/* Right Column: Triggers & Targeting */}
                                 <div className="space-y-5">
                                     <div className="p-5 border border-[#E3E8E5] rounded-xl">
-                                        <h4 className="font-bold text-[#1A3C34] mb-4 flex items-center gap-2">
+                                        <h4 className="font-bold text-[#384959] mb-4 flex items-center gap-2">
                                             <Target size={18} /> Targeting Rules
                                         </h4>
                                         
@@ -539,7 +539,7 @@ export default function PopupSettings() {
                                                     <label key={page} className={`
                                                         cursor-pointer px-3 py-1.5 rounded-lg text-xs font-bold border transition-all select-none
                                                         ${config.targetPages.includes(page) 
-                                                            ? 'bg-[#1A3C34] text-white border-[#1A3C34]' 
+                                                            ? 'bg-[#384959] text-white border-[#384959]' 
                                                             : 'bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#8BA699]'
                                                         }
                                                     `}>
@@ -571,7 +571,7 @@ export default function PopupSettings() {
                                                 <label key={i} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-[#FAFBF9] transition-colors -ml-2">
                                                     <div className={`
                                                         w-5 h-5 rounded border flex items-center justify-center transition-colors
-                                                        ${config[opt.field] ? 'bg-[#1A3C34] border-[#1A3C34]' : 'bg-white border-[#E3E8E5]'}
+                                                        ${config[opt.field] ? 'bg-[#384959] border-[#384959]' : 'bg-white border-[#E3E8E5]'}
                                                     `}>
                                                         {config[opt.field] && <Check size={12} className="text-white" />}
                                                     </div>
@@ -581,7 +581,7 @@ export default function PopupSettings() {
                                                         onChange={(e) => updateConfig(config._id, opt.field, e.target.checked)}
                                                         className="hidden"
                                                     />
-                                                    <span className="text-sm text-[#1A3C34]">{opt.label}</span>
+                                                    <span className="text-sm text-[#384959]">{opt.label}</span>
                                                 </label>
                                             ))}
                                         </div>
@@ -593,7 +593,7 @@ export default function PopupSettings() {
                                             <button
                                                 type="button"
                                                 onClick={() => setExpandedConfig(expandedConfig === config._id ? null : config._id)}
-                                                className="flex items-center justify-between w-full text-sm font-bold text-[#1A3C34]"
+                                                className="flex items-center justify-between w-full text-sm font-bold text-[#384959]"
                                             >
                                                 <span className="flex items-center gap-2"><Palette size={16} /> Advanced Styling</span>
                                                 <span className="text-[#5C756D]">{expandedConfig === config._id ? 'Hide' : 'Show'}</span>
@@ -608,11 +608,11 @@ export default function PopupSettings() {
                                                     </div>
                                                     <div>
                                                         <label className={labelClass}>Text Color</label>
-                                                        <input type="color" value={config.customDesign?.textColor || '#1A3C34'} onChange={(e) => updateCustomDesign(config._id, 'textColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
+                                                        <input type="color" value={config.customDesign?.textColor || '#384959'} onChange={(e) => updateCustomDesign(config._id, 'textColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
                                                     </div>
                                                     <div>
                                                         <label className={labelClass}>Button Bg</label>
-                                                        <input type="color" value={config.customDesign?.ctaBackgroundColor || '#1A3C34'} onChange={(e) => updateCustomDesign(config._id, 'ctaBackgroundColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
+                                                        <input type="color" value={config.customDesign?.ctaBackgroundColor || '#384959'} onChange={(e) => updateCustomDesign(config._id, 'ctaBackgroundColor', e.target.value)} className="w-full h-8 rounded cursor-pointer border border-[#E3E8E5]" />
                                                     </div>
                                                     <div>
                                                         <label className={labelClass}>Button Text</label>
@@ -635,11 +635,11 @@ export default function PopupSettings() {
                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-[#E3E8E5] shadow-sm">
                         <LayoutTemplate size={32} className="text-[#5C756D]" />
                     </div>
-                    <h3 className="text-xl font-bold text-[#1A3C34] mb-2">No active popups</h3>
+                    <h3 className="text-xl font-bold text-[#384959] mb-2">No active popups</h3>
                     <p className="text-[#5C756D] mb-6 max-w-md mx-auto">Create a popup to promote sales, collect emails, or highlight new books to your visitors.</p>
                     <button
                         onClick={addNewConfig}
-                        className="px-6 py-3 bg-[#1A3C34] text-white rounded-xl font-bold hover:bg-[#2F523F] transition-all"
+                        className="px-6 py-3 bg-[#384959] text-white rounded-xl font-bold hover:bg-[#6A89A7] transition-all"
                     >
                         Create First Popup
                     </button>
@@ -651,7 +651,7 @@ export default function PopupSettings() {
                 <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] flex items-center justify-between">
                     <div className="flex items-center gap-4 text-sm font-medium text-[#5C756D]">
                         <span className="flex items-center gap-2">
-                             <span className={`w-2.5 h-2.5 rounded-full ${enabled ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>
+                             <span className={`w-2.5 h-2.5 rounded-full ${enabled ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></span>
                              {enabled ? 'System Active' : 'System Paused'}
                         </span>
                         <span className="h-4 w-px bg-[#E3E8E5]"></span>
@@ -661,14 +661,14 @@ export default function PopupSettings() {
                     <div className="flex gap-3">
                         <button
                             onClick={addNewConfig}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#1A3C34] text-[#1A3C34] font-bold text-sm hover:bg-[#F4F7F5] transition-all"
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#384959] text-[#384959] font-bold text-sm hover:bg-[#F4F7F5] transition-all"
                         >
                             <Plus size={18} /> Add New
                         </button>
                         <button
                             onClick={save}
                             disabled={saving}
-                            className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {saving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={18} />}
                             {saving ? 'Saving...' : 'Save Changes'}

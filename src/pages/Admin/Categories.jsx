@@ -70,7 +70,7 @@ export default function AdminCategories() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-            <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Categories</h1>
+            <h1 className="text-3xl font-bold text-[#384959] tracking-tight">Categories</h1>
             <p className="text-[#5C756D] mt-1 text-sm">Organize your books into searchable collections.</p>
         </div>
       </div>
@@ -81,8 +81,8 @@ export default function AdminCategories() {
         <div className="lg:col-span-1">
             <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm sticky top-24 overflow-hidden">
                 <div className="bg-[#FAFBF9] border-b border-[#E3E8E5] px-6 py-4 flex items-center gap-2">
-                    <FolderPlus className="w-5 h-5 text-[#1A3C34]" />
-                    <h2 className="font-bold text-[#1A3C34]">Add New Category</h2>
+                    <FolderPlus className="w-5 h-5 text-[#384959]" />
+                    <h2 className="font-bold text-[#384959]">Add New Category</h2>
                 </div>
                 
                 <form onSubmit={submit} className="p-6 space-y-5">
@@ -91,7 +91,7 @@ export default function AdminCategories() {
                             Category Name <span className="text-red-500">*</span>
                         </label>
                         <input
-                            className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-3 text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all"
+                            className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-3 text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all"
                             value={form.name}
                             onChange={(e) => setForm({ ...form, name: e.target.value })}
                             placeholder="e.g. Mythology, Kids, Sci-Fi"
@@ -104,7 +104,7 @@ export default function AdminCategories() {
                             Description
                         </label>
                         <textarea
-                            className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-3 text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all resize-none"
+                            className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-3 text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all resize-none"
                             rows={4}
                             value={form.description}
                             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -118,8 +118,8 @@ export default function AdminCategories() {
                         disabled={saving}
                         className="
                             w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl 
-                            bg-[#1A3C34] text-white font-bold text-sm shadow-md 
-                            hover:bg-[#2F523F] active:scale-95 transition-all
+                            bg-[#384959] text-white font-bold text-sm shadow-md 
+                            hover:bg-[#6A89A7] active:scale-95 transition-all
                             disabled:opacity-70 disabled:cursor-not-allowed
                         "
                     >
@@ -144,7 +144,7 @@ export default function AdminCategories() {
             <div className="relative group">
                 
                 <input
-                    className="w-full bg-white border border-[#E3E8E5] rounded-xl pl-12 pr-4 py-3 text-[#1A3C34] placeholder:text-[#8BA699] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all shadow-sm"
+                    className="w-full bg-white border border-[#E3E8E5] rounded-xl pl-12 pr-4 py-3 text-[#384959] placeholder:text-[#8BA699] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all shadow-sm"
                     placeholder="Search categories..."
                     value={q}
                     onChange={e => setQ(e.target.value)}
@@ -153,7 +153,7 @@ export default function AdminCategories() {
 
             <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm overflow-hidden">
                 <div className="bg-[#FAFBF9] border-b border-[#E3E8E5] px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-[#1A3C34]">
+                    <div className="flex items-center gap-2 font-bold text-[#384959]">
                         <Layers className="w-5 h-5" />
                         Existing Categories
                     </div>
@@ -164,7 +164,7 @@ export default function AdminCategories() {
 
                 {loading ? (
                     <div className="p-12 flex flex-col items-center justify-center text-[#5C756D]">
-                        <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#1A3C34]" />
+                        <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#384959]" />
                         <p>Loading categories...</p>
                     </div>
                 ) : filteredList.length === 0 ? (
@@ -179,11 +179,11 @@ export default function AdminCategories() {
                         {filteredList.map((c) => (
                             <div key={c._id} className="p-5 flex items-center justify-between hover:bg-[#FAFBF9] transition-colors group">
                                 <div className="flex items-start gap-4">
-                                    <div className="mt-1 w-10 h-10 rounded-lg bg-[#E8F5E9] text-[#1A3C34] flex items-center justify-center shrink-0 border border-[#C8E6C9]">
+                                    <div className="mt-1 w-10 h-10 rounded-lg bg-[#E8F5E9] text-[#384959] flex items-center justify-center shrink-0 border border-[#C8E6C9]">
                                         <BookOpen className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-[#1A3C34] text-lg">{c.name}</h3>
+                                        <h3 className="font-bold text-[#384959] text-lg">{c.name}</h3>
                                         {c.description && (
                                             <p className="text-sm text-[#5C756D] mt-0.5 max-w-md">{c.description}</p>
                                         )}
@@ -196,13 +196,13 @@ export default function AdminCategories() {
                                 </div>
                                 
                                 <div className="flex items-center gap-4">
-                                    <span className="hidden md:flex items-center gap-1.5 text-sm font-bold text-[#1A3C34] bg-[#F4F7F5] px-3 py-1.5 rounded-lg border border-[#E3E8E5]">
+                                    <span className="hidden md:flex items-center gap-1.5 text-sm font-bold text-[#384959] bg-[#F4F7F5] px-3 py-1.5 rounded-lg border border-[#E3E8E5]">
                                         <BookOpen className="w-4 h-4 text-[#5C756D]" />
                                         {c.count || 0}
                                     </span>
                                     
                                     {/* Actions (Future proofing for Edit/Delete) */}
-                                    {/* <button className="p-2 text-[#5C756D] hover:text-[#1A3C34] hover:bg-white rounded-lg transition-colors">
+                                    {/* <button className="p-2 text-[#5C756D] hover:text-[#384959] hover:bg-white rounded-lg transition-colors">
                                         <Edit2 className="w-4 h-4" />
                                     </button> */}
                                 </div>

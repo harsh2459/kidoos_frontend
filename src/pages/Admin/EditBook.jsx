@@ -76,10 +76,10 @@ function IconSelector({ value, onChange }) {
       <button 
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+        className="w-full flex items-center justify-between bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none"
       >
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded bg-[#E3E8E5] flex items-center justify-center text-[#1A3C34]">
+          <div className="w-6 h-6 rounded bg-[#E3E8E5] flex items-center justify-center text-[#384959]">
             <SelectedIcon className="w-4 h-4" />
           </div>
           <span className="text-sm font-medium text-[#2C3E38] capitalize">
@@ -99,7 +99,7 @@ function IconSelector({ value, onChange }) {
                 onChange(name);
                 setIsOpen(false);
               }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors border ${value === name ? 'bg-[#1A3C34] border-[#1A3C34] text-white' : 'bg-gray-50 border-transparent hover:bg-gray-100 text-[#5C756D]'}`}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors border ${value === name ? 'bg-[#384959] border-[#384959] text-white' : 'bg-gray-50 border-transparent hover:bg-gray-100 text-[#5C756D]'}`}
             >
               <IconComponent className="w-4 h-4" />
               <span className="text-[10px] truncate w-full text-center capitalize">{name}</span>
@@ -406,7 +406,7 @@ export default function EditBook() {
   const selected = selectedFromText();
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#384959] pb-20">
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
         {/* Header */}
@@ -414,20 +414,20 @@ export default function EditBook() {
           <div>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-[#5C756D] hover:text-[#1A3C34] mb-2 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 text-[#5C756D] hover:text-[#384959] mb-2 transition-colors text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Books
             </button>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34]">Edit Book</h1>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#384959]">Edit Book</h1>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Tab Buttons */}
             <div className="bg-white rounded-lg p-1 flex shadow-sm border border-[#E3E8E5]">
-               <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+               <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#384959] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
                    General Info
                </button>
-               <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+               <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#384959] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
                    <Layout className="w-4 h-4" /> Page Builder
                </button>
             </div>
@@ -435,7 +435,7 @@ export default function EditBook() {
             <button
               onClick={save}
               disabled={saving || uploading}
-              className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold hover:bg-[#2F523F] transition-all shadow-md active:scale-95 disabled:opacity-50"
+              className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold hover:bg-[#6A89A7] transition-all shadow-md active:scale-95 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {saving ? "Saving..." : "Save Changes"}
@@ -451,7 +451,7 @@ export default function EditBook() {
             <Card title="Basic Information">
                 <Row label="Title" hintRight="Required">
                 <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none"
                     value={book.title || ""}
                     onChange={(e) => setField("title", e.target.value)}
                 />
@@ -460,14 +460,14 @@ export default function EditBook() {
                 <div className="grid md:grid-cols-2 gap-6">
                 <Row label="Subtitle">
                     <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none"
                     value={book.subtitle || ""}
                     onChange={(e) => setField("subtitle", e.target.value)}
                     />
                 </Row>
                 <Row label="Authors" hintRight="Comma separated">
                     <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none"
                     value={authorsText}
                     onChange={(e) => setAuthorsText(e.target.value)}
                     />
@@ -479,7 +479,7 @@ export default function EditBook() {
                 <div className="grid md:grid-cols-2 gap-6">
                 <Row label="SKU" hintRight="Stock Keeping Unit (Editable)">
                     <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-mono"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-mono"
                     value={book.inventory?.sku || ""}
                     onChange={(e) => setInv("sku", e.target.value)}
                     />
@@ -502,7 +502,7 @@ export default function EditBook() {
                 <Row label="MRP (₹)">
                     <input
                     type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]"
                     value={book.mrp ?? ""}
                     onChange={handlePriceChange("mrp")}
                     placeholder="0"
@@ -511,7 +511,7 @@ export default function EditBook() {
                 <Row label="Sale Price (₹)">
                     <input
                     type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] font-bold text-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959] font-bold text-[#384959]"
                     value={book.price ?? ""}
                     onChange={handlePriceChange("price")}
                     placeholder="0"
@@ -520,7 +520,7 @@ export default function EditBook() {
                 <Row label="Discount (%)">
                     <input
                     type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34] text-green-600"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959] text-blue-600"
                     value={book.discountPct ?? ""}
                     onChange={handlePriceChange("discountPct")}
                     placeholder="0"
@@ -531,7 +531,7 @@ export default function EditBook() {
                 <Row label="Stock">
                     <input
                     type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]"
                     value={book.inventory?.stock ?? ""}
                     onChange={(e) => setInv("stock", e.target.value)}
                     placeholder="0"
@@ -540,7 +540,7 @@ export default function EditBook() {
                 <Row label="Low Stock Alert">
                     <input
                     type="number"
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]"
                     value={book.inventory?.lowStockAlert ?? ""}
                     onChange={(e) => setInv("lowStockAlert", e.target.value)}
                     placeholder="5"
@@ -550,7 +550,7 @@ export default function EditBook() {
             </Card>
 
             <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
-                <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
+                <div className="text-xl font-serif font-bold text-[#384959] mb-6 border-b border-[#E3E8E5] pb-4">
                 Categorization
                 </div>
 
@@ -569,7 +569,7 @@ export default function EditBook() {
                         const found = categoryList.find(c => c.slug === s || c.name === s);
                         const label = found?.name || s;
                         return (
-                            <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#1A3C34] text-white">
+                            <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#384959] text-white">
                             {label}
                             <button
                                 type="button"
@@ -597,7 +597,7 @@ export default function EditBook() {
                             const checked = selected.includes(val) || selected.includes(c.name);
                             return (
                             <label key={key} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F4F7F5] rounded-lg cursor-pointer transition-colors">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${checked ? 'bg-[#1A3C34] border-[#1A3C34]' : 'border-[#DCE4E0] bg-white'}`}>
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${checked ? 'bg-[#384959] border-[#384959]' : 'border-[#DCE4E0] bg-white'}`}>
                                 {checked && <Check className="w-3.5 h-3.5 text-white" />}
                                 </div>
                                 <div className="flex-1">
@@ -615,14 +615,14 @@ export default function EditBook() {
                 <div className="grid md:grid-cols-2 gap-6">
                 <Row label="Categories (CSV)">
                     <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]"
                     value={categoriesText}
                     onChange={(e) => setCategoriesText(e.target.value)}
                     />
                 </Row>
                 <Row label="Tags (CSV)">
                     <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]"
                     value={tagsText}
                     onChange={(e) => setTagsText(e.target.value)}
                     />
@@ -633,7 +633,7 @@ export default function EditBook() {
             <Card title="Content & SEO">
                 <Row label="Suggestion Groups (CSV)" hintRight="For 'You Might Also Like'">
                 <input
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]"
                     value={suggestionsText}
                     onChange={e => setSuggestionsText(e.target.value)}
                 />
@@ -641,7 +641,7 @@ export default function EditBook() {
 
                 <Row label="Description (HTML supported)">
                 <textarea
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-40 outline-none focus:border-[#1A3C34] font-mono text-sm"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-40 outline-none focus:border-[#384959] font-mono text-sm"
                     value={book.descriptionHtml || ""}
                     onChange={(e) => setField("descriptionHtml", e.target.value)}
                 />
@@ -654,7 +654,7 @@ export default function EditBook() {
                 <textarea
                     value={whyChooseThisText}
                     onChange={e => setWhyChooseThisText(e.target.value)}
-                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-32 outline-none focus:border-[#1A3C34] font-mono text-sm"
+                    className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 h-32 outline-none focus:border-[#384959] font-mono text-sm"
                     placeholder="One point per line"
                 />
                 </div>
@@ -662,7 +662,7 @@ export default function EditBook() {
 
             <Card title="Media & Settings">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm">
+                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#384959] text-white rounded-xl cursor-pointer hover:bg-[#6A89A7] transition-colors shadow-sm">
                     <Upload className="w-4 h-4" />
                     <span>Upload Images</span>
                     <input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" />
@@ -676,10 +676,10 @@ export default function EditBook() {
                         <div key={i} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
                         <img src={assetUrl(p)} className="h-full w-full object-contain p-2" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-2 transition-opacity">
-                            {i !== 0 && <button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>}
+                            {i !== 0 && <button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#384959] rounded-full">Cover</button>}
                             <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
                         </div>
-                        {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                        {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#384959] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
                         </div>
                     ))}
                 </div>
@@ -687,7 +687,7 @@ export default function EditBook() {
 
                 <div className="mt-8 pt-6 border-t border-[#E3E8E5]">
                 <label className="text-sm font-bold text-[#2C3E38] block mb-2">Visibility Status</label>
-                <select className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#1A3C34]" value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public (Visible)</option><option value="draft">Draft (Hidden)</option></select>
+                <select className="w-full sm:w-64 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none focus:border-[#384959]" value={book.visibility} onChange={(e) => setField("visibility", e.target.value)}><option value="public">Public (Visible)</option><option value="draft">Draft (Hidden)</option></select>
                 </div>
             </Card>
           </div>
@@ -701,7 +701,7 @@ export default function EditBook() {
                     <select 
                         value={book.templateType} 
                         onChange={e => setField("templateType", e.target.value)}
-                        className="w-full p-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none focus:border-[#1A3C34]"
+                        className="w-full p-3 bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl outline-none focus:border-[#384959]"
                     >
                         <option value="standard">Standard (Default)</option>
                         <option value="spiritual">Spiritual (Gold/Green)</option>
@@ -710,7 +710,7 @@ export default function EditBook() {
                 </div>
 
                 <div className="space-y-4 border-t border-[#E3E8E5] pt-6">
-                    <h3 className="font-bold text-[#1A3C34]">Mission Section</h3>
+                    <h3 className="font-bold text-[#384959]">Mission Section</h3>
                     <div>
                       <label className="block text-sm font-bold text-[#2C3E38] mb-2">Heading</label>
                       <input className="input-field w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 outline-none" value={book.layoutConfig?.story?.heading} onChange={e => setConfig("story", "heading", e.target.value)} placeholder="e.g. Why We Created This?" />
@@ -742,7 +742,7 @@ export default function EditBook() {
                         <button type="button" onClick={() => removeItem("specs", i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
                     </div>
                 ))}
-                <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+                <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#384959] flex items-center gap-1 hover:underline">
                     <Plus className="w-4 h-4" /> Add Specification
                 </button>
             </Card>
@@ -770,7 +770,7 @@ export default function EditBook() {
                         </div>
                     </div>
                 ))}
-                <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#1A3C34] transition-all flex justify-center items-center gap-2">
+                <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#384959] transition-all flex justify-center items-center gap-2">
                     <Plus className="w-5 h-5" /> Add Curriculum Point
                 </button>
             </Card>
@@ -787,14 +787,14 @@ export default function EditBook() {
                         <textarea className="input-field h-20 w-full bg-white border border-[#DCE4E0] rounded-lg px-3 py-2 outline-none" value={review.text} onChange={e => updateItem("testimonials", i, "text", e.target.value)} placeholder="Review content..." />
                     </div>
                 ))}
-                <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+                <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#384959] flex items-center gap-1 hover:underline">
                     <Plus className="w-4 h-4" /> Add Review
                 </button>
             </Card>
           </div>
 
           <div className="fixed bottom-6 right-6 sm:hidden z-50">
-            <button type="submit" disabled={saving || uploading} className="w-14 h-14 rounded-full bg-[#1A3C34] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"><Save className="w-6 h-6" /></button>
+            <button type="submit" disabled={saving || uploading} className="w-14 h-14 rounded-full bg-[#384959] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"><Save className="w-6 h-6" /></button>
           </div>
         </form>
       </div>
@@ -806,7 +806,7 @@ export default function EditBook() {
 function Card({ title, children }) {
   return (
     <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
-      <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">{title}</div>
+      <div className="text-xl font-serif font-bold text-[#384959] mb-6 border-b border-[#E3E8E5] pb-4">{title}</div>
       {children}
     </div>
   );

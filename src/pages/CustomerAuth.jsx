@@ -12,8 +12,8 @@ export default function CustomerAuth() {
   const next = loc.state?.next || "/";
 
   // --- VRINDAVAN THEME ASSETS ---
-  const authBg = "url('/images/auth-spiritual-bg.png')"; 
-  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+  const authBg = "url('/images-webp/auth-spiritual-bg.webp')"; 
+  const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
   const [mode, setMode] = useState("login");
   const [showPwd, setShowPwd] = useState(false);

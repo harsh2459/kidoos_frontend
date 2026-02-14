@@ -1,12 +1,11 @@
 // src/components/VisionMissionValues.jsx
-import React, { useLayoutEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 
 const VisionMissionValues = () => {
   const sectionRef = useRef(null);
+  const [gsapLoaded, setGsapLoaded] = useState(false);
+  const gsapRef = useRef(null);
+  const ScrollTriggerRef = useRef(null);
   
   // Background Refs for Parallax Descent
   const bgLayer1Ref = useRef(null);
@@ -31,7 +30,41 @@ const VisionMissionValues = () => {
   const valuesLightRef = useRef(null);
   const listItemsRef = useRef([]);
 
+  // Load GSAP dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGsap = async () => {
+      try {
+        const [gsapModule, scrollTriggerModule] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger")
+        ]);
+
+        if (mounted) {
+          gsapRef.current = gsapModule.gsap;
+          ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+          gsapModule.gsap.registerPlugin(scrollTriggerModule.ScrollTrigger);
+          setGsapLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load GSAP:", error);
+      }
+    };
+
+    loadGsap();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useLayoutEffect(() => {
+    if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+    const gsap = gsapRef.current;
+    const ScrollTrigger = ScrollTriggerRef.current;
+
     const ctx = gsap.context(() => {
       
       // =====================================================
@@ -315,7 +348,7 @@ const VisionMissionValues = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [gsapLoaded]);
 
   const addToRefs = (el) => {
     if (el && !listItemsRef.current.includes(el)) {
@@ -323,40 +356,60 @@ const VisionMissionValues = () => {
     }
   };
 
-  // Enhanced Image Container
-  const ImageContainer = ({ src, alt, customRef, glowRef, className = "" }) => (
-    <div className={`relative ${className}`}>
-      <div 
-        ref={glowRef}
-        className="absolute -inset-8 bg-gradient-radial from-amber-500/50 via-orange-600/30 to-transparent rounded-full blur-3xl"
-      />
-      
-      <div 
-        ref={customRef} 
-        className="relative rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.9)] border-2 border-orange-900/40 will-change-transform"
-        style={{ 
-          transformStyle: 'preserve-3d',
-          transform: 'translateZ(0)'
-        }}
-      >
-        <div className="absolute inset-0 z-10 shadow-[inset_0_0_100px_rgba(0,0,0,0.95)] pointer-events-none" />
-        
-        <div className="absolute inset-0 z-20 opacity-30 pointer-events-none mix-blend-overlay">
-          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-amber-500/20 to-transparent animate-light-ray" />
-        </div>
-        
-        <div className="absolute inset-0 z-30 hover:opacity-100 transition-opacity duration-1000 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-amber-400/10 to-transparent animate-shimmer" />
-        </div>
-        
-        <img 
-          src={src} 
-          alt={alt} 
-          className="w-full h-full object-cover"
+  // Enhanced Image Container with WebP optimization
+  const ImageContainer = ({ src, alt, customRef, glowRef, className = "" }) => {
+    // Convert image path to WebP optimized versions
+    // Handle both /images/ and /images-webp/ paths
+    const basePath = src
+      .replace(/^\/images-webp\//, '/images-optimized/')
+      .replace(/^\/images\//, '/images-optimized/')
+      .replace(/\.(png|jpg|jpeg|webp)$/i, '');
+
+    return (
+      <div className={`relative ${className}`}>
+        <div
+          ref={glowRef}
+          className="absolute -inset-8 bg-gradient-radial from-amber-500/50 via-orange-600/30 to-transparent rounded-full blur-3xl"
         />
+
+        <div
+          ref={customRef}
+          className="relative rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.9)] border-2 border-orange-900/40 will-change-transform"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: 'translateZ(0)'
+          }}
+        >
+          <div className="absolute inset-0 z-10 shadow-[inset_0_0_100px_rgba(0,0,0,0.95)] pointer-events-none" />
+
+          <div className="absolute inset-0 z-20 opacity-30 pointer-events-none mix-blend-overlay">
+            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-amber-500/20 to-transparent animate-light-ray" />
+          </div>
+
+          <div className="absolute inset-0 z-30 hover:opacity-100 transition-opacity duration-1000 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-amber-400/10 to-transparent animate-shimmer" />
+          </div>
+
+          <picture>
+            <source
+              type="image/webp"
+              srcSet={`${basePath}-400w.webp 400w,
+                      ${basePath}-800w.webp 800w,
+                      ${basePath}-1200w.webp 1200w,
+                      ${basePath}-1920w.webp 1920w`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+            />
+            <img
+              src={src}
+              alt={alt}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </picture>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <section 
@@ -370,30 +423,30 @@ const VisionMissionValues = () => {
         className="absolute inset-0 z-0 pointer-events-none scale-125 will-change-transform"
       >
         <img 
-          src="/images/vision-background.png"
+          src="/images-webp/vision-background.webp"
           alt="Deep underground cavern" 
           className="w-full h-full object-cover brightness-[0.3] blur-sm"
         />
       </div>
 
-      <div 
+      <div
         ref={bgLayer2Ref}
         className="absolute inset-0 z-0 opacity-40 pointer-events-none scale-115 will-change-transform mix-blend-hard-light"
       >
-        <img 
-          src="/images/vrindavan-layer-3.png"
-          alt="Mystical atmosphere" 
+        <img
+          src="/images-webp/parchment-vrindavan.webp"
+          alt="Mystical atmosphere"
           className="w-full h-full object-cover brightness-[0.5] saturate-150"
         />
       </div>
 
-      <div 
+      <div
         ref={bgLayer3Ref}
         className="absolute inset-0 z-0 opacity-15 mix-blend-overlay pointer-events-none will-change-transform"
-        style={{ 
-          backgroundImage: 'url("/images/image_4.png")',
+        style={{
+          backgroundImage: 'url("/images-webp/texture-pattern.webp")',
           backgroundRepeat: 'repeat',
-          backgroundSize: '500px' 
+          backgroundSize: '500px'
         }}
       />
 
@@ -474,7 +527,7 @@ const VisionMissionValues = () => {
             <ImageContainer 
               customRef={visionImageRef}
               glowRef={visionGlowRef}
-              src="/images/vision-child-reading.png"
+              src="/images-webp/vision-child-reading.webp"
               alt="Child discovering ancient wisdom"
               className="aspect-[4/5]"
             />
@@ -487,7 +540,7 @@ const VisionMissionValues = () => {
             <ImageContainer 
               customRef={missionImageRef}
               glowRef={missionGlowRef}
-              src="/images/Sacred_book_glowing.png"
+              src="/images-webp/Sacred_book_glowing.webp"
               alt="Sacred texts illuminated"
               className="aspect-square"
             />
@@ -530,7 +583,7 @@ const VisionMissionValues = () => {
             <ImageContainer 
               customRef={valuesImageRef}
               glowRef={valuesGlowRef}
-              src="/images/Lotus_and_Diya_on_altar.png"
+              src="/images-webp/Lotus_and_Diya_on_altar.webp"
               alt="Sacred altar with eternal flame"
               className="aspect-video w-full max-w-3xl"
             />

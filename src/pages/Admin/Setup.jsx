@@ -41,7 +41,7 @@ export default function AdminSetup() {
 
   if (hasAdmin === null) return (
     <div className="h-screen flex items-center justify-center bg-[#F4F7F5]">
-      <Loader2 className="w-8 h-8 text-[#1A3C34] animate-spin" />
+      <Loader2 className="w-8 h-8 text-[#384959] animate-spin" />
     </div>
   );
 
@@ -92,10 +92,10 @@ export default function AdminSetup() {
         {/* LEFT SIDE: Visuals & Info */}
         <div className="hidden lg:block space-y-8">
           <div>
-            <div className="h-16 w-16 bg-[#1A3C34] rounded-2xl flex items-center justify-center shadow-xl mb-6">
+            <div className="h-16 w-16 bg-[#384959] rounded-2xl flex items-center justify-center shadow-xl mb-6">
               <ShieldCheck className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-serif font-bold text-[#1A3C34] mb-4">
+            <h1 className="text-4xl font-serif font-bold text-[#384959] mb-4">
               {hasAdmin ? "Expand Your Team" : "Secure Your System"}
             </h1>
             <p className="text-[#5C756D] text-lg leading-relaxed">
@@ -105,7 +105,7 @@ export default function AdminSetup() {
             </p>
           </div>
 
-          <div className="bg-[#1A3C34] p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
+          <div className="bg-[#384959] p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
              {/* Decorative Background Circles */}
              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
              <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl"></div>
@@ -152,9 +152,9 @@ export default function AdminSetup() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Full Name</label>
                   <div className="relative group">
-                    <User className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors" />
+                    <User className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#384959] transition-colors" />
                     <input 
-                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-medium text-[#2C3E38]"
+                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="e.g. John Doe"
                       value={first.name}
                       onChange={e => setFirst({...first, name: e.target.value})}
@@ -166,10 +166,10 @@ export default function AdminSetup() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Email Address</label>
                   <div className="relative group">
-                    <Mail className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors" />
+                    <Mail className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#384959] transition-colors" />
                     <input 
                       type="email"
-                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-medium text-[#2C3E38]"
+                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="admin@kiddosintellect.com"
                       value={first.email}
                       onChange={e => setFirst({...first, email: e.target.value})}
@@ -181,10 +181,10 @@ export default function AdminSetup() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Master Password</label>
                   <div className="relative group">
-                    <Lock className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors" />
+                    <Lock className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#384959] transition-colors" />
                     <input 
                       type="password"
-                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-medium text-[#2C3E38]"
+                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="••••••••••••"
                       value={first.password}
                       onChange={e => setFirst({...first, password: e.target.value})}
@@ -197,7 +197,7 @@ export default function AdminSetup() {
                 <button 
                   type="submit" 
                   disabled={saving}
-                  className="w-full bg-[#1A3C34] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#1A3C34]/20 hover:shadow-xl hover:bg-[#142E28] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+                  className="w-full bg-[#384959] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#384959]/20 hover:shadow-xl hover:bg-[#142E28] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
                   Create Master Account
@@ -211,8 +211,8 @@ export default function AdminSetup() {
               <form onSubmit={handleCreateAdmin} className="space-y-5">
                 <div className="p-4 bg-[#F4F7F5] rounded-xl border border-[#E3E8E5] mb-4">
                   <div className="flex items-center gap-3 mb-1">
-                    <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
-                    <span className="font-bold text-[#1A3C34] text-sm">System Active</span>
+                    <CheckCircle2 className="w-5 h-5 text-[#88BDF2]" />
+                    <span className="font-bold text-[#384959] text-sm">System Active</span>
                   </div>
                   <p className="text-xs text-[#5C756D] ml-8">You are logged in. Use this form to add more team members.</p>
                 </div>
@@ -222,7 +222,7 @@ export default function AdminSetup() {
                   <div className="relative group">
                    
                     <input 
-                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-medium text-[#2C3E38]"
+                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="Name"
                       value={more.name}
                       onChange={e => setMore({...more, name: e.target.value})}
@@ -237,7 +237,7 @@ export default function AdminSetup() {
                    
                     <input 
                       type="email"
-                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-medium text-[#2C3E38]"
+                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="Email"
                       value={more.email}
                       onChange={e => setMore({...more, email: e.target.value})}
@@ -252,7 +252,7 @@ export default function AdminSetup() {
                     
                     <input 
                       type="password"
-                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none font-medium text-[#2C3E38]"
+                      className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="Password"
                       value={more.password}
                       onChange={e => setMore({...more, password: e.target.value})}
@@ -265,7 +265,7 @@ export default function AdminSetup() {
                 <button 
                   type="submit" 
                   disabled={saving}
-                  className="w-full bg-[#1A3C34] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#1A3C34]/20 hover:shadow-xl hover:bg-[#142E28] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
+                  className="w-full bg-[#384959] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#384959]/20 hover:shadow-xl hover:bg-[#142E28] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
                   Create Admin
@@ -284,15 +284,15 @@ function Card({ icon: Icon, title, children }) {
   return (
     <div className="bg-white border border-[#E3E8E5] rounded-3xl p-8 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
       <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-        <Icon className="w-24 h-24 text-[#1A3C34]" />
+        <Icon className="w-24 h-24 text-[#384959]" />
       </div>
       
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-8">
-          <div className="p-3 rounded-xl bg-[#F4F7F5] text-[#1A3C34]">
+          <div className="p-3 rounded-xl bg-[#F4F7F5] text-[#384959]">
             <Icon className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-[#1A3C34] font-serif">{title}</h2>
+          <h2 className="text-xl font-bold text-[#384959] font-serif">{title}</h2>
         </div>
         {children}
       </div>

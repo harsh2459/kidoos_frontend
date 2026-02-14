@@ -28,8 +28,8 @@ export default function AdminTabs() {
   const baseClass = "flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 whitespace-nowrap border";
   
   // Style: Deep Green background for active, Ghost/Subtle for inactive (matching Navbar logic)
-  const activeClass = "bg-[#1A3C34] text-white border-[#1A3C34] shadow-md transform scale-[1.02]";
-  const inactiveClass = "bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#1A3C34] hover:text-[#1A3C34] hover:bg-[#F4F7F5]";
+  const activeClass = "bg-[#384959] text-white border-[#384959] shadow-md transform scale-[1.02]";
+  const inactiveClass = "bg-white text-[#5C756D] border-[#E3E8E5] hover:border-[#384959] hover:text-[#384959] hover:bg-[#F4F7F5]";
 
   return (
     // Container aligned with Navbar's responsive padding

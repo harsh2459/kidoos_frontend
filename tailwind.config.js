@@ -2,7 +2,12 @@
 
 module.exports = {
   darkMode: 'class',
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  content: {
+    files: ["./src/**/*.{js,jsx,ts,tsx}"],
+    options: {
+      safelist: [],
+    },
+  },
   theme: {
     // ========== CUSTOM RESPONSIVE BREAKPOINTS (480px - 2560px) ==========
     screens: {
@@ -56,6 +61,21 @@ module.exports = {
           DEFAULT: "hsl(var(--danger))",
           foreground: "hsl(var(--danger-foreground))",
           soft: "hsl(var(--danger-soft))",
+        },
+        // Admin-specific theme colors - Stormy Morning Blue Palette
+        admin: {
+          dark: {
+            DEFAULT: "#384959",    // Dark slate - primary
+            light: "#6A89A7",      // Steel blue - secondary/hover
+          },
+          accent: {
+            DEFAULT: "#88BDF2",    // Sky blue - accent color
+            foreground: "#BDDDFC", // Ice blue for text on accent
+          },
+          surface: {
+            light: "#BDDDFC",      // Ice blue backgrounds
+            dark: "#384959",       // Dark backgrounds
+          }
         },
       },
       fontFamily: {

@@ -19,7 +19,7 @@ export const EmailAPI = {
     api.delete(`/admin/email-templates/${idOrSlug}`, auth()),
   testTemplate: (slug, body) =>
     api.post(`/admin/email-templates/test/${slug}`, body, auth()),
-  
+
   // SENDERS
   listSenders: () => api.get("/admin/mail-senders", { ...noCache, ...auth() }),
   createSender: (payload) => api.post("/admin/mail-senders", payload, auth()),

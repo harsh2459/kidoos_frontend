@@ -474,7 +474,7 @@ export default function AdminOrders() {
     const orderStatusConfig = {
       'pending': { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Pending' },
       'confirmed': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Confirmed' },
-      'paid': { bg: 'bg-green-100', text: 'text-green-700', label: 'Paid' },
+      'paid': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Paid' },
       'shipped': { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Shipped' },
       'delivered': { bg: 'bg-teal-100', text: 'text-teal-700', label: 'Delivered' },
       'refunded': { bg: 'bg-red-100', text: 'text-red-700', label: 'Refunded' },
@@ -483,7 +483,7 @@ export default function AdminOrders() {
 
     const paymentStatusConfig = {
       'pending': { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Payment Pending' },
-      'paid': { bg: 'bg-green-100', text: 'text-green-700', label: 'Paid' },
+      'paid': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Paid' },
       'partially_paid': { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Partial Payment' },
       'failed': { bg: 'bg-red-100', text: 'text-red-700', label: 'Payment Failed' },
       'partially_refunded': { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Partial Refund' },
@@ -610,10 +610,10 @@ export default function AdminOrders() {
           </div>
 
           {/* Ready to Ship */}
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-gradient-to-br from-blue-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-green-100 mb-1">Ready to Ship</p>
+                <p className="text-sm font-medium text-blue-100 mb-1">Ready to Ship</p>
                 <p className="text-4xl font-bold">{stats.ready}</p>
               </div>
               <div className="bg-white/20 rounded-lg p-3">
@@ -641,10 +641,10 @@ export default function AdminOrders() {
           </div>
 
           {/* Selected */}
-          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-cyan-100 mb-1">Selected</p>
+                <p className="text-sm font-medium text-blue-100 mb-1">Selected</p>
                 <p className="text-4xl font-bold">{selected.size}</p>
               </div>
               <div className="bg-white/20 rounded-lg p-3">
@@ -738,7 +738,7 @@ export default function AdminOrders() {
                 <label className="block text-xs font-medium text-gray-700 mb-2">
                   BlueDart Profile
                   {profiles.length > 0 && (
-                    <span className="ml-2 text-xs text-green-600">({profiles.length} available)</span>
+                    <span className="ml-2 text-xs text-blue-600">({profiles.length} available)</span>
                   )}
                 </label>
                 <select
@@ -974,7 +974,7 @@ export default function AdminOrders() {
                               <span className="text-xs font-mono text-gray-900 font-medium">{activeShipment.awb}</span>
                             </div>
                             {activeShipment.courier && <div className="text-[10px] text-gray-500">{activeShipment.courier}</div>}
-                            {activeShipment.status && <span className="text-xs text-green-600 font-medium">{activeShipment.status}</span>}
+                            {activeShipment.status && <span className="text-xs text-blue-600 font-medium">{activeShipment.status}</span>}
                           </div>
                         ) : (
                           <span className="text-xs text-gray-400">No AWB</span>

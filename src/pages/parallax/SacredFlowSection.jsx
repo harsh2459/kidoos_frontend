@@ -1,12 +1,11 @@
 // src/components/SacredFlowSection.jsx
-import React, { useLayoutEffect, useRef, useEffect } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import React, { useLayoutEffect, useRef, useEffect, useState } from 'react';
 
 const SacredFlowSection = () => {
     const containerRef = useRef(null);
+    const [gsapLoaded, setGsapLoaded] = useState(false);
+    const gsapRef = useRef(null);
+    const ScrollTriggerRef = useRef(null);
 
     // GROUPS
     const brightGroupRef = useRef(null); // The Video Layer (Foreground)
@@ -36,8 +35,41 @@ const SacredFlowSection = () => {
 
     const lanternRef = useRef(null);
 
+    // Load GSAP dynamically
+    useEffect(() => {
+        let mounted = true;
+
+        const loadGsap = async () => {
+            try {
+                const [gsapModule, scrollTriggerModule] = await Promise.all([
+                    import("gsap"),
+                    import("gsap/ScrollTrigger")
+                ]);
+
+                if (mounted) {
+                    gsapRef.current = gsapModule.gsap;
+                    ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+                    gsapModule.gsap.registerPlugin(scrollTriggerModule.ScrollTrigger);
+                    setGsapLoaded(true);
+                }
+            } catch (error) {
+                console.error("Failed to load GSAP:", error);
+            }
+        };
+
+        loadGsap();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
     // MOUSE EFFECT
     useEffect(() => {
+        if (!gsapLoaded || !gsapRef.current) return;
+
+        const gsap = gsapRef.current;
+
         const xTo = gsap.quickTo(lanternRef.current, "x", { duration: 0.6, ease: "power3" });
         const yTo = gsap.quickTo(lanternRef.current, "y", { duration: 0.6, ease: "power3" });
 
@@ -48,9 +80,14 @@ const SacredFlowSection = () => {
 
         window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, []);
+    }, [gsapLoaded]);
 
     useLayoutEffect(() => {
+        if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+        const gsap = gsapRef.current;
+        const ScrollTrigger = ScrollTriggerRef.current;
+
         const ctx = gsap.context(() => {
 
             const tl = gsap.timeline({
@@ -156,7 +193,7 @@ const SacredFlowSection = () => {
 
         }, containerRef);
         return () => ctx.revert();
-    }, []);
+    }, [gsapLoaded]);
 
     return (
         <div ref={containerRef} className="relative w-full h-screen overflow-hidden bg-[#0a0502] font-serif">
@@ -233,8 +270,8 @@ const SacredFlowSection = () => {
             {/* LAYER 2: MIDDLE WORLD (Mist)              */}
             {/* ========================================= */}
             <div ref={middleGroupRef} className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-                <img ref={mistRef} src="/images/illustration-water-ripple.png" alt="Mist" className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-40" />
-                <img ref={rippleRef} src="/images/texture-parchment-wash.png" alt="Ripple" className="absolute w-[90%] md:w-[70%] h-auto object-contain mix-blend-overlay opacity-50" />
+                <img ref={mistRef} src="/images-webp/illustration-water-ripple.webp" alt="Mist" className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-40" />
+                <img ref={rippleRef} src="/images-webp/texture-parchment-wash.webp" alt="Ripple" className="absolute w-[90%] md:w-[70%] h-auto object-contain mix-blend-overlay opacity-50" />
 
                 <div className="relative z-30 text-center p-8 max-w-5xl">
                     <div ref={middleTextRef} className="mb-8">
@@ -265,7 +302,7 @@ const SacredFlowSection = () => {
                     <div className="absolute transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.15)_0%,transparent_70%)] blur-3xl" />
                 </div>
                 <div ref={darkRootsRef} className="absolute inset-0 w-full h-full">
-                    <img src="/images/Dark_background.png" alt="Underground darkness" className="w-full h-full object-cover brightness-[0.8] sepia-[0.2]" />
+                    <img src="/images-webp/Dark_background.webp" alt="Underground darkness" className="w-full h-full object-cover brightness-[0.8] sepia-[0.2]" />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
                 </div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-40 p-6">

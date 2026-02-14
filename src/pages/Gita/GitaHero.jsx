@@ -164,7 +164,7 @@ const GitaHero = () => {
                     >
                         <div className="relative pointer-events-auto w-full flex justify-center">
                             <img 
-                                src="/images/gita-english-hero.png" 
+                                src="/images-webp/gita-english-hero.webp" 
                                 alt="Gita Book English Edition" 
                                 className="w-full object-contain drop-shadow-2xl rounded-lg z-50 transition-transform duration-300 hover:scale-105"
                                 style={{ maxHeight: '85vh' }}

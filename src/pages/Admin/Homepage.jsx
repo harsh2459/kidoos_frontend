@@ -47,7 +47,7 @@ export default function HomepageAdmin() {
                  b.slides = b.slides.map(s => ({
                      ...s,
                      image: s.image || "",
-                     bgColor: s.bgColor || "#1A3C34",
+                     bgColor: s.bgColor || "#384959",
                      textColor: s.textColor || "#ffffff",
                      layout: s.layout || 'split', 
                      height: s.height || 'medium',
@@ -133,7 +133,7 @@ export default function HomepageAdmin() {
   const moveUp = (i) => move(i, i - 1);
   const moveDown = (i) => move(i, i + 1);
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-[#F4F7F5]"><div className="w-12 h-12 border-4 border-[#1A3C34] border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading) return <div className="h-screen flex items-center justify-center bg-[#F4F7F5]"><div className="w-12 h-12 border-4 border-[#384959] border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
     <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
@@ -142,10 +142,10 @@ export default function HomepageAdmin() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34]">Homepage Builder</h1>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#384959]">Homepage Builder</h1>
             <p className="text-[#5C756D] mt-1">Design your storefront layout.</p>
           </div>
-          <button onClick={save} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold hover:bg-[#2F523F] transition-all shadow-md active:scale-95 disabled:opacity-50">
+          <button onClick={save} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold hover:bg-[#6A89A7] transition-all shadow-md active:scale-95 disabled:opacity-50">
             <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function HomepageAdmin() {
                   }`}>
                     {b.type === 'html' ? 'Custom Code' : b.type === 'puzzle' ? 'Game' : b.type}
                   </span>
-                  <span className="text-sm font-medium text-[#1A3C34]">
+                  <span className="text-sm font-medium text-[#384959]">
                     {b.title || (b.type === 'html' ? 'Untitled HTML Block' : b.type === 'puzzle' ? 'Puzzle Game' : 'Untitled Section')}
                   </span>
                 </div>
@@ -189,14 +189,14 @@ export default function HomepageAdmin() {
                 <div className="flex items-center gap-2">
                    <div className="flex items-center gap-2 bg-white border border-[#DCE4E0] rounded-lg px-2 py-1 mr-2">
                     <span className="text-[10px] uppercase font-bold text-[#8BA699]">Pos</span>
-                    <select value={i} onChange={(e) => move(i, Number(e.target.value))} className="bg-transparent text-sm font-bold text-[#1A3C34] outline-none cursor-pointer">
+                    <select value={i} onChange={(e) => move(i, Number(e.target.value))} className="bg-transparent text-sm font-bold text-[#384959] outline-none cursor-pointer">
                       {blocks.map((_, idx) => <option key={idx} value={idx}>{idx + 1}</option>)}
                     </select>
                   </div>
 
                   <div className="flex items-center border-l border-[#DCE4E0] pl-2 gap-1">
-                    <button onClick={() => moveUp(i)} disabled={i === 0} className="p-1.5 text-[#5C756D] hover:text-[#1A3C34] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowUp className="w-4 h-4" /></button>
-                    <button onClick={() => moveDown(i)} disabled={i === blocks.length - 1} className="p-1.5 text-[#5C756D] hover:text-[#1A3C34] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowDown className="w-4 h-4" /></button>
+                    <button onClick={() => moveUp(i)} disabled={i === 0} className="p-1.5 text-[#5C756D] hover:text-[#384959] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowUp className="w-4 h-4" /></button>
+                    <button onClick={() => moveDown(i)} disabled={i === blocks.length - 1} className="p-1.5 text-[#5C756D] hover:text-[#384959] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowDown className="w-4 h-4" /></button>
                     <button onClick={() => setBlocks(blocks.filter((_, x) => x !== i))} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded ml-1"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default function HomepageAdmin() {
       </div>
       <style>{`
         .input-base { width: 100%; background-color: #FAFBF9; border: 1px solid #DCE4E0; border-radius: 0.75rem; padding: 0.75rem 1rem; outline: none; transition: all; }
-        .input-base:focus { border-color: #1A3C34; ring: 2px solid rgba(26,60,52,0.2); }
+        .input-base:focus { border-color: #384959; ring: 2px solid rgba(26,60,52,0.2); }
       `}</style>
     </div>
   );
@@ -230,8 +230,8 @@ export default function HomepageAdmin() {
 
 function AddButton({ onClick, icon: Icon, label }) {
   return (
-    <button onClick={onClick} className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[#DCE4E0] bg-white hover:border-[#1A3C34] hover:bg-[#F4F7F5] text-[#2C3E38] font-medium transition-all active:scale-95 shadow-sm">
-      <div className="p-1 bg-[#E8F0EB] rounded-md"><Icon className="w-4 h-4 text-[#1A3C34]" /></div>
+    <button onClick={onClick} className="flex items-center gap-2 px-4 py-3 rounded-xl border border-[#DCE4E0] bg-white hover:border-[#384959] hover:bg-[#F4F7F5] text-[#2C3E38] font-medium transition-all active:scale-95 shadow-sm">
+      <div className="p-1 bg-[#E8F0EB] rounded-md"><Icon className="w-4 h-4 text-[#384959]" /></div>
       {label}
     </button>
   );
@@ -260,7 +260,7 @@ function defaultBlock(type) {
         image: "", 
         ctaText: "Shop Now", 
         ctaLink: "/catalog",
-        bgColor: "#1A3C34",
+        bgColor: "#384959",
         textColor: "#ffffff",
         layout: "split",
         height: "medium",
@@ -306,7 +306,7 @@ function BlockEditor({ block, onChange, categories }) {
     if (block.type === 'slider') {
         onChange({ ...block, slides: [...(block.slides || []), { desktopImage: "", mobileImage: "", link: "", alt: "", objectFit: "cover" }] });
     } else if (block.type === 'hero-slider') {
-        onChange({ ...block, slides: [...(block.slides || []), { title: "New Slide", subtitle: "", image: "", ctaText: "Shop", ctaLink: "/catalog", bgColor: "#1A3C34", textColor: "#ffffff", layout: "split", height: "medium", objectFit: "cover" }] });
+        onChange({ ...block, slides: [...(block.slides || []), { title: "New Slide", subtitle: "", image: "", ctaText: "Shop", ctaLink: "/catalog", bgColor: "#384959", textColor: "#ffffff", layout: "split", height: "medium", objectFit: "cover" }] });
     }
   };
 
@@ -335,7 +335,7 @@ function BlockEditor({ block, onChange, categories }) {
           <div className="space-y-8">
             {(block.slides || []).map((slide, idx) => (
               <div key={idx} className="border border-[#E3E8E5] p-5 rounded-xl bg-[#FAFBF9] relative group shadow-sm">
-                <span className="absolute -left-3 -top-3 w-6 h-6 bg-[#1A3C34] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{idx + 1}</span>
+                <span className="absolute -left-3 -top-3 w-6 h-6 bg-[#384959] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{idx + 1}</span>
                 
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-xl border border-[#E3E8E5]">
@@ -385,7 +385,7 @@ function BlockEditor({ block, onChange, categories }) {
                           <div>
                             <label className="text-sm font-bold text-[#2C3E38] block mb-2">Bg Color</label>
                             <div className="flex items-center gap-2">
-                                <input type="color" value={slide.bgColor || "#1A3C34"} onChange={(e) => updateSlide(idx, 'bgColor', e.target.value)} className="w-8 h-8 rounded cursor-pointer border-none" />
+                                <input type="color" value={slide.bgColor || "#384959"} onChange={(e) => updateSlide(idx, 'bgColor', e.target.value)} className="w-8 h-8 rounded cursor-pointer border-none" />
                                 <span className="text-xs text-gray-500 font-mono">{slide.bgColor}</span>
                             </div>
                           </div>
@@ -423,7 +423,7 @@ function BlockEditor({ block, onChange, categories }) {
           <div className="space-y-6">
             {(block.slides || []).map((slide, idx) => (
               <div key={idx} className="border border-[#E3E8E5] p-4 rounded-xl bg-[#FAFBF9] relative group">
-                <span className="absolute -left-3 -top-3 w-6 h-6 bg-[#1A3C34] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{idx + 1}</span>
+                <span className="absolute -left-3 -top-3 w-6 h-6 bg-[#384959] text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">{idx + 1}</span>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="md:col-span-2"><ImageUpload label="Desktop Image" value={slide.desktopImage || slide.image} onChange={(v) => updateSlide(idx, 'desktopImage', v)} /></div>
                   <div className=""><ImageUpload label="Mobile Image (Optional)" value={slide.mobileImage} onChange={(v) => updateSlide(idx, 'mobileImage', v)} /></div>
@@ -454,17 +454,17 @@ function BlockEditor({ block, onChange, categories }) {
            </div>
 
            <div className="space-y-4">
-               <h3 className="font-bold text-[#1A3C34] flex items-center gap-2 border-b pb-2"><Puzzle className="w-4 h-4" /> Game Levels</h3>
-               <div className="border border-green-200 bg-green-50/50 p-4 rounded-xl">
-                    <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
-                        <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500"></div> Level 1: Easy (3x3)</span>
-                        <span className="text-[10px] uppercase font-bold bg-green-200 text-green-800 px-2 py-0.5 rounded tracking-wide">Always Unlocked</span>
+               <h3 className="font-bold text-[#384959] flex items-center gap-2 border-b pb-2"><Puzzle className="w-4 h-4" /> Game Levels</h3>
+               <div className="border border-blue-200 bg-blue-50/50 p-4 rounded-xl">
+                    <div className="mb-3 font-bold text-[#384959] flex justify-between items-center">
+                        <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Level 1: Easy (3x3)</span>
+                        <span className="text-[10px] uppercase font-bold bg-blue-200 text-blue-800 px-2 py-0.5 rounded tracking-wide">Always Unlocked</span>
                     </div>
                     <ImageUpload label="Easy Image (3x3)" value={levels[0]?.image} onChange={v => updateLevel(0, 'image', v)} />
                </div>
 
                <div className="border border-yellow-200 bg-yellow-50/50 p-4 rounded-xl">
-                    <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
+                    <div className="mb-3 font-bold text-[#384959] flex justify-between items-center">
                         <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500"></div> Level 2: Medium (4x4)</span>
                         <span className="text-[10px] uppercase font-bold bg-yellow-200 text-yellow-800 px-2 py-0.5 rounded tracking-wide">Unlocks after Easy</span>
                     </div>
@@ -472,7 +472,7 @@ function BlockEditor({ block, onChange, categories }) {
                </div>
 
                <div className="border border-red-200 bg-red-50/50 p-4 rounded-xl">
-                    <div className="mb-3 font-bold text-[#1A3C34] flex justify-between items-center">
+                    <div className="mb-3 font-bold text-[#384959] flex justify-between items-center">
                         <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> Level 3: Hard (5x5)</span>
                         <span className="text-[10px] uppercase font-bold bg-red-200 text-red-800 px-2 py-0.5 rounded tracking-wide">Unlocks after Medium</span>
                     </div>
@@ -490,7 +490,7 @@ function BlockEditor({ block, onChange, categories }) {
            </div>
 
            <div className="border-t border-gray-200 pt-6">
-               <h3 className="font-bold text-[#1A3C34] flex items-center gap-2 mb-4"><Gift className="w-4 h-4" /> Winner Rewards</h3>
+               <h3 className="font-bold text-[#384959] flex items-center gap-2 mb-4"><Gift className="w-4 h-4" /> Winner Rewards</h3>
                <div className="grid md:grid-cols-2 gap-6">
                    <div className="md:col-span-2">
                        <ImageUpload label="Reward Image (Appears on Win)" value={block.rewardImage} onChange={v => onChange({ ...block, rewardImage: v })} />
@@ -567,5 +567,5 @@ function ImageUpload({ label, value, onChange }) {
       } catch (error) { t.err("Error uploading image"); } finally { setUploading(false); }
     }
   };
-  return (<div><label className="text-sm font-bold text-[#2C3E38] block mb-2">{label}</label><div className="flex gap-4 items-start"><div className="flex-1"><label className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border border-dashed border-[#1A3C34] rounded-xl cursor-pointer hover:bg-[#F4F7F5] transition-colors text-[#1A3C34] font-medium group">{uploading ? "Uploading..." : <><Upload className="w-4 h-4" /> Choose Image</>}<input type="file" accept="image/*" onChange={handleImageChange} className="hidden" /></label><input type="text" className="input-base mt-2 text-xs font-mono text-[#5C756D]" placeholder="Or paste URL" value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>{value && (<div className="w-24 h-24 border border-[#E3E8E5] rounded-lg bg-white p-1 shadow-sm flex-shrink-0"><img src={assetUrl(value)} alt="Preview" className="w-full h-full object-contain rounded" /></div>)}</div></div>);
+  return (<div><label className="text-sm font-bold text-[#2C3E38] block mb-2">{label}</label><div className="flex gap-4 items-start"><div className="flex-1"><label className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border border-dashed border-[#384959] rounded-xl cursor-pointer hover:bg-[#F4F7F5] transition-colors text-[#384959] font-medium group">{uploading ? "Uploading..." : <><Upload className="w-4 h-4" /> Choose Image</>}<input type="file" accept="image/*" onChange={handleImageChange} className="hidden" /></label><input type="text" className="input-base mt-2 text-xs font-mono text-[#5C756D]" placeholder="Or paste URL" value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>{value && (<div className="w-24 h-24 border border-[#E3E8E5] rounded-lg bg-white p-1 shadow-sm flex-shrink-0"><img src={assetUrl(value)} alt="Preview" className="w-full h-full object-contain rounded" /></div>)}</div></div>);
 }

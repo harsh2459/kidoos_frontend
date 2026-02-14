@@ -1,9 +1,6 @@
 // src/lib/firebase.js
+// Lazy initialization to reduce initial bundle size
 
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-
-// Replace with YOUR Firebase config from console.firebase.google.com
 const firebaseConfig = {
     apiKey: "AIzaSyBXx3VQAuOwUUogSgEZvC-mw2Td8-v6yPI",
     authDomain: "kiddos-intellect.firebaseapp.com",
@@ -14,6 +11,35 @@ const firebaseConfig = {
     measurementId: "G-ST1KYT0N4K"
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+let authInstance = null;
+let providerInstance = null;
+
+// Lazy initialize Firebase only when auth is needed
+export async function getAuthInstance() {
+    if (authInstance) return authInstance;
+
+    // Dynamic import reduces initial bundle size
+    const { initializeApp } = await import("firebase/app");
+    const { getAuth } = await import("firebase/auth");
+
+    const app = initializeApp(firebaseConfig);
+    authInstance = getAuth(app);
+    return authInstance;
+}
+
+export async function getGoogleProvider() {
+    if (providerInstance) return providerInstance;
+
+    const { GoogleAuthProvider } = await import("firebase/auth");
+    providerInstance = new GoogleAuthProvider();
+    return providerInstance;
+}
+
+// Backward compatibility exports (but these will still eagerly load)
+export let auth, googleProvider;
+
+// Initialize synchronously if accessed directly (fallback)
+(async () => {
+    auth = await getAuthInstance();
+    googleProvider = await getGoogleProvider();
+})();

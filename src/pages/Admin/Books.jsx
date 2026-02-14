@@ -203,7 +203,7 @@ export default function BooksAdmin() {
   };
 
   // Helper styles
-  const secondaryBtnClass = "flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E3E8E5] text-[#5C756D] font-bold text-sm bg-white hover:border-[#1A3C34] hover:text-[#1A3C34] transition-all shadow-sm active:scale-95";
+  const secondaryBtnClass = "flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E3E8E5] text-[#5C756D] font-bold text-sm bg-white hover:border-[#222831] hover:text-[#222831] transition-all shadow-sm active:scale-95";
 
   return (
     <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8">
@@ -212,7 +212,7 @@ export default function BooksAdmin() {
       {/* --- HEADER --- */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Books Inventory</h1>
+          <h1 className="text-3xl font-bold text-[#222831] tracking-tight">Books Inventory</h1>
           <p className="text-[#5C756D] mt-1 text-sm">Manage your catalog, pricing, and visibility.</p>
         </div>
 
@@ -240,11 +240,11 @@ export default function BooksAdmin() {
 
           {/* SEARCH BAR - IMPROVED */}
           <div className="relative w-full lg:max-w-xl group">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#00ADB5] transition-colors">
 
             </div>
             <input
-              className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl pl-12 pr-4 py-3 text-base text-[#1A3C34] placeholder:text-[#8BA699] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all shadow-inner"
+              className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl pl-12 pr-4 py-3 text-base text-[#222831] placeholder:text-[#8BA699] focus:outline-none focus:ring-2 focus:ring-[#00ADB5]/20 focus:border-[#00ADB5] transition-all shadow-inner"
               placeholder="Search by title, SKU, author..."
               value={q}
               onChange={e => setQ(e.target.value)}
@@ -271,8 +271,8 @@ export default function BooksAdmin() {
                   className={`
                             px-5 py-2 rounded-lg text-sm font-bold transition-all duration-200
                             ${vis === tab.id
-                      ? "bg-white text-[#1A3C34] shadow-sm ring-1 ring-[#E3E8E5] scale-[1.02]"
-                      : "text-[#5C756D] hover:text-[#1A3C34] hover:bg-white/50"
+                      ? "bg-white text-[#222831] shadow-sm ring-1 ring-[#E3E8E5] scale-[1.02]"
+                      : "text-[#5C756D] hover:text-[#222831] hover:bg-white/50"
                     }
                         `}
                 >
@@ -287,18 +287,18 @@ export default function BooksAdmin() {
       {/* --- INFO & BULK ACTIONS --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 px-1 min-h-[40px]">
         <div className="text-sm text-[#5C756D] font-medium">
-          Showing <span className="text-[#1A3C34] font-bold">{items.length}</span> of <span className="text-[#1A3C34] font-bold">{total}</span> results
+          Showing <span className="text-[#222831] font-bold">{items.length}</span> of <span className="text-[#222831] font-bold">{total}</span> results
         </div>
 
         {/* IMPROVED BULK ACTION BUTTONS */}
         {selectedBooks.length > 0 && (
           <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#1A3C34] mr-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#222831] mr-2">
               Selected ({selectedBooks.length})
             </span>
             <button
               onClick={() => bulkUpdateVisibility("public")}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-[#1A3C34] text-white hover:bg-[#2F523F] transition-all shadow-md hover:shadow-lg active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-[#222831] text-white hover:bg-[#393E46] transition-all shadow-md hover:shadow-lg active:scale-95"
             >
               <Eye className="w-4 h-4" /> Publish
             </button>
@@ -315,7 +315,7 @@ export default function BooksAdmin() {
       {/* --- TABLE --- */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#E3E8E5]">
-          <div className="w-10 h-10 border-4 border-[#1A3C34] border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-[#222831] border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-[#5C756D] font-medium">Loading catalog...</p>
         </div>
       ) : (
@@ -328,7 +328,7 @@ export default function BooksAdmin() {
                     <th className="py-4 px-6 w-10">
                       <input
                         type="checkbox"
-                        className="rounded border-[#E3E8E5] text-[#1A3C34] focus:ring-[#1A3C34] w-4 h-4 cursor-pointer"
+                        className="rounded border-[#E3E8E5] text-[#222831] focus:ring-[#00ADB5] w-4 h-4 cursor-pointer"
                         onChange={() => setSelectedBooks(selectedBooks.length === items.length ? [] : items.map(b => b._id))}
                         checked={selectedBooks.length === items.length && items.length > 0}
                       />
@@ -359,7 +359,7 @@ export default function BooksAdmin() {
                         <td className="py-4 px-6">
                           <input
                             type="checkbox"
-                            className="rounded border-[#E3E8E5] text-[#1A3C34] focus:ring-[#1A3C34] w-4 h-4 cursor-pointer"
+                            className="rounded border-[#E3E8E5] text-[#222831] focus:ring-[#00ADB5] w-4 h-4 cursor-pointer"
                             checked={isSelected}
                             onChange={() => toggleSelection(b._id)}
                           />
@@ -380,7 +380,7 @@ export default function BooksAdmin() {
 
                         <td className="py-4 px-4 max-w-[250px]">
                           <div
-                            className="font-bold text-[#1A3C34] truncate"
+                            className="font-bold text-[#222831] truncate"
                             title={b.title}
                           >
                             {b.title}
@@ -392,15 +392,15 @@ export default function BooksAdmin() {
                             {sku}
                           </span>
                         </td>
-                        <td className="py-4 px-4 font-bold text-[#1A3C34]">₹{b.price}</td>
+                        <td className="py-4 px-4 font-bold text-[#222831]">₹{b.price}</td>
                         <td className="py-4 px-4">
-                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${b.inventory?.stock > 10 ? "bg-[#E8F5E9] text-[#1A3C34]" : b.inventory?.stock > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${b.inventory?.stock > 10 ? "bg-cyan-100 text-cyan-700" : b.inventory?.stock > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"}`}>
                             {b.inventory?.stock ?? 0}
                           </span>
                         </td>
                         <td className="py-4 px-4">
                           {b.visibility === "public" ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-100 text-cyan-700 border border-cyan-200">
                               <CheckCircle2 className="w-3 h-3" /> Public
                             </span>
                           ) : (
@@ -414,7 +414,7 @@ export default function BooksAdmin() {
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               to={`/admin/books/${b.slug}/edit`}
-                              className="p-2 rounded-lg text-[#5C756D] border border-transparent hover:border-[#E3E8E5] hover:bg-white hover:text-[#1A3C34] hover:shadow-sm transition-all"
+                              className="p-2 rounded-lg text-[#5C756D] border border-transparent hover:border-[#E3E8E5] hover:bg-white hover:text-[#222831] hover:shadow-sm transition-all"
                               title="Edit Book"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -422,8 +422,8 @@ export default function BooksAdmin() {
                             <button
                               onClick={() => toggleVisibility(b)}
                               className={`p-2 rounded-lg border border-transparent transition-all ${b.visibility === "public"
-                                  ? "text-[#5C756D] hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
-                                  : "text-[#5C756D] hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                                ? "text-[#5C756D] hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                                : "text-[#5C756D] hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
                                 }`}
                               title={b.visibility === "public" ? "Unpublish" : "Publish"}
                             >
@@ -446,7 +446,7 @@ export default function BooksAdmin() {
                       <td colSpan={8} className="py-16 text-center">
                         <div className="flex flex-col items-center justify-center text-[#5C756D]">
                           <BookOpen className="w-12 h-12 mb-4 opacity-20" />
-                          <p className="text-lg font-bold text-[#1A3C34]">No books found</p>
+                          <p className="text-lg font-bold text-[#222831]">No books found</p>
                           <p className="text-sm mt-1">Try adjusting your search or filters.</p>
                         </div>
                       </td>
@@ -464,8 +464,8 @@ export default function BooksAdmin() {
                 onClick={() => goToPage(page - 1)}
                 disabled={page === 1}
                 className={`p-2 rounded-lg border transition-all ${page === 1
-                    ? "bg-[#F4F7F5] text-[#8BA699] border-transparent cursor-not-allowed"
-                    : "bg-white text-[#1A3C34] border-[#E3E8E5] hover:bg-[#F4F7F5] shadow-sm"
+                  ? "bg-[#F4F7F5] text-[#8BA699] border-transparent cursor-not-allowed"
+                  : "bg-white text-[#222831] border-[#E3E8E5] hover:bg-[#F4F7F5] shadow-sm"
                   }`}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -482,8 +482,8 @@ export default function BooksAdmin() {
                       className={`
                         w-8 h-8 rounded-lg text-sm font-bold transition-all flex items-center justify-center
                         ${page === pageNum
-                          ? "bg-[#1A3C34] text-white shadow-md"
-                          : "text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#1A3C34]"
+                          ? "bg-[#222831] text-white shadow-md"
+                          : "text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#222831]"
                         }
                       `}
                     >
@@ -497,8 +497,8 @@ export default function BooksAdmin() {
                 onClick={() => goToPage(page + 1)}
                 disabled={page === totalPages}
                 className={`p-2 rounded-lg border transition-all ${page === totalPages
-                    ? "bg-[#F4F7F5] text-[#8BA699] border-transparent cursor-not-allowed"
-                    : "bg-white text-[#1A3C34] border-[#E3E8E5] hover:bg-[#F4F7F5] shadow-sm"
+                  ? "bg-[#F4F7F5] text-[#8BA699] border-transparent cursor-not-allowed"
+                  : "bg-white text-[#222831] border-[#E3E8E5] hover:bg-[#F4F7F5] shadow-sm"
                   }`}
               >
                 <ChevronRight className="w-5 h-5" />

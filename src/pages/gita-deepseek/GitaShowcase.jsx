@@ -1,15 +1,13 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import styled from 'styled-components';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
-
-// Register GSAP Plugin
-gsap.registerPlugin(ScrollTrigger);
 
 const GitaCinematicScroll = () => {
   const containerRef = useRef(null);
   const textRef = useRef(null);
+  const [gsapLoaded, setGsapLoaded] = useState(false);
+  const gsapRef = useRef(null);
+  const ScrollTriggerRef = useRef(null);
 
   // Book Refs
   const centerBookRef = useRef(null);
@@ -30,7 +28,41 @@ const GitaCinematicScroll = () => {
   const floatingSymbol1Ref = useRef(null);
   const floatingSymbol2Ref = useRef(null);
 
+  // Load GSAP dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGsap = async () => {
+      try {
+        const [gsapModule, scrollTriggerModule] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger")
+        ]);
+
+        if (mounted) {
+          gsapRef.current = gsapModule.default;
+          ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+          gsapModule.default.registerPlugin(scrollTriggerModule.ScrollTrigger);
+          setGsapLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load GSAP:", error);
+      }
+    };
+
+    loadGsap();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useLayoutEffect(() => {
+    if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+    const gsap = gsapRef.current;
+    const ScrollTrigger = ScrollTriggerRef.current;
+
     let ctx = gsap.context(() => {
       let mm = gsap.matchMedia();
 
@@ -274,9 +306,13 @@ const GitaCinematicScroll = () => {
     }, containerRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [gsapLoaded]);
 
-  const handleImageLoad = () => ScrollTrigger.refresh();
+  const handleImageLoad = () => {
+    if (ScrollTriggerRef.current) {
+      ScrollTriggerRef.current.refresh();
+    }
+  };
 
   return (
     <MainContainer ref={containerRef}>
@@ -374,7 +410,7 @@ const GitaCinematicScroll = () => {
         <Link to="/catalog">
           <SideBook
             ref={leftBookRef}
-            src="/images/HindiGita3D.png"
+            src="/images-webp/HindiGita3D.webp"
             $position="left"
             alt="Bhagavad Gita Hindi Edition"
             onError={(e) => { e.target.src = "https://placehold.co/420x580/e8e6d8/1a4d3e?text=Hindi+Edition"; }}
@@ -383,7 +419,7 @@ const GitaCinematicScroll = () => {
         <Link to="/catalog">
           <CenterBook
             ref={centerBookRef}
-            src="/images/EnglishGita3D.png"
+            src="/images-webp/EnglishGita3D.webp"
             alt="Bhagavad Gita for Children"
             onLoad={handleImageLoad}
             onError={(e) => { e.target.src = "https://placehold.co/450x600/f7f5eb/1a4d3e?text=Gita+for+Kids"; }}
@@ -391,7 +427,7 @@ const GitaCinematicScroll = () => {
         <Link to="/catalog">
           <SideBook
             ref={rightBookRef}
-            src="/images/GujratiGita3D.png"
+            src="/images-webp/GujratiGita3D.webp"
             $position="right"
             alt="Bhagavad Gita Gujarati Edition"
             onError={(e) => { e.target.src = "https://placehold.co/420x580/e8e6d8/1a4d3e?text=Gujarati+Edition"; }}

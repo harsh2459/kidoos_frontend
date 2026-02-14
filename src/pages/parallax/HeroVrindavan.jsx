@@ -1,19 +1,53 @@
 // src/components/Hero.jsx
-import React, { useLayoutEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import OptimizedImage from '../../components/OptimizedImage';
 
 const Hero = () => {
   const containerRef = useRef(null);
+  const [gsapLoaded, setGsapLoaded] = useState(false);
+  const gsapRef = useRef(null);
+  const ScrollTriggerRef = useRef(null);
   const bgRef = useRef(null);      // The main temple image
   const fgRef = useRef(null);      // The "cutout" (optional but recommended)
   const titleRef = useRef(null);   // "KIDDOS INTELLECT"
   const overlayRef = useRef(null); // The black darkening layer
   const contentRef = useRef(null); // The "Welcome" text section
 
+  // Load GSAP dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGsap = async () => {
+      try {
+        const [gsapModule, scrollTriggerModule] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger")
+        ]);
+
+        if (mounted) {
+          gsapRef.current = gsapModule.gsap;
+          ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+          gsapModule.gsap.registerPlugin(scrollTriggerModule.ScrollTrigger);
+          setGsapLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load GSAP:", error);
+      }
+    };
+
+    loadGsap();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useLayoutEffect(() => {
+    if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+    const gsap = gsapRef.current;
+    const ScrollTrigger = ScrollTriggerRef.current;
+
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -51,7 +85,7 @@ const Hero = () => {
     }, containerRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [gsapLoaded]);
 
   return (
     <div className="relative w-full">
@@ -62,12 +96,24 @@ const Hero = () => {
 
         {/* === LAYER 1: BACKGROUND IMAGE === */}
         <div className="absolute inset-0 z-0">
-          <img
-            ref={bgRef}
-            src="/images/back-image.png"
-            alt="Background"
-            className="w-full h-full object-cover origin-center"
-          />
+          <picture>
+            <source
+              type="image/webp"
+              srcSet="/images-optimized/back-image-400w.webp 400w,
+                      /images-optimized/back-image-800w.webp 800w,
+                      /images-optimized/back-image-1200w.webp 1200w,
+                      /images-optimized/back-image-1920w.webp 1920w"
+              sizes="100vw"
+            />
+            <img
+              ref={bgRef}
+              src="/images-webp/back-image.webp"
+              alt="Background"
+              className="w-full h-full object-cover origin-center"
+              loading="eager"
+              fetchPriority="high"
+            />
+          </picture>
         </div>
 
         {/* === LAYER 2: HERO TITLE === */}
@@ -85,16 +131,27 @@ const Hero = () => {
         </h1>
 
         {/* === LAYER 3: FOREGROUND CUTOUT (OPTIONAL) === */}
-        {/* To get the "Lun Dev" effect where text is BEHIND trees, 
-            you need a transparent PNG of just the temples here. 
+        {/* To get the "Lun Dev" effect where text is BEHIND trees,
+            you need a transparent PNG of just the temples here.
             If you don't have it, delete this div. */}
         <div className="absolute inset-0 z-20 pointer-events-none">
-          <img
-            ref={fgRef}
-            src="/images/foreground-cutout.png"
-            alt="Foreground"
-            className="w-full h-full object-cover origin-center"
-          />
+          <picture>
+            <source
+              type="image/webp"
+              srcSet="/images-optimized/foreground-cutout-400w.webp 400w,
+                      /images-optimized/foreground-cutout-800w.webp 800w,
+                      /images-optimized/foreground-cutout-1200w.webp 1200w,
+                      /images-optimized/foreground-cutout-1920w.webp 1920w"
+              sizes="100vw"
+            />
+            <img
+              ref={fgRef}
+              src="/images-webp/foreground-cutout.webp"
+              alt="Foreground"
+              className="w-full h-full object-cover origin-center"
+              loading="eager"
+            />
+          </picture>
         </div>
 
         {/* === LAYER 4: DARK OVERLAY === */}

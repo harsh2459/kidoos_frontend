@@ -1,11 +1,40 @@
 // components/MarineSnow.jsx
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import { useEffect, useRef, useState } from "react";
 
 const MarineSnow = ({ count = 50 }) => {
   const containerRef = useRef(null);
+  const [gsapLoaded, setGsapLoaded] = useState(false);
+  const gsapRef = useRef(null);
+
+  // Load GSAP dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadGsap = async () => {
+      try {
+        const gsapModule = await import("gsap");
+
+        if (mounted) {
+          gsapRef.current = gsapModule.default;
+          setGsapLoaded(true);
+        }
+      } catch (error) {
+        console.error("Failed to load GSAP:", error);
+      }
+    };
+
+    loadGsap();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
+    if (!gsapLoaded || !gsapRef.current) return;
+
+    const gsap = gsapRef.current;
+
     const ctx = gsap.context(() => {
       // Create random particles
       for (let i = 0; i < count; i++) {
@@ -45,7 +74,7 @@ const MarineSnow = ({ count = 50 }) => {
     }, containerRef);
 
     return () => ctx.revert();
-  }, [count]);
+  }, [count, gsapLoaded]);
 
   return <div ref={containerRef} className="absolute inset-0 z-20 pointer-events-none overflow-hidden" />;
 };

@@ -8,11 +8,11 @@ export default function FilterBar({ q, setQ, sort, setSort }) {
       {/* Decorative Background Images */}
       <div 
         className="absolute top-0 right-0 w-32 h-32 md:w-40 md:h-40 lg:w-52 lg:h-52 xl:w-64 xl:h-64 opacity-10 pointer-events-none bg-contain bg-no-repeat"
-        style={{ backgroundImage: "url('/images/grape-vine.png')" }}
+        style={{ backgroundImage: "url('/images-webp/grape-vine.webp')" }}
       ></div>
       <div 
         className="absolute bottom-0 left-0 w-28 h-28 md:w-36 md:h-36 lg:w-48 lg:h-48 xl:w-56 xl:h-56 opacity-10 pointer-events-none bg-contain bg-no-repeat"
-        style={{ backgroundImage: "url('/images/golden-plant.png')" }}
+        style={{ backgroundImage: "url('/images-webp/golden-plant.webp')" }}
       ></div>
 
       {/* Search Input */}

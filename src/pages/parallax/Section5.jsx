@@ -1,12 +1,11 @@
 // src/components/BookFeatureDeepDive.jsx
-import React, { useLayoutEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
 
 const BookFeatureDeepDive = () => {
     const containerRef = useRef(null);
+    const [gsapLoaded, setGsapLoaded] = useState(false);
+    const gsapRef = useRef(null);
+    const ScrollTriggerRef = useRef(null);
     const bookWrapperRef = useRef(null);
     const bookRef = useRef(null);
     const textRef1 = useRef(null);
@@ -14,7 +13,41 @@ const BookFeatureDeepDive = () => {
     const textRef3 = useRef(null);
     const progressBarRef = useRef(null);
 
+    // Load GSAP dynamically
+    useEffect(() => {
+        let mounted = true;
+
+        const loadGsap = async () => {
+            try {
+                const [gsapModule, scrollTriggerModule] = await Promise.all([
+                    import("gsap"),
+                    import("gsap/ScrollTrigger")
+                ]);
+
+                if (mounted) {
+                    gsapRef.current = gsapModule.gsap;
+                    ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+                    gsapModule.gsap.registerPlugin(scrollTriggerModule.ScrollTrigger);
+                    setGsapLoaded(true);
+                }
+            } catch (error) {
+                console.error("Failed to load GSAP:", error);
+            }
+        };
+
+        loadGsap();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
     useLayoutEffect(() => {
+        if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+        const gsap = gsapRef.current;
+        const ScrollTrigger = ScrollTriggerRef.current;
+
         const ctx = gsap.context(() => {
             
             // MASTER TIMELINE
@@ -72,7 +105,7 @@ const BookFeatureDeepDive = () => {
 
         }, containerRef);
         return () => ctx.revert();
-    }, []);
+    }, [gsapLoaded]);
 
     return (
         <section ref={containerRef} className="relative w-full h-screen bg-[#0a0503] overflow-hidden">
@@ -114,7 +147,7 @@ const BookFeatureDeepDive = () => {
                     <div ref={bookRef} className="relative w-full h-full rounded-xl shadow-[0_30px_60px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10">
                         {/* CHANGE THIS IMAGE TO YOUR MAIN BOOK COVER */}
                         <img 
-                            src="/images/1.jpg" 
+                            src="/images-webp/1.webp" 
                             alt="The Selected Gita" 
                             className="w-full h-full object-cover"
                         />

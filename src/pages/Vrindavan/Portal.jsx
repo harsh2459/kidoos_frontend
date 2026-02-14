@@ -10,22 +10,22 @@ const VIDEO_PATH = "/videos/final_image_portel.mp4";
 
 const ORBS = {
   blue: {
-    src: "/images/vrundaven/blue_orb.png",
+    src: "/images-webp/vrundaven/blue_orb.webp",
     label: "WATER CONSCIOUSNESS",
     path: "/water-1",
   },
   fire: {
-    src: "/images/vrundaven/fire_orb.png",
+    src: "/images-webp/vrundaven/fire_orb.webp",
     label: "SOLAR POWER",
     path: "/solar-power",
   },
   green: {
-    src: "/images/vrundaven/green_orb.png",
+    src: "/images-webp/vrundaven/green_orb.webp",
     label: "LIFE FORCE",
     path: "/life-force",
   },
   yellow: {
-    src: "/images/vrundaven/yellow_orb.png",
+    src: "/images-webp/vrundaven/yellow_orb.webp",
     label: "SOLAR WISDOM",
     path: "/solar-wisdom",
   },

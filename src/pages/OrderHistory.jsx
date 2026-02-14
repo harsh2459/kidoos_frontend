@@ -33,8 +33,8 @@ const OrderHistory = () => {
   const { isCustomer, loading: customerLoading } = useCustomer();
 
   // --- VRINDAVAN THEME ASSETS ---
-  const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+  const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+  const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
   useEffect(() => {
     if (customerLoading) return;

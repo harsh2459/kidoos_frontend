@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    HelpCircle, ChevronDown, Package, CreditCard, Truck, 
-    ShieldCheck, Mail, Phone, FileText, RefreshCw, Shield, 
-    ChevronRight, ArrowRight 
+import {
+    HelpCircle, ChevronDown, Package, CreditCard, Truck,
+    ShieldCheck, Mail, Phone, FileText, RefreshCw, Shield,
+    ChevronRight, ArrowRight
 } from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const FAQ = () => {
     const [openIndex, setOpenIndex] = useState(null);
@@ -20,9 +21,9 @@ const FAQ = () => {
     };
 
     // VRINDAVAN THEME ASSETS
-    const parchmentBg = "url('/images/homepage/parchment-bg.png')";
+    const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
     // Use the NEW Library Image you generated here:
-    const heroBg = "url('/images/faq-library-bg.png')"; 
+    const heroBg = "url('/images-webp/faq-library-bg.webp')";
 
     const faqData = [
         {
@@ -155,13 +156,32 @@ const FAQ = () => {
 
     return (
         <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
-            
+            <SEO
+                title="Frequently Asked Questions | Kiddos Intellect"
+                description="Find answers to common questions about our premium children's books, ordering, shipping, payments, returns, and customer support. Get help with your queries."
+                image="/favicon.jpg"
+                type="website"
+                keywords="FAQ, children's books FAQ, kids books questions, shipping policy, return policy, customer support, payment methods, book ordering"
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "FAQ", url: "/faq" }
+                ]}
+                faq={{
+                    questions: faqData.flatMap(cat =>
+                        cat.questions.map(q => ({
+                            question: q.question,
+                            answer: q.answer
+                        }))
+                    )
+                }}
+            />
+
             {/* --- HERO SECTION --- */}
             <div className="relative w-full pt-28 md:pt-36 pb-20 px-6 border-b border-[#D4AF37]/30 overflow-hidden">
-                
+
                 {/* Background Image Layer */}
-                <div 
-                    className="absolute inset-0 z-0 pointer-events-none" 
+                <div
+                    className="absolute inset-0 z-0 pointer-events-none"
                     style={{
                         backgroundImage: heroBg,
                         backgroundSize: 'cover',
@@ -169,7 +189,7 @@ const FAQ = () => {
                         opacity: 1 // Full opacity since it's an image
                     }}
                 />
-                
+
                 {/* Gradient Overlay to make text readable */}
                 <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#FAF7F2]/80 via-[#FAF7F2]/70 to-[#FAF7F2] pointer-events-none"></div>
 
@@ -178,11 +198,11 @@ const FAQ = () => {
                     <div className="inline-flex items-center justify-center p-3 mb-6 bg-white/70 backdrop-blur-sm rounded-full shadow-[0_4px_15px_rgba(212,175,55,0.2)] ring-1 ring-[#D4AF37]/40">
                         <HelpCircle className="w-8 h-8 text-[#D4AF37]" />
                     </div>
-                    
+
                     <h1 className="font-['Playfair_Display'] text-5xl md:text-6xl lg:text-7xl font-bold text-[#3E2723] mb-6 tracking-tight leading-tight drop-shadow-sm">
                         Frequently Asked <span className="text-[#D4AF37] italic">Questions</span>
                     </h1>
-                    
+
                     <p className="text-lg md:text-xl text-[#5C4A2E] font-light max-w-2xl mx-auto leading-relaxed">
                         Find answers to common questions about our products, ordering, shipping, and more.
                         Can't find what you're looking for? Contact our support team!
@@ -192,21 +212,21 @@ const FAQ = () => {
 
             {/* --- MAIN CONTENT --- */}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 relative">
-                
+
                 {/* Parchment Background for Content Area */}
-                <div 
-                    className="absolute inset-0 pointer-events-none opacity-40 z-0" 
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-40 z-0"
                     style={{ backgroundImage: parchmentBg, backgroundSize: 'cover' }}
                 ></div>
 
                 <div className="relative z-10 space-y-16">
-                    
+
                     {/* FAQ Categories Loop */}
                     {faqData.map((category, categoryIndex) => {
                         const IconComponent = category.icon;
                         return (
                             <section key={categoryIndex} className="bg-white/80 backdrop-blur-sm rounded-2xl border border-[#D4AF37]/20 shadow-[0_5px_25px_rgba(62,39,35,0.05)] overflow-hidden">
-                                
+
                                 {/* Category Header */}
                                 <div className="flex items-center gap-4 p-6 md:p-8 border-b border-[#D4AF37]/20 bg-gradient-to-r from-[#FFF9E6] to-white">
                                     <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-[#D4AF37] border border-[#D4AF37]/30 shadow-sm">
@@ -256,20 +276,20 @@ const FAQ = () => {
 
                     {/* Still Have Questions Section (Dark Wood Theme) */}
                     <div className="rounded-[2.5rem] p-10 md:p-16 text-center relative overflow-hidden shadow-2xl"
-                         style={{ background: 'linear-gradient(135deg, #3E2723 0%, #251613 100%)' }}>
-                        
+                        style={{ background: 'linear-gradient(135deg, #3E2723 0%, #251613 100%)' }}>
+
                         {/* Decorative Circle */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/20 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                         <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#D4AF37]/10 rounded-full blur-2xl pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
                         <div className="absolute inset-0 border border-[#D4AF37]/30 rounded-[2.5rem] pointer-events-none"></div>
-                        
+
                         <div className="relative z-10 max-w-3xl mx-auto">
                             <h2 className="text-3xl md:text-4xl font-['Cinzel'] font-bold mb-4 text-[#F3E5AB]">Still Have Questions?</h2>
                             <p className="text-[#D4AF37]/80 mb-10 text-lg font-light leading-relaxed">
                                 Can't find the answer you're looking for? Our friendly customer support team is here to help!
                                 Reach out to us and we'll get back to you as soon as possible.
                             </p>
-                            
+
                             <div className="flex flex-col sm:flex-row gap-5 justify-center items-center">
                                 <a
                                     href="mailto:kiddosintellect@gmail.com"
@@ -286,7 +306,7 @@ const FAQ = () => {
                                     Call Us
                                 </a>
                             </div>
-                            
+
                             <div className="mt-10 pt-6 border-t border-[#D4AF37]/20 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-[#8A7A5E]">
                                 <p className="text-[#F3E5AB]/70">Business Hours: Mon - Sat, 9:00 AM - 6:00 PM IST</p>
                                 <p className="text-[#F3E5AB]/70">Email Response: Within 24 hours</p>

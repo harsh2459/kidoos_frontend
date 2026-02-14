@@ -1,64 +1,77 @@
+import React, { lazy, Suspense } from 'react';
 import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import './styles/classic-light.css';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ToastContainer } from "react-toastify";
+import { HelmetProvider } from 'react-helmet-async';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SiteProvider } from './contexts/SiteConfig';
 import { AuthProvider } from './contexts/Auth';
-import Navbar from './components/Navbar';
-import Catalog from './pages/Catalog';
-import BookDetail from './pages/BookDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import AddBook from './pages/Admin/AddBook';
-import AdminLogin from './pages/Admin/Login';
-import Home from './pages/Home';
-import SiteSettings from './pages/Admin/SiteSettings';
-import HomepageAdmin from './pages/Admin/Homepage';
-import PaymentsAdmin from './pages/Admin/Payments';
-import AdminSetup from './pages/Admin/Setup';
-import { AdminGuard, PageGate } from './components/RouteGuard';
-import EditBook from './pages/Admin/EditBook';
-import BooksAdmin from './pages/Admin/Books';
-import AdminOrders from './pages/Admin/Orders';
-import ApiUsers from './pages/Admin/ApiUsers';
 import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
-import CustomerAuth from './pages/CustomerAuth';
-import EmailSenders from './pages/Admin/EmailSenders';
-import EmailTemplates from './pages/Admin/EmailTemplates';
-import Footer from './components/Footer';
-import AdminLayout from './components/AdminLayout';
-import AboutUs from './pages/AboutUs';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import ShippingPolicy from './pages/ShippingPolicy';
-import TermsAndConditions from './pages/Terms&Conditions';
-import RefundPolicy from './pages/RefundPolicy';
-import FAQ from './pages/FAQ';
-import ContactUs from './pages/ContactUs';
-import CustomerProfile from './pages/CustomerProfile';
-import OrderHistory from './pages/OrderHistory';
-import AdminCategories from './pages/Admin/Categories';
-import DynamicPopup from './components/DynamicPopup';
-import PopupSettings from './pages/Admin/PopupSettings';
-import PreSchool from './pages/PreSchool';
 import { useCartCleanup } from './hooks/useCartCleanup';
-import Invoice from './pages/Invoice';
-import GitaHome from './pages/Gita/GitaHome';
-import CatalogSettings from './pages/Admin/CatalogSettings';
-import GitaShowcase1 from './pages/gita-deepseek/GitaShowcase';
-import Hero from './pages/parallax/Hero';
-import HeroSection from './pages/gita_showcash/HeroSection';
-import ScrollVideo from './pages/scroll_video/ScrollVideo';
-import AiSettings from './pages/Admin/AiSettings';
-import Portal from './pages/Vrindavan/Portal';
-import UnderwaterVrindavan from './pages/Vrindavan/UnderwaterVrindavan';
-import Dashboard from "./pages/Admin/Dashboard";
+
+// Components that are always needed (keep as static imports)
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import { AdminGuard, PageGate } from './components/RouteGuard';
+import AdminLayout from './components/AdminLayout';
+import DynamicPopup from './components/DynamicPopup';
+import LoadingFallback from './components/LoadingFallback';
+
+// Lazy load all page components
+const Home = lazy(() => import('./pages/Home'));
+const Catalog = lazy(() => import('./pages/Catalog'));
+const BookDetail = lazy(() => import('./pages/BookDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const CustomerAuth = lazy(() => import('./pages/CustomerAuth'));
+const CustomerProfile = lazy(() => import('./pages/CustomerProfile'));
+const OrderHistory = lazy(() => import('./pages/OrderHistory'));
+const Invoice = lazy(() => import('./pages/Invoice'));
+
+// Policy pages
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const ShippingPolicy = lazy(() => import('./pages/ShippingPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/Terms&Conditions'));
+const RefundPolicy = lazy(() => import('./pages/RefundPolicy'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const ContactUs = lazy(() => import('./pages/ContactUs'));
+const PreSchool = lazy(() => import('./pages/PreSchool'));
+
+// Experimental/Demo pages (lazy load to reduce main bundle)
+const GitaHome = lazy(() => import('./pages/Gita/GitaHome'));
+const GitaShowcase1 = lazy(() => import('./pages/gita-deepseek/GitaShowcase'));
+const Hero = lazy(() => import('./pages/parallax/Hero'));
+const HeroSection = lazy(() => import('./pages/gita_showcash/HeroSection'));
+const ScrollVideo = lazy(() => import('./pages/scroll_video/ScrollVideo'));
+const Portal = lazy(() => import('./pages/Vrindavan/Portal'));
+const UnderwaterVrindavan = lazy(() => import('./pages/Vrindavan/UnderwaterVrindavan'));
+
+// Admin pages (lazy load separately - rarely accessed)
+const AdminLogin = lazy(() => import('./pages/Admin/Login'));
+const AdminSetup = lazy(() => import('./pages/Admin/Setup'));
+const Dashboard = lazy(() => import('./pages/Admin/Dashboard'));
+const AddBook = lazy(() => import('./pages/Admin/AddBook'));
+const EditBook = lazy(() => import('./pages/Admin/EditBook'));
+const BooksAdmin = lazy(() => import('./pages/Admin/Books'));
+const AdminOrders = lazy(() => import('./pages/Admin/Orders'));
+const SiteSettings = lazy(() => import('./pages/Admin/SiteSettings'));
+const HomepageAdmin = lazy(() => import('./pages/Admin/Homepage'));
+const PaymentsAdmin = lazy(() => import('./pages/Admin/Payments'));
+const CatalogSettings = lazy(() => import('./pages/Admin/CatalogSettings'));
+const ApiUsers = lazy(() => import('./pages/Admin/ApiUsers'));
+const EmailSenders = lazy(() => import('./pages/Admin/EmailSenders'));
+const EmailTemplates = lazy(() => import('./pages/Admin/EmailTemplates'));
+const AdminCategories = lazy(() => import('./pages/Admin/Categories'));
+const PopupSettings = lazy(() => import('./pages/Admin/PopupSettings'));
+const AiSettings = lazy(() => import('./pages/Admin/AiSettings'));
 
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
-  const hideNavbarRoutes = ['/intro', '/gita', '/scroll', '/j' ,'/water-1'];
+  const hideNavbarRoutes = ['/intro', '/gita', '/scroll', '/j', '/water-1'];
   const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
@@ -81,9 +94,10 @@ function InnerApp() {
       {showNavbar && <Navbar />}
       <main>
         {!isAdminRoute && <DynamicPopup page={getPageName()} />}
-        <Routes>
-          {/* customer auth */}
-          <Route path="/login" element={<CustomerAuth />} />
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            {/* customer auth */}
+            <Route path="/login" element={<CustomerAuth />} />
           {/* public pages gated by Visibility */}
           <Route path="/" element={<PageGate page="home"><Home /></PageGate>} />
           <Route path="/catalog" element={<PageGate page="catalog"><Catalog /></PageGate>} />
@@ -200,8 +214,9 @@ function InnerApp() {
             element={<AdminGuard><AdminLayout><AiSettings /></AdminLayout></AdminGuard>}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes >
-      </main >
+        </Routes>
+        </Suspense>
+      </main>
 
       {
         showFooter && (
@@ -218,34 +233,36 @@ function InnerApp() {
             ]}
           />
         )
-      }   
+      }
     </>
   );
 }
 
 export default function App() {
-   useCartCleanup();
+  useCartCleanup();
   return (
-    <SiteProvider>
-      <AuthProvider>
-        <CustomerProvider>
-          <ThemeProvider>
-            <BrowserRouter>
-              <InnerApp />
-              <ToastContainer
-                position="top-right"
-                autoClose={2500}
-                hideProgressBar
-                newestOnTop
-                closeOnClick
-                draggable
-                pauseOnHover
-                closeButton={false}
-              />
-            </BrowserRouter>
-          </ThemeProvider>
-        </CustomerProvider>
-      </AuthProvider>
-    </SiteProvider>
+    <HelmetProvider>
+      <SiteProvider>
+        <AuthProvider>
+          <CustomerProvider>
+            <ThemeProvider>
+              <BrowserRouter>
+                <InnerApp />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={2500}
+                  hideProgressBar
+                  newestOnTop
+                  closeOnClick
+                  draggable
+                  pauseOnHover
+                  closeButton={false}
+                />
+              </BrowserRouter>
+            </ThemeProvider>
+          </CustomerProvider>
+        </AuthProvider>
+      </SiteProvider>
+    </HelmetProvider>
   );
 }

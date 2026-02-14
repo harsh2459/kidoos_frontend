@@ -15,7 +15,7 @@ import {
   Wand2
 } from "lucide-react";
 
-const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none text-[#2C3E38]";
+const INPUT_STYLE = "w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none text-[#2C3E38]";
 
 const ICON_MAP = {
   "star": Star, "brain": Brain, "heart": Heart, "lightbulb": Lightbulb, "zap": Zap,
@@ -49,10 +49,10 @@ function IconSelector({ value, onChange }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all outline-none"
+        className="w-full flex items-center justify-between bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#E3E8E5] flex items-center justify-center text-[#1A3C34]">
+          <div className="w-8 h-8 rounded-lg bg-[#E3E8E5] flex items-center justify-center text-[#384959]">
             <SelectedIcon className="w-5 h-5" />
           </div>
           <span className="text-sm font-medium text-[#2C3E38] capitalize">
@@ -72,7 +72,7 @@ function IconSelector({ value, onChange }) {
                 onChange(name);
                 setIsOpen(false);
               }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors border ${value === name ? 'bg-[#1A3C34] border-[#1A3C34] text-white' : 'bg-gray-50 border-transparent hover:bg-gray-100 text-[#5C756D]'}`}
+              className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-colors border ${value === name ? 'bg-[#384959] border-[#384959] text-white' : 'bg-gray-50 border-transparent hover:bg-gray-100 text-[#5C756D]'}`}
             >
               <IconComponent className="w-5 h-5" />
               <span className="text-[10px] truncate w-full text-center capitalize">{name}</span>
@@ -381,7 +381,7 @@ export default function AddBook() {
   const selected = selectedFromText();
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#1A3C34] pb-20">
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] selection:bg-[#D4E2D4] selection:text-[#384959] pb-20">
 
       <div className="max-w-7xl 2xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
@@ -390,11 +390,11 @@ export default function AddBook() {
           <div>
             <button
               onClick={() => navigate("/admin/books")}
-              className="flex items-center gap-2 text-[#5C756D] hover:text-[#1A3C34] mb-2 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 text-[#5C756D] hover:text-[#384959] mb-2 transition-colors text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Books
             </button>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1A3C34]">Add New Book</h1>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#384959]">Add New Book</h1>
           </div>
 
           <div className="flex items-center gap-3">
@@ -417,10 +417,10 @@ export default function AddBook() {
 
             {/* Tab Buttons */}
             <div className="bg-white rounded-lg p-1 flex shadow-sm border border-[#E3E8E5]">
-              <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+              <button onClick={() => setActiveTab('general')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'general' ? 'bg-[#384959] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
                 General Info
               </button>
-              <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#1A3C34] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
+              <button onClick={() => setActiveTab('builder')} className={`px-4 py-2 rounded-md text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'builder' ? 'bg-[#384959] text-white shadow' : 'text-[#5C756D] hover:bg-gray-50'}`}>
                 <Layout className="w-4 h-4" /> Page Builder
               </button>
             </div>
@@ -428,7 +428,7 @@ export default function AddBook() {
             <button
               onClick={save}
               disabled={saving || uploading}
-              className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold hover:bg-[#2F523F] transition-all shadow-md active:scale-95 disabled:opacity-50"
+              className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold hover:bg-[#6A89A7] transition-all shadow-md active:scale-95 disabled:opacity-50"
             >
               <PlusCircle className="w-4 h-4" />
               {saving ? "Creating..." : "Create Book"}
@@ -443,7 +443,7 @@ export default function AddBook() {
 
             <Card title="1. Upload Images (Required for AI)">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#1A3C34] text-white rounded-xl cursor-pointer hover:bg-[#2F523F] transition-colors shadow-sm"><Upload className="w-4 h-4" /><span>Upload Images</span><input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" /></label>
+                <label className="flex items-center gap-2 px-4 py-2.5 bg-[#384959] text-white rounded-xl cursor-pointer hover:bg-[#6A89A7] transition-colors shadow-sm"><Upload className="w-4 h-4" /><span>Upload Images</span><input type="file" accept="image/*" multiple onChange={onPickImages} className="hidden" /></label>
                 {uploading && <span className="text-sm text-[#5C756D] animate-pulse">Uploading...</span>}
 
                 {/* Mobile AI Button */}
@@ -463,10 +463,10 @@ export default function AddBook() {
                     <div key={`${p}-${i}`} className="relative group rounded-xl overflow-hidden border border-[#E3E8E5] aspect-[3/4] bg-white">
                       <img src={assetUrl(p)} className="h-full w-full object-contain p-2" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                        {i !== 0 && (<button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#1A3C34] rounded-full">Cover</button>)}
+                        {i !== 0 && (<button type="button" onClick={() => setAsCover(i)} className="px-3 py-1 text-xs font-bold bg-white text-[#384959] rounded-full">Cover</button>)}
                         <button type="button" onClick={() => removeImageAt(i)} className="px-3 py-1 text-xs font-bold bg-red-500 text-white rounded-full">Remove</button>
                       </div>
-                      {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#1A3C34] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
+                      {i === 0 && <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#384959] text-white text-[10px] font-bold rounded uppercase">Cover</div>}
                     </div>
                   ))}
                 </div>
@@ -503,8 +503,8 @@ export default function AddBook() {
             <Card title="Pricing & Inventory">
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <Row label="MRP (₹)"><input type="number" className={INPUT_STYLE} value={book.mrp} onChange={handlePriceChange("mrp")} placeholder="0" /></Row>
-                <Row label="Sale Price (₹)"><input type="number" className={`${INPUT_STYLE} font-bold text-[#1A3C34]`} value={book.price} onChange={handlePriceChange("price")} placeholder="0" /></Row>
-                <Row label="Discount (%)"><input type="number" className={`${INPUT_STYLE} text-green-600`} value={book.discountPct} onChange={handlePriceChange("discountPct")} placeholder="0" /></Row>
+                <Row label="Sale Price (₹)"><input type="number" className={`${INPUT_STYLE} font-bold text-[#384959]`} value={book.price} onChange={handlePriceChange("price")} placeholder="0" /></Row>
+                <Row label="Discount (%)"><input type="number" className={`${INPUT_STYLE} text-blue-600`} value={book.discountPct} onChange={handlePriceChange("discountPct")} placeholder="0" /></Row>
               </div>
               <div className="grid grid-cols-2 gap-4 border-t border-[#E3E8E5] pt-6">
                 <Row label="Stock"><input type="number" className={INPUT_STYLE} value={book.inventory.stock} onChange={(e) => setInv("stock", e.target.value)} placeholder="0" /></Row>
@@ -514,12 +514,12 @@ export default function AddBook() {
 
             {/* Categorization */}
             <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
-              <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">Categorization</div>
+              <div className="text-xl font-serif font-bold text-[#384959] mb-6 border-b border-[#E3E8E5] pb-4">Categorization</div>
               <div className="mb-6">
                 <label className="text-sm font-bold text-[#2C3E38] block mb-2">Select Categories</label>
                 <div className="relative">
                   <div className="flex items-center gap-2 flex-wrap p-3 border border-[#DCE4E0] rounded-xl bg-[#FAFBF9] cursor-pointer min-h-[50px]" onClick={() => setCatOpen(v => !v)}>
-                    {selected.length === 0 ? <span className="text-sm text-[#8BA699]">Choose categories…</span> : selected.map((s) => (<span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#1A3C34] text-white">{s}<button type="button" onClick={(ev) => { ev.stopPropagation(); toggleCategory(s); }} className="hover:text-red-300"><X className="w-3 h-3" /></button></span>))}
+                    {selected.length === 0 ? <span className="text-sm text-[#8BA699]">Choose categories…</span> : selected.map((s) => (<span key={s} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#384959] text-white">{s}<button type="button" onClick={(ev) => { ev.stopPropagation(); toggleCategory(s); }} className="hover:text-red-300"><X className="w-3 h-3" /></button></span>))}
                     <ChevronDown className="ml-auto w-4 h-4 text-[#8BA699]" />
                   </div>
                   {catOpen && (<div className="absolute z-30 mt-2 w-full bg-white border border-[#E3E8E5] rounded-xl shadow-xl max-h-64 overflow-auto p-2">{categoryList.map((c) => {
@@ -534,7 +534,7 @@ export default function AddBook() {
                       >
                         <div
                           className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${checked
-                            ? 'bg-[#1A3C34] border-[#1A3C34]'
+                            ? 'bg-[#384959] border-[#384959]'
                             : 'border-[#DCE4E0] bg-white'
                             }`}
                         >
@@ -581,7 +581,7 @@ export default function AddBook() {
               </div>
 
               <div className="space-y-4 border-t border-[#E3E8E5] pt-6">
-                <h3 className="font-bold text-[#1A3C34]">Mission Section</h3>
+                <h3 className="font-bold text-[#384959]">Mission Section</h3>
                 <div>
                   <label className="block text-sm font-bold text-[#2C3E38] mb-2">Heading</label>
                   <input className={INPUT_STYLE} value={book.layoutConfig?.story?.heading} onChange={e => setConfig("story", "heading", e.target.value)} placeholder="e.g. Why We Created This?" />
@@ -614,7 +614,7 @@ export default function AddBook() {
                   <button type="button" onClick={() => removeItem("specs", i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
                 </div>
               ))}
-              <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+              <button type="button" onClick={() => addItem("specs", { label: "", value: "", icon: "check" })} className="mt-2 text-sm font-bold text-[#384959] flex items-center gap-1 hover:underline">
                 <Plus className="w-4 h-4" /> Add Specification
               </button>
             </Card>
@@ -645,7 +645,7 @@ export default function AddBook() {
                   </div>
                 </div>
               ))}
-              <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#1A3C34] transition-all flex justify-center items-center gap-2">
+              <button type="button" onClick={() => addItem("curriculum", { title: "", description: "", icon: "star" })} className="w-full py-3 border-2 border-dashed border-[#DCE4E0] rounded-xl text-[#5C756D] font-bold hover:bg-white hover:border-[#384959] transition-all flex justify-center items-center gap-2">
                 <Plus className="w-5 h-5" /> Add Curriculum Point
               </button>
             </Card>
@@ -663,7 +663,7 @@ export default function AddBook() {
                   <textarea className={`${INPUT_STYLE} h-20`} value={review.text} onChange={e => updateItem("testimonials", i, "text", e.target.value)} placeholder="Review content..." />
                 </div>
               ))}
-              <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#1A3C34] flex items-center gap-1 hover:underline">
+              <button type="button" onClick={() => addItem("testimonials", { name: "", role: "", text: "", rating: 5 })} className="mt-2 text-sm font-bold text-[#384959] flex items-center gap-1 hover:underline">
                 <Plus className="w-4 h-4" /> Add Review
               </button>
             </Card>
@@ -674,7 +674,7 @@ export default function AddBook() {
             <button
               onClick={save}
               disabled={saving || uploading}
-              className="w-14 h-14 rounded-full bg-[#1A3C34] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"
+              className="w-14 h-14 rounded-full bg-[#384959] text-white shadow-xl flex items-center justify-center active:scale-90 transition-transform"
             >
               <Save className="w-6 h-6" />
             </button>
@@ -689,7 +689,7 @@ export default function AddBook() {
 function Card({ title, children }) {
   return (
     <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm p-6 md:p-8">
-      <div className="text-xl font-serif font-bold text-[#1A3C34] mb-6 border-b border-[#E3E8E5] pb-4">
+      <div className="text-xl font-serif font-bold text-[#384959] mb-6 border-b border-[#E3E8E5] pb-4">
         {title}
       </div>
       {children}

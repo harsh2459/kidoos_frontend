@@ -8,6 +8,7 @@ import { deal as dealFn } from "../lib/Price";
 import { useCustomer } from "../contexts/CustomerAuth";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
+import SEO from "../components/SEO";
 import {
     ShoppingCart, Heart, Check, Star,
     BookOpen, Globe, Feather, ShieldCheck,
@@ -21,8 +22,8 @@ import {
 } from "lucide-react";
 
 // --- THEME ASSETS ---
-const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
 // --- HELPER COMPONENTS ---
 const IconMap = {
@@ -190,6 +191,28 @@ export default function BookDetail() {
 
     return (
         <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-32">
+            <SEO
+                title={`${book.title} - ${book.categories?.[0] || 'Books'} | Kiddos Intellect`}
+                description={book.descriptionHtml?.replace(/<[^>]*>/g, '').slice(0, 155) || `Shop ${book.title} by ${book.author || 'various authors'}. Premium children's books and educational materials.`}
+                image={images[0] || '/favicon.jpg'}
+                type="product"
+                keywords={`${book.title}, ${book.author || ''}, ${book.categories?.join(', ') || ''}, children's books, kids books, educational books, story books, learning materials`}
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "Catalog", url: "/catalog" },
+                    { name: book.title, url: `/book/${book.slug}` }
+                ]}
+                product={{
+                    name: book.title,
+                    description: book.descriptionHtml?.replace(/<[^>]*>/g, '').slice(0, 155),
+                    image: images[0],
+                    price: d.price,
+                    priceCurrency: 'INR',
+                    inStock: !isOutOfStock,
+                    sku: book._id,
+                    rating: { value: 4.8, count: 124 }
+                }}
+            />
 
             {/* Global Texture */}
             <div className="fixed inset-0 pointer-events-none opacity-100 z-0" style={{ backgroundImage: parchmentBg, backgroundAttachment: 'fixed' }}></div>

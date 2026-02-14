@@ -1,15 +1,43 @@
 import React, { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const VrindavanScroll = () => {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const textRef = useRef(null);
     const [imagesLoaded, setImagesLoaded] = useState(false);
+    const [gsapLoaded, setGsapLoaded] = useState(false);
     const imagesRef = useRef([]);
+    const gsapRef = useRef(null);
+    const ScrollTriggerRef = useRef(null);
+
+    // Load GSAP dynamically
+    useEffect(() => {
+        let mounted = true;
+
+        const loadGsap = async () => {
+            try {
+                const [gsapModule, scrollTriggerModule] = await Promise.all([
+                    import("gsap"),
+                    import("gsap/ScrollTrigger")
+                ]);
+
+                if (mounted) {
+                    gsapRef.current = gsapModule.default;
+                    ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger;
+                    gsapModule.default.registerPlugin(scrollTriggerModule.ScrollTrigger);
+                    setGsapLoaded(true);
+                }
+            } catch (error) {
+                console.error("Failed to load GSAP:", error);
+            }
+        };
+
+        loadGsap();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     // CONFIGURATION
     const frameCount = 192; 
@@ -41,10 +69,13 @@ const VrindavanScroll = () => {
 
     // 2. Animation
     useEffect(() => {
-        if (!imagesLoaded) return;
+        if (!imagesLoaded || !gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return;
+
+        const gsap = gsapRef.current;
+        const ScrollTrigger = ScrollTriggerRef.current;
 
         const canvas = canvasRef.current;
-        const context = canvas.getContext("2d", { alpha: false }); 
+        const context = canvas.getContext("2d", { alpha: false });
 
         canvas.width = 1920;
         canvas.height = 1080;
@@ -76,14 +107,14 @@ const VrindavanScroll = () => {
             },
         }, 0);
 
-        tl.fromTo(textRef.current, 
-            { x: "-10%" }, 
-            { x: "10%", ease: "none" }, 
+        tl.fromTo(textRef.current,
+            { x: "-10%" },
+            { x: "10%", ease: "none" },
             0
         );
 
         return () => ScrollTrigger.getAll().forEach(t => t.kill());
-    }, [imagesLoaded]);
+    }, [imagesLoaded, gsapLoaded]);
 
     return (
         <div ref={containerRef} style={styles.wrapper}>

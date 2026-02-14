@@ -193,7 +193,7 @@ const GitaBentoGrid = () => {
             style={{ transitionDelay: visibleSections['story'] ? '200ms' : '0ms' }}
           >
             <img
-              src="/images/gita-english/Bento_grid_right.jpg"
+              src="/images-webp/gita-english/Bento_grid_right.webp"
               alt="Child reading book"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1"
             />

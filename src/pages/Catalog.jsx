@@ -6,13 +6,14 @@ import ScrollToTopButton from "../components/ScrollToTopButton";
 import ProductCard from "../components/ProductCard";
 import {
   Loader2, SearchX, ChevronLeft, ChevronRight,
-  Filter, X, Check, ChevronDown, ChevronUp,  Minus, BookOpen
+  Filter, X, Check, ChevronDown, ChevronUp, Minus, BookOpen
 } from "lucide-react";
 import WaveText from "../components/WaveText";
+import SEO from "../components/SEO";
 
 // --- THEME ASSETS ---
-const mandalaBg = "url('/images/homepage/mandala-bg.png')";
-const parchmentBg = "url('/images/homepage/parchment-bg.png')";
+const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
+const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
 
 // --- FILTER SECTION COMPONENT ---
 const FilterSection = ({ title, children, onClear, hasActiveFilters }) => {
@@ -165,7 +166,7 @@ export default function Catalog() {
         <FilterSection title="Categories" onClear={() => setSelectedCats([])} hasActiveFilters={selectedCats.length > 0}>
           {categories.length > 5 && (
             <div className="relative mb-4 group">
-              
+
               <input
                 value={catSearch}
                 onChange={(e) => setCatSearch(e.target.value)}
@@ -240,6 +241,25 @@ export default function Catalog() {
 
   return (
     <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] pb-20 selection:bg-[#F3E5AB] selection:text-[#3E2723]">
+      <SEO
+        title={`${q ? `Search: ${q} - ` : ''}${selectedCats.length > 0 ? `${categories.find(c => c.slug === selectedCats[0])?.name} Books - ` : ''}Bookstore | Kiddos Intellect`}
+        description={`Browse our collection of ${total} premium children's books${selectedCats.length > 0 ? ` in ${categories.find(c => c.slug === selectedCats[0])?.name}` : ''}. Educational materials, learning resources, and curated books for young minds.`}
+        image="/images/catalog-banner.jpg"
+        type="website"
+        keywords={`children's books, kids books catalog${selectedCats.length > 0 ? `, ${categories.find(c => c.slug === selectedCats[0])?.name}` : ''}, educational books, story books, picture books, board books, kids learning materials`}
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Catalog", url: "/catalog" },
+          ...(selectedCats.length > 0 ? [{ name: categories.find(c => c.slug === selectedCats[0])?.name || "Category", url: `/catalog?category=${selectedCats[0]}` }] : [])
+        ]}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "name": "Children's Books Catalog",
+          "description": "Browse our curated collection of premium children's books and educational materials",
+          "numberOfItems": total
+        }}
+      />
 
       {/* Background Texture */}
       <div

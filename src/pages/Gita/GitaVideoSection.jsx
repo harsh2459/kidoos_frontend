@@ -74,7 +74,7 @@ const GitaVideoSection = () => {
                             >
                                 {/* Background Image */}
                                 <img
-                                    src="/images/gita-english/Bento_grid_right.jpg"
+                                    src="/images-webp/gita-english/Bento_grid_right.webp"
                                     alt="Background"
                                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000"
                                 />
@@ -84,7 +84,7 @@ const GitaVideoSection = () => {
                                 {/* 3D Book Cover */}
                                 <div className="relative z-10 transform transition-transform duration-500 group-hover:-translate-y-2">
                                     <img
-                                        src="/images/gita-english-hero.png"
+                                        src="/images-webp/gita-english-hero.webp"
                                         alt="Gita Book Cover"
                                         className="h-[250px] md:h-[380px] object-contain drop-shadow-2xl"
                                     />

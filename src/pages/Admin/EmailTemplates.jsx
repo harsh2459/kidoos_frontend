@@ -99,7 +99,7 @@ export default function EmailTemplates() {
   }, [templates, filter]);
 
   // Styles
-  const searchInputClass = "w-full bg-white border border-[#E3E8E5] rounded-xl pl-11 pr-4 py-3 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699] shadow-sm";
+  const searchInputClass = "w-full bg-white border border-[#E3E8E5] rounded-xl pl-11 pr-4 py-3 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699] shadow-sm";
 
   return (
     <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8">
@@ -108,7 +108,7 @@ export default function EmailTemplates() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
-            <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Email Templates</h1>
+            <h1 className="text-3xl font-bold text-[#384959] tracking-tight">Email Templates</h1>
             <p className="text-[#5C756D] mt-1 text-sm">Design and manage your automated email notifications.</p>
         </div>
         <div className="flex gap-3">
@@ -116,17 +116,17 @@ export default function EmailTemplates() {
              <div className="hidden lg:flex items-center bg-white border border-[#E3E8E5] rounded-xl p-1.5 shadow-sm">
                 <div className="px-4 py-1 border-r border-[#F4F7F5]">
                     <span className="block text-xs font-bold text-[#8BA699] uppercase">Total</span>
-                    <span className="block text-lg font-bold text-[#1A3C34] leading-none">{templates.length}</span>
+                    <span className="block text-lg font-bold text-[#384959] leading-none">{templates.length}</span>
                 </div>
                 <div className="px-4 py-1">
                     <span className="block text-xs font-bold text-[#8BA699] uppercase">Active</span>
-                    <span className="block text-lg font-bold text-[#1A3C34] leading-none">{templates.filter(t => t.isActive).length}</span>
+                    <span className="block text-lg font-bold text-[#384959] leading-none">{templates.filter(t => t.isActive).length}</span>
                 </div>
              </div>
 
             <button 
                 onClick={newTpl} 
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] transition-all shadow-md active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] transition-all shadow-md active:scale-95"
             >
                 <Plus className="w-5 h-5" /> Create Template
             </button>
@@ -147,7 +147,7 @@ export default function EmailTemplates() {
       {/* Main Grid Layout */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-[#E3E8E5]">
-             <Loader2 className="w-10 h-10 animate-spin text-[#1A3C34] mb-4" />
+             <Loader2 className="w-10 h-10 animate-spin text-[#384959] mb-4" />
              <p className="text-[#5C756D] font-medium">Loading templates...</p>
         </div>
       ) : filtered.length === 0 ? (
@@ -155,7 +155,7 @@ export default function EmailTemplates() {
             <div className="w-16 h-16 bg-[#F4F7F5] rounded-full flex items-center justify-center mx-auto mb-4">
                 <LayoutTemplate className="w-8 h-8 text-[#8BA699]" />
             </div>
-            <h3 className="text-xl font-bold text-[#1A3C34]">No templates found</h3>
+            <h3 className="text-xl font-bold text-[#384959]">No templates found</h3>
             <p className="text-[#5C756D] mt-2">Try adjusting your search or create a new template.</p>
         </div>
       ) : (
@@ -163,7 +163,7 @@ export default function EmailTemplates() {
             {filtered.map(t => {
                 const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[3];
                 return (
-                    <div key={t._id || t.slug} className="group bg-white border border-[#E3E8E5] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#1A3C34]/30 transition-all flex flex-col h-full">
+                    <div key={t._id || t.slug} className="group bg-white border border-[#E3E8E5] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[#384959]/30 transition-all flex flex-col h-full">
                         {/* Card Header */}
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex gap-3 items-center">
@@ -171,7 +171,7 @@ export default function EmailTemplates() {
                                     <Mail className={`w-5 h-5 ${cat.color}`} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-[#1A3C34] line-clamp-1" title={t.title}>{t.title}</h3>
+                                    <h3 className="font-bold text-[#384959] line-clamp-1" title={t.title}>{t.title}</h3>
                                     <div className="flex items-center gap-2 text-xs mt-0.5">
                                         <span className={`px-1.5 py-0.5 rounded font-medium ${cat.color}`}>{cat.label}</span>
                                         {t.abandonedDay && <span className="text-amber-600 font-medium flex items-center gap-1"><AlertTriangle size={10} /> Day {t.abandonedDay}</span>}
@@ -179,19 +179,19 @@ export default function EmailTemplates() {
                                 </div>
                             </div>
                             <div className="flex gap-1">
-                                <button onClick={() => setTesting(t)} className="p-2 text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#1A3C34] rounded-lg transition-colors" title="Test">
+                                <button onClick={() => setTesting(t)} className="p-2 text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#384959] rounded-lg transition-colors" title="Test">
                                     <FlaskConical size={18} />
                                 </button>
-                                <button onClick={() => setEditing(t)} className="p-2 text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#1A3C34] rounded-lg transition-colors" title="Edit">
+                                <button onClick={() => setEditing(t)} className="p-2 text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#384959] rounded-lg transition-colors" title="Edit">
                                     <Edit3 size={18} />
                                 </button>
                             </div>
                         </div>
                         
                         {/* Slug Block */}
-                        <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-lg px-3 py-2 mb-4 flex items-center justify-between group-hover:border-[#1A3C34]/20 transition-colors">
-                            <code className="text-xs font-mono text-[#1A3C34] truncate">{t.slug}</code>
-                            <Copy size={12} className="text-[#8BA699] cursor-pointer hover:text-[#1A3C34]" onClick={() => { navigator.clipboard.writeText(t.slug); t.success("Copied slug!"); }} />
+                        <div className="bg-[#FAFBF9] border border-[#E3E8E5] rounded-lg px-3 py-2 mb-4 flex items-center justify-between group-hover:border-[#384959]/20 transition-colors">
+                            <code className="text-xs font-mono text-[#384959] truncate">{t.slug}</code>
+                            <Copy size={12} className="text-[#8BA699] cursor-pointer hover:text-[#384959]" onClick={() => { navigator.clipboard.writeText(t.slug); t.success("Copied slug!"); }} />
                         </div>
 
                         {/* Subject Preview */}
@@ -284,7 +284,7 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
         }
     }
 
-    const inputBase = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699]";
+    const inputBase = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699]";
     const labelBase = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5";
 
     return (
@@ -294,11 +294,11 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-[#F4F7F5] bg-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#E8F5E9] text-[#1A3C34] rounded-lg">
+                        <div className="p-2 bg-[#E8F5E9] text-[#384959] rounded-lg">
                             <Edit3 className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-[#1A3C34]">{tpl._id ? "Edit Template" : "New Template"}</h2>
+                            <h2 className="text-lg font-bold text-[#384959]">{tpl._id ? "Edit Template" : "New Template"}</h2>
                             <p className="text-xs text-[#5C756D]">{tpl.title || "Untitled"}</p>
                         </div>
                     </div>
@@ -316,8 +316,8 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
                                 className={`
                                     flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all
                                     ${activeTab === tab.id 
-                                        ? "bg-white text-[#1A3C34] shadow-sm text-shadow-sm" 
-                                        : "text-[#5C756D] hover:text-[#1A3C34]"
+                                        ? "bg-white text-[#384959] shadow-sm text-shadow-sm" 
+                                        : "text-[#5C756D] hover:text-[#384959]"
                                     }
                                 `}
                             >
@@ -338,7 +338,7 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
                     {activeTab === "essentials" && (
                         <div className="space-y-6 max-w-3xl mx-auto">
                             <div className="bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm space-y-5">
-                                <h3 className="font-bold text-[#1A3C34] border-b border-[#F4F7F5] pb-2">Core Information</h3>
+                                <h3 className="font-bold text-[#384959] border-b border-[#F4F7F5] pb-2">Core Information</h3>
                                 <div className="grid grid-cols-2 gap-5">
                                     <div>
                                         <label className={labelBase}>Template Slug (Unique ID)</label>
@@ -444,7 +444,7 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
                                         <span className="text-xs bg-gray-100 text-gray-600 px-2 rounded">Optional</span>
                                     </div>
                                     <textarea 
-                                        className="flex-1 w-full bg-white border border-[#E3E8E5] text-[#1A3C34] font-mono text-xs p-4 rounded-xl focus:outline-none focus:border-[#1A3C34] resize-none"
+                                        className="flex-1 w-full bg-white border border-[#E3E8E5] text-[#384959] font-mono text-xs p-4 rounded-xl focus:outline-none focus:border-[#384959] resize-none"
                                         value={tpl.text || ""}
                                         onChange={e => setTpl({...tpl, text: e.target.value})}
                                         placeholder="Text version for simpler email clients..."
@@ -458,7 +458,7 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
                     {activeTab === "delivery" && (
                         <div className="max-w-3xl mx-auto space-y-6">
                             <div className="bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm space-y-5">
-                                <h3 className="font-bold text-[#1A3C34] border-b border-[#F4F7F5] pb-2">Routing Options</h3>
+                                <h3 className="font-bold text-[#384959] border-b border-[#F4F7F5] pb-2">Routing Options</h3>
                                 
                                 <div className="grid grid-cols-2 gap-5">
                                     <div>
@@ -495,12 +495,12 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
 
                             <div className="bg-white p-6 rounded-2xl border border-[#E3E8E5] shadow-sm flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-bold text-[#1A3C34]">Template Status</h4>
+                                    <h4 className="font-bold text-[#384959]">Template Status</h4>
                                     <p className="text-sm text-[#5C756D]">Disable to stop sending this email automatically.</p>
                                 </div>
                                 <label className={`
                                     flex items-center gap-3 cursor-pointer px-4 py-2 rounded-xl border transition-all select-none
-                                    ${tpl.isActive ? "bg-[#1A3C34] border-[#1A3C34]" : "bg-white border-[#E3E8E5]"}
+                                    ${tpl.isActive ? "bg-[#384959] border-[#384959]" : "bg-white border-[#E3E8E5]"}
                                 `}>
                                     <input 
                                         type="checkbox" 
@@ -532,7 +532,7 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
                         <button 
                             onClick={handleSave} 
                             disabled={saving}
-                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] shadow-lg active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] shadow-lg active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             {saving ? "Saving..." : "Save Template"}
@@ -571,7 +571,7 @@ function TestLabModal({ tpl, onClose }) {
     return (
         <div className="fixed inset-0 z-[60] grid place-items-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="bg-[#1A3C34] px-6 py-4 flex items-center justify-between">
+                <div className="bg-[#384959] px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3 text-white">
                         <FlaskConical className="w-5 h-5" />
                         <h3 className="font-bold text-lg">Test Lab</h3>
@@ -588,7 +588,7 @@ function TestLabModal({ tpl, onClose }) {
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5">Recipient Email</label>
                         <input 
-                            className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:ring-2 focus:ring-[#1A3C34]"
+                            className="w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:ring-2 focus:ring-[#384959]"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             placeholder="you@example.com"
@@ -598,7 +598,7 @@ function TestLabModal({ tpl, onClose }) {
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5">JSON Context Data</label>
                         <textarea 
-                            className="w-full h-32 bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm font-mono text-[#1A3C34] focus:ring-2 focus:ring-[#1A3C34]"
+                            className="w-full h-32 bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm font-mono text-[#384959] focus:ring-2 focus:ring-[#384959]"
                             value={jsonCtx}
                             onChange={e => setJsonCtx(e.target.value)}
                         />
@@ -607,7 +607,7 @@ function TestLabModal({ tpl, onClose }) {
                     <button 
                         onClick={handleSend}
                         disabled={sending}
-                        className="w-full py-3 rounded-xl bg-[#1A3C34] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#2F523F] transition-all disabled:opacity-70"
+                        className="w-full py-3 rounded-xl bg-[#384959] text-white font-bold flex items-center justify-center gap-2 hover:bg-[#6A89A7] transition-all disabled:opacity-70"
                     >
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         {sending ? "Sending..." : "Fire Test Email"}

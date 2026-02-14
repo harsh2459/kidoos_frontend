@@ -9,28 +9,60 @@
   <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.jpg?v=20251118" type="image/jpeg" />
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.jpg?v=20251118" />
 
-  <!-- Preload favicon FIRST (before anything else) -->
+  <!-- Preload critical resources for better performance -->
   <link rel="preload" href="%PUBLIC_URL%/favicon.jpg?v=20251118" as="image" type="image/jpeg" />
+  <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2" crossorigin />
 
-  <!-- Prevent caching of favicon during page load -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  <!-- Preload critical hero images for LCP optimization -->
+  <link rel="preload" as="image" type="image/webp" href="/images-optimized/back-image-1920w.webp" media="(min-width: 1200px)" />
+  <link rel="preload" as="image" type="image/webp" href="/images-optimized/back-image-800w.webp" media="(max-width: 1199px)" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Allow caching for better performance (favicon cache-busting handled by ?v= param) -->
+
+  <!-- Viewport and Mobile Optimization -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
   <meta name="theme-color" content="#FF6B6B" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- SEO Meta Tags -->
   <meta name="description"
-    content="Kiddos Intallcat - Healthy Minds Grow Beyond Screens. Hand-picked children's books and learning materials for curious minds." />
+    content="Kiddos Intellect - Premium children's books and educational materials. Healthy Minds Grow Beyond Screens. Hand-picked learning resources for curious young minds in India. Free shipping on orders above ₹500." />
+  <meta name="keywords" content="children's books, kids books india, educational materials, learning resources, picture books, board books, story books, kids education, preschool books, toddler books" />
+  <meta name="author" content="Kiddos Intellect" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="bingbot" content="index, follow" />
+
+  <!-- Geo Tags -->
+  <meta name="geo.region" content="IN" />
+  <meta name="geo.placename" content="India" />
+  <meta name="language" content="English" />
 
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
-  <title>Kiddos Intallcat - Children's Books</title>
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="krVvl7yKUDYpkF5uVh6Lfw" async></script>
+  <title>Kiddos Intellect - Premium Children's Books & Educational Materials India</title>
+
+  <!-- DNS Prefetch & Preconnect for Performance -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+  <link rel="dns-prefetch" href="https://connect.facebook.net" />
+  <link rel="dns-prefetch" href="https://analytics.ahrefs.com" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://connect.facebook.net">
+
+  <!-- Optimized Font Loading with display=swap for better performance -->
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@400;700;900&family=Playfair+Display:wght@700&display=swap"
     rel="stylesheet">
+
+  <!-- Analytics -->
+  <script src="https://analytics.ahrefs.com/analytics.js" data-key="krVvl7yKUDYpkF5uVh6Lfw" defer></script>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17857451112"></script>

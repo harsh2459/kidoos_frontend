@@ -100,7 +100,7 @@ export default function Footer({ contact }) {
       {/* BACKGROUNDS */}
       <div
         className="absolute inset-0 bg-cover bg-center opacity-[0.18]"
-        style={{ backgroundImage: "url('/images/homepage/footer-vrindavan-bg.png')" }}
+        style={{ backgroundImage: "url('/images-webp/homepage/footer-vrindavan-bg.webp')" }}
       />
       <div
         className="absolute inset-0 opacity-[0.12] mix-blend-multiply"

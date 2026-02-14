@@ -45,7 +45,7 @@ export default function Navbar() {
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   // VRINDAVAN THEME ASSETS
-  const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+  const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
   return (
     <header
@@ -191,7 +191,7 @@ export default function Navbar() {
             ${isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}
         `}
         style={{
-          backgroundImage: `url('/images/homepage/parchment-bg.png')`, // Ensure this path is correct
+          backgroundImage: `url('/images-webp/homepage/parchment-bg.webp')`, // Ensure this path is correct
           backgroundSize: 'cover'
         }}
       >

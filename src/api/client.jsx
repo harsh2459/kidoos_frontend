@@ -13,7 +13,7 @@ function resolveBaseURL() {
 
   if (apiIdx === -1) {
     u = `${u}/api`;
-  } else if (apiIdx !== u.length - 4) { 
+  } else if (apiIdx !== u.length - 4) {
     u = u.slice(0, apiIdx + 4);
   } 
   return u;

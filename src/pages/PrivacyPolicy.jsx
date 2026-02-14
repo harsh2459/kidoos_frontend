@@ -6,6 +6,7 @@ import {
     ChevronRight, Globe, Scroll as ScrollIcon
 } from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
+import SEO from '../components/SEO';
 
 const PrivacyPolicy = () => {
     const [activeSection, setActiveSection] = useState('overview');
@@ -49,12 +50,22 @@ const PrivacyPolicy = () => {
     ];
 
     // VRINDAVAN THEME ASSETS
-    const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-    const heroBg = "url('/images/privacy-scroll-bg.png')"; // Use the new generated image here
-    const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+    const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+    const heroBg = "url('/images-webp/privacy-scroll-bg.webp')"; // Use the new generated image here
+    const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
     return (
         <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
+            <SEO
+                title="Privacy Policy | Kiddos Intellect"
+                description="Read our privacy policy to understand how Kiddos Intellect collects, uses, and protects your personal information. Your privacy is our priority."
+                keywords="privacy policy, data protection, children's privacy, COPPA compliance, secure shopping"
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "Privacy Policy", url: "/privacy" }
+                ]}
+                noindex={true}
+            />
 
             {/* --- HERO SECTION --- */}
             <div className="relative w-full pt-28 md:pt-36 pb-20 px-6 border-b border-[#D4AF37]/30 overflow-hidden">

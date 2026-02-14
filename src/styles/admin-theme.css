@@ -1,0 +1,52 @@
+/* Admin Theme - Stormy Morning Blue Palette */
+.admin-scope {
+  /* Color variables for admin pages */
+  --admin-primary: #384959;
+  /* Dark slate */
+  --admin-secondary: #6A89A7;
+  /* Steel blue */
+  --admin-accent: #88BDF2;
+  /* Sky blue */
+  --admin-light: #BDDDFC;
+  /* Ice blue */
+
+  /* Gradients */
+  --admin-gradient-dark: linear-gradient(135deg, #384959 0%, #6A89A7 100%);
+  --admin-gradient-accent: linear-gradient(135deg, #88BDF2 0%, #BDDDFC 100%);
+
+  /* Shadow with admin primary color */
+  --admin-shadow: 0 4px 6px -1px rgba(34, 40, 49, 0.1), 0 2px 4px -1px rgba(34, 40, 49, 0.06);
+}
+
+/* Utility classes for quick theming */
+.admin-bg-primary {
+  background-color: var(--admin-primary);
+}
+
+.admin-bg-secondary {
+  background-color: var(--admin-secondary);
+}
+
+.admin-bg-accent {
+  background-color: var(--admin-accent);
+}
+
+.admin-text-primary {
+  color: var(--admin-primary);
+}
+
+.admin-text-accent {
+  color: var(--admin-accent);
+}
+
+.admin-border-accent {
+  border-color: var(--admin-accent);
+}
+
+.admin-gradient-dark {
+  background: var(--admin-gradient-dark);
+}
+
+.admin-gradient-accent {
+  background: var(--admin-gradient-accent);
+}

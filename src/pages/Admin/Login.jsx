@@ -42,7 +42,7 @@ export default function AdminLogin() {
   }
 
   // Shared Styles
-  const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl pl-11 pr-11 py-3.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699]";
+  const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl pl-11 pr-11 py-3.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#88BDF2]/30 focus:border-[#88BDF2] transition-all placeholder:text-[#8BA699]";
   const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5 ml-1";
 
   return (
@@ -51,7 +51,7 @@ export default function AdminLogin() {
         {/* Card */}
         <div className="bg-white border border-[#E3E8E5] rounded-3xl shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="bg-[#1A3C34] px-8 py-10 text-center relative overflow-hidden">
+          <div className="bg-[#384959] px-8 py-10 text-center relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -ml-8 -mb-8 pointer-events-none"></div>
@@ -73,7 +73,7 @@ export default function AdminLogin() {
               <div>
                 <label className={labelClass}>Email Address</label>
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#00ADB5] transition-colors">
 
                   </div>
                   <input
@@ -92,7 +92,7 @@ export default function AdminLogin() {
               <div>
                 <label className={labelClass}>Password</label>
                 <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#1A3C34] transition-colors">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8BA699] group-focus-within:text-[#00ADB5] transition-colors">
 
                   </div>
                   <input
@@ -106,7 +106,7 @@ export default function AdminLogin() {
                   <button
                     type="button"
                     onClick={() => setShowPwd(!showPwd)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8BA699] hover:text-[#1A3C34] transition-colors focus:outline-none"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8BA699] hover:text-[#88BDF2] transition-colors focus:outline-none"
                   >
                     {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -129,8 +129,8 @@ export default function AdminLogin() {
                 disabled={loading}
                 className="
                   group w-full flex items-center justify-center gap-2 py-4 rounded-xl 
-                  bg-[#1A3C34] text-white font-bold text-sm shadow-lg shadow-[#1A3C34]/20 
-                  hover:bg-[#2F523F] hover:shadow-xl hover:-translate-y-0.5 
+                  bg-[#384959] text-white font-bold text-sm shadow-lg shadow-[#384959]/20 
+                  hover:bg-[#6A89A7] hover:shadow-xl hover:-translate-y-0.5 
                   active:translate-y-0 active:scale-95 transition-all duration-200
                   disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0
                 "

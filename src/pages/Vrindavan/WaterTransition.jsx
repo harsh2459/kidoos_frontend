@@ -1,10 +1,37 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 const WaterTransition = ({ active }) => {
+  const [FramerMotion, setFramerMotion] = useState(null);
+
+  // Load framer-motion dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadFramerMotion = async () => {
+      try {
+        const module = await import('framer-motion');
+        if (mounted) {
+          setFramerMotion(module);
+        }
+      } catch (error) {
+        console.error('Failed to load framer-motion:', error);
+      }
+    };
+
+    loadFramerMotion();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!FramerMotion || !active) return null;
+
+  const { AnimatePresence, motion } = FramerMotion;
+
   return (
     <AnimatePresence>
-      {active && (
-        <motion.div
+      <motion.div
           className="fixed inset-0 z-[9999] pointer-events-none"
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
@@ -26,7 +53,7 @@ const WaterTransition = ({ active }) => {
             */}
             <div className="relative w-screen h-screen">
                 <img
-                  src="/images/image_59eec6.jpg" 
+                  src="/images-webp/image_59eec6.webp" 
                   alt="Destination"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -47,7 +74,6 @@ const WaterTransition = ({ active }) => {
             </div>
           </motion.div>
         </motion.div>
-      )}
     </AnimatePresence>
   );
 };

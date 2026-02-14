@@ -1,8 +1,7 @@
 // src/contexts/CustomerAuth.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
-import { auth, googleProvider } from "../lib/firebase";
-import { signInWithPopup } from "firebase/auth";
+import { getAuthInstance, getGoogleProvider } from "../lib/firebase";
 
 const LS_KEY = "customer_jwt";
 
@@ -118,6 +117,11 @@ export default function CustomerProvider({ children }) {
 
   async function googleLogin() {
     try {
+      // Lazy load Firebase only when Google login is triggered
+      const { signInWithPopup } = await import("firebase/auth");
+      const auth = await getAuthInstance();
+      const googleProvider = await getGoogleProvider();
+
       // 1. Open Google popup
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;

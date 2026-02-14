@@ -38,11 +38,11 @@ export default function AdminSidebar() {
     >
       {/* Brand / Title */}
       <div className="h-20 px-6 flex items-center gap-3 border-b border-[#F4F7F5]">
-        <div className="h-10 w-10 rounded-xl bg-[#1A3C34] text-white grid place-items-center font-serif font-bold text-xl shadow-md">
+        <div className="h-10 w-10 rounded-xl bg-[#384959] text-white grid place-items-center font-serif font-bold text-xl shadow-md">
           KI
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-[#1A3C34] leading-tight"></span>
+          <span className="font-bold text-[#384959] leading-tight"></span>
           <span className="text-[10px] text-[#5C756D] font-medium tracking-wider uppercase"></span>
         </div>
       </div>
@@ -194,10 +194,10 @@ function Item({ to, active, children, icon: Icon }) {
   const base = "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 mb-1";
 
   // Active: Deep Green BG, White Text
-  const activeClass = "bg-[#1A3C34] text-white shadow-md shadow-[#1A3C34]/20";
+  const activeClass = "bg-[#384959] text-white shadow-md shadow-[#384959]/20";
 
   // Inactive: Muted Text, Hover Light Green
-  const inactiveClass = "text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#1A3C34]";
+  const inactiveClass = "text-[#5C756D] hover:bg-[#F4F7F5] hover:text-[#384959]";
 
   return (
     <Link to={to} className={`${base} ${active ? activeClass : inactiveClass}`}>

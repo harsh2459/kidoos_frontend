@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 import {
     BookOpen, Heart, Users, Truck, ShieldCheck,
     Sparkles, Target, Lightbulb, TrendingUp,
@@ -14,11 +15,20 @@ export default function AboutUs() {
 
     // --- NEW ASSETS FOR ABOUT US PAGE ---
     // Replace these with the new filenames you generate from the prompts above
-    const heroBg = "url('/images/about/ancient-scripture-bg.png')"; 
-    const patternBg = "url('/images/about/sacred-garden-pattern.png')"; 
+    const heroBg = "url('/images-webp/about/ancient-scripture-bg.webp')";
+    const patternBg = "url('/images-webp/about/sacred-garden-pattern.webp')";
 
     return (
         <div className="bg-[#FAF7F2] font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] min-h-screen">
+            <SEO
+                title="About Us | Kiddos Intellect"
+                description="Learn about Kiddos Intellect - Your trusted partner in children's education. We curate premium books and learning materials to nurture young minds beyond screens."
+                keywords="about kiddos intellect, children's books store, educational materials provider, kids learning, premium books india"
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "About Us", url: "/aboutus" }
+                ]}
+            />
 
             {/* --- HERO SECTION (Legacy Theme) --- */}
             <div className="relative w-full pt-28 md:pt-36 pb-24 px-6 border-b border-[#D4AF37]/30 overflow-hidden">
@@ -108,7 +118,7 @@ export default function AboutUs() {
                         {/* Main Photo */}
                         <div className="relative rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(62,39,35,0.2)] border-4 border-white z-10">
                             {/* Replace with your actual About Us image path */}
-                            <img src="/images/About-us.png" alt="Our Story" className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105" />
+                            <img src="/images-webp/About-us.webp" alt="Our Story" className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105" />
                         </div>
                     </div>
                 </div>

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { 
-    BookOpen, Scale, Shield, Users, CreditCard, 
-    Truck, RefreshCw, AlertCircle, Globe, Gavel, 
-    Lock, Menu, ChevronRight, CheckCircle, XCircle 
+import {
+    BookOpen, Scale, Shield, Users, CreditCard,
+    Truck, RefreshCw, AlertCircle, Globe, Gavel,
+    Lock, Menu, ChevronRight, CheckCircle, XCircle
 } from 'lucide-react';
 import ScrollToTopButton from '../components/ScrollToTopButton';
+import SEO from '../components/SEO';
 
 const TermsAndConditions = () => {
     const [activeSection, setActiveSection] = useState('agreement');
@@ -53,13 +54,23 @@ const TermsAndConditions = () => {
     ];
 
     // VRINDAVAN THEME ASSETS
-    const parchmentBg = "url('/images/homepage/parchment-bg.png')";
-    const heroBg = "url('/images/terms-decree-bg.png')"; // New Hero Image
-    const mandalaBg = "url('/images/homepage/mandala-bg.png')";
+    const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
+    const heroBg = "url('/images-webp/terms-decree-bg.webp')"; // New Hero Image
+    const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
     return (
         <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
-            
+            <SEO
+                title="Terms & Conditions | Kiddos Intellect"
+                description="Read our terms and conditions for using Kiddos Intellect website and services. Understand your rights and responsibilities when shopping with us."
+                keywords="terms and conditions, user agreement, terms of service, legal terms, children's books terms"
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "Terms & Conditions", url: "/terms" }
+                ]}
+                noindex={true}
+            />
+
             {/* --- HERO SECTION --- */}
             <div className="relative w-full pt-28 md:pt-36 pb-20 px-6 border-b border-[#D4AF37]/30 overflow-hidden">
                 

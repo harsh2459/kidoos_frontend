@@ -98,7 +98,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
       <button
         onClick={handleCreate}
         disabled={loading}
-        className="flex items-center gap-2 px-4 py-2 bg-[#1A3C34] text-white text-sm font-medium rounded-lg hover:bg-[#2F523F] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 px-4 py-2 bg-[#384959] text-white text-sm font-medium rounded-lg hover:bg-[#6A89A7] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? (
           <RefreshCw className="w-4 h-4 animate-spin" />
@@ -112,7 +112,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
       {/* <button
         onClick={handleLabel}
         disabled={loading}
-        className="p-2 text-[#1A3C34] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#C8E6C9] rounded-lg disabled:opacity-50 transition-colors"
+        className="p-2 text-[#384959] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#C8E6C9] rounded-lg disabled:opacity-50 transition-colors"
         title="Print Shiprocket Label"
       >
         <Printer className="w-4 h-4" />
@@ -122,7 +122,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
       {/* <button
         onClick={handleManifest}
         disabled={loading}
-        className="p-2 text-[#1A3C34] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#C8E6C9] rounded-lg disabled:opacity-50 transition-colors"
+        className="p-2 text-[#384959] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#C8E6C9] rounded-lg disabled:opacity-50 transition-colors"
         title="Download Manifest"
       >
         <FileText className="w-4 h-4" />

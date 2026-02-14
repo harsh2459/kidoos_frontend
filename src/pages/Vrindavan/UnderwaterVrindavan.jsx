@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
-import * as THREE from "three";
 
-const HERO_IMAGE = "/images/vrundaven/image_ffc064.png";
+const HERO_IMAGE = "/images-webp/vrundaven/image_ffc064.webp";
 
 const HeroSection = () => {
   const containerRef = useRef(null);
@@ -9,6 +8,29 @@ const HeroSection = () => {
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
   const [bubbles, setBubbles] = useState([]);
+  const [THREE, setTHREE] = useState(null);
+
+  // Load Three.js dynamically
+  useEffect(() => {
+    let mounted = true;
+
+    const loadThree = async () => {
+      try {
+        const ThreeModule = await import("three");
+        if (mounted) {
+          setTHREE(ThreeModule);
+        }
+      } catch (error) {
+        console.error("Failed to load Three.js:", error);
+      }
+    };
+
+    loadThree();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Generate bubbles
   useEffect(() => {
@@ -27,7 +49,7 @@ const HeroSection = () => {
 
   // Three.js setup for distant fish
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !THREE) return;
 
     const canvas = canvasRef.current;
     const scene = new THREE.Scene();
@@ -184,7 +206,7 @@ const HeroSection = () => {
       cancelAnimationFrame(animationId);
       renderer.dispose();
     };
-  }, []);
+  }, [THREE]);
 
   // Text animations
   useEffect(() => {

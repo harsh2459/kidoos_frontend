@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react'
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
+import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 
 const Section1 = () => {
   const containerRef = useRef(null)
   const canvasRef = useRef(null)
 
-  // 1. TIGHTENED TRACK: Reduced to 110vh to eliminate the "big gap"
+  // Initialize scroll hooks - these must be called unconditionally
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -17,8 +17,6 @@ const Section1 = () => {
     restDelta: 0.001
   })
 
-  // 2. FAST MAPPING: The shrink finishes at 0.7 scroll progress
-  // This leaves 0.3 of the scroll to reveal the next section seamlessly
   const scale = useTransform(smoothProgress, [0, 0.7], [1, 0.85])
   const borderRadius = useTransform(smoothProgress, [0, 0.7], ["0px", "48px"])
   const textOpacity = useTransform(smoothProgress, [0, 0.3], [1, 0])
@@ -27,9 +25,9 @@ const Section1 = () => {
     if (!canvasRef.current || window._liquidApp) return
     const script = document.createElement("script")
     script.type = "module"
-    
+
     // Path points to your public folder asset
-    const imageUrl = "/images/gita_showcash.png" 
+    const imageUrl = "/images-webp/gita_showcash.webp"
 
     script.textContent = `
       import LiquidBackground from 'https://cdn.jsdelivr.net/npm/threejs-components@0.0.22/build/backgrounds/liquid1.min.js';
@@ -56,17 +54,17 @@ const Section1 = () => {
     <div ref={containerRef} className="relative h-[110vh] bg-black">
       {/* STICKY CONTAINER */}
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden z-20">
-        
+
         {/* THE PORTAL */}
-        <motion.div 
+        <motion.div
           style={{ scale, borderRadius }}
           className="relative w-full h-full overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.9)] bg-zinc-950"
         >
           <canvas ref={canvasRef} id="liquid-canvas" className="absolute inset-0 w-full h-full z-0 block" />
-          
+
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60 z-10 pointer-events-none" />
 
-          <motion.div 
+          <motion.div
             style={{ opacity: textOpacity }}
             className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6 pointer-events-none"
           >

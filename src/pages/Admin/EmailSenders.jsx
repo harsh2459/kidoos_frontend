@@ -98,7 +98,7 @@ export default function EmailSenders() {
   }
 
   // Common Input Styles
-  const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699]";
+  const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699]";
   const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-1.5";
 
   return (
@@ -107,12 +107,12 @@ export default function EmailSenders() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Email Senders</h1>
+          <h1 className="text-3xl font-bold text-[#384959] tracking-tight">Email Senders</h1>
           <p className="text-[#5C756D] mt-1 text-sm">Configure SMTP or Gmail services for system notifications.</p>
         </div>
         <button
           onClick={newSender}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] transition-all shadow-md active:scale-95"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] transition-all shadow-md active:scale-95"
         >
           <Plus className="w-4 h-4" /> Add Sender
         </button>
@@ -136,7 +136,7 @@ export default function EmailSenders() {
                 <tr>
                   <td colSpan={5} className="py-20 text-center">
                     <div className="flex flex-col items-center justify-center text-[#5C756D]">
-                      <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#1A3C34]" />
+                      <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#384959]" />
                       <p>Loading senders...</p>
                     </div>
                   </td>
@@ -151,14 +151,14 @@ export default function EmailSenders() {
                 </tr>
               ) : list.map((s) => (
                 <tr key={s._id} className="group hover:bg-[#FAFBF9] transition-colors">
-                  <td className="py-4 px-6 font-bold text-[#1A3C34]">{s.label}</td>
+                  <td className="py-4 px-6 font-bold text-[#384959]">{s.label}</td>
                   <td className="py-4 px-4">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-white border border-[#E3E8E5] text-[#5C756D] uppercase">
                       {s.type === 'gmail' ? <Mail className="w-3 h-3" /> : <Server className="w-3 h-3" />}
                       {s.type}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-[#1A3C34]">
+                  <td className="py-4 px-4 text-[#384959]">
                     <div className="flex flex-col">
                       <span className="font-medium">{s.fromName}</span>
                       <span className="text-xs text-[#5C756D]">{s.fromEmail}</span>
@@ -166,7 +166,7 @@ export default function EmailSenders() {
                   </td>
                   <td className="py-4 px-4">
                     {s.isActive ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1A3C34] border border-[#C8E6C9]">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#384959] border border-[#C8E6C9]">
                         <CheckCircle2 className="w-3 h-3" /> Active
                       </span>
                     ) : (
@@ -178,17 +178,17 @@ export default function EmailSenders() {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       {/* Test Input Group */}
-                      <div className="flex items-center gap-2 bg-white border border-[#E3E8E5] rounded-lg p-1 shadow-sm focus-within:border-[#1A3C34] transition-colors">
+                      <div className="flex items-center gap-2 bg-white border border-[#E3E8E5] rounded-lg p-1 shadow-sm focus-within:border-[#384959] transition-colors">
                         <input
                           placeholder="Test email to..."
-                          className="bg-transparent border-none text-xs px-2 py-1 focus:outline-none w-32 text-[#1A3C34]"
+                          className="bg-transparent border-none text-xs px-2 py-1 focus:outline-none w-32 text-[#384959]"
                           value={testTo}
                           onChange={e => setTestTo(e.target.value)}
                         />
                         <button
                           disabled={!s._id || testing}
                           onClick={() => test(s)}
-                          className="p-1.5 rounded-md bg-[#F4F7F5] text-[#5C756D] hover:bg-[#1A3C34] hover:text-white transition-all disabled:opacity-50"
+                          className="p-1.5 rounded-md bg-[#F4F7F5] text-[#5C756D] hover:bg-[#384959] hover:text-white transition-all disabled:opacity-50"
                           title="Send Test"
                         >
                           {testing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
@@ -199,7 +199,7 @@ export default function EmailSenders() {
 
                       <button
                         onClick={() => setEditing(s)}
-                        className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#1A3C34] hover:shadow-sm border border-transparent hover:border-[#E3E8E5] transition-all"
+                        className="p-2 rounded-lg text-[#5C756D] hover:bg-white hover:text-[#384959] hover:shadow-sm border border-transparent hover:border-[#E3E8E5] transition-all"
                         title="Edit"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -228,10 +228,10 @@ export default function EmailSenders() {
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-[#F4F7F5] flex items-center justify-between bg-[#FAFBF9]">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#E8F5E9] text-[#1A3C34] rounded-lg">
+                <div className="p-2 bg-[#E8F5E9] text-[#384959] rounded-lg">
                   <Mail className="w-5 h-5" />
                 </div>
-                <h2 className="text-lg font-bold text-[#1A3C34]">
+                <h2 className="text-lg font-bold text-[#384959]">
                   {editing._id ? "Edit Sender Configuration" : "Add New Sender"}
                 </h2>
               </div>
@@ -301,19 +301,19 @@ export default function EmailSenders() {
               <div className="border-t border-[#F4F7F5] my-2"></div>
 
               <div className="flex items-center gap-2 mb-2">
-                <ShieldCheck className="w-4 h-4 text-[#1A3C34]" />
-                <span className="text-sm font-bold text-[#1A3C34]">Authentication Details</span>
+                <ShieldCheck className="w-4 h-4 text-[#384959]" />
+                <span className="text-sm font-bold text-[#384959]">Authentication Details</span>
               </div>
 
               {editing.type === "gmail" ? (
                 <div className="grid md:grid-cols-2 gap-5 bg-[#F0F7F4] p-5 rounded-xl border border-[#C8E6C9]">
-                  <div className="md:col-span-2 text-xs text-[#1A3C34] mb-1">
+                  <div className="md:col-span-2 text-xs text-[#384959] mb-1">
                     ℹ️ Use your Gmail address and an <strong>App Password</strong> (not your login password).
                   </div>
                   <div>
                     <label className={labelClass}>Gmail Address</label>
                     <input
-                      className="w-full bg-white border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34]"
+                      className="w-full bg-white border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959]"
                       value={editing.user || ""}
                       onChange={e => setEditing({ ...editing, user: e.target.value })}
                       placeholder="user@gmail.com"
@@ -323,7 +323,7 @@ export default function EmailSenders() {
                     <label className={labelClass}>App Password</label>
                     <input
                       type="password"
-                      className="w-full bg-white border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#1A3C34] focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34]"
+                      className="w-full bg-white border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959]"
                       value={editing.pass || ""}
                       onChange={e => setEditing({ ...editing, pass: e.target.value })}
                       placeholder="xxxx xxxx xxxx xxxx"
@@ -368,12 +368,12 @@ export default function EmailSenders() {
                 <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-[#E3E8E5] hover:bg-[#FAFBF9] transition-colors">
                   <input
                     type="checkbox"
-                    className="w-5 h-5 text-[#1A3C34] rounded focus:ring-[#1A3C34]"
+                    className="w-5 h-5 text-[#384959] rounded focus:ring-[#384959]"
                     checked={editing.isActive}
                     onChange={e => setEditing({ ...editing, isActive: e.target.checked })}
                   />
                   <div>
-                    <span className="block text-sm font-bold text-[#1A3C34]">Enable this sender</span>
+                    <span className="block text-sm font-bold text-[#384959]">Enable this sender</span>
                     <span className="block text-xs text-[#5C756D]">If disabled, the system will skip this configuration.</span>
                   </div>
                 </label>
@@ -384,14 +384,14 @@ export default function EmailSenders() {
             <div className="px-6 py-4 border-t border-[#F4F7F5] flex items-center justify-end gap-3 bg-[#FAFBF9]">
               <button
                 onClick={() => setEditing(null)}
-                className="px-4 py-2.5 rounded-xl border border-[#E3E8E5] text-[#5C756D] font-bold text-sm hover:bg-white hover:text-[#1A3C34] transition-all"
+                className="px-4 py-2.5 rounded-xl border border-[#E3E8E5] text-[#5C756D] font-bold text-sm hover:bg-white hover:text-[#384959] transition-all"
               >
                 Cancel
               </button>
               <button
                 disabled={saving}
                 onClick={save}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1A3C34] text-white font-bold text-sm hover:bg-[#2F523F] shadow-md active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold text-sm hover:bg-[#6A89A7] shadow-md active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {saving ? "Saving..." : "Save Configuration"}

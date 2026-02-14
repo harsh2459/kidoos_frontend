@@ -1,11 +1,10 @@
-import React, { useEffect, useRef } from 'react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-gsap.registerPlugin(ScrollTrigger)
+import React, { useEffect, useRef, useState } from 'react'
 
 const Section2 = () => {
   const containerRef = useRef(null)
+  const [gsapLoaded, setGsapLoaded] = useState(false)
+  const gsapRef = useRef(null)
+  const ScrollTriggerRef = useRef(null)
   
   // Refs for the 3 Books
   const leftBookRef = useRef(null)
@@ -16,7 +15,41 @@ const Section2 = () => {
   const portalBgRef = useRef(null)
   const glowRef = useRef(null)
 
+  // Load GSAP dynamically
   useEffect(() => {
+    let mounted = true
+
+    const loadGsap = async () => {
+      try {
+        const [gsapModule, scrollTriggerModule] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger")
+        ])
+
+        if (mounted) {
+          gsapRef.current = gsapModule.gsap
+          ScrollTriggerRef.current = scrollTriggerModule.ScrollTrigger
+          gsapModule.gsap.registerPlugin(scrollTriggerModule.ScrollTrigger)
+          setGsapLoaded(true)
+        }
+      } catch (error) {
+        console.error("Failed to load GSAP:", error)
+      }
+    }
+
+    loadGsap()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!gsapLoaded || !gsapRef.current || !ScrollTriggerRef.current) return
+
+    const gsap = gsapRef.current
+    const ScrollTrigger = ScrollTriggerRef.current
+
     const ctx = gsap.context(() => {
       
       const tl = gsap.timeline({
@@ -50,7 +83,7 @@ const Section2 = () => {
     }, containerRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [gsapLoaded])
 
   return (
     <div ref={containerRef} className="relative min-h-screen w-full bg-black flex items-center justify-center overflow-hidden py-24">

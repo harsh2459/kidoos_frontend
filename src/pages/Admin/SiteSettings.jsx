@@ -115,7 +115,7 @@ export default function SiteSettings() {
 
   // Styles
   const labelClass = "block text-xs font-bold uppercase tracking-wider text-[#5C756D] mb-2";
-  const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-3 text-sm text-[#1A3C34] focus:outline-none focus:ring-2 focus:ring-[#1A3C34]/20 focus:border-[#1A3C34] transition-all placeholder:text-[#8BA699]";
+  const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-3 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699]";
 
   return (
     <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 2xl:px-12 max-w-7xl 2xl:max-w-[1800px] py-8">
@@ -124,7 +124,7 @@ export default function SiteSettings() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-            <h1 className="text-3xl font-bold text-[#1A3C34] tracking-tight">Site Configuration</h1>
+            <h1 className="text-3xl font-bold text-[#384959] tracking-tight">Site Configuration</h1>
             <p className="text-[#5C756D] mt-1 text-sm">Manage your store's identity, branding, and assets.</p>
         </div>
       </div>
@@ -137,7 +137,7 @@ export default function SiteSettings() {
                 
                 {/* General Section */}
                 <div>
-                    <h3 className="font-bold text-[#1A3C34] text-lg border-b border-[#F4F7F5] pb-3 mb-5 flex items-center gap-2">
+                    <h3 className="font-bold text-[#384959] text-lg border-b border-[#F4F7F5] pb-3 mb-5 flex items-center gap-2">
                         <Globe className="w-5 h-5" /> General Identity
                     </h3>
                     <div>
@@ -154,7 +154,7 @@ export default function SiteSettings() {
 
                 {/* Branding Section */}
                 <div>
-                    <h3 className="font-bold text-[#1A3C34] text-lg border-b border-[#F4F7F5] pb-3 mb-5 flex items-center gap-2">
+                    <h3 className="font-bold text-[#384959] text-lg border-b border-[#F4F7F5] pb-3 mb-5 flex items-center gap-2">
                         <Layout className="w-5 h-5" /> Branding Assets
                     </h3>
                     
@@ -175,14 +175,14 @@ export default function SiteSettings() {
                                     className={`
                                         flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer transition-all
                                         ${form.logoUrl 
-                                            ? "border-[#E3E8E5] bg-white hover:border-[#1A3C34]" 
-                                            : "border-[#E3E8E5] bg-[#FAFBF9] hover:bg-white hover:border-[#1A3C34]"
+                                            ? "border-[#E3E8E5] bg-white hover:border-[#384959]" 
+                                            : "border-[#E3E8E5] bg-[#FAFBF9] hover:bg-white hover:border-[#384959]"
                                         }
                                     `}
                                 >
                                     {upLogo ? (
                                         <div className="flex flex-col items-center">
-                                            <Loader2 className="w-8 h-8 animate-spin text-[#1A3C34] mb-2" />
+                                            <Loader2 className="w-8 h-8 animate-spin text-[#384959] mb-2" />
                                             <span className="text-xs text-[#5C756D]">Uploading...</span>
                                         </div>
                                     ) : form.logoUrl ? (
@@ -195,7 +195,7 @@ export default function SiteSettings() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center text-[#8BA699] group-hover:text-[#1A3C34]">
+                                        <div className="flex flex-col items-center text-[#8BA699] group-hover:text-[#384959]">
                                             <ImageIcon className="w-8 h-8 mb-2" />
                                             <span className="text-xs font-bold">Upload Logo</span>
                                             <span className="text-[10px] mt-1 text-[#5C756D]">PNG/SVG preferred</span>
@@ -206,7 +206,7 @@ export default function SiteSettings() {
                             {/* Manual URL Input */}
                             <div className="mt-3 relative">
                                 <input 
-                                    className="w-full bg-white border border-[#E3E8E5] rounded-lg pl-3 pr-8 py-1.5 text-xs text-[#5C756D] focus:border-[#1A3C34] focus:outline-none"
+                                    className="w-full bg-white border border-[#E3E8E5] rounded-lg pl-3 pr-8 py-1.5 text-xs text-[#5C756D] focus:border-[#384959] focus:outline-none"
                                     placeholder="Or paste URL..."
                                     value={form.logoUrl}
                                     onChange={e => setForm({...form, logoUrl: toRelativeFromPublic(e.target.value)})}
@@ -230,14 +230,14 @@ export default function SiteSettings() {
                                     className={`
                                         flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer transition-all
                                         ${form.faviconUrl 
-                                            ? "border-[#E3E8E5] bg-white hover:border-[#1A3C34]" 
-                                            : "border-[#E3E8E5] bg-[#FAFBF9] hover:bg-white hover:border-[#1A3C34]"
+                                            ? "border-[#E3E8E5] bg-white hover:border-[#384959]" 
+                                            : "border-[#E3E8E5] bg-[#FAFBF9] hover:bg-white hover:border-[#384959]"
                                         }
                                     `}
                                 >
                                     {upFavi ? (
                                         <div className="flex flex-col items-center">
-                                            <Loader2 className="w-8 h-8 animate-spin text-[#1A3C34] mb-2" />
+                                            <Loader2 className="w-8 h-8 animate-spin text-[#384959] mb-2" />
                                             <span className="text-xs text-[#5C756D]">Uploading...</span>
                                         </div>
                                     ) : form.faviconUrl ? (
@@ -250,7 +250,7 @@ export default function SiteSettings() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center text-[#8BA699] group-hover:text-[#1A3C34]">
+                                        <div className="flex flex-col items-center text-[#8BA699] group-hover:text-[#384959]">
                                             <MousePointerClick className="w-8 h-8 mb-2" />
                                             <span className="text-xs font-bold">Upload Favicon</span>
                                             <span className="text-[10px] mt-1 text-[#5C756D]">32x32px .ico/.png</span>
@@ -261,7 +261,7 @@ export default function SiteSettings() {
                             {/* Manual URL Input */}
                             <div className="mt-3 relative">
                                 <input 
-                                    className="w-full bg-white border border-[#E3E8E5] rounded-lg pl-3 pr-8 py-1.5 text-xs text-[#5C756D] focus:border-[#1A3C34] focus:outline-none"
+                                    className="w-full bg-white border border-[#E3E8E5] rounded-lg pl-3 pr-8 py-1.5 text-xs text-[#5C756D] focus:border-[#384959] focus:outline-none"
                                     placeholder="Or paste URL..."
                                     value={form.faviconUrl}
                                     onChange={e => setForm({...form, faviconUrl: toRelativeFromPublic(e.target.value)})}
@@ -277,8 +277,8 @@ export default function SiteSettings() {
                         disabled={saving || upLogo || upFavi}
                         className="
                             flex items-center gap-2 px-8 py-3.5 rounded-xl 
-                            bg-[#1A3C34] text-white font-bold text-sm shadow-md 
-                            hover:bg-[#2F523F] active:scale-95 transition-all 
+                            bg-[#384959] text-white font-bold text-sm shadow-md 
+                            hover:bg-[#6A89A7] active:scale-95 transition-all 
                             disabled:opacity-70 disabled:cursor-not-allowed
                         "
                     >
@@ -293,14 +293,14 @@ export default function SiteSettings() {
         <div className="lg:col-span-5 space-y-6">
             
             {/* Live Preview Card */}
-            <div className="bg-[#1A3C34] rounded-2xl shadow-xl overflow-hidden text-white p-6 relative">
+            <div className="bg-[#384959] rounded-2xl shadow-xl overflow-hidden text-white p-6 relative">
                 <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
                 <h3 className="font-bold text-lg mb-1 relative z-10">Live Preview</h3>
                 <p className="text-white/60 text-sm mb-6 relative z-10">See how your branding appears to customers.</p>
 
                 {/* 1. Browser Tab Preview */}
                 <div className="bg-[#2C3E50] rounded-t-xl p-3 pb-0 relative z-10 shadow-lg">
-                    <div className="flex items-center gap-2 bg-white text-[#1A3C34] px-3 py-2 rounded-t-lg w-48 text-xs font-medium shadow-sm relative top-1">
+                    <div className="flex items-center gap-2 bg-white text-[#384959] px-3 py-2 rounded-t-lg w-48 text-xs font-medium shadow-sm relative top-1">
                         {form.faviconUrl ? (
                             <img src={assetUrl(form.faviconUrl)} className="w-4 h-4 object-contain" alt="" />
                         ) : (
@@ -313,7 +313,7 @@ export default function SiteSettings() {
                         <div className="flex gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-red-400"></div>
                             <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                            <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                            <div className="w-2 h-2 rounded-full bg-blue-400"></div>
                         </div>
                         <div className="flex-1 bg-gray-100 rounded-md h-5"></div>
                     </div>
@@ -326,7 +326,7 @@ export default function SiteSettings() {
                             {form.logoUrl ? (
                                 <img src={assetUrl(form.logoUrl)} className="h-8 w-auto object-contain" alt="Brand" />
                             ) : (
-                                <div className="h-8 w-8 bg-[#1A3C34] rounded text-white grid place-items-center font-bold text-xs">
+                                <div className="h-8 w-8 bg-[#384959] rounded text-white grid place-items-center font-bold text-xs">
                                     LOG
                                 </div>
                             )}
@@ -350,9 +350,9 @@ export default function SiteSettings() {
             {/* Helper Info */}
             <div className="bg-white border border-[#E3E8E5] rounded-2xl p-5 shadow-sm">
                 <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-[#1A3C34] shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 text-[#384959] shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="font-bold text-[#1A3C34] text-sm">Pro Tips</h4>
+                        <h4 className="font-bold text-[#384959] text-sm">Pro Tips</h4>
                         <ul className="text-xs text-[#5C756D] mt-2 space-y-1.5 list-disc list-inside">
                             <li>Use a <strong>transparent PNG</strong> or SVG for the logo to blend with any background.</li>
                             <li>Favicons should be square (1:1 ratio) for best results.</li>

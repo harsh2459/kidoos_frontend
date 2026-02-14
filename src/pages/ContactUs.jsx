@@ -6,6 +6,7 @@ import {
 import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
 import { FaThreads } from 'react-icons/fa6';
 import ScrollToTopButton from '../components/ScrollToTopButton';
+import SEO from '../components/SEO';
 
 const ContactUs = () => {
     useEffect(() => {
@@ -13,8 +14,8 @@ const ContactUs = () => {
     }, []);
 
     // VRINDAVAN THEME ASSETS
-    const parchmentBg = "url('/images/contact/contant_bg.png')"; 
-    const mandalaBg = "url('/images/flower_contant.png')";
+    const parchmentBg = "url('/images-webp/contact/contant_bg.webp')"; 
+    const mandalaBg = "url('/images-webp/flower_contant.webp')";
 
     const contactInfo = {
         email: 'kiddosintellect@gmail.com',
@@ -60,6 +61,15 @@ const ContactUs = () => {
 
     return (
         <div className="bg-[#FAF7F2] font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] min-h-screen">
+            <SEO
+                title="Contact Us | Kiddos Intellect"
+                description="Get in touch with Kiddos Intellect. Contact us for queries about children's books, orders, shipping, and customer support. Available Mon-Sat, 9 AM - 6 PM IST."
+                keywords="contact kiddos intellect, customer support, book store contact, kids books inquiry, educational materials contact"
+                breadcrumbs={[
+                    { name: "Home", url: "/" },
+                    { name: "Contact", url: "/contact" }
+                ]}
+            />
 
             {/* --- HERO SECTION --- */}
             <div className="relative w-full pt-28 md:pt-36 pb-24 px-6 border-b border-[#D4AF37]/30 overflow-hidden">
