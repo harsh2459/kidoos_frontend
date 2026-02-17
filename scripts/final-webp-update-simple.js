@@ -4,28 +4,7 @@ const path = require('path');
 const webpDir = path.join(__dirname, '../public/images-webp');
 
 // Get all WebP files available
-function getAllWebP() {
-  const webpFiles = new Set();
-
-  function scan(dir, baseDir = dir) {
-    const files = fs.readdirSync(dir);
-    files.forEach(file => {
-      const fullPath = path.join(dir, file);
-      const stat = fs.statSync(fullPath);
-      if (stat.isDirectory()) {
-        scan(fullPath, baseDir);
-      } else if (file.endsWith('.webp')) {
-        const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
-        // Remove .webp extension to get base name
-        const baseName = relativePath.replace(/\.webp$/, '');
-        webpFiles.add(baseName);
-      }
-    });
-  }
-
-  scan(webpDir);
-  return webpFiles;
-}
+ 
 
 // Get all JSX/JS files
 function getAllJSFiles(dir, files = []) {

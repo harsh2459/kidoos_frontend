@@ -11,7 +11,7 @@ const handleApiCall = async (apiCall) => {
     if (error?.response?.status === 401) {
       throw new Error("Authentication failed. Please login again.");
     }
-
+      
     if (error?.response?.status === 403) {
       throw new Error("Access denied. Admin privileges required.");
     }

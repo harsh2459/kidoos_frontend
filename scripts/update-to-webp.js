@@ -113,3 +113,4 @@ if (updatedFiles.length > 0) {
 
 console.log('\n✅ All available images have been updated to use WebP format!');
 console.log('💡 Note: 17 images don\'t have WebP versions and were left unchanged.\n');
+  

@@ -14,7 +14,7 @@ import {
   ShieldPlus,
   LogOut, Target,
   Milestone,
-  Mail,
+  Mail, 
   Sparkles
 } from "lucide-react";
 import WaveText from "./WaveText";

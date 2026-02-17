@@ -29,3 +29,13 @@
 .rotate-y-\[90deg\] {
     transform: rotateY(90deg);
 }
+
+/* Hide scrollbar */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
