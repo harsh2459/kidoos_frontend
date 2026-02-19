@@ -199,7 +199,7 @@ export default function Checkout() {
 
   function validateShipping() {
     if (items.length === 0) { navigate("/cart"); return false; }
-    if (!cust.name || !cust.phone || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
+    if (!cust.name || !cust.phone || !cust.email || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
       t.info("Please fill all shipping details."); return false;
     }
     if (!/^[a-zA-Z\s]{2,}$/.test(cust.name)) {

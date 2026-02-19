@@ -88,12 +88,12 @@ export default function Navbar() {
         {showShopUI && nav.includes("catalog") && (
           <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 xl:gap-10">
             {[
+              { path: "/", label: "HOME" },
               { path: "/catalog", label: "CATALOG" },
               { path: "/aboutus", label: "ABOUT US" },
-              { path: "/Sacred Stories", label: "Sacred Stories" }
+              { path: "/Sacred Stories", label: "SACRED STORIES" }
             ].map((link) => (
               <NavLink key={link.path} to={link.path} isScrolled={isScrolled}>
-                {/* Passing Gold color for hover effect */}
                 <WaveText text={link.label} hoverColor="#D4AF37" waveHeight={8} />
               </NavLink>
             ))}

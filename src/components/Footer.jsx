@@ -6,7 +6,7 @@ import { FaThreads, FaInstagram, FaWhatsapp, FaFacebook, FaX, FaTwitter, FaXTwit
 /* ----------------------------------
    WAVE COMPONENT (FROM OLD FOOTER)
 ----------------------------------- */
-function SeaCap() {
+function SeaCap() {     
   const H = 160;
   return (
     <div className="relative w-full bg-transparent select-none pointer-events-none">

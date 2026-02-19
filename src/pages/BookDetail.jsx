@@ -98,7 +98,7 @@ export default function BookDetail() {
     const items = useCart((s) => s.items);
     const add = useCart((s) => s.add);
     const replaceAll = useCart((s) => s.replaceAll);
-    const { isCustomer, token } = useCustomer();
+    const { isCustomer, token, loginAnonymously } = useCustomer();
 
     // --- ERROR SUPPRESSION & RESIZE FIX ---
     useEffect(() => {
@@ -169,6 +169,7 @@ export default function BookDetail() {
         (async () => {
             try {
                 setLoading(true);
+                setActiveImg(0); // Reset active image when book changes
                 window.scrollTo(0, 0);
                 const { data } = await api.get(`/books/${slug}/suggestions?limit=5`);
                 if (!data?.book) { t.error("Book not found"); return; }
@@ -181,23 +182,6 @@ export default function BookDetail() {
             }
         })();
     }, [slug]);
-
-    // --- RESET FLIPBOOK TO FIRST PAGE WHEN MODAL OPENS ---
-    useEffect(() => {
-        if (showFlipbook) {
-            setCurrentPage(0);
-            // Small delay to ensure the flipbook is mounted before resetting
-            setTimeout(() => {
-                if (flipBookRef.current?.pageFlip) {
-                    try {
-                        flipBookRef.current.pageFlip().turnToPage(0);
-                    } catch (e) {
-                        // Silently handle if flipbook isn't ready
-                    }
-                }
-            }, 100);
-        }
-    }, [showFlipbook]);
 
     // --- THUMBNAIL NAVIGATION HELPERS ---
     const updateThumbnailNavButtons = () => {
@@ -223,7 +207,9 @@ export default function BookDetail() {
     const images = useMemo(() => {
         if (!book) return [];
         let urls = Array.isArray(book.assets?.coverUrl) ? book.assets.coverUrl : [book.assets?.coverUrl];
-        return urls.filter(Boolean).map(url => assetUrl(url));
+        const result = urls.filter(Boolean).map(url => assetUrl(url));
+        console.log('Images loaded:', result.length, 'images');
+        return result;
     }, [book]);
 
     const flipbookPages = useMemo(() => {
@@ -232,6 +218,28 @@ export default function BookDetail() {
         const previews = (book.assets?.previewPages || []).map(url => assetUrl(url));
         return [...covers, ...previews].filter(Boolean);
     }, [book, images]);
+
+    // --- RESET FLIPBOOK TO FIRST PAGE WHEN MODAL OPENS ---
+    useEffect(() => {
+        if (showFlipbook) {
+            console.log('Flipbook opened! Pages:', flipbookPages.length, 'FlipBook ref:', flipBookRef.current);
+            setCurrentPage(0);
+            // Small delay to ensure the flipbook is mounted before resetting
+            setTimeout(() => {
+                console.log('After timeout - FlipBook ref:', flipBookRef.current, 'pageFlip method:', flipBookRef.current?.pageFlip);
+                if (flipBookRef.current?.pageFlip) {
+                    try {
+                        flipBookRef.current.pageFlip().turnToPage(0);
+                        console.log('Successfully reset to page 0');
+                    } catch (e) {
+                        console.error('Error resetting flipbook:', e);
+                    }
+                } else {
+                    console.error('FlipBook ref or pageFlip method not available!');
+                }
+            }, 100);
+        }
+    }, [showFlipbook, flipbookPages.length]);
 
     // Update navigation buttons when images change
     useEffect(() => {
@@ -245,16 +253,51 @@ export default function BookDetail() {
 
     useEffect(() => { if (inCart) setQty(inCart.qty); }, [inCart]);
 
+    // Debug: Log when activeImg changes
+    useEffect(() => {
+        console.log('activeImg changed to:', activeImg);
+    }, [activeImg]);
+
     // --- HANDLERS ---
     async function handleAddToCart(buyNow = false) {
         if (isOutOfStock) return;
+
+        // 1. If user is NOT logged in and clicks BUY NOW -> Auto-Login Anonymously
+        if (!isCustomer && buyNow) {
+            try {
+                t.info("Preparing secure checkout...");
+
+                // Trigger the anonymous login
+                // Note: We assume loginAnonymously is now exposed from useCustomer()
+                const newToken = await loginAnonymously();
+
+                // Perform the "Add to Cart" action using the NEW token immediately
+                // We cannot rely on 'token' state variable yet as React state updates are async
+                const res = await CustomerAPI.addToCart(newToken, { bookId: book._id, qty: qty });
+
+                // Update local cart state to match backend
+                replaceAll(res?.data?.cart?.items || []);
+
+                t.success("Proceeding to checkout...");
+                navigate("/checkout");
+            } catch (e) {
+                console.error("Auto-login failed:", e);
+                // Fallback: Just add to local cart and go to checkout (Guest Mode fallback)
+                add({ ...book, price: d.price, qty: qty }, qty);
+                navigate("/checkout");
+            }
+            return;
+        }
+
+        // 2. Standard Logic (Existing)
         const cartItem = { ...book, price: d.price, qty: qty };
 
         if (!isCustomer) {
+            // Add to local storage cart (Non-BuyNow actions)
             add(cartItem, qty);
-            t.success(buyNow ? "Proceeding to checkout..." : "Added to cart");
-            if (buyNow) navigate("/checkout");
+            t.success("Added to cart");
         } else {
+            // Logged in user (Normal flow)
             try {
                 const res = await CustomerAPI.addToCart(token, { bookId: book._id, qty: qty });
                 replaceAll(res?.data?.cart?.items || []);
@@ -275,182 +318,187 @@ export default function BookDetail() {
     if (!book) return null;
 
     // --- FLIPBOOK MODAL ---
-    const FlipbookModal = () => (
-        showFlipbook && (
-            <div className="fixed inset-0 z-[100] bg-gradient-to-br from-[#1a0f0a]/95 via-[#2d1810]/98 to-[#1a0f0a]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-2 sm:p-4 animate-in fade-in duration-700">
+    const flipbookModalJSX = showFlipbook && (
+        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-[#1a0f0a]/95 via-[#2d1810]/98 to-[#1a0f0a]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-2 sm:p-4 animate-in fade-in duration-700">
 
-                {/* Enhanced Close Button */}
+            {/* Enhanced Close Button */}
+            <button
+                onClick={() => setShowFlipbook(false)}
+                className="absolute top-2 right-2 sm:top-6 sm:right-6 p-2.5 sm:p-3.5 bg-gradient-to-br from-white/15 to-white/5 hover:from-red-900/50 hover:to-red-700/40 text-[#F3E5AB] rounded-full transition-all border border-[#D4AF37]/30 z-[110] backdrop-blur-lg hover:scale-110 active:scale-95 shadow-xl"
+            >
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            {/* Book Title Header */}
+            <div className="absolute top-4 sm:top-8 left-1/2 transform -translate-x-1/2 z-[105] text-center max-w-md px-4">
+                <h2 className="text-sm sm:text-lg md:text-xl font-['Cinzel'] font-bold text-[#F3E5AB] drop-shadow-lg">{book.title}</h2>
+                <p className="text-[10px] sm:text-xs text-[#D4AF37]/80 mt-1">Page {currentPage + 1} of {flipbookPages.length}</p>
+            </div>
+
+            {/* Main container */}
+            <div className="relative flex items-center justify-center w-full h-[calc(100vh-140px)] sm:h-full max-w-7xl mt-8 sm:mt-0">
+
+                {/* Navigation Arrows - Enhanced Design */}
                 <button
-                    onClick={() => setShowFlipbook(false)}
-                    className="absolute top-2 right-2 sm:top-6 sm:right-6 p-2.5 sm:p-3.5 bg-gradient-to-br from-white/15 to-white/5 hover:from-red-900/50 hover:to-red-700/40 text-[#F3E5AB] rounded-full transition-all border border-[#D4AF37]/30 z-[110] backdrop-blur-lg hover:scale-110 active:scale-95 shadow-xl"
+                    onClick={() => {
+                        console.log('Desktop flipbook PREV clicked, currentPage:', currentPage, 'ref:', flipBookRef.current);
+                        flipBookRef.current?.pageFlip()?.flipPrev();
+                    }}
+                    disabled={currentPage === 0}
+                    className="hidden sm:flex absolute left-2 sm:left-0 lg:-left-16 z-20 p-3 sm:p-4 lg:p-5 bg-gradient-to-r from-white/10 to-transparent hover:from-white/20 backdrop-blur-md rounded-xl text-[#D4AF37] hover:text-[#F3E5AB] transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 border border-[#D4AF37]/20"
                 >
-                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ChevronLeft className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 drop-shadow-lg" />
                 </button>
 
-                {/* Book Title Header */}
-                <div className="absolute top-4 sm:top-8 left-1/2 transform -translate-x-1/2 z-[105] text-center max-w-md px-4">
-                    <h2 className="text-sm sm:text-lg md:text-xl font-['Cinzel'] font-bold text-[#F3E5AB] drop-shadow-lg">{book.title}</h2>
-                    <p className="text-[10px] sm:text-xs text-[#D4AF37]/80 mt-1">Page {currentPage + 1} of {flipbookPages.length}</p>
-                </div>
-
-                {/* Main container */}
-                <div className="relative flex items-center justify-center w-full h-[calc(100vh-140px)] sm:h-full max-w-7xl mt-8 sm:mt-0">
-
-                    {/* Navigation Arrows - Enhanced Design */}
-                    <button
-                        onClick={() => flipBookRef.current?.pageFlip()?.flipPrev()}
-                        disabled={currentPage === 0}
-                        className="hidden sm:flex absolute left-2 sm:left-0 lg:-left-16 z-20 p-3 sm:p-4 lg:p-5 bg-gradient-to-r from-white/10 to-transparent hover:from-white/20 backdrop-blur-md rounded-xl text-[#D4AF37] hover:text-[#F3E5AB] transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 border border-[#D4AF37]/20"
+                {/* The Book Container */}
+                <div className="relative flex items-center justify-center w-full h-full py-12 sm:py-16">
+                    <HTMLFlipBook
+                        width={bookDim.width}
+                        height={bookDim.height}
+                        size="stretch"
+                        minWidth={200}
+                        maxWidth={600}
+                        minHeight={300}
+                        maxHeight={900}
+                        maxShadowOpacity={0.9}
+                        showCover={true}
+                        mobileScrollSupport={true}
+                        className="shadow-[0_30px_80px_-15px_rgba(0,0,0,0.95)] rounded-sm"
+                        ref={flipBookRef}
+                        usePortrait={false}
+                        startPage={0}
+                        drawShadow={true}
+                        flippingTime={800}
+                        useMouseEvents={true}
+                        swipeDistance={30}
+                        clickEventForward={true}
+                        disableFlipByClick={false}
+                        onFlip={(e) => setCurrentPage(e.data)}
                     >
-                        <ChevronLeft className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 drop-shadow-lg" />
-                    </button>
+                        {flipbookPages.map((url, i) => (
+                            <div key={i} className="bg-[#fdfaf3] overflow-hidden shadow-2xl" data-density="hard">
+                                <div className="relative w-full h-full">
+                                    {/* Page Background Texture */}
+                                    <div className="absolute inset-0 pointer-events-none opacity-5"
+                                        style={{ backgroundImage: parchmentBg }} />
 
-                    {/* The Book Container */}
-                    <div className="relative flex items-center justify-center w-full h-full py-12 sm:py-16">
-                        <HTMLFlipBook
-                            width={bookDim.width}
-                            height={bookDim.height}
-                            size="stretch"
-                            minWidth={200}
-                            maxWidth={600}
-                            minHeight={300}
-                            maxHeight={900}
-                            maxShadowOpacity={0.9}
-                            showCover={true}
-                            mobileScrollSupport={true}
-                            className="shadow-[0_30px_80px_-15px_rgba(0,0,0,0.95)] rounded-sm"
-                            ref={flipBookRef}
-                            usePortrait={false}
-                            startPage={0}
-                            drawShadow={true}
-                            flippingTime={800}
-                            useMouseEvents={true}
-                            swipeDistance={30}
-                            clickEventForward={true}
-                            disableFlipByClick={false}
-                            onFlip={(e) => setCurrentPage(e.data)}
-                        >
-                            {flipbookPages.map((url, i) => (
-                                <div key={i} className="bg-[#fdfaf3] overflow-hidden shadow-2xl" data-density="hard">
-                                    <div className="relative w-full h-full">
-                                        {/* Page Background Texture */}
-                                        <div className="absolute inset-0 pointer-events-none opacity-5"
-                                            style={{ backgroundImage: parchmentBg }} />
+                                    {/* Subtle gradient for depth */}
+                                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-transparent via-transparent to-black/5 z-10" />
 
-                                        {/* Subtle gradient for depth */}
-                                        <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-transparent via-transparent to-black/5 z-10" />
+                                    {/* The actual page image */}
+                                    <img
+                                        src={url}
+                                        className="w-full h-full object-contain p-3 sm:p-5"
+                                        alt={`Page ${i + 1}`}
+                                        draggable={false}
+                                    />
 
-                                        {/* The actual page image */}
-                                        <img
-                                            src={url}
-                                            className="w-full h-full object-contain p-3 sm:p-5"
-                                            alt={`Page ${i + 1}`}
-                                            draggable={false}
-                                        />
-
-                                        {/* Gutter Shadow - The spine/fold effect */}
-                                        <div className={`absolute top-0 bottom-0 w-6 sm:w-10 z-20 pointer-events-none
+                                    {/* Gutter Shadow - The spine/fold effect */}
+                                    <div className={`absolute top-0 bottom-0 w-6 sm:w-10 z-20 pointer-events-none
                                 ${i % 2 === 0
-                                                ? 'right-0 bg-gradient-to-l from-black/40 via-black/15 to-transparent'
-                                                : 'left-0 bg-gradient-to-r from-black/40 via-black/15 to-transparent'
+                                            ? 'right-0 bg-gradient-to-l from-black/40 via-black/15 to-transparent'
+                                            : 'left-0 bg-gradient-to-r from-black/40 via-black/15 to-transparent'
+                                        }`}
+                                    />
+
+                                    {/* Corner Curl Effect - Makes it look more like a real page */}
+                                    {i > 0 && (
+                                        <div className={`absolute w-10 h-10 sm:w-14 sm:h-14 pointer-events-none z-30
+                                    ${i % 2 === 0
+                                                ? 'bottom-0 right-0 bg-gradient-to-tl from-[#3E2723]/25 to-transparent rounded-tl-lg'
+                                                : 'bottom-0 left-0 bg-gradient-to-tr from-[#3E2723]/25 to-transparent rounded-tr-lg'
                                             }`}
                                         />
+                                    )}
 
-                                        {/* Corner Curl Effect - Makes it look more like a real page */}
-                                        {i > 0 && (
-                                            <div className={`absolute w-10 h-10 sm:w-14 sm:h-14 pointer-events-none z-30
-                                    ${i % 2 === 0
-                                                    ? 'bottom-0 right-0 bg-gradient-to-tl from-[#3E2723]/25 to-transparent rounded-tl-lg'
-                                                    : 'bottom-0 left-0 bg-gradient-to-tr from-[#3E2723]/25 to-transparent rounded-tr-lg'
-                                                }`}
-                                            />
-                                        )}
-
-                                        {/* Page Number */}
-                                        {i > 0 && (
-                                            <div className={`absolute bottom-4 sm:bottom-6 font-['Cinzel'] text-[10px] sm:text-[11px] text-black/50 tracking-widest z-30 font-semibold
+                                    {/* Page Number */}
+                                    {i > 0 && (
+                                        <div className={`absolute bottom-4 sm:bottom-6 font-['Cinzel'] text-[10px] sm:text-[11px] text-black/50 tracking-widest z-30 font-semibold
                                     ${i % 2 === 0 ? 'left-5 sm:left-8' : 'right-5 sm:right-8'}`}>
-                                                {i}
-                                            </div>
-                                        )}
-                                    </div>
+                                            {i}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                        </HTMLFlipBook>
-                    </div>
+                            </div>
+                        ))}
+                    </HTMLFlipBook>
+                </div>
 
-                    {/* Navigation Arrows - Enhanced Design */}
+                {/* Navigation Arrows - Enhanced Design */}
+                <button
+                    onClick={() => {
+                        console.log('Desktop flipbook NEXT clicked, currentPage:', currentPage, 'ref:', flipBookRef.current);
+                        flipBookRef.current?.pageFlip()?.flipNext();
+                    }}
+                    disabled={currentPage >= flipbookPages.length - 2}
+                    className="hidden md:flex absolute right-0 lg:-right-16 z-20 p-3 sm:p-4 lg:p-5 bg-gradient-to-l from-white/10 to-transparent hover:from-white/20 backdrop-blur-md rounded-xl text-[#D4AF37] hover:text-[#F3E5AB] transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 border border-[#D4AF37]/20"
+                >
+                    <ChevronRight className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 drop-shadow-lg" />
+                </button>
+            </div>
+
+            {/* Bottom Info & Controls */}
+            <div className="absolute bottom-3 sm:bottom-6 left-0 right-0 space-y-3 sm:space-y-4">
+                {/* Mobile Navigation Buttons */}
+                <div className="flex md:hidden justify-center gap-3 px-4">
                     <button
-                        onClick={() => flipBookRef.current?.pageFlip()?.flipNext()}
-                        disabled={currentPage >= flipbookPages.length - 2}
-                        className="hidden md:flex absolute right-0 lg:-right-16 z-20 p-3 sm:p-4 lg:p-5 bg-gradient-to-l from-white/10 to-transparent hover:from-white/20 backdrop-blur-md rounded-xl text-[#D4AF37] hover:text-[#F3E5AB] transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100 border border-[#D4AF37]/20"
+                        onClick={() => {
+                            console.log('Mobile flipbook PREV clicked, currentPage:', currentPage, 'ref:', flipBookRef.current);
+                            if (flipBookRef.current?.pageFlip) {
+                                flipBookRef.current.pageFlip().flipPrev();
+                            } else {
+                                console.error('FlipBook ref not initialized!');
+                            }
+                        }}
+                        disabled={currentPage === 0}
+                        className="flex-1 max-w-[140px] px-4 py-3 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-lg border border-[#D4AF37]/40 text-[#F3E5AB] rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                        <ChevronRight className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 drop-shadow-lg" />
+                        <ChevronLeft className="w-4 h-4" />
+                        Previous
+                    </button>
+                    <button
+                        onClick={() => {
+                            console.log('Mobile flipbook NEXT clicked, currentPage:', currentPage, 'ref:', flipBookRef.current);
+                            if (flipBookRef.current?.pageFlip) {
+                                flipBookRef.current.pageFlip().flipNext();
+                            } else {
+                                console.error('FlipBook ref not initialized!');
+                            }
+                        }}
+                        disabled={currentPage >= flipbookPages.length - 2}
+                        className="flex-1 max-w-[140px] px-4 py-3 bg-gradient-to-l from-white/15 to-white/10 backdrop-blur-lg border border-[#D4AF37]/40 text-[#F3E5AB] rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                        Next
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 
-                {/* Bottom Info & Controls */}
-                <div className="absolute bottom-3 sm:bottom-6 left-0 right-0 space-y-3 sm:space-y-4">
-                    {/* Mobile Navigation Buttons */}
-                    <div className="flex md:hidden justify-center gap-3 px-4">
-                        <button
-                            onClick={() => flipBookRef.current?.pageFlip()?.flipPrev()}
-                            disabled={currentPage === 0}
-                            className="flex-1 max-w-[140px] px-4 py-3 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-lg border border-[#D4AF37]/40 text-[#F3E5AB] rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Previous
-                        </button>
-                        <button
-                            onClick={() => flipBookRef.current?.pageFlip()?.flipNext()}
-                            disabled={currentPage >= flipbookPages.length - 2}
-                            className="flex-1 max-w-[140px] px-4 py-3 bg-gradient-to-l from-white/15 to-white/10 backdrop-blur-lg border border-[#D4AF37]/40 text-[#F3E5AB] rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-white/25 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            Next
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    {/* Page Progress Indicator */}
-                    <div className="flex justify-center px-4">
-                        <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-[#D4AF37]/30">
-                            <p className="text-[10px] sm:text-xs text-[#F3E5AB] font-medium tracking-wide">
-                                Swipe or click to flip pages
-                            </p>
-                        </div>
+                {/* Page Progress Indicator */}
+                <div className="flex justify-center px-4">
+                    <div className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-[#D4AF37]/30">
+                        <p className="text-[10px] sm:text-xs text-[#F3E5AB] font-medium tracking-wide">
+                            Swipe or click to flip pages
+                        </p>
                     </div>
                 </div>
             </div>
-        )
+        </div>
+
     );
 
     // --- DEDICATED MOBILE VIEW ---
-    const MobileView = () => (
+    const mobileViewJSX = (
         <div className="bg-[#FAF7F2] min-h-screen pb-28">
-            
 
-            {/* Main Image Carousel */}
+
+            {/* Main Image Display */}
             <div className="relative w-full bg-[#FFF9E6] pt-[10px] pb-5">
-                <div className="aspect-[4/5] w-full overflow-hidden relative">
-                    <div
-                        ref={mobileGalleryRef}
-                        id="mobile-gallery"
-                        className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide z-10"
-                        onScroll={(e) => {
-                            const scrollLeft = e.currentTarget.scrollLeft;
-                            const width = e.currentTarget.offsetWidth;
-                            const newIndex = Math.round(scrollLeft / width);
-                            if (newIndex !== activeImg) {
-                                setActiveImg(newIndex);
-                            }
-                        }}
-                    >
-                        {images.map((img, i) => (
-                            <div key={i} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-6">
-                                <img src={img} className="max-w-full max-h-full object-contain drop-shadow-xl" alt={`${book.title} - Image ${i + 1}`} />
-                            </div>
-                        ))}
-                    </div>
+                <div className="aspect-[4/5] w-full overflow-hidden relative flex items-center justify-center">
+                    <img
+                        src={images[activeImg] || "/placeholder.png"}
+                        className="max-w-full max-h-full object-contain p-6 drop-shadow-xl transition-all duration-300"
+                        alt={`${book.title} - Image ${activeImg + 1}`}
+                    />
                 </div>
 
                 {/* Thumbnails Strip with Navigation */}
@@ -475,17 +523,12 @@ export default function BookDetail() {
                             <button
                                 key={i}
                                 onClick={() => {
-                                    const gallery = mobileGalleryRef.current || document.getElementById('mobile-gallery');
-                                    if (gallery) {
-                                        const targetScroll = i * gallery.offsetWidth;
-                                        gallery.scrollTo({ left: targetScroll, behavior: 'smooth' });
-                                        // Update active image immediately for better UX
-                                        setActiveImg(i);
-                                    }
+                                    console.log('Mobile thumbnail clicked, index:', i, 'current activeImg:', activeImg);
+                                    setActiveImg(i);
                                 }}
-                                className={`w-14 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-white p-1 transition-all ${activeImg === i ? 'border-[#D4AF37] ring-2 ring-[#FFF9E6] scale-105' : 'border-[#D4AF37]/30 opacity-70 hover:opacity-100'}`}
+                                className={`w-14 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-white p-1 transition-all cursor-pointer ${activeImg === i ? 'border-[#D4AF37] ring-2 ring-[#FFF9E6] scale-105' : 'border-[#D4AF37]/30 opacity-70 hover:opacity-100 hover:scale-105'}`}
                             >
-                                <img src={img} className="w-full h-full object-contain" alt={`Thumbnail ${i + 1}`} />
+                                <img src={img} className="w-full h-full object-contain pointer-events-none" alt={`Thumbnail ${i + 1}`} />
                             </button>
                         ))}
                     </div>
@@ -681,7 +724,7 @@ export default function BookDetail() {
     );
 
     // --- DEDICATED DESKTOP VIEW ---
-    const DesktopView = () => (
+    const desktopViewJSX = (
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 lg:py-8 relative">
             <nav className="hidden md:flex items-center gap-2 text-sm text-[#8A7A5E] mb-6">
                 <span className="cursor-pointer hover:text-[#D4AF37] transition-colors" onClick={() => navigate('/')}>Home</span>
@@ -725,13 +768,17 @@ export default function BookDetail() {
                                     {images.map((img, i) => (
                                         <button
                                             key={i}
-                                            onClick={() => setActiveImg(i)}
-                                            className={`w-14 h-16 sm:w-16 sm:h-20 md:w-18 md:h-22 lg:w-20 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-white snap-center ${activeImg === i
-                                                ? 'border-[#D4AF37] shadow-md ring-2 ring-[#FFF9E6]'
-                                                : 'border-[#D4AF37]/30 opacity-60 hover:opacity-100 hover:border-[#D4AF37]'
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                console.log('Desktop thumbnail clicked, index:', i, 'current activeImg:', activeImg);
+                                                setActiveImg(i);
+                                            }}
+                                            className={`w-14 h-16 sm:w-16 sm:h-20 md:w-18 md:h-22 lg:w-20 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-white snap-center cursor-pointer ${activeImg === i
+                                                ? 'border-[#D4AF37] shadow-md ring-2 ring-[#FFF9E6] scale-105'
+                                                : 'border-[#D4AF37]/30 opacity-60 hover:opacity-100 hover:border-[#D4AF37] hover:scale-105'
                                                 }`}
                                         >
-                                            <img src={img} className="w-full h-full object-contain p-1" alt={`Thumbnail ${i + 1}`} />
+                                            <img src={img} className="w-full h-full object-contain p-1 pointer-events-none" alt={`Thumbnail ${i + 1}`} />
                                         </button>
                                     ))}
                                 </div>
@@ -1082,16 +1129,16 @@ export default function BookDetail() {
                 }}
             />
 
-            <FlipbookModal />
+            {flipbookModalJSX}
 
             {/* DEDICATED MOBILE VIEW */}
             <div className="md:hidden">
-                <MobileView />
+                {mobileViewJSX}
             </div>
 
             {/* DEDICATED DESKTOP VIEW */}
             <div className="hidden md:block">
-                <DesktopView />
+                {desktopViewJSX}
             </div>
             <Footer />
         </div>

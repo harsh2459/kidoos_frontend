@@ -129,6 +129,6 @@ export function OptimizedBackgroundImage({
       {...props}
     >
       {children}
-    </div>
+    </div>  
   );
 }

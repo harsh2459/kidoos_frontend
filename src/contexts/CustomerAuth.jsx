@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { getAuthInstance, getGoogleProvider } from "../lib/firebase";
-
+import { signInAnonymously } from "firebase/auth";
 const LS_KEY = "customer_jwt";
 
 // MUST match your backend mount: app.use("/api/customer", customerRoutes)
@@ -115,6 +115,44 @@ export default function CustomerProvider({ children }) {
     setCustomer(null);
   }
 
+  const loginAnonymously = async () => {
+    try {
+      // 1. Initialize Auth (Fixes "auth is not defined" error)
+      const auth = await getAuthInstance();
+      
+      // 2. Sign in to Firebase
+      const result = await signInAnonymously(auth);
+      
+      // 3. Get the token
+      const idToken = await result.user.getIdToken();
+
+      // --- OPTION A: If your Backend exchanges Firebase Token for a Custom JWT (Recommended) ---
+      // This ensures a user record is actually created in your database
+      const { data } = await api.post(withPrefix("/auth/google"), { idToken }); 
+      // ^ NOTE: We can often reuse the /auth/google endpoint if it just validates Firebase tokens, 
+      // or create a specific /auth/anonymous endpoint.
+
+      if (!data?.token) throw new Error("Backend sync failed");
+      const finalToken = data.token;
+      const finalCustomer = data.customer;
+
+      /* --- OPTION B: If you just use the Firebase Token directly (Simpler) ---
+      const finalToken = idToken;
+      const finalCustomer = { id: result.user.uid, isAnonymous: true };
+      */
+
+      // 4. SAVE SESSION (Crucial! Otherwise refreshing the page logs them out)
+      localStorage.setItem(LS_KEY, finalToken);
+      setToken(finalToken);
+      setCustomer(finalCustomer);
+
+      return finalToken; 
+    } catch (error) {
+      console.error("Anonymous login failed", error);
+      throw error;
+    }
+  };
+
   async function googleLogin() {
     try {
       // Lazy load Firebase only when Google login is triggered
@@ -159,6 +197,7 @@ export default function CustomerProvider({ children }) {
       logout,
       googleLogin,
       setCustomer,
+      loginAnonymously
     }),
     [token, customer, isCustomer, loading]
   );
