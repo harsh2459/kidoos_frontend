@@ -77,6 +77,7 @@ export default function BookDetail() {
     // Data State
     const [book, setBook] = useState(null);
     const [suggestions, setSuggestions] = useState([]);
+    const [editions, setEditions] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // UI State
@@ -166,21 +167,31 @@ export default function BookDetail() {
 
     // --- FETCH DATA ---
     useEffect(() => {
+        let cancelled = false;  // ← stale request guard
+
         (async () => {
             try {
                 setLoading(true);
-                setActiveImg(0); // Reset active image when book changes
+                setActiveImg(0);
                 window.scrollTo(0, 0);
-                const { data } = await api.get(`/books/${slug}/suggestions?limit=5`);
+
+                const { data } = await api.get(`/books/${slug}/suggestions?limit=25&_=${Date.now()}`);
+                if (cancelled) return; // ← ignore if a newer request already fired
+
                 if (!data?.book) { t.error("Book not found"); return; }
+
                 setBook(data.book);
                 setSuggestions(data.suggestions || []);
+                setEditions(data.editions || []);  // ← now guaranteed to be from the latest request
+
             } catch (e) {
-                console.error(e);
+                if (!cancelled) console.error(e);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         })();
+
+        return () => { cancelled = true; };  // ← cleanup cancels stale request
     }, [slug]);
 
     // --- THUMBNAIL NAVIGATION HELPERS ---
@@ -576,7 +587,74 @@ export default function BookDetail() {
                             <span className="text-xs font-semibold text-red-700 bg-red-50 px-2.5 py-1 rounded-full mb-2">Out of Stock</span>
                         )}
                     </div>
+
+                    {/* Edition Badge */}
+                    {book.edition && (
+                        <div className="flex items-center gap-2 mt-3">
+                            <Book className="w-3.5 h-3.5 text-[#D4AF37]" />
+                            <span className="text-xs font-semibold text-[#8A7A5E] uppercase tracking-wide">Edition</span>
+                            <span className="text-xs font-bold text-[#3E2723] bg-[#FFF9E6] px-2.5 py-1 rounded-full border border-[#D4AF37]/30">{book.edition}</span>
+                        </div>
+                    )}
                 </div>
+
+                {/* Editions Strip - Mobile */}
+                {editions.length > 0 && (
+                    <div className="mb-6 rounded-xl border border-[#D4AF37]/30 overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FFF9E6] border-b border-[#D4AF37]/20">
+                            <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
+                            <span className="text-[11px] font-bold text-[#8A7A5E] uppercase tracking-widest">Also Available In</span>
+                            <span className="ml-auto text-[10px] font-semibold text-[#D4AF37]">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
+                        </div>
+                        {/* Cards */}
+                        <div className="flex gap-3 p-3 overflow-x-auto scrollbar-hide bg-white">
+                            {editions.map(ed => {
+                                const edDeal = dealFn(ed);
+                                const skuTokens = (ed.inventory?.sku || '').split('_');
+                                const lastToken = skuTokens[skuTokens.length - 1] || '';
+                                const skuLabel = /^\d+$/.test(lastToken) && skuTokens.length >= 2
+                                    ? `${skuTokens[skuTokens.length - 2]} ${lastToken}`
+                                    : lastToken;
+                                return (
+                                    <button
+                                        key={ed._id}
+                                        onClick={() => { navigate(`/book/${ed.slug}`); window.scrollTo(0, 0); }}
+                                        className="flex-shrink-0 w-[120px] bg-[#FAF7F2] rounded-xl border border-[#D4AF37]/20 active:border-[#D4AF37] active:scale-[0.97] transition-all duration-150 text-left group overflow-hidden"
+                                    >
+                                        {/* Cover */}
+                                        <div className="relative w-full aspect-[3/4] bg-[#FFF9E6] overflow-hidden">
+                                            <img
+                                                src={assetUrl(ed.assets?.coverUrl?.[0])}
+                                                className="w-full h-full object-contain p-2"
+                                                alt={ed.title}
+                                            />
+                                            {skuLabel && (
+                                                <div className="absolute bottom-0 inset-x-0 pt-5 pb-1.5 px-2 bg-gradient-to-t from-[#3E2723]/85 via-[#3E2723]/40 to-transparent">
+                                                    <span className="block text-center text-[10px] font-bold text-[#F3E5AB] tracking-wider uppercase">
+                                                        {skuLabel}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* Info */}
+                                        <div className="px-2.5 py-2">
+                                            <p className="text-[11px] font-bold text-[#3E2723] leading-tight line-clamp-2 min-h-[28px] mb-1.5">
+                                                {ed.title}
+                                            </p>
+                                            <div className="flex items-baseline gap-1 flex-wrap">
+                                                <span className="text-sm font-bold text-[#3E2723]">₹{edDeal.price.toLocaleString('en-IN')}</span>
+                                                {edDeal.mrp > edDeal.price && (
+                                                    <span className="text-[10px] text-[#8A7A5E] line-through">₹{edDeal.mrp.toLocaleString('en-IN')}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Preview Button */}
                 {flipbookPages.length > 0 && (
@@ -854,6 +932,74 @@ export default function BookDetail() {
                         </div>
                     </div>
 
+                    {/* Edition Badge */}
+                    {book.edition && (
+                        <div className="flex items-center gap-2">
+                            <Book className="w-3.5 h-3.5 text-[#D4AF37]" />
+                            <span className="text-xs font-semibold text-[#8A7A5E] uppercase tracking-wide">Edition</span>
+                            <span className="text-xs font-bold text-[#3E2723] bg-[#FFF9E6] px-2.5 py-1 rounded-full border border-[#D4AF37]/30">{book.edition}</span>
+                        </div>
+                    )}
+
+                    {/* Editions Strip - Desktop */}
+                    {editions.length > 0 && (
+                        <div className="rounded-xl border border-[#D4AF37]/30 overflow-hidden">
+                            {/* Header */}
+                            <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FFF9E6] border-b border-[#D4AF37]/20">
+                                <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                <span className="text-[11px] font-bold text-[#8A7A5E] uppercase tracking-widest">Also Available In</span>
+                                <span className="ml-auto text-[10px] font-semibold text-[#D4AF37]">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
+                            </div>
+                            {/* Cards */}
+                            <div className="flex gap-3 p-3 overflow-x-auto scrollbar-hide bg-white">
+                                {editions.map(ed => {
+                                    const edDeal = dealFn(ed);
+                                    const skuTokens = (ed.inventory?.sku || '').split('_');
+                                    const lastToken = skuTokens[skuTokens.length - 1] || '';
+                                    const skuLabel = /^\d+$/.test(lastToken) && skuTokens.length >= 2
+                                        ? `${skuTokens[skuTokens.length - 2]} ${lastToken}`
+                                        : lastToken;
+                                    return (
+                                        <button
+                                            key={ed._id}
+                                            onClick={() => { navigate(`/book/${ed.slug}`); window.scrollTo(0, 0); }}
+                                            className="flex-shrink-0 w-[130px] bg-[#FAF7F2] rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-lg active:scale-[0.97] transition-all duration-200 text-left group overflow-hidden"
+                                        >
+                                            {/* Cover */}
+                                            <div className="relative w-full aspect-[3/4] bg-[#FFF9E6] overflow-hidden">
+                                                <img
+                                                    src={assetUrl(ed.assets?.coverUrl?.[0])}
+                                                    className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                                                    alt={ed.title}
+                                                />
+                                                {/* Gradient + label overlay */}
+                                                {skuLabel && (
+                                                    <div className="absolute bottom-0 inset-x-0 pt-5 pb-1.5 px-2 bg-gradient-to-t from-[#3E2723]/85 via-[#3E2723]/40 to-transparent">
+                                                        <span className="block text-center text-[10px] font-bold text-[#F3E5AB] tracking-wider uppercase">
+                                                            {skuLabel}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Info */}
+                                            <div className="px-2.5 py-2">
+                                                <p className="text-[11px] font-bold text-[#3E2723] leading-tight line-clamp-2 group-hover:text-[#D4AF37] transition-colors min-h-[30px] mb-1.5">
+                                                    {ed.title}
+                                                </p>
+                                                <div className="flex items-baseline gap-1 flex-wrap">
+                                                    <span className="text-sm font-bold text-[#3E2723]">₹{edDeal.price.toLocaleString('en-IN')}</span>
+                                                    {edDeal.mrp > edDeal.price && (
+                                                        <span className="text-[10px] text-[#8A7A5E] line-through">₹{edDeal.mrp.toLocaleString('en-IN')}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {book.whyChooseThis?.length > 0 && (
                         <ul className="space-y-1.5 sm:space-y-2">
                             {book.whyChooseThis.slice(0, 4).map((pt, i) => (
@@ -1108,10 +1254,10 @@ export default function BookDetail() {
         <div className="bg-[#FAF7F2] min-h-screen text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-0">
             <SEO
                 title={`${book.title} - ${book.categories?.[0] || 'Books'} | Kiddos Intellect`}
-                description={book.descriptionHtml?.replace(/<[^>]*>/g, '').slice(0, 155) || `Shop ${book.title} by ${book.author || 'various authors'}. Premium children's books and educational materials.`}
+                description={book.descriptionHtml?.replace(/<[^>]*>/g, '').slice(0, 155) || `Shop ${book.title} by ${book.authors?.[0] || 'various authors'}. Premium children's books and educational materials.`}
                 image={images[0] || '/favicon.jpg'}
                 type="product"
-                keywords={`${book.title}, ${book.author || ''}, ${book.categories?.join(', ') || ''}, children's books, kids books, educational books, story books, learning materials`}
+                keywords={`${book.title}, ${book.authors?.join(', ') || ''}, ${book.categories?.join(', ') || ''}, children's books, kids books, educational books, story books, learning materials`}
                 breadcrumbs={[
                     { name: "Home", url: "/" },
                     { name: "Catalog", url: "/catalog" },
@@ -1120,12 +1266,21 @@ export default function BookDetail() {
                 product={{
                     name: book.title,
                     description: book.descriptionHtml?.replace(/<[^>]*>/g, '').slice(0, 155),
-                    image: images[0],
+                    images: images,
                     price: d.price,
                     priceCurrency: 'INR',
                     inStock: !isOutOfStock,
-                    sku: book._id,
-                    rating: { value: 4.8, count: 124 }
+                    sku: book.inventory?.sku || book._id,
+                    isbn: book.isbn13 || book.isbn10,
+                    author: book.authors?.[0],
+                    numberOfPages: book.pages,
+                    language: book.language,
+                    ...(config.testimonials?.length > 0 && {
+                        rating: {
+                            value: parseFloat((config.testimonials.reduce((s, t) => s + (t.rating || 5), 0) / config.testimonials.length).toFixed(1)),
+                            count: config.testimonials.length
+                        }
+                    })
                 }}
             />
 

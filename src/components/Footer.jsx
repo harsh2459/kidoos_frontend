@@ -73,7 +73,7 @@ const FooterAnchor = ({ href, children }) => (
 /* ----------------------------------
    MAIN FOOTER (FEATURE COMPLETE)
 ----------------------------------- */
-export default function Footer({ contact }) {
+export default function Footer({ contact }) { 
   const year = new Date().getFullYear();
 
   const contactInfo = {
@@ -83,13 +83,13 @@ export default function Footer({ contact }) {
       "206 Sunrise Commercial Complex, Near Savjibhai Korat Bridge, Mota Varachha, Surat, Gujarat 394101",
   };
 
-  const socialItems = [
-    { id: "threads", icon: <FaThreads size={20} />, href: "https://www.threads.com/@kiddosintellect" },
-    { id: "instagram", icon: <FaInstagram size={20} />, href: "https://www.instagram.com/kiddosintellect/" },
-    { id: "whatsapp", icon: <FaWhatsapp size={20} />, href: `https://wa.me/${contactInfo.phone.replace(/\s+/g, "")}` },
-    { id: "x", icon: <FaXTwitter size={20} />, href: `https://x.com/kiddosintellect` },
-    { id: "facebook", icon: <FaFacebook size={20} />, href: `https://www.facebook.com/people/Kiddos-Intellect/61579945910642/` },
-  ];
+    const socialItems = [
+      { id: "threads", icon: <FaThreads size={20} />, href: "https://www.threads.com/@kiddosintellect" },
+      { id: "instagram", icon: <FaInstagram size={20} />, href: "https://www.instagram.com/kiddosintellect/" },
+      { id: "whatsapp", icon: <FaWhatsapp size={20} />, href: `https://wa.me/${contactInfo.phone.replace(/\s+/g, "")}` },
+      { id: "x", icon: <FaXTwitter size={20} />, href: `https://x.com/kiddosintellect` },
+      { id: "facebook", icon: <FaFacebook size={20} />, href: `https://www.facebook.com/people/Kiddos-Intellect/61579945910642/` },
+    ];
 
   return (
     <footer className="relative bg-[#FAF7F2] text-[#5C4A2E] flex flex-col">
@@ -109,7 +109,7 @@ export default function Footer({ contact }) {
 
       {/* CONTENT */}
       <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-12 pt-6">
-        <div className="grid gap-8 lg:grid-cols-12 md:grid-cols-2 grid-cols-1">
+        <div className="grid gap-8 lg:grid-cols-12 md:grid-cols-2 grid-cols-1"> 
 
           {/* BRAND */}
           <div className="lg:col-span-3 flex flex-col gap-6">
@@ -160,6 +160,7 @@ export default function Footer({ contact }) {
             <ul className="space-y-4">
               <li><FooterLink to="/faq">FAQs</FooterLink></li>
               <li><FooterLink to="/contact">Contact Us</FooterLink></li>
+              <li><FooterLink to="/PreSchool">PreSchool</FooterLink></li>
             </ul>
           </div>
 

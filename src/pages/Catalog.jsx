@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { api } from "../api/client";
 import { CategoriesAPI } from "../api/categories";
 import { assetUrl } from "../api/asset";
@@ -130,9 +130,9 @@ export default function Catalog() {
   }, [q, sort, selectedCats]);
 
   // --- HANDLERS ---
-  const toggleCategory = (slug) => {
+  const toggleCategory = useCallback((slug) => {
     setSelectedCats(prev => prev.includes(slug) ? prev.filter(c => c !== slug) : [...prev, slug]);
-  };
+  }, []);
 
   const applyPriceFilter = (e) => {
     if (e) e.preventDefault();
@@ -147,20 +147,30 @@ export default function Catalog() {
     setTimeout(() => { setPage(1); loadBooks(); }, 50);
   };
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setQ("");
     setSelectedCats([]);
     setPriceRange({ min: "", max: "" });
     setTempPriceRange({ min: "", max: "" });
     setSort("oldest");
     setPage(1);
-  };
+  }, []);
 
-  const goToPage = (newPage) => { if (newPage >= 1 && newPage <= totalPages) { setPage(newPage); topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
+  const goToPage = useCallback((newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+      topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [totalPages]);
+
+  // --- MEMOIZED COMPUTED VALUES ---
+  const visibleCategories = useMemo(
+    () => categories.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase())),
+    [categories, catSearch]
+  );
 
   // --- SIDEBAR CONTENT (As Render Function to fix Focus Issue) ---
   const renderSidebarContent = () => {
-    const visibleCategories = categories.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase()));
     return (
       <div className="pr-2 font-['Lato']">
         <FilterSection title="Categories" onClear={() => setSelectedCats([])} hasActiveFilters={selectedCats.length > 0}>
@@ -511,6 +521,8 @@ function CatalogHeroSlider({ slides, totalBooks }) {
                 <img
                   src={assetUrl(slide.image)}
                   alt={slide.title}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  decoding="async"
                   className="absolute inset-0 w-full h-full object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-black/40"></div>
@@ -522,6 +534,8 @@ function CatalogHeroSlider({ slides, totalBooks }) {
                 <img
                   src={assetUrl(slide.image)}
                   alt={slide.title}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  decoding="async"
                   className={`w-full h-full ${fit === 'contain' ? 'object-contain p-8' : 'object-cover'} object-center opacity-40 md:opacity-100`}
                 />
                 {fit === 'cover' && (

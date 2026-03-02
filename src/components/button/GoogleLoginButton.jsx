@@ -53,7 +53,7 @@ export default function GoogleLoginButton({ onSuccess }) {
   };
 
   return (
-    <button
+    <button 
       onClick={handleClick}
       type="button"
       className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border border-gray-300 rounded-xl bg-white text-gray-700 font-medium hover:bg-gray-50 transition-all shadow-sm hover:shadow-md active:scale-[0.99] group"

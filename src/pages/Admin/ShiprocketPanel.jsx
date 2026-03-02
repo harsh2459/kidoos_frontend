@@ -12,8 +12,8 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
     if (selected.size === 0) return t.error("Select orders first");
     setLoading(true);
     try {
-      const data = await ShipAPI.create(Array.from(selected), auth);
-      
+      const { data } = await ShipAPI.create(Array.from(selected), auth);
+
       if (data.ok) {
         const results = data.data;
         const success = results.success?.length || 0;

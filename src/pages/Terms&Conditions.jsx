@@ -544,7 +544,6 @@ const TermsAndConditions = () => {
                     </div>
                 </div>
             </div>
-
             <ScrollToTopButton />
         </div>
     );

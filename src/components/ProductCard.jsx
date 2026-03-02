@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, Check, Star } from "lucide-react";
+import { Check } from "lucide-react";
 import { assetUrl } from "../api/asset";
 import { useCart } from "../contexts/CartStore";
 import { useCustomer } from "../contexts/CustomerAuth";
@@ -8,7 +8,7 @@ import { deal as dealFn } from "../lib/Price";
 import { CustomerAPI } from "../api/customer";
 import { t } from "../lib/toast";
 
-export default function ProductCard({ book }) {
+function ProductCard({ book }) {
   // --- 1. HOOKS (MUST BE AT THE VERY TOP) ---
   const navigate = useNavigate();
   const items = useCart((s) => s.items);
@@ -17,27 +17,30 @@ export default function ProductCard({ book }) {
   const { isCustomer, token } = useCustomer();
   const [imgError, setImgError] = useState(false);
 
-  // --- 2. SAFETY CHECK (After hooks are declared) ---
-  if (!book) return null;
+  // --- 2. MEMOIZED COMPUTED VALUES ---
+  const id = book?._id || book?.id;
 
-  // --- 3. LOGIC & DATA PREP ---
-  const d = dealFn(book);
-  const id = book._id || book.id;
-  const inCart = items.some((i) => (i._id || i.id || i.bookId) === id);
+  const d = useMemo(() => book ? dealFn(book) : {}, [book]);
 
-  // Handle Cover Image
-  const coverPath = Array.isArray(book?.assets?.coverUrl)
-    ? book.assets.coverUrl[0]
-    : book?.assets?.coverUrl;
+  const inCart = useMemo(
+    () => items.some((i) => (i._id || i.id || i.bookId) === id),
+    [items, id]
+  );
 
-  const finalCover = !imgError && coverPath 
-    ? assetUrl(coverPath) 
-    : "https://placehold.co/600x800/F4F7F5/A08C5B?text=Book+Cover";
+  const finalCover = useMemo(() => {
+    const coverPath = Array.isArray(book?.assets?.coverUrl)
+      ? book.assets.coverUrl[0]
+      : book?.assets?.coverUrl;
+    return !imgError && coverPath
+      ? assetUrl(coverPath)
+      : "https://placehold.co/600x800/F4F7F5/A08C5B?text=Book+Cover";
+  }, [book, imgError]);
 
-  const addToCart = async (e) => {
-    e.preventDefault(); 
-    e.stopPropagation(); // Stop clicking through to book details
-    
+  // --- 3. MEMOIZED HANDLERS ---
+  const addToCart = useCallback(async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!isCustomer) {
       t.info("Please login to shop");
       navigate("/login", { state: { next: "/cart" } });
@@ -59,18 +62,21 @@ export default function ProductCard({ book }) {
       addLocal({ ...book, price: d.price, mrp: d.mrp, qty: 1 });
       t.warn("Added to local cart");
     }
-  };
+  }, [isCustomer, token, id, book, d, navigate, replaceAll, addLocal]);
 
-  const goToCart = (e) => {
+  const goToCart = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     navigate("/cart");
-  };
+  }, [navigate]);
 
-  // --- 4. RENDER (Premium Style) ---
+  // --- 4. SAFETY CHECK (After hooks are declared) ---
+  if (!book) return null;
+
+  // --- 5. RENDER (Premium Style) ---
   return (
     <div className="group relative flex flex-col h-full bg-white rounded-xl shadow-sm border border-[#EBE5D9] hover:shadow-xl hover:border-[#D4AF37] transition-all duration-500 ease-out overflow-hidden">
-      
+
       {/* --- IMAGE SECTION --- */}
       <Link to={`/book/${book.slug}`} className="relative block w-full pt-[10%] pb-4 bg-gradient-to-b from-[#FAF9F6] to-white px-8">
         {/* Discount Badge (Elegant) */}
@@ -79,7 +85,7 @@ export default function ProductCard({ book }) {
             {d.off}% Off
           </span>
         )}
-        
+
         <div className="relative w-full aspect-[2/3] flex items-end justify-center">
           <img
             src={finalCover}
@@ -87,20 +93,20 @@ export default function ProductCard({ book }) {
             onError={() => setImgError(true)}
             loading="lazy"
             className="
-              max-h-full max-w-full object-contain 
-              drop-shadow-xl transform transition-transform duration-500 
+              max-h-full max-w-full object-contain
+              drop-shadow-xl transform transition-transform duration-500
               group-hover:-translate-y-2 group-hover:scale-105 will-change-transform
             "
-            style={{ filter: "drop-shadow(0 15px 15px rgba(0,0,0,0.15))" }} 
+            style={{ filter: "drop-shadow(0 15px 15px rgba(0,0,0,0.15))" }}
           />
         </div>
       </Link>
 
       {/* --- DETAILS SECTION --- */}
       <div className="flex flex-col flex-grow px-5 pb-6 text-center">
-        
+
         {/* Title (Serif Font like reference) */}
-        <Link 
+        <Link
           to={`/book/${book.slug}`}
           className="font-serif text-[#3E2723] text-xl font-medium leading-tight mb-2 hover:text-[#D4AF37] transition-colors line-clamp-2"
         >
@@ -127,8 +133,8 @@ export default function ProductCard({ book }) {
             className={`
               w-full py-3 rounded-lg text-sm font-bold uppercase tracking-wide transition-all duration-300 shadow-md
               flex items-center justify-center gap-2
-              ${inCart 
-                ? "bg-[#F5F5F0] text-[#3E2723] border border-[#D4AF37]" 
+              ${inCart
+                ? "bg-[#F5F5F0] text-[#3E2723] border border-[#D4AF37]"
                 : "bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-lg active:scale-95"
               }
             `}
@@ -149,3 +155,5 @@ export default function ProductCard({ book }) {
     </div>
   );
 }
+
+export default React.memo(ProductCard);

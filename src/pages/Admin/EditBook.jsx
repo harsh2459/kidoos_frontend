@@ -8,7 +8,6 @@ import { t } from "../../lib/toast";
 import { 
   Save, Upload, X, ChevronDown, Check, Image as ImageIcon, 
   ArrowLeft, Edit3, Lock, Unlock, Layout, Plus, Trash2,
-  // ✅ NEW: Icons for Selector
   Star, Brain, Heart, Lightbulb, Zap, Smile, BookOpen, 
   Pencil, Calculator, Globe, Music, Palette, Puzzle, 
   Users, Trophy, Target, Sparkles, Clock, Sun, Moon, 
@@ -19,7 +18,7 @@ import {
 // ✅ NEW: Icon Mapping
 const ICON_MAP = {
   "star": Star,
-  "brain": Brain,
+  "brain": Brain, 
   "heart": Heart,
   "lightbulb": Lightbulb,
   "zap": Zap,

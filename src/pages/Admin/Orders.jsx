@@ -4,7 +4,6 @@ import { api, BASE_URL } from "../../api/client";
 import { BlueDartAPI } from "../../api/bluedart";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
-import ShiprocketPanel from "./ShiprocketPanel"; // ✅ IMPORTED
 import { Truck, Printer, Rocket, MapPin } from "lucide-react";
 import { ShipAPI } from "../../api/shiprocket";
 
@@ -38,6 +37,14 @@ export default function AdminOrders() {
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [providerOrderId, setProviderOrderId] = useState(null);
   const [showRefundModal, setShowRefundModal] = useState(false);
+  // Shiprocket dimensions modal (shown before Phase 1)
+  const [srDimensionsModal, setSrDimensionsModal] = useState(false);
+  const [srPendingOrderIds, setSrPendingOrderIds] = useState([]);
+  const [srDimensions, setSrDimensions] = useState({ weight: 0.5, length: 20, breadth: 15, height: 5 });
+  // Shiprocket courier selection modal
+  const [srCourierModal, setSrCourierModal] = useState(false);
+  const [srCourierData, setSrCourierData] = useState([]); // [{ id, shipmentId, couriers, recommendedCourierId }]
+  const [srSelections, setSrSelections] = useState({});  // { orderId: courierId }
   const [refundForm, setRefundForm] = useState({
     orderId: '',
     orderDetails: null,
@@ -45,6 +52,28 @@ export default function AdminOrders() {
     reason: '',
     speed: 'normal'
   });
+
+  // Order Detail Modal
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailOrder, setDetailOrder] = useState(null);
+
+  // Offline Order Modal States
+  const [showOfflineOrderModal, setShowOfflineOrderModal] = useState(false);
+  const [offlineForm, setOfflineForm] = useState({
+    customer: { name: '', email: '', phone: '' },
+    items: [],
+    shipping: { address: '', city: '', state: '', pincode: '', country: 'India' },
+    payment: { method: 'cash', paidAmount: '', status: '' },
+    shippingFee: '',
+    serviceFee: '',
+    taxAmount: '',
+    status: 'confirmed',
+    adminNotes: ''
+  });
+  const [bookSearch, setBookSearch] = useState('');
+  const [bookResults, setBookResults] = useState([]);
+  const [bookSearchLoading, setBookSearchLoading] = useState(false);
+  const [offlineOrderSaving, setOfflineOrderSaving] = useState(false);
 
   const hasSelection = selected.size > 0;
 
@@ -279,7 +308,7 @@ export default function AdminOrders() {
   async function load() {
     setLoading(true);
     try {
-      const params = { q, status, page, limit: 20 };
+      const params = { q, status, page, limit: 20, excludeSr: "1" };
       const dateRange = getDateRange();
       if (dateRange) {
         params.startDate = dateRange.startDate;
@@ -534,24 +563,80 @@ export default function AdminOrders() {
       setSelected(new Set([id]));
       setTimeout(() => openShipmentModal(), 100);
     } else if (provider === 'shiprocket') {
-      setActionLoading(true);
-      try {
-        const data = await ShipAPI.create([id], auth);
-        if (data.ok) {
-          const results = data.data;
-          const success = results.success?.length || 0;
-          const failed = results.failed?.length || 0;
-          if (success > 0) t.success(`Shiprocket shipment created!`);
-          if (failed > 0) t.err(`Failed: ${results.failed[0]?.error || 'Check logs'}`);
-          await load();
-        } else {
-          t.err(data.error || "Shiprocket creation failed");
-        }
-      } catch (e) {
-        t.err(e.response?.data?.error || "Shiprocket creation failed");
-      } finally {
-        setActionLoading(false);
+      openSrWithDimensions([id]);
+    }
+  }
+
+  // Open the dimensions modal before Phase 1
+  function openSrWithDimensions(orderIds) {
+    setSrPendingOrderIds(orderIds);
+    setSrDimensionsModal(true);
+  }
+
+  // Phase 1: create Shiprocket shipments with given dimensions, then open courier selection modal
+  async function startShiprocketPhase1(orderIds, dimensions) {
+    setSrDimensionsModal(false);
+    setActionLoading(true);
+    try {
+      const { data } = await ShipAPI.create(orderIds, dimensions, auth);
+      if (!data.ok) {
+        t.error(data.error || "Shiprocket creation failed");
+        return;
       }
+      const results = data.data;
+      if (results.failed?.length > 0) {
+        results.failed.forEach(f => t.error(`Order ${String(f.id).slice(-6)}: ${f.error}`));
+      }
+      if (results.noCourierAvailable?.length > 0) {
+        results.noCourierAvailable.forEach(f => t.warn(`No couriers: ${String(f.id).slice(-6)}`));
+      }
+      if (results.ready?.length > 0) {
+        // Pre-select recommended courier for each order
+        const defaultSelections = {};
+        results.ready.forEach(r => {
+          defaultSelections[r.id] = r.recommendedCourierId;
+        });
+        setSrSelections(defaultSelections);
+        setSrCourierData(results.ready);
+        setSrCourierModal(true);
+        await load(); // refresh orders (they now disappear from Orders page)
+      }
+    } catch (e) {
+      t.error(e.response?.data?.error || "Shiprocket creation failed");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  // Phase 2: admin confirmed courier selections → assign AWB + pickup
+  async function confirmSrCouriers() {
+    const selections = Object.entries(srSelections)
+      .filter(([, courierId]) => courierId)
+      .map(([orderId, courierId]) => ({ orderId, courierId: Number(courierId) }));
+
+    if (selections.length === 0) {
+      t.warn("Please select a courier for each order");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const { data } = await ShipAPI.assignCourier(selections, auth);
+      if (data.ok) {
+        const { success = [], failed = [] } = data.data;
+        if (success.length > 0) t.success(`${success.length} shipment(s) dispatched!`);
+        if (failed.length > 0) failed.forEach(f => t.error(`Order ${String(f.id).slice(-6)}: ${f.error}`));
+        setSrCourierModal(false);
+        setSrCourierData([]);
+        setSrSelections({});
+        setSelected(new Set());
+      } else {
+        t.error(data.error || "Courier assignment failed");
+      }
+    } catch (e) {
+      t.error(e.response?.data?.error || "Courier assignment failed");
+    } finally {
+      setActionLoading(false);
     }
   }
 
@@ -563,6 +648,122 @@ export default function AdminOrders() {
       paidAmount > 0 &&
       order.status !== 'refunded';
   };
+
+  // ==================== OFFLINE ORDER ====================
+  function resetOfflineForm() {
+    setOfflineForm({
+      customer: { name: '', email: '', phone: '' },
+      items: [],
+      shipping: { address: '', city: '', state: '', pincode: '', country: 'India' },
+      payment: { method: 'cash', paidAmount: '', status: '' },
+      shippingFee: '',
+      serviceFee: '',
+      taxAmount: '',
+      status: 'confirmed',
+      adminNotes: ''
+    });
+    setBookSearch('');
+    setBookResults([]);
+  }
+
+  async function searchBooks(q) {
+    if (!q.trim()) { setBookResults([]); return; }
+    setBookSearchLoading(true);
+    try {
+      const { data } = await api.get('/books', { params: { q, limit: 10 }, ...auth });
+      setBookResults(data.books || data.items || []);
+    } catch (e) {
+      // silent
+    } finally {
+      setBookSearchLoading(false);
+    }
+  }
+
+  function addBookToOrder(book) {
+    const existing = offlineForm.items.find(i => i.bookId === String(book._id));
+    if (existing) {
+      setOfflineForm(prev => ({
+        ...prev,
+        items: prev.items.map(i =>
+          i.bookId === String(book._id) ? { ...i, qty: i.qty + 1 } : i
+        )
+      }));
+    } else {
+      setOfflineForm(prev => ({
+        ...prev,
+        items: [...prev.items, {
+          bookId: String(book._id),
+          title: book.title,
+          qty: 1,
+          unitPrice: book.price || 0
+        }]
+      }));
+    }
+    setBookSearch('');
+    setBookResults([]);
+  }
+
+  function removeBookFromOrder(bookId) {
+    setOfflineForm(prev => ({ ...prev, items: prev.items.filter(i => i.bookId !== bookId) }));
+  }
+
+  function updateItemField(bookId, field, value) {
+    setOfflineForm(prev => ({
+      ...prev,
+      items: prev.items.map(i => i.bookId === bookId ? { ...i, [field]: value } : i)
+    }));
+  }
+
+  const offlineSubtotal = offlineForm.items.reduce((s, i) => s + (Number(i.unitPrice) || 0) * (Number(i.qty) || 0), 0);
+  const offlineGrandTotal = offlineSubtotal +
+    (Number(offlineForm.shippingFee) || 0) +
+    (Number(offlineForm.serviceFee) || 0) +
+    (Number(offlineForm.taxAmount) || 0);
+
+  async function submitOfflineOrder() {
+    const { customer, items, shipping, payment, shippingFee, serviceFee, taxAmount, status, adminNotes } = offlineForm;
+    if (!customer.email && !customer.phone) {
+      t.warn('Customer email or phone is required');
+      return;
+    }
+    if (!items.length) {
+      t.warn('Add at least one item');
+      return;
+    }
+
+    setOfflineOrderSaving(true);
+    try {
+      const payload = {
+        customer,
+        items: items.map(i => ({ bookId: i.bookId, qty: Number(i.qty) || 1, unitPrice: Number(i.unitPrice) || 0 })),
+        shipping,
+        payment: {
+          method: payment.method,
+          paidAmount: payment.paidAmount !== '' ? Number(payment.paidAmount) : 0,
+          ...(payment.status && { status: payment.status })
+        },
+        shippingFee: shippingFee !== '' ? Number(shippingFee) : 0,
+        serviceFee: serviceFee !== '' ? Number(serviceFee) : 0,
+        taxAmount: taxAmount !== '' ? Number(taxAmount) : 0,
+        status,
+        adminNotes
+      };
+
+      const { data } = await api.post('/orders/admin', payload, auth);
+      if (data.ok) {
+        t.success(`Offline order created! #${String(data.order._id).slice(-8).toUpperCase()}`);
+        setShowOfflineOrderModal(false);
+        resetOfflineForm();
+        await load();
+      } else {
+        t.err(data.error || 'Failed to create order');
+      }
+    } catch (e) {
+      t.err(e?.response?.data?.error || e?.message || 'Failed to create order');
+    } finally {
+      setOfflineOrderSaving(false);
+    }
+  }
 
   // ==================== RENDER ====================
   return (
@@ -580,16 +781,27 @@ export default function AdminOrders() {
             </div>
             <p className="text-sm text-gray-600">Manage your orders, create shipments, and track deliveries</p>
           </div>
-          <button
-            onClick={load}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            <svg className={cx("w-4 h-4", loading && "animate-spin")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { resetOfflineForm(); setShowOfflineOrderModal(true); }}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New Offline Order
+            </button>
+            <button
+              onClick={load}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              <svg className={cx("w-4 h-4", loading && "animate-spin")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -796,8 +1008,15 @@ export default function AdminOrders() {
               Print Labels
             </button>
 
-            {/* Shiprocket Actions */}
-            <ShiprocketPanel selected={selected} auth={auth} onSuccess={load} />
+            {/* Shiprocket Phase 1 bulk */}
+            <button
+              onClick={() => openSrWithDimensions(Array.from(selected))}
+              disabled={actionLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-[#384959] text-white text-sm font-medium rounded-lg hover:bg-[#6A89A7] transition-colors disabled:opacity-50"
+            >
+              <Rocket className="w-4 h-4" />
+              Shiprocket ({selected.size})
+            </button>
 
             <button
               onClick={() => setSelected(new Set())}
@@ -893,6 +1112,12 @@ export default function AdminOrders() {
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-mono font-medium text-gray-900">#{id.slice(-8)}</div>
+                        {o.source === 'offline' && (
+                          <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            Offline
+                          </span>
+                        )}
                       </td>
 
                       {/* ITEMS COLUMN WITH IMAGE */}
@@ -984,6 +1209,18 @@ export default function AdminOrders() {
                       {/* ✅ UPDATED ACTIONS COLUMN */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1">
+                          {/* View Details */}
+                          <button
+                            onClick={() => { setDetailOrder(o); setShowDetailModal(true); }}
+                            title="View Order Details"
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+
                           {activeShipment ? (
                             <>
                               <button onClick={() => handlePrintLabel(o)} title="Print Label" className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -1194,6 +1431,688 @@ export default function AdminOrders() {
                   className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
                 >
                   {actionLoading ? "Processing..." : "Process Refund"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shiprocket — Package Dimensions Modal (Phase 0, shown before Phase 1) */}
+      {srDimensionsModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-60" onClick={() => setSrDimensionsModal(false)} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 z-10">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <Rocket className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Package Dimensions</h3>
+                    <p className="text-sm text-gray-500">{srPendingOrderIds.length} order(s) — applied to all</p>
+                  </div>
+                </div>
+                <button onClick={() => setSrDimensionsModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Weight (kg)</label>
+                  <input
+                    type="number" min="0.1" step="0.1"
+                    value={srDimensions.weight}
+                    onChange={e => setSrDimensions(p => ({ ...p, weight: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Length (cm)</label>
+                  <input
+                    type="number" min="1" step="1"
+                    value={srDimensions.length}
+                    onChange={e => setSrDimensions(p => ({ ...p, length: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Breadth (cm)</label>
+                  <input
+                    type="number" min="1" step="1"
+                    value={srDimensions.breadth}
+                    onChange={e => setSrDimensions(p => ({ ...p, breadth: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Height (cm)</label>
+                  <input
+                    type="number" min="1" step="1"
+                    value={srDimensions.height}
+                    onChange={e => setSrDimensions(p => ({ ...p, height: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-5 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => setSrDimensionsModal(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => startShiprocketPhase1(srPendingOrderIds, {
+                    weight: Number(srDimensions.weight) || 0.5,
+                    length: Number(srDimensions.length) || 20,
+                    breadth: Number(srDimensions.breadth) || 15,
+                    height: Number(srDimensions.height) || 5,
+                  })}
+                  className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700"
+                >
+                  Get Couriers
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shiprocket Courier Selection Modal */}
+      {srCourierModal && srCourierData.length > 0 && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-60" onClick={() => !actionLoading && setSrCourierModal(false)} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 z-10">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <Rocket className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Select Courier</h3>
+                    <p className="text-sm text-gray-500">Choose a courier for each order, then confirm</p>
+                  </div>
+                </div>
+                <button onClick={() => setSrCourierModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+                {srCourierData.map(order => (
+                  <div key={order.id} className="border border-gray-200 rounded-xl p-4">
+                    <p className="text-xs font-mono text-gray-500 mb-3">Order #{String(order.id).slice(-8)}</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {order.couriers.map(c => (
+                        <label
+                          key={c.courier_company_id}
+                          className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            String(srSelections[order.id]) === String(c.courier_company_id)
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name={`courier-${order.id}`}
+                              value={c.courier_company_id}
+                              checked={String(srSelections[order.id]) === String(c.courier_company_id)}
+                              onChange={() => setSrSelections(prev => ({ ...prev, [order.id]: c.courier_company_id }))}
+                              className="accent-purple-600"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{c.courier_name}</p>
+                              <p className="text-xs text-gray-500">Delivery: {c.etd}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900">₹{c.rate}</p>
+                            {c.is_recommended && (
+                              <span className="text-[10px] text-purple-600 font-medium bg-purple-100 px-1.5 py-0.5 rounded">Recommended</span>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3 mt-5 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => setSrCourierModal(false)}
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmSrCouriers}
+                  disabled={actionLoading || srCourierData.some(o => !srSelections[o.id])}
+                  className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {actionLoading ? "Processing..." : "Confirm & Dispatch"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ORDER DETAIL MODAL ==================== */}
+      {showDetailModal && detailOrder && (() => {
+        const o = detailOrder;
+        const payMethodLabels = { cash: "Cash", upi: "UPI", card: "Card / POS", bank_transfer: "Bank Transfer", cheque: "Cheque", cod: "Cash on Delivery", other: "Other" };
+        const subtotal = (o.items || []).reduce((s, i) => s + (i.unitPrice || 0) * (i.qty || 0), 0);
+        return (
+          <div className="fixed z-50 inset-0 overflow-y-auto">
+            <div className="flex items-start justify-center min-h-screen pt-6 px-4 pb-20">
+              <div className="fixed inset-0 bg-gray-900 bg-opacity-60" onClick={() => setShowDetailModal(false)}></div>
+              <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl z-10">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900">Order #{String(o._id).slice(-8).toUpperCase()}</h3>
+                        {o.source === 'offline' && (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Offline</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">{o.createdAt ? new Date(o.createdAt).toLocaleString('en-IN') : ''}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
+                <div className="px-6 py-5 space-y-5 max-h-[75vh] overflow-y-auto">
+
+                  {/* Customer */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Customer</h4>
+                    <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500">Name</p>
+                        <p className="font-medium text-gray-900">{o.shipping?.name || o.userId?.name || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Email</p>
+                        <p className="font-medium text-gray-900 break-all">{o.email || o.shipping?.email || o.userId?.email || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Phone</p>
+                        <p className="font-medium text-gray-900">{o.phone || o.shipping?.phone || o.userId?.phone || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Items */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Items</h4>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Title</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 w-16">Qty</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 w-24">Price</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 w-24">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {(o.items || []).map((item, i) => (
+                            <tr key={i}>
+                              <td className="px-3 py-2 text-gray-900">{item.title || item.bookId?.title || '—'}</td>
+                              <td className="px-3 py-2 text-center text-gray-700">{item.qty}</td>
+                              <td className="px-3 py-2 text-right text-gray-700">₹{(item.unitPrice || 0).toFixed(2)}</td>
+                              <td className="px-3 py-2 text-right font-medium text-gray-900">₹{((item.unitPrice || 0) * (item.qty || 0)).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="bg-gray-50 px-3 py-2.5 flex flex-col items-end gap-0.5 text-xs text-gray-600 border-t border-gray-200">
+                        <span>Subtotal: ₹{subtotal.toFixed(2)}</span>
+                        {(o.shippingAmount > 0) && <span>Shipping: ₹{(o.shippingAmount).toFixed(2)}</span>}
+                        {(o.serviceFee > 0) && <span>Service Fee: ₹{(o.serviceFee).toFixed(2)}</span>}
+                        {(o.taxAmount > 0) && <span>Tax: ₹{(o.taxAmount).toFixed(2)}</span>}
+                        <span className="text-base font-bold text-gray-900 mt-1">Grand Total: ₹{(o.amount || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shipping Address */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Shipping Address</h4>
+                    <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-800">
+                      {[o.shipping?.address, o.shipping?.city, o.shipping?.state, o.shipping?.pincode, o.shipping?.country]
+                        .filter(Boolean).join(', ') || '—'}
+                    </div>
+                  </div>
+
+                  {/* Payment */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment</h4>
+                    <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500">Method</p>
+                        <p className="font-medium text-gray-900">
+                          {o.source === 'offline'
+                            ? (payMethodLabels[o.offlinePaymentMethod] || o.offlinePaymentMethod || 'Offline')
+                            : (o.payment?.provider || 'Razorpay')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Status</p>
+                        <p className="font-medium text-gray-900 capitalize">{o.payment?.status || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Paid</p>
+                        <p className="font-semibold text-green-700">₹{(o.payment?.paidAmount || 0).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Due</p>
+                        {(() => {
+                          const due = Math.max(0, (o.amount || 0) - (o.payment?.paidAmount || 0));
+                          return <p className={`font-semibold ${due > 0 ? 'text-red-600' : 'text-gray-400'}`}>₹{due.toFixed(2)}</p>;
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Admin Notes */}
+                  {o.adminNotes && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Admin Notes</h4>
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-900 whitespace-pre-wrap">
+                        {o.adminNotes}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end">
+                  <button onClick={() => setShowDetailModal(false)} className="px-5 py-2 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900">
+                    Close
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Offline Order Modal */}
+      {showOfflineOrderModal && (
+        <div className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-start justify-center min-h-screen pt-6 px-4 pb-20">
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity" onClick={() => !offlineOrderSaving && setShowOfflineOrderModal(false)}></div>
+
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl z-10">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">New Offline Order</h3>
+                    <p className="text-sm text-gray-500">Walk-in / Phone / WhatsApp order</p>
+                  </div>
+                </div>
+                <button onClick={() => !offlineOrderSaving && setShowOfflineOrderModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              <div className="px-6 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
+
+                {/* Customer Section */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    Customer
+                  </h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                      <input
+                        type="text"
+                        value={offlineForm.customer.name}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, customer: { ...prev.customer, name: e.target.value } }))}
+                        placeholder="Customer name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={offlineForm.customer.email}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, customer: { ...prev.customer, email: e.target.value } }))}
+                        placeholder="email@example.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Phone *</label>
+                      <input
+                        type="tel"
+                        value={offlineForm.customer.phone}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, customer: { ...prev.customer, phone: e.target.value } }))}
+                        placeholder="10-digit phone"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Section */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    Items *
+                  </h4>
+                  {/* Book Search */}
+                  <div className="relative mb-3">
+                    <input
+                      type="text"
+                      value={bookSearch}
+                      onChange={e => { setBookSearch(e.target.value); searchBooks(e.target.value); }}
+                      placeholder="Search books by title..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    {bookSearchLoading && (
+                      <div className="absolute right-3 top-2.5">
+                        <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-green-500 rounded-full"></div>
+                      </div>
+                    )}
+                    {bookResults.length > 0 && (
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {bookResults.map(book => (
+                          <button
+                            key={book._id}
+                            type="button"
+                            onClick={() => addBookToOrder(book)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-green-50 text-left border-b border-gray-100 last:border-0"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{book.title}</p>
+                              <p className="text-xs text-gray-500">₹{book.price || 0} · {book.inventory?.sku || 'No SKU'}</p>
+                            </div>
+                            <span className="text-xs text-green-600 font-medium">+ Add</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selected Items */}
+                  {offlineForm.items.length > 0 ? (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Book</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 w-20">Qty</th>
+                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 w-28">Price (₹)</th>
+                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 w-24">Total</th>
+                            <th className="w-8"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {offlineForm.items.map(item => (
+                            <tr key={item.bookId}>
+                              <td className="px-3 py-2 text-sm text-gray-900 truncate max-w-[200px]">{item.title}</td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={item.qty}
+                                  onChange={e => updateItemField(item.bookId, 'qty', e.target.value)}
+                                  className="w-full text-center border border-gray-300 rounded px-2 py-1 text-sm"
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={item.unitPrice}
+                                  onChange={e => updateItemField(item.bookId, 'unitPrice', e.target.value)}
+                                  className="w-full text-center border border-gray-300 rounded px-2 py-1 text-sm"
+                                />
+                              </td>
+                              <td className="px-3 py-2 text-right text-sm font-medium text-gray-900">
+                                ₹{((Number(item.unitPrice) || 0) * (Number(item.qty) || 0)).toFixed(2)}
+                              </td>
+                              <td className="px-2 py-2">
+                                <button onClick={() => removeBookFromOrder(item.bookId)} className="text-gray-400 hover:text-red-500">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 border border-dashed border-gray-300 rounded-lg">
+                      <p className="text-sm text-gray-400">Search and add books above</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Shipping Section */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    Shipping Address
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <input
+                      type="text"
+                      value={offlineForm.shipping.address}
+                      onChange={e => setOfflineForm(prev => ({ ...prev, shipping: { ...prev.shipping, address: e.target.value } }))}
+                      placeholder="Street address"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    <div className="grid grid-cols-4 gap-3">
+                      <input
+                        type="text"
+                        value={offlineForm.shipping.city}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, shipping: { ...prev.shipping, city: e.target.value } }))}
+                        placeholder="City"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={offlineForm.shipping.state}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, shipping: { ...prev.shipping, state: e.target.value } }))}
+                        placeholder="State"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={offlineForm.shipping.pincode}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, shipping: { ...prev.shipping, pincode: e.target.value } }))}
+                        placeholder="Pincode"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={offlineForm.shipping.country}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, shipping: { ...prev.shipping, country: e.target.value } }))}
+                        placeholder="Country"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment & Pricing Section */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    Payment & Pricing
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Payment Method</label>
+                      <select
+                        value={offlineForm.payment.method}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, method: e.target.value } }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="cash">Cash</option>
+                        <option value="upi">UPI</option>
+                        <option value="card">Card / POS</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="cod">Cash on Delivery</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Amount Paid (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={offlineForm.payment.paidAmount}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, paidAmount: e.target.value } }))}
+                        placeholder="0.00"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Payment Status <span className="text-gray-400">(auto if blank)</span></label>
+                      <select
+                        value={offlineForm.payment.status}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, status: e.target.value } }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="">Auto (based on paid amount)</option>
+                        <option value="paid">Paid</option>
+                        <option value="partially_paid">Partially Paid</option>
+                        <option value="pending">Pending</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Order Status</label>
+                      <select
+                        value={offlineForm.status}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, status: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Shipping Fee (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={offlineForm.shippingFee}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, shippingFee: e.target.value }))}
+                        placeholder="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Service Fee (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={offlineForm.serviceFee}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, serviceFee: e.target.value }))}
+                        placeholder="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Tax (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={offlineForm.taxAmount}
+                        onChange={e => setOfflineForm(prev => ({ ...prev, taxAmount: e.target.value }))}
+                        placeholder="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Grand Total Preview */}
+                  {offlineForm.items.length > 0 && (
+                    <div className="mt-3 bg-gray-50 rounded-lg px-4 py-3 flex items-center justify-between">
+                      <div className="text-xs text-gray-500 space-y-0.5">
+                        <div>Subtotal: ₹{offlineSubtotal.toFixed(2)}</div>
+                        {(Number(offlineForm.shippingFee) > 0) && <div>Shipping: ₹{Number(offlineForm.shippingFee).toFixed(2)}</div>}
+                        {(Number(offlineForm.serviceFee) > 0) && <div>Service Fee: ₹{Number(offlineForm.serviceFee).toFixed(2)}</div>}
+                        {(Number(offlineForm.taxAmount) > 0) && <div>Tax: ₹{Number(offlineForm.taxAmount).toFixed(2)}</div>}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">Grand Total</p>
+                        <p className="text-xl font-bold text-gray-900">₹{offlineGrandTotal.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Admin Notes */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">Admin Notes <span className="text-xs font-normal text-gray-400">(included in confirmation email)</span></label>
+                  <textarea
+                    rows={2}
+                    value={offlineForm.adminNotes}
+                    onChange={e => setOfflineForm(prev => ({ ...prev, adminNotes: e.target.value }))}
+                    placeholder="e.g. Customer called, address confirmed, special instructions..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end bg-gray-50 rounded-b-2xl">
+                <button
+                  onClick={() => setShowOfflineOrderModal(false)}
+                  disabled={offlineOrderSaving}
+                  className="px-5 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitOfflineOrder}
+                  disabled={offlineOrderSaving || !offlineForm.items.length || (!offlineForm.customer.email && !offlineForm.customer.phone)}
+                  className="px-5 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {offlineOrderSaving ? 'Creating...' : 'Create Order'}
                 </button>
               </div>
             </div>

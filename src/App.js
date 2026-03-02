@@ -17,12 +17,12 @@ import Footer from './components/Footer';
 import { AdminGuard, PageGate } from './components/RouteGuard';
 import AdminLayout from './components/AdminLayout';
 import DynamicPopup from './components/DynamicPopup';
-import LoadingFallback from './components/LoadingFallback';
+import LoadingFallback from './components/LoadingFallback';   
 
 // Lazy load all page components
 const Home = lazy(() => import('./pages/Home'));
 const Catalog = lazy(() => import('./pages/Catalog'));
-const BookDetail = lazy(() => import('./pages/BookDetail'));
+const BookDetail = lazy(() => import('./pages/bookdetail'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const CustomerAuth = lazy(() => import('./pages/CustomerAuth'));
@@ -57,6 +57,7 @@ const AddBook = lazy(() => import('./pages/Admin/AddBook'));
 const EditBook = lazy(() => import('./pages/Admin/EditBook'));
 const BooksAdmin = lazy(() => import('./pages/Admin/Books'));
 const AdminOrders = lazy(() => import('./pages/Admin/Orders'));
+const ShiprocketPage = lazy(() => import('./pages/Admin/ShiprocketPage'));
 const SiteSettings = lazy(() => import('./pages/Admin/SiteSettings'));
 const HomepageAdmin = lazy(() => import('./pages/Admin/Homepage'));
 const PaymentsAdmin = lazy(() => import('./pages/Admin/Payments'));
@@ -86,7 +87,7 @@ function InnerApp() {
     const { isCustomer } = useCustomer();
     const here = useLocation();
     if (!isCustomer) return <Navigate to="/login" state={{ next: here.pathname }} replace />;
-    return children;
+    return children;  
   }
 
   return (
@@ -162,6 +163,10 @@ function InnerApp() {
             <Route
               path="/admin/orders"
               element={<AdminGuard><AdminLayout><AdminOrders /></AdminLayout></AdminGuard>}
+            />
+            <Route
+              path="/admin/shiprocket"
+              element={<AdminGuard><AdminLayout><ShiprocketPage /></AdminLayout></AdminGuard>}
             />
             <Route
               path="/admin/books"

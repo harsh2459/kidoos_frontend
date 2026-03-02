@@ -22,7 +22,7 @@ export default function Invoice() {
       });
   }, [id]);
 
-  if (loading) return <div className="p-10 text-center">Loading Invoice...</div>;
+  if (loading) return <div className="p-10 text-cente r">Loading Invoice...</div>;
   if (!order) return <div className="p-10 text-center">Invoice not found.</div>;
 
   const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -178,7 +178,7 @@ export default function Invoice() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-gray-200 text-center text-xs text-gray-400">
           <p>Thank you for shopping with Kiddos Intellect!</p>
-          <p className="mt-1">For support, email us at support@kiddosintellect.com</p>
+          <p className="mt-1">For support, email us at kiddosintellect.com</p>
         </div>
 
       </div>

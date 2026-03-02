@@ -14,8 +14,9 @@ import {
   ShieldPlus,
   LogOut, Target,
   Milestone,
-  Mail, 
-  Sparkles
+  Mail,
+  Sparkles,
+  Rocket
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -59,10 +60,17 @@ export default function AdminSidebar() {
         </Item>
         <Item
           to="/admin/orders"
-          active={loc.pathname.startsWith("/admin/orders")}
+          active={loc.pathname === "/admin/orders"}
           icon={ShoppingBag}
         >
           <WaveText text="Orders" hoverColor="#000" />
+        </Item>
+        <Item
+          to="/admin/shiprocket"
+          active={loc.pathname.startsWith("/admin/shiprocket")}
+          icon={Rocket}
+        >
+          <WaveText text="Shiprocket" hoverColor="#000" />
         </Item>
         <Item
           to="/admin/books"
@@ -130,13 +138,6 @@ export default function AdminSidebar() {
           icon={LayoutDashboard}
         >
           <WaveText text="Homepage" hoverColor="#000"  />
-        </Item>
-        <Item
-          to="/admin/catalog"
-          active={loc.pathname.startsWith("/admin/catalog")}
-          icon={LayoutDashboard}
-        >
-          <WaveText text="Catalog Header" hoverColor="#000"  />
         </Item>
         <Item
           to="/admin/ai-settings"

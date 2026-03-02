@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { useCart } from '../contexts/CartStore';
 
-/**
+/*
  * Hook to automatically clean invalid items from cart on app load
  * This prevents orders from failing due to deleted/invalid book IDs
  */

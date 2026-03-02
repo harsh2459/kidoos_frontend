@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { api } from "../api/client";
 const SiteCtx = createContext(null);
 
@@ -42,11 +42,13 @@ export function SiteProvider({ children }) {
     })();
   }, []); // eslint-disable-line
 
+  const value = useMemo(() => ({
+    loaded, site, theme, homepage, payments, visibility,
+    setSite, setTheme, setHomepage, setPayments, setVisibility
+  }), [loaded, site, theme, homepage, payments, visibility]); // setters are stable, excluded from deps
+
   return (
-    <SiteCtx.Provider value={{
-      loaded, site, theme, homepage, payments, visibility,
-      setSite, setTheme, setHomepage, setPayments, setVisibility
-    }}>
+    <SiteCtx.Provider value={value}>
       {children}
     </SiteCtx.Provider>
   );

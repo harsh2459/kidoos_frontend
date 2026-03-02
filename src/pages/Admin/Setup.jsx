@@ -3,7 +3,6 @@ import { Navigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
-
 import {
   ShieldCheck,
   UserPlus,
@@ -17,7 +16,7 @@ import {
   LayoutDashboard,
   FileText
 } from "lucide-react";
-
+  
 export default function AdminSetup() {
   const { isAdmin, token, login: setAuth } = useAuth();
   const [hasAdmin, setHasAdmin] = useState(null);
@@ -86,9 +85,9 @@ export default function AdminSetup() {
 
   return (
     <div className="min-h-screen bg-[#F4F7F5] p-6 md:p-12 flex items-center justify-center font-sans text-[#2C3E38]">
-      
+
       <div className="max-w-5xl w-full grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        
+
         {/* LEFT SIDE: Visuals & Info */}
         <div className="hidden lg:block space-y-8">
           <div>
@@ -99,18 +98,18 @@ export default function AdminSetup() {
               {hasAdmin ? "Expand Your Team" : "Secure Your System"}
             </h1>
             <p className="text-[#5C756D] text-lg leading-relaxed">
-              {hasAdmin 
-                ? "Grant access to trusted team members. Administrators have full control over orders, inventory, and settings." 
+              {hasAdmin
+                ? "Grant access to trusted team members. Administrators have full control over orders, inventory, and settings."
                 : "Create the first Master Administrator account to lock down the system and start managing your digital bookstore."}
             </p>
           </div>
 
           <div className="bg-[#384959] p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-             {/* Decorative Background Circles */}
-             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
-             <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl"></div>
+            {/* Decorative Background Circles */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3 blur-2xl"></div>
 
-             <div className="relative z-10">
+            <div className="relative z-10">
               <div className="flex items-center gap-3 mb-6">
                 <Shield className="w-7 h-7 text-white" />
               </div>
@@ -142,22 +141,22 @@ export default function AdminSetup() {
 
         {/* RIGHT SIDE: Forms */}
         <div className="w-full">
-          
+
           {/* CASE 1: NO ADMIN EXISTS (First Setup) */}
           {!hasAdmin ? (
             <Card title="Initialize System" icon={ShieldCheck}>
               <form onSubmit={handleFirstAdmin} className="space-y-5">
-                {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 border border-red-100"><CheckCircle2 className="w-4 h-4"/> {error}</div>}
-                
+                {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 border border-red-100"><CheckCircle2 className="w-4 h-4" /> {error}</div>}
+
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Full Name</label>
                   <div className="relative group">
                     <User className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#384959] transition-colors" />
-                    <input 
+                    <input
                       className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="e.g. John Doe"
                       value={first.name}
-                      onChange={e => setFirst({...first, name: e.target.value})}
+                      onChange={e => setFirst({ ...first, name: e.target.value })}
                       required
                     />
                   </div>
@@ -167,12 +166,12 @@ export default function AdminSetup() {
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Email Address</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#384959] transition-colors" />
-                    <input 
+                    <input
                       type="email"
                       className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="admin@kiddosintellect.com"
                       value={first.email}
-                      onChange={e => setFirst({...first, email: e.target.value})}
+                      onChange={e => setFirst({ ...first, email: e.target.value })}
                       required
                     />
                   </div>
@@ -182,20 +181,20 @@ export default function AdminSetup() {
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Master Password</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-3.5 w-5 h-5 text-[#8BA699] group-focus-within:text-[#384959] transition-colors" />
-                    <input 
+                    <input
                       type="password"
                       className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="••••••••••••"
                       value={first.password}
-                      onChange={e => setFirst({...first, password: e.target.value})}
+                      onChange={e => setFirst({ ...first, password: e.target.value })}
                       required
                       minLength={6}
                     />
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={saving}
                   className="w-full bg-[#384959] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#384959]/20 hover:shadow-xl hover:bg-[#142E28] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
                 >
@@ -205,7 +204,7 @@ export default function AdminSetup() {
               </form>
             </Card>
           ) : (
-            
+
             /* CASE 2: ADMIN LOGGED IN (Add More) */
             <Card title="Add New Administrator" icon={UserPlus}>
               <form onSubmit={handleCreateAdmin} className="space-y-5">
@@ -220,12 +219,12 @@ export default function AdminSetup() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Name</label>
                   <div className="relative group">
-                   
-                    <input 
+
+                    <input
                       className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="Name"
                       value={more.name}
-                      onChange={e => setMore({...more, name: e.target.value})}
+                      onChange={e => setMore({ ...more, name: e.target.value })}
                       required
                     />
                   </div>
@@ -234,13 +233,12 @@ export default function AdminSetup() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Email</label>
                   <div className="relative group">
-                   
-                    <input 
+                    <input
                       type="email"
                       className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="Email"
                       value={more.email}
-                      onChange={e => setMore({...more, email: e.target.value})}
+                      onChange={e => setMore({ ...more, email: e.target.value })}
                       required
                     />
                   </div>
@@ -249,21 +247,21 @@ export default function AdminSetup() {
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#5C756D] ml-1">Password</label>
                   <div className="relative group">
-                    
-                    <input 
+
+                    <input
                       type="password"
                       className="w-full bg-[#FAFBF9] border border-[#DCE4E0] rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all outline-none font-medium text-[#2C3E38]"
                       placeholder="Password"
                       value={more.password}
-                      onChange={e => setMore({...more, password: e.target.value})}
+                      onChange={e => setMore({ ...more, password: e.target.value })}
                       required
                       minLength={6}
                     />
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={saving}
                   className="w-full bg-[#384959] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#384959]/20 hover:shadow-xl hover:bg-[#142E28] active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4"
                 >
@@ -286,7 +284,7 @@ function Card({ icon: Icon, title, children }) {
       <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
         <Icon className="w-24 h-24 text-[#384959]" />
       </div>
-      
+
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-8">
           <div className="p-3 rounded-xl bg-[#F4F7F5] text-[#384959]">

@@ -140,19 +140,26 @@ export default function SEO({
   } : null;
 
   // Product structured data
+  const autoExpiry = (() => { const d = new Date(); d.setFullYear(d.getFullYear() + 1); return d.toISOString().split('T')[0]; })();
   const productSchema = product ? {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.name,
-    "image": product.image || fullImageUrl,
+    "image": product.images?.length > 0 ? product.images : (product.image ? [product.image] : [fullImageUrl]),
     "description": product.description || description,
     "sku": product.sku || product.id,
+    "brand": { "@type": "Brand", "name": "Kiddos Intellect" },
+    ...(product.isbn && { "isbn": product.isbn }),
+    ...(product.author && { "author": { "@type": "Person", "name": product.author } }),
+    ...(product.numberOfPages && { "numberOfPages": product.numberOfPages }),
+    ...(product.language && { "inLanguage": product.language }),
     "offers": {
       "@type": "Offer",
       "url": fullUrl,
       "priceCurrency": "INR",
       "price": product.price,
-      "priceValidUntil": product.priceValidUntil,
+      "priceValidUntil": product.priceValidUntil || autoExpiry,
+      "itemCondition": "https://schema.org/NewCondition",
       "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "seller": {
         "@type": "Organization",
@@ -163,7 +170,9 @@ export default function SEO({
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": product.rating.value,
-        "reviewCount": product.rating.count
+        "reviewCount": product.rating.count,
+        "bestRating": "5",
+        "worstRating": "1"
       }
     })
   } : null;
@@ -190,6 +199,13 @@ export default function SEO({
       <meta property="og:url" content={fullUrl} />
       <meta property="og:site_name" content="Kiddos Intellect" />
       <meta property="og:locale" content="en_IN" />
+
+      {/* Product-specific Open Graph (Facebook/WhatsApp product cards) */}
+      {product && <meta property="product:price:amount" content={String(product.price)} />}
+      {product && <meta property="product:price:currency" content="INR" />}
+      {product && <meta property="product:availability" content={product.inStock ? "in stock" : "out of stock"} />}
+      {product?.isbn && <meta property="book:isbn" content={product.isbn} />}
+      {product?.author && <meta property="book:author" content={product.author} />}
 
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />
