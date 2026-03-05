@@ -87,7 +87,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (res) => {
-    return res;
+    return res; 
   },
   (err) => {
     const status = err?.response?.status;

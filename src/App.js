@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import "react-toastify/dist/ReactToastify.css";
 import './App.css';
 import './styles/classic-light.css';
@@ -13,14 +13,19 @@ import { useCartCleanup } from './hooks/useCartCleanup';
 
 // Components that are always needed (keep as static imports)
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
 import { AdminGuard, PageGate } from './components/RouteGuard';
-import AdminLayout from './components/AdminLayout';
-import DynamicPopup from './components/DynamicPopup';
-import LoadingFallback from './components/LoadingFallback';   
+import LoadingFallback from './components/LoadingFallback';
+// Home is eager — it's the landing page, lazy-loading it delays FCP
+import Home from './pages/Home';
 
-// Lazy load all page components
-const Home = lazy(() => import('./pages/Home'));
+// Lazy — keeps these out of the main bundle (not needed for initial paint)
+const DynamicPopup = lazy(() => import('./components/DynamicPopup'));
+const Footer = lazy(() => import('./components/Footer'));
+
+// Lazy load AdminLayout so AdminSidebar stays out of the main bundle
+const AdminLayout = lazy(() => import('./components/AdminLayout'));
+
+// Lazy load all other page components
 const Catalog = lazy(() => import('./pages/Catalog'));
 const BookDetail = lazy(() => import('./pages/bookdetail'));
 const Cart = lazy(() => import('./pages/Cart'));
@@ -76,6 +81,13 @@ function InnerApp() {
   const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
+  // Defer popup mount by 3s — keeps it out of the TBT window entirely
+  const [mountPopup, setMountPopup] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMountPopup(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
   const getPageName = () => {
     if (loc.pathname === '/') return 'home';
     if (loc.pathname === '/catalog') return 'products';
@@ -94,7 +106,11 @@ function InnerApp() {
     <>
       {showNavbar && <Navbar />}
       <main>
-        {!isAdminRoute && <DynamicPopup page={getPageName()} />}
+        {!isAdminRoute && mountPopup && (
+          <Suspense fallback={null}>
+            <DynamicPopup page={getPageName()} />
+          </Suspense>
+        )}
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* customer auth */}
@@ -223,18 +239,20 @@ function InnerApp() {
 
       {
         showFooter && (
-          <Footer
-            contact={{
-              email: "kiddosintellect@gmail.com",
-              phone: "+91 98798 57529",
-              hours: "Mon–Sat, 10am–6pm IST",
-            }}
-            links={[
-              { label: "Privacy", href: "/privacy" },
-              { label: "Returns", href: "/returns" },
-              { label: "Shipping", href: "/shipping" },
-            ]}
-          />
+          <Suspense fallback={null}>
+            <Footer
+              contact={{
+                email: "kiddosintellect@gmail.com",
+                phone: "+91 98798 57529",
+                hours: "Mon–Sat, 10am–6pm IST",
+              }}
+              links={[
+                { label: "Privacy", href: "/privacy" },
+                { label: "Returns", href: "/returns" },
+                { label: "Shipping", href: "/shipping" },
+              ]}
+            />
+          </Suspense>
         )
       }
     </>

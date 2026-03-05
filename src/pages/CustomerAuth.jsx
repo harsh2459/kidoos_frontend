@@ -58,8 +58,10 @@ export default function CustomerAuth() {
       '5555555555', '6666666666', '7777777777', '8888888888',
       '9999999999', '0000000000', '6854214574', '4574123456',
       '9988998899', '9879879878', '7897897897', '7778889997',
+      '09876543210', '1231231231', '3213213210', '4564564564',
+      '6546546546', '8528528528', '2582582582', '1471471471',
     ];
-    if (sequences.includes(p)) return false;
+    if (sequences.includes(p)) return false;  
     const uniqueDigits = new Set(p.split(''));
     if (uniqueDigits.size < 5) return false;
     const pairs = p.match(/(\d)\1/g) || [];

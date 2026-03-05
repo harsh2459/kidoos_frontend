@@ -35,11 +35,3 @@ export async function getGoogleProvider() {
     return providerInstance;
 }
 
-// Backward compatibility exports (but these will still eagerly load)
-export let auth, googleProvider;
-
-// Initialize synchronously if accessed directly (fallback)
-(async () => {
-    auth = await getAuthInstance();
-    googleProvider = await getGoogleProvider();
-})();

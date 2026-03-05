@@ -43,11 +43,42 @@ export default function Home() {
       {/* Global Background Texture */}
       <div
         className="fixed inset-0 pointer-events-none opacity-100 z-0"
-        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover' }}
       />
 
-      {/* âœ… FIRST PAINT */}
-      {!isReady && <HomeSkeleton />}
+      {/* ✅ FIRST PAINT — static hero shows instantly before API loads */}
+      {!isReady && (
+        <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto relative z-10 px-4 sm:px-6 lg:px-8">
+          {/* Hero image — fixed height matches dynamic hero so no layout shift */}
+          <div className="pt-8 md:pt-12 pb-8 md:pb-12">
+            <picture>
+              <source media="(max-width: 767px)" srcSet="/images/homepageslider-mobile.webp" />
+              <img
+                src="/images/homepageslider.jpg"
+                alt="Kiddos Intellect"
+                loading="eager"
+                fetchpriority="high"
+                decoding="sync"
+                width="1200"
+                height="500"
+                className="w-full rounded-[2.5rem] object-cover h-[400px] md:h-[500px] shadow-[0_20px_60px_rgba(62,39,35,0.3)]"
+              />
+            </picture>
+          </div>
+
+          {/* Skeleton sections below — preserve total page height to prevent CLS */}
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="py-12">
+              <div className="h-8 w-64 bg-[#3E2723]/10 rounded mb-6 animate-pulse" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((j) => (
+                  <div key={j} className="h-64 rounded-2xl bg-[#3E2723]/10 animate-pulse" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* âœ… REAL CONTENT */}
       {isReady && (
@@ -116,7 +147,7 @@ function Block({ block }) {
           </div>
           {block.image && (
             <div className="relative w-full h-64 md:h-full overflow-hidden">
-              <img src={assetUrl(block.image)} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105" />
+              <img src={assetUrl(block.image, "hero")} alt="" loading="eager" fetchpriority="high" decoding="async" className="absolute inset-0 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#3E2723] to-transparent md:bg-gradient-to-l opacity-90"></div>
             </div>
           )}
@@ -177,7 +208,7 @@ function Block({ block }) {
 
   // --- BANNER (Glassy) ---
   if (block.type === "banner") {
-    const imageUrl = assetUrl(block.image);
+    const imageUrl = assetUrl(block.image, "hero");
     return (
       <div className={containerClasses} style={containerStyle}>
         <a href={block.ctaLink || "/"} className="block rounded-[2rem] overflow-hidden shadow-[0_15px_40px_rgba(62,39,35,0.15)] group relative isolate h-full w-full border border-[#D4AF37]/20">
@@ -258,13 +289,16 @@ function HeroSlider({ slides }) {
     }
   };
 
+  // Lock to first slide height — prevents layout shift (CLS) on slide advance
+  const containerHeight = getHeight(items[0].height);
+
   return (
-    <div className={`relative w-full rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(62,39,35,0.3)] flex items-center group transition-all duration-300 ${getHeight(items[current].height)} border border-[#D4AF37]/30`}>
+    <div className={`relative w-full rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(62,39,35,0.3)] flex items-center group transition-all duration-300 ${containerHeight} border border-[#D4AF37]/30`}>
       {items.map((slide, idx) => (
         <div key={idx} className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${current === idx ? "opacity-100 z-10" : "opacity-0 z-0"}`} style={{ backgroundColor: slide.bgColor || '#3E2723' }}>
           {slide.layout === 'full' && slide.image && (
             <>
-              <img src={assetUrl(slide.image)} alt={slide.title} loading={idx === 0 ? "eager" : "lazy"} decoding="async" className="absolute inset-0 w-full h-full object-cover object-center" />
+              <img src={assetUrl(slide.image, "hero")} alt={slide.title} loading={idx === 0 ? "eager" : "lazy"} fetchpriority={idx === 0 ? "high" : "auto"} decoding="async" className="absolute inset-0 w-full h-full object-cover object-center" />
               <div className="absolute inset-0 bg-black/40"></div>
             </>
           )}
@@ -273,7 +307,7 @@ function HeroSlider({ slides }) {
               <div className="absolute inset-0 z-0 opacity-10 pointer-events-none mix-blend-overlay" style={{ backgroundImage: mandalaBg, backgroundSize: '400px' }} />
               {slide.image && (
                 <div className="absolute inset-0 md:left-1/3 w-full md:w-2/3 h-full overflow-hidden">
-                  <img src={assetUrl(slide.image)} alt={slide.title} loading={idx === 0 ? "eager" : "lazy"} decoding="async" className={`w-full h-full ${slide.objectFit === 'contain' ? 'object-contain p-8 md:p-12' : 'object-contain'} object-center opacity-40 md:opacity-100 transition-transform duration-700 ease-out group-hover:scale-105`} />
+                  <img src={assetUrl(slide.image, "hero")} alt={slide.title} loading={idx === 0 ? "eager" : "lazy"} fetchpriority={idx === 0 ? "high" : "auto"} decoding="async" className={`w-full h-full ${slide.objectFit === 'contain' ? 'object-contain p-8 md:p-12' : 'object-contain'} object-center opacity-40 md:opacity-100 transition-transform duration-700 ease-out group-hover:scale-105`} />
                   {slide.objectFit === 'cover' && <div className="absolute inset-0" style={{ background: `linear-gradient(to right, ${slide.bgColor || '#3E2723'} 5%, transparent 100%), linear-gradient(to top, ${slide.bgColor || '#3E2723'} 0%, transparent 50%)` }}></div>}
                 </div>
               )}
@@ -309,8 +343,8 @@ function HomepageSlider({ slides, height = "medium" }) {
   const timeoutRef = useRef(null);
 
   const items = (Array.isArray(slides) ? slides : []).map(s => ({
-    desktop: assetUrl(s.desktopImage || s.image),
-    mobile: assetUrl(s.mobileImage || s.desktopImage || s.image),
+    desktop: assetUrl(s.desktopImage || s.image, "hero"),
+    mobile: assetUrl(s.mobileImage || s.desktopImage || s.image, "thumb"),
     link: s.link || "#",
     alt: s.alt || "Slider Image",
   }));
@@ -359,8 +393,8 @@ function HomepageSlider({ slides, height = "medium" }) {
   if (!isDesktop) {
     return (
       <div className="relative w-full">
-        {/* Slides stacked, crossfade */}
-        <div className="relative overflow-hidden rounded-xl">
+        {/* Slides stacked, crossfade — min-height reserves space before image loads (prevents CLS) */}
+        <div className="relative overflow-hidden rounded-xl" style={{ minHeight: '180px' }}>
           {items.map((slide, idx) => (
             <div
               key={idx}
@@ -370,7 +404,15 @@ function HomepageSlider({ slides, height = "medium" }) {
               <Link to={slide.link}>
                 <picture className="block w-full">
                   <source media="(max-width: 767px)" srcSet={slide.mobile} />
-                  <img src={slide.desktop} alt={slide.alt} loading="lazy" decoding="async" className="w-full h-auto block select-none" draggable={false} />
+                  <img
+                    src={slide.desktop}
+                    alt={slide.alt}
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    fetchpriority={idx === 0 ? "high" : "auto"}
+                    decoding="async"
+                    className="w-full h-auto block select-none"
+                    draggable={false}
+                  />
                 </picture>
               </Link>
             </div>
@@ -448,7 +490,8 @@ function HomepageSlider({ slides, height = "medium" }) {
                   <img
                     src={slide.desktop}
                     alt={slide.alt}
-                    loading="lazy"
+                    loading={isActive ? "eager" : "lazy"}
+                    fetchpriority={isActive ? "high" : "auto"}
                     decoding="async"
                     className="w-full h-auto block select-none"
                     draggable={false}
@@ -686,7 +729,7 @@ function SimpleShowcaseCard({ book }) {
         {/* Subtle Mandala Texture */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: mandalaBg }}></div>
         <div className="w-full h-full p-6 flex items-center justify-center relative z-10">
-          <img src={assetUrl(book.assets?.coverUrl)} alt={book.title} className="max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-700 ease-out group-hover:scale-110 group-hover:rotate-1" loading="lazy" />
+          <img src={assetUrl(book.assets?.coverUrl, "thumb")} alt={book.title} className="max-h-full max-w-full object-contain drop-shadow-md transition-transform duration-700 ease-out group-hover:scale-110 group-hover:rotate-1" loading="lazy" decoding="async" />
         </div>
         {off > 0 && <span className="absolute top-4 left-4 bg-[#3E2723] text-[#F3E5AB] text-[10px] font-bold px-2 py-1 rounded border border-[#D4AF37] shadow-sm z-20">-{off}%</span>}
       </Link>
@@ -717,28 +760,3 @@ function GridSectionSkeleton() {
   );
 }
 
-function HomeSkeleton() {
-  return (
-    <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto relative z-10 px-4 sm:px-6 lg:px-8">
-      {/* Hero Skeleton */}
-      <div className="pt-12 pb-12">
-        <div className="rounded-[2.5rem] bg-[#3E2723]/10 h-[400px] md:h-[500px] animate-pulse" />
-      </div>
-
-      {/* Section Skeletons */}
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="py-12">
-          <div className="h-8 w-64 bg-[#3E2723]/10 rounded mb-6 animate-pulse" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((j) => (
-              <div
-                key={j}
-                className="h-64 rounded-2xl bg-[#3E2723]/10 animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}

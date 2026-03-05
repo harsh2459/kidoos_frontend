@@ -13,9 +13,13 @@
   <link rel="preload" href="%PUBLIC_URL%/favicon.jpg?v=20251118" as="image" type="image/jpeg" />
   <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2" crossorigin />
 
-  <!-- Preload critical hero images for LCP optimization -->
-  <link rel="preload" as="image" type="image/webp" href="/images-optimized/back-image-1920w.webp" media="(min-width: 1200px)" />
-  <link rel="preload" as="image" type="image/webp" href="/images-optimized/back-image-800w.webp" media="(max-width: 1199px)" />
+  <!-- Preload the parchment background used on every page -->
+  <link rel="preload" as="image" type="image/webp" href="/images-webp/homepage/parchment-bg.webp" />
+
+  <!-- Preload static hero slider — LCP image, loads before JS even runs -->
+  <link rel="preload" as="image" href="/images/homepageslider.jpg"
+    imagesrcset="/images/homepageslider-mobile.jpg 768w, /images/homepageslider.jpg 1200w"
+    imagesizes="(max-width: 767px) 100vw, 1200px" />
 
   <!-- Allow caching for better performance (favicon cache-busting handled by ?v= param) -->
 
@@ -53,44 +57,158 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://www.googletagmanager.com">
-  <link rel="preconnect" href="https://connect.facebook.net">
+  <link rel="preconnect" href="https://res.cloudinary.com">
 
-  <!-- Optimized Font Loading with display=swap for better performance -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@400;700;900&family=Playfair+Display:wght@700&display=swap"
-    rel="stylesheet">
+  <!-- Non-render-blocking Google Fonts (all fonts combined into one request) -->
+  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;700&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Lato:wght@400;700&family=Playfair+Display:wght@700&display=swap" />
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;700&family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Lato:wght@400;700&family=Playfair+Display:wght@700&display=swap" />
+  </noscript>
 
-  <!-- Analytics -->
-  <script src="https://analytics.ahrefs.com/analytics.js" data-key="krVvl7yKUDYpkF5uVh6Lfw" defer></script>
-
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17857451112"></script>
+  <!-- Preload cached LCP image (Cloudinary slider) so it's discoverable before JS runs on repeat visits -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-
-    gtag('config', 'AW-17857451112');
+    (function () {
+      try {
+        var raw = sessionStorage.getItem('ki_pub_v1');
+        if (!raw) return;
+        var parsed = JSON.parse(raw);
+        if (!parsed || !parsed.data || !parsed.data.ok) return;
+        if (Date.now() - parsed.ts > 5 * 60 * 1000) return;
+        var blocks = (parsed.data.homepage && parsed.data.homepage.blocks) || [];
+        var rawUrl = null;
+        for (var i = 0; i < blocks.length; i++) {
+          var b = blocks[i];
+          if (b.slides && b.slides[0]) {
+            var s0 = b.slides[0];
+            rawUrl = b.type === 'slider'
+              ? (window.innerWidth < 768 ? (s0.mobileImage || s0.desktopImage || s0.image) : (s0.desktopImage || s0.image))
+              : s0.image;
+            break;
+          }
+        }
+        if (!rawUrl || !rawUrl.startsWith('http')) return;
+        if (rawUrl.includes('res.cloudinary.com') && !rawUrl.includes('f_webp') && !rawUrl.includes('q_auto')) {
+          var w = window.innerWidth < 768 ? 'w_300' : 'w_1200';
+          rawUrl = rawUrl.replace('/upload/', '/upload/f_webp,q_auto,' + w + ',c_limit/');
+        }
+        var link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = rawUrl;
+        document.head.appendChild(link);
+      } catch (e) {}
+    })();
   </script>
-  <!-- Meta Pixel Code -->
+
+  <!-- Analytics + Google Tag Manager + Meta Pixel: load on first user interaction or after 5s fallback -->
   <script>
-    !function (f, b, e, v, n, t, s) {
-      if (f.fbq) return; n = f.fbq = function () {
-        n.callMethod ?
-          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-      };
-      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
-      n.queue = []; t = b.createElement(e); t.async = !0;
-      t.src = v; s = b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t, s)
-    }(window, document, 'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
+    (function () {
+      var loaded = false;
+      function loadTracking() {
+        if (loaded) return;
+        loaded = true;
+        ['scroll', 'click', 'mousemove', 'touchstart', 'keydown'].forEach(function (e) {
+          document.removeEventListener(e, loadTracking, true);
+        });
 
-    fbq('init', '1468568397674813');
-    fbq('track', 'PageView');
+        // Ahrefs analytics
+        var ah = document.createElement('script');
+        ah.src = 'https://analytics.ahrefs.com/analytics.js';
+        ah.setAttribute('data-key', 'krVvl7yKUDYpkF5uVh6Lfw');
+        document.head.appendChild(ah);
+      }
+      ['scroll', 'click', 'mousemove', 'touchstart', 'keydown'].forEach(function (e) {
+        document.addEventListener(e, loadTracking, { once: true, passive: true, capture: true });
+      });
+      setTimeout(loadTracking, 5000);
+    })();
   </script>
-  <!-- End Meta Pixel Code -->
+
+  <!-- Google Tag Manager + Meta Pixel: load on first user interaction or after 5s fallback -->
+  <script>
+    (function () {
+      var loaded = false;
+      function loadTracking() {
+        if (loaded) return;
+        loaded = true;
+        ['scroll', 'click', 'mousemove', 'touchstart', 'keydown'].forEach(function (e) {
+          document.removeEventListener(e, loadTracking, true);
+        });
+
+        // Google tag (gtag.js)
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        window.gtag = gtag;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17857451112';
+        s.onload = function () {
+          gtag('js', new Date());
+          gtag('config', 'AW-17857451112');
+        };
+        document.head.appendChild(s);
+
+        // Meta Pixel
+        !function (f, b, e, v, n, t, s) {
+          if (f.fbq) return; n = f.fbq = function () {
+            n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+          };
+          if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+          n.queue = []; t = b.createElement(e); t.async = !0;
+          t.src = v; s = b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t, s);
+        }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1468568397674813');
+        fbq('track', 'PageView');
+      }
+
+      ['scroll', 'click', 'mousemove', 'touchstart', 'keydown'].forEach(function (e) {
+        document.addEventListener(e, loadTracking, { once: true, passive: true, capture: true });
+      });
+      // Fallback: load after 5 seconds even if no interaction
+      setTimeout(loadTracking, 5000);
+    })();
+  </script>
+  <!-- End tracking -->
+
+  <!-- Pre-React shell styles — pixel-matched to React layout to prevent CLS -->
+  <style>
+    /* Navbar placeholder: matches sticky Navbar height on each breakpoint */
+    #prs-nav {
+      height: 80px; /* mobile: h-12 (48px) + py-4 top+bottom (32px) */
+      display: flex;
+      align-items: center;
+      padding: 0 16px; /* px-4 */
+      background: transparent;
+    }
+    /* Hero wrapper: matches Home.jsx outer div (px-4) + inner div (pt-8 pb-8) */
+    #prs-hero {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 16px 32px; /* pt-8 px-4 pb-8 */
+    }
+    #prs-hero img {
+      width: 100%;
+      height: 400px;       /* h-[400px] on mobile */
+      object-fit: cover;
+      border-radius: 2.5rem;
+      box-shadow: 0 20px 60px rgba(62,39,35,0.3);
+      display: block;
+    }
+    @media (min-width: 640px) {
+      #prs-hero { padding-left: 24px; padding-right: 24px; } /* sm:px-6 */
+    }
+    @media (min-width: 768px) {
+      #prs-nav  { height: 112px; padding: 0 24px; } /* desktop: h-[5rem] (80px) + py-4 (32px) */
+      #prs-hero { padding-top: 48px; padding-bottom: 48px; } /* md:pt-12 md:pb-12 */
+      #prs-hero img { height: 500px; } /* md:h-[500px] */
+    }
+    @media (min-width: 1024px) {
+      #prs-hero { padding-left: 32px; padding-right: 32px; } /* lg:px-8 */
+    }
+  </style>
 </head>
 
 <body>
@@ -99,7 +217,33 @@
       src="https://www.facebook.com/tr?id=1468568397674813&ev=PageView&noscript=1" />
   </noscript>
   <noscript>You need to enable JavaScript to run this app.</noscript>
-  <div id="root"></div>
+  <div id="root">
+    <!--
+      Pre-React shell: paints as soon as CSS loads (~280ms mobile / ~100ms desktop).
+      Text in navbar triggers FCP immediately — image alone won't fire FCP while downloading.
+      Responsive #prs-nav height matches actual sticky Navbar on both breakpoints → CLS = 0.
+    -->
+    <div style="background:#FAF7F2;min-height:100vh;">
+      <!-- Navbar placeholder: text triggers FCP before JS even starts parsing -->
+      <div id="prs-nav">
+        <span style="font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:1.1rem;color:#3E2723;letter-spacing:0.05em;">Kiddos Intellect</span>
+      </div>
+      <!-- Hero image: LCP element, preloaded in <head> so it starts immediately -->
+      <div id="prs-hero">
+        <picture>
+          <source media="(max-width:767px)" srcset="/images/homepageslider-mobile.jpg">
+          <img
+            src="/images/homepageslider.jpg"
+            alt="Kiddos Intellect"
+            fetchpriority="high"
+            decoding="sync"
+            width="1200"
+            height="500"
+          >
+        </picture>
+      </div>
+    </div>
+  </div>
 </body>
 
 

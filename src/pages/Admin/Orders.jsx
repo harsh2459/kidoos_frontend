@@ -74,6 +74,7 @@ export default function AdminOrders() {
   const [bookResults, setBookResults] = useState([]);
   const [bookSearchLoading, setBookSearchLoading] = useState(false);
   const [offlineOrderSaving, setOfflineOrderSaving] = useState(false);
+  const [offlinePaymentLink, setOfflinePaymentLink] = useState(null); // { url, orderId, orderRef }
 
   const hasSelection = selected.size > 0;
 
@@ -664,6 +665,7 @@ export default function AdminOrders() {
     });
     setBookSearch('');
     setBookResults([]);
+    setOfflinePaymentLink(null);
   }
 
   async function searchBooks(q) {
@@ -731,6 +733,8 @@ export default function AdminOrders() {
       return;
     }
 
+    const isOnline = payment.method === 'online';
+
     setOfflineOrderSaving(true);
     try {
       const payload = {
@@ -739,24 +743,56 @@ export default function AdminOrders() {
         shipping,
         payment: {
           method: payment.method,
-          paidAmount: payment.paidAmount !== '' ? Number(payment.paidAmount) : 0,
-          ...(payment.status && { status: payment.status })
+          paidAmount: isOnline ? 0 : (payment.paidAmount !== '' ? Number(payment.paidAmount) : 0),
+          ...((!isOnline && payment.status) && { status: payment.status })
         },
         shippingFee: shippingFee !== '' ? Number(shippingFee) : 0,
         serviceFee: serviceFee !== '' ? Number(serviceFee) : 0,
         taxAmount: taxAmount !== '' ? Number(taxAmount) : 0,
-        status,
+        status: isOnline ? 'pending' : status,
         adminNotes
       };
 
       const { data } = await api.post('/orders/admin', payload, auth);
-      if (data.ok) {
-        t.success(`Offline order created! #${String(data.order._id).slice(-8).toUpperCase()}`);
+      if (!data.ok) {
+        t.err(data.error || 'Failed to create order');
+        return;
+      }
+
+      const orderId = data.order._id;
+      const orderRef = String(orderId).slice(-8).toUpperCase();
+
+      // For online payment: generate Razorpay payment link
+      if (isOnline) {
+        const linkRes = await api.post('/payments/razorpay/payment-link', {
+          orderId,
+          amountInRupees: offlineGrandTotal,
+          customer: {
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone
+          }
+        }, auth);
+
+        if (linkRes.data.ok) {
+          setOfflinePaymentLink({
+            url: linkRes.data.paymentLink,
+            orderId,
+            orderRef
+          });
+          t.success(`Order #${orderRef} created! Payment link ready.`);
+          await load();
+        } else {
+          t.warn(`Order #${orderRef} created but payment link failed: ${linkRes.data.error}`);
+          setShowOfflineOrderModal(false);
+          resetOfflineForm();
+          await load();
+        }
+      } else {
+        t.success(`Offline order created! #${orderRef}`);
         setShowOfflineOrderModal(false);
         resetOfflineForm();
         await load();
-      } else {
-        t.err(data.error || 'Failed to create order');
       }
     } catch (e) {
       t.err(e?.response?.data?.error || e?.message || 'Failed to create order');
@@ -1242,6 +1278,29 @@ export default function AdminOrders() {
                             </button>
                           ) : null}
 
+                          {/* Check Payment button for pending offline online orders */}
+                          {o.source === 'offline' && o.offlinePaymentMethod === 'online' && o.payment?.status === 'pending' && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const { data } = await api.post(`/payments/razorpay/check-payment/${o._id}`, {}, auth);
+                                  if (data.ok && data.updated) {
+                                    t.success('Payment confirmed! Order updated.');
+                                    await load();
+                                  } else {
+                                    t.warn(`Payment not received yet (status: ${data.status})`);
+                                  }
+                                } catch (e) {
+                                  t.err(e?.response?.data?.error || 'Failed to check payment');
+                                }
+                              }}
+                              title="Check if customer has paid"
+                              className="px-3 py-1.5 bg-blue-50 border border-blue-300 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100"
+                            >
+                              Check Payment
+                            </button>
+                          )}
+
                           {canRefund(o) && (
                             <button onClick={() => openRefundModal(o)} title="Refund" className="px-3 py-1.5 border border-red-300 text-red-600 text-xs font-medium rounded-lg hover:bg-red-50">Refund</button>
                           )}
@@ -1551,11 +1610,10 @@ export default function AdminOrders() {
                       {order.couriers.map(c => (
                         <label
                           key={c.courier_company_id}
-                          className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                            String(srSelections[order.id]) === String(c.courier_company_id)
-                              ? 'border-purple-500 bg-purple-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                          className={`flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all ${String(srSelections[order.id]) === String(c.courier_company_id)
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <input
@@ -1608,7 +1666,7 @@ export default function AdminOrders() {
       {/* ==================== ORDER DETAIL MODAL ==================== */}
       {showDetailModal && detailOrder && (() => {
         const o = detailOrder;
-        const payMethodLabels = { cash: "Cash", upi: "UPI", card: "Card / POS", bank_transfer: "Bank Transfer", cheque: "Cheque", cod: "Cash on Delivery", other: "Other" };
+        const payMethodLabels = { cash: "Cash", upi: "UPI", card: "Card / POS", bank_transfer: "Bank Transfer", cheque: "Cheque", cod: "Cash on Delivery", online: "Online (Payment Link)", other: "Other" };
         const subtotal = (o.items || []).reduce((s, i) => s + (i.unitPrice || 0) * (i.qty || 0), 0);
         return (
           <div className="fixed z-50 inset-0 overflow-y-auto">
@@ -1730,6 +1788,27 @@ export default function AdminOrders() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Payment Link (for offline online orders) */}
+                  {o.source === 'offline' && o.offlinePaymentMethod === 'online' && o.payment?.paymentLinkUrl && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment Link</h4>
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-blue-700 font-mono truncate">{o.payment.paymentLinkUrl}</p>
+                          <p className="text-xs text-blue-500 mt-0.5">
+                            {o.payment.status === 'paid' ? '✓ Payment completed' : 'Awaiting customer payment'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(o.payment.paymentLinkUrl); t.success('Link copied!'); }}
+                          className="flex-shrink-0 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Admin Notes */}
                   {o.adminNotes && (
@@ -1981,39 +2060,49 @@ export default function AdminOrders() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         <option value="cash">Cash</option>
+                        <option value="online">Online (Payment Link)</option>
                         <option value="upi">UPI</option>
                         <option value="card">Card / POS</option>
                         <option value="bank_transfer">Bank Transfer</option>
-                        <option value="cheque">Cheque</option>
                         <option value="cod">Cash on Delivery</option>
                         <option value="other">Other</option>
                       </select>
+                      {offlineForm.payment.method === 'online' && (
+                        <p className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          A Razorpay payment link will be generated to share with the customer
+                        </p>
+                      )}
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Amount Paid (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={offlineForm.payment.paidAmount}
-                        onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, paidAmount: e.target.value } }))}
-                        placeholder="0.00"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Payment Status <span className="text-gray-400">(auto if blank)</span></label>
-                      <select
-                        value={offlineForm.payment.status}
-                        onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, status: e.target.value } }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      >
-                        <option value="">Auto (based on paid amount)</option>
-                        <option value="paid">Paid</option>
-                        <option value="partially_paid">Partially Paid</option>
-                        <option value="pending">Pending</option>
-                      </select>
-                    </div>
+                    {offlineForm.payment.method !== 'online' && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Amount Paid (₹)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={offlineForm.payment.paidAmount}
+                          onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, paidAmount: e.target.value } }))}
+                          placeholder="0.00"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        />
+                      </div>
+                    )}
+                    {offlineForm.payment.method !== 'online' && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Payment Status <span className="text-gray-400">(auto if blank)</span></label>
+                        <select
+                          value={offlineForm.payment.status}
+                          onChange={e => setOfflineForm(prev => ({ ...prev, payment: { ...prev.payment, status: e.target.value } }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        >
+                          <option value="">Auto (based on paid amount)</option>
+                          <option value="paid">Paid</option>
+                          <option value="partially_paid">Partially Paid</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Order Status</label>
                       <select
@@ -2054,18 +2143,6 @@ export default function AdminOrders() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Tax (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={offlineForm.taxAmount}
-                        onChange={e => setOfflineForm(prev => ({ ...prev, taxAmount: e.target.value }))}
-                        placeholder="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      />
-                    </div>
                   </div>
 
                   {/* Grand Total Preview */}
@@ -2075,7 +2152,6 @@ export default function AdminOrders() {
                         <div>Subtotal: ₹{offlineSubtotal.toFixed(2)}</div>
                         {(Number(offlineForm.shippingFee) > 0) && <div>Shipping: ₹{Number(offlineForm.shippingFee).toFixed(2)}</div>}
                         {(Number(offlineForm.serviceFee) > 0) && <div>Service Fee: ₹{Number(offlineForm.serviceFee).toFixed(2)}</div>}
-                        {(Number(offlineForm.taxAmount) > 0) && <div>Tax: ₹{Number(offlineForm.taxAmount).toFixed(2)}</div>}
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500">Grand Total</p>
@@ -2098,22 +2174,57 @@ export default function AdminOrders() {
                 </div>
               </div>
 
+              {/* Payment Link Success Panel */}
+              {offlinePaymentLink && (
+                <div className="mx-6 mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-blue-900 mb-1">
+                        Order #{offlinePaymentLink.orderRef} created — Payment link ready
+                      </p>
+                      <p className="text-xs text-blue-700 mb-2">Share this link with the customer. Order will auto-confirm once payment is done.</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={offlinePaymentLink.url}
+                          className="flex-1 px-2 py-1.5 text-xs bg-white border border-blue-300 rounded-lg font-mono text-blue-800 truncate"
+                        />
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(offlinePaymentLink.url); t.success('Link copied!'); }}
+                          className="flex-shrink-0 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Modal Footer */}
               <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end bg-gray-50 rounded-b-2xl">
                 <button
-                  onClick={() => setShowOfflineOrderModal(false)}
+                  onClick={() => { setShowOfflineOrderModal(false); resetOfflineForm(); }}
                   disabled={offlineOrderSaving}
                   className="px-5 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"
                 >
-                  Cancel
+                  {offlinePaymentLink ? 'Done' : 'Cancel'}
                 </button>
-                <button
-                  onClick={submitOfflineOrder}
-                  disabled={offlineOrderSaving || !offlineForm.items.length || (!offlineForm.customer.email && !offlineForm.customer.phone)}
-                  className="px-5 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {offlineOrderSaving ? 'Creating...' : 'Create Order'}
-                </button>
+                {!offlinePaymentLink && (
+                  <button
+                    onClick={submitOfflineOrder}
+                    disabled={offlineOrderSaving || !offlineForm.items.length || (!offlineForm.customer.email && !offlineForm.customer.phone)}
+                    className="px-5 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {offlineOrderSaving
+                      ? (offlineForm.payment.method === 'online' ? 'Generating link...' : 'Creating...')
+                      : (offlineForm.payment.method === 'online' ? 'Create & Generate Link' : 'Create Order')
+                    }
+                  </button>
+                )}
               </div>
             </div>
           </div>

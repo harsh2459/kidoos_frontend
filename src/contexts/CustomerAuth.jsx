@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { getAuthInstance, getGoogleProvider } from "../lib/firebase";
-import { signInAnonymously } from "firebase/auth";
 const LS_KEY = "customer_jwt";
 
 // MUST match your backend mount: app.use("/api/customer", customerRoutes)
@@ -117,9 +116,12 @@ export default function CustomerProvider({ children }) {
 
   const loginAnonymously = async () => {
     try {
-      // 1. Initialize Auth (Fixes "auth is not defined" error)
+      // Dynamic import keeps firebase/auth out of the main bundle
+      const { signInAnonymously } = await import("firebase/auth");
+
+      // 1. Initialize Auth
       const auth = await getAuthInstance();
-      
+
       // 2. Sign in to Firebase
       const result = await signInAnonymously(auth);
       

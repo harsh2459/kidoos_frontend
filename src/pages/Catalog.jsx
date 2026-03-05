@@ -274,7 +274,7 @@ export default function Catalog() {
       {/* Background Texture */}
       <div
         className="fixed inset-0 pointer-events-none opacity-100 z-0"
-        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover', backgroundAttachment: 'fixed' }}
+        style={{ backgroundImage: parchmentBg, backgroundSize: 'cover' }}
       />
 
       {/* HERO HEADER */}
@@ -311,7 +311,7 @@ export default function Catalog() {
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Search books..."
-              className="w-full pl-6 pr-12 py-5 bg-white/90 backdrop-blur-xl border-2 border-[#D4AF37]/30 rounded-2xl text-[#3E2723] text-lg shadow-lg focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all font-medium placeholder-[#8A7A5E]"
+              className="w-full pl-6 pr-12 py-5 bg-white border-2 border-[#D4AF37]/30 rounded-2xl text-[#3E2723] text-lg shadow-lg focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all font-medium placeholder-[#8A7A5E]"
             />
             {q && <button onClick={() => setQ("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A7A5E] hover:text-[#3E2723]"><X className="w-6 h-6" /></button>}
           </div>
@@ -519,7 +519,7 @@ function CatalogHeroSlider({ slides, totalBooks }) {
             {isFull && slide.image && (
               <>
                 <img
-                  src={assetUrl(slide.image)}
+                  src={assetUrl(slide.image, "hero")}
                   alt={slide.title}
                   loading={idx === 0 ? "eager" : "lazy"}
                   decoding="async"
@@ -532,7 +532,7 @@ function CatalogHeroSlider({ slides, totalBooks }) {
             {!isFull && slide.image && (
               <div className="absolute inset-0 md:left-1/3 w-full md:w-2/3 h-full">
                 <img
-                  src={assetUrl(slide.image)}
+                  src={assetUrl(slide.image, "hero")}
                   alt={slide.title}
                   loading={idx === 0 ? "eager" : "lazy"}
                   decoding="async"

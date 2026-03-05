@@ -52,7 +52,7 @@ export default function Navbar() {
       className={`
         sticky top-0 z-[100] font-['Lato'] transition-all duration-500 ease-in-out
         ${isScrolled
-          ? "bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-md py-2"
+          ? "bg-[#FAF7F2] sm:bg-[#FAF7F2]/90 sm:backdrop-blur-md border-b border-[#D4AF37]/30 shadow-md py-2"
           : "bg-transparent border-b border-transparent py-4"
         }
       `}
@@ -65,18 +65,25 @@ export default function Navbar() {
         {/* LEFT: Brand */}
         {showBrand && (
           <Link to="/" className="flex items-center gap-3 shrink-0 z-50 relative group" onClick={closeMenu}>
+            {/* Mobile: always use local logo */}
+            <img
+              src="/images/logo.jpg"
+              alt="Kiddos Intellect"
+              className="block md:hidden h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
+            />
+            {/* Desktop: use CMS logo or fallback */}
             {site?.logoUrl ? (
               <img
                 src={assetUrl(site.logoUrl)}
-                alt="logo"
-                className="h-12 md:h-[5rem] w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
+                alt="Kiddos Intellect"
+                className="hidden md:block h-[5rem] w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
               />
             ) : (
-              <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br  from-[#3E2723] to-[#2C1810] text-[#D4AF37] grid place-items-center font-['Cinzel'] font-bold text-xl shadow-[0_4px_10px_rgba(62,39,35,0.3)] border border-[#D4AF37]/50">
+              <div className="hidden md:flex items-center gap-2">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3E2723] to-[#2C1810] text-[#D4AF37] grid place-items-center font-['Cinzel'] font-bold text-xl shadow-[0_4px_10px_rgba(62,39,35,0.3)] border border-[#D4AF37]/50">
                   KI
                 </div>
-                <span className={`font-['Cinzel'] font-bold text-xl tracking-wide hidden sm:block transition-colors ${isScrolled ? 'text-[#3E2723]' : 'text-[#3E2723]'}`}>
+                <span className={`font-['Cinzel'] font-bold text-xl tracking-wide transition-colors ${isScrolled ? 'text-[#3E2723]' : 'text-[#3E2723]'}`}>
                   Kiddos Intellect
                 </span>
               </div>

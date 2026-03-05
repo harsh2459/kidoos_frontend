@@ -32,7 +32,7 @@ function ProductCard({ book }) {
       ? book.assets.coverUrl[0]
       : book?.assets?.coverUrl;
     return !imgError && coverPath
-      ? assetUrl(coverPath)
+      ? assetUrl(coverPath, "thumb")
       : "https://placehold.co/600x800/F4F7F5/A08C5B?text=Book+Cover";
   }, [book, imgError]);
 
@@ -90,8 +90,11 @@ function ProductCard({ book }) {
           <img
             src={finalCover}
             alt={book.title}
+            width={300}
+            height={450}
             onError={() => setImgError(true)}
             loading="lazy"
+            decoding="async"
             className="
               max-h-full max-w-full object-contain
               drop-shadow-xl transform transition-transform duration-500

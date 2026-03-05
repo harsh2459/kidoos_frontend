@@ -184,6 +184,17 @@ export default function BookDetail() {
                 setSuggestions(data.suggestions || []);
                 setEditions(data.editions || []);  // ← now guaranteed to be from the latest request
 
+                // ✅ Fire Meta ViewContent Event
+                if (window.fbq) {
+                    window.fbq('track', 'ViewContent', {
+                        content_ids: [data.book.inventory?.sku || data.book._id],
+                        content_type: 'product',
+                        content_name: data.book.title,
+                        value: dealFn(data.book).price,
+                        currency: 'INR',
+                    });
+                }
+
             } catch (e) {
                 if (!cancelled) console.error(e);
             } finally {
@@ -272,6 +283,17 @@ export default function BookDetail() {
     // --- HANDLERS ---
     async function handleAddToCart(buyNow = false) {
         if (isOutOfStock) return;
+
+        // ✅ Fire Meta AddToCart Event
+        if (window.fbq) {
+            window.fbq('track', 'AddToCart', {
+                content_ids: [book.inventory?.sku || book._id],
+                content_type: 'product',
+                content_name: book.title,
+                value: d.price,
+                currency: 'INR',
+            });
+        }
 
         // 1. If user is NOT logged in and clicks BUY NOW -> Auto-Login Anonymously
         if (!isCustomer && buyNow) {
