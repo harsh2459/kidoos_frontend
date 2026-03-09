@@ -5,8 +5,8 @@ function resolveBaseURL() {
     (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE) ||
     (typeof process !== "undefined" && process.env && process.env.REACT_APP_API_BASE) ||
     (typeof window !== "undefined" && window.API_BASE) ||
-    "https://kiddosintellect.com/api";
-        // "http://localhost:5050/api";
+    // "https://kiddosintellect.com/api";
+        "http://localhost:5050/api";
 
   u = String(u || "").trim().replace(/\/+$/, "");
   const apiIdx = u.toLowerCase().lastIndexOf("/api"); 
@@ -82,24 +82,25 @@ api.interceptors.request.use((config) => {
     config.headers["Content-Type"] = "application/json";
   }
 
+  console.log(`🌐 API  ➜  ${(config.method || "GET").toUpperCase()} ${config.url}`);
   return config;
 });
 
 api.interceptors.response.use(
   (res) => {
-    return res; 
+    const status = res?.status;
+    const url = String(res?.config?.url || "");
+    const color = status < 300 ? "color:#22c55e" : "color:#f59e0b";
+    console.log(`%c✅ ${status}  ${(res?.config?.method || "GET").toUpperCase()} ${url}`, color);
+    return res;
   },
   (err) => {
     const status = err?.response?.status;
     const url = String(err?.config?.url || "");
 
-    // ✅ Only log errors, not every request
-    if (status >= 400) {
-      console.error("❌ API Error:", { url, status, error: err?.response?.data });
-    }
+    console.error(`❌ ${status || "ERR"}  ${(err?.config?.method || "GET").toUpperCase()} ${url}`, err?.response?.data || err?.message);
 
     if (status === 401) {
-      console.error("🚫 401 Unauthorized for:", url);
       try {
         // ✅ Check if it's a customer route
         if (url.startsWith("/customer/")) {

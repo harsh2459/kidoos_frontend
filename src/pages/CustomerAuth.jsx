@@ -12,7 +12,7 @@ export default function CustomerAuth() {
   const next = loc.state?.next || "/";
 
   // --- VRINDAVAN THEME ASSETS ---
-  const authBg = "url('/images-webp/auth-spiritual-bg.webp')"; 
+  const authBg = "url('/images-webp/auth-spiritual-bg.webp')";
   const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
   const [mode, setMode] = useState("login");
@@ -61,7 +61,7 @@ export default function CustomerAuth() {
       '09876543210', '1231231231', '3213213210', '4564564564',
       '6546546546', '8528528528', '2582582582', '1471471471',
     ];
-    if (sequences.includes(p)) return false;  
+    if (sequences.includes(p)) return false;
     const uniqueDigits = new Set(p.split(''));
     if (uniqueDigits.size < 5) return false;
     const pairs = p.match(/(\d)\1/g) || [];
@@ -170,6 +170,14 @@ export default function CustomerAuth() {
         set("emailOtpTicket", data.ticket);
         setEmailVerified(true);
         setInfo("Email verified ✓");
+
+        // --- GA4 Verify Email Event ---
+        if (window.gtag) {
+          window.gtag('event', 'verify_email', {
+            event_category: 'Auth',
+            event_label: 'Success'
+          });
+        }
       } else {
         setErr("Verification failed");
       }
@@ -199,6 +207,14 @@ export default function CustomerAuth() {
             phone: f.phone || undefined,
             password: f.password,
           });
+
+          // --- GA4 Login Event ---
+          if (window.gtag) {
+            window.gtag('event', 'login', {
+              method: f.email ? 'Email' : 'Phone'
+            });
+            console.log("✅ GA4 'login' event fired");
+          }
 
           if (pendingItem && res?.token) {
             try {
@@ -254,6 +270,14 @@ export default function CustomerAuth() {
           emailOtpTicket: f.emailOtpTicket,
         });
 
+        // --- GA4 Sign Up Event ---
+        if (window.gtag) {
+          window.gtag('event', 'sign_up', {
+            method: 'Email/Phone'
+          });
+          console.log("✅ GA4 'sign_up' event fired");
+        }
+
         if (pendingItem && res?.token) {
           try {
             await CustomerAPI.addToCart(res.token, {
@@ -278,34 +302,34 @@ export default function CustomerAuth() {
 
   return (
     <div className="min-h-screen grid place-items-center px-4 py-12 relative overflow-hidden font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
-      
+
       {/* --- Background Layers --- */}
-      <div 
-          className="absolute inset-0 z-0 pointer-events-none opacity-100" 
-          style={{
-              backgroundImage: authBg,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-          }}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-100"
+        style={{
+          backgroundImage: authBg,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
       />
       <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none"></div> {/* Slight dark overlay for contrast */}
-      <div 
-          className="absolute inset-0 opacity-10 pointer-events-none z-0 mix-blend-overlay" 
-          style={{ backgroundImage: mandalaBg, backgroundSize: '600px', backgroundRepeat: 'repeat' }}
+      <div
+        className="absolute inset-0 opacity-10 pointer-events-none z-0 mix-blend-overlay"
+        style={{ backgroundImage: mandalaBg, backgroundSize: '600px', backgroundRepeat: 'repeat' }}
       ></div>
 
       <div className="w-full max-w-md relative z-10">
-        
+
         {/* --- LIQUID GLASS AUTH CARD --- */}
         <div className="bg-white/10 backdrop-blur-[20px] rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.2)] p-8 border border-white/20 ring-1 ring-[#D4AF37]/20 relative overflow-hidden">
-          
+
           {/* Top Decoration (Shiny edge) */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-70"></div>
 
           {/* Header */}
           <div className="mb-8 text-center relative z-10">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-4 border border-white/30 shadow-sm ring-1 ring-[#D4AF37]/20">
-                <KeyRound className="w-6 h-6 text-[#D4AF37] drop-shadow-sm" />
+              <KeyRound className="w-6 h-6 text-[#D4AF37] drop-shadow-sm" />
             </div>
             <h1 className="text-3xl font-['Cinzel'] font-bold text-[#3E2723] mb-2 drop-shadow-sm">
               {mode === "login" ? "Welcome Back" : "Join the Family"}
@@ -333,22 +357,20 @@ export default function CustomerAuth() {
 
           {/* Tabs (Glassy) */}
           <div className="flex p-1 bg-white/10 backdrop-blur-md rounded-xl mb-6 border border-white/20 relative z-10">
-            <button 
-                onClick={() => switchMode("login")}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${
-                    mode === "login" 
-                    ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm" 
-                    : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
+            <button
+              onClick={() => switchMode("login")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${mode === "login"
+                ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm"
+                : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
                 }`}
             >
               Login
             </button>
-            <button 
-                onClick={() => switchMode("signup")}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${
-                    mode === "signup" 
-                    ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm" 
-                    : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
+            <button
+              onClick={() => switchMode("signup")}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${mode === "signup"
+                ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm"
+                : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
                 }`}
             >
               Sign Up
@@ -362,15 +384,15 @@ export default function CustomerAuth() {
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
-                    <input
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
+                  <input
                     className={glassInputStyle}
                     placeholder="Enter your name"
                     value={form.name}
                     onChange={(e) => set("name", e.target.value)}
                     autoFocus
                     required={mode === "signup"}
-                    />
+                  />
                 </div>
               </div>
             )}
@@ -391,7 +413,7 @@ export default function CustomerAuth() {
                   onChange={(e) => onEmailChange(e.target.value)}
                   required={mode === "signup"}
                 />
-                
+
                 {mode === "signup" && (
                   <button
                     type="button"
@@ -426,7 +448,7 @@ export default function CustomerAuth() {
 
               {info && (
                 <div className="mt-2 text-xs font-medium text-green-800 flex items-center gap-1 bg-green-100/50 backdrop-blur-sm p-2 rounded-lg border border-green-200/50">
-                    <CheckCircle className="w-3 h-3" /> {info}
+                  <CheckCircle className="w-3 h-3" /> {info}
                 </div>
               )}
             </div>
@@ -439,16 +461,16 @@ export default function CustomerAuth() {
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3E2723]/60" />
                 <input
-                    type="tel"
-                    className={glassInputStyle}
-                    placeholder="9876543210"
-                    value={form.phone}
-                    onChange={(e) => {
+                  type="tel"
+                  className={glassInputStyle}
+                  placeholder="9876543210"
+                  value={form.phone}
+                  onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
                     set("phone", value);
-                    }}
-                    maxLength="10"
-                    required={mode === "signup"}
+                  }}
+                  maxLength="10"
+                  required={mode === "signup"}
                 />
               </div>
               {mode === "signup" && form.phone && !phoneValid && (
@@ -485,7 +507,7 @@ export default function CustomerAuth() {
               </div>
               {mode === "signup" && (
                 <p className="text-xs text-[#3E2723]/70 mt-1.5 ml-1 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3" /> Minimum 6 characters
+                  <AlertCircle className="w-3 h-3" /> Minimum 6 characters
                 </p>
               )}
             </div>
@@ -526,20 +548,20 @@ export default function CustomerAuth() {
             )}
 
             {/* Submit Button (Premium Gold Glass) */}
-            <button 
-                type="submit" 
-                disabled={loading} 
-                className="w-full py-4 bg-gradient-to-r from-[#C59D5F]/90 to-[#B0894C]/90 backdrop-blur-md text-white rounded-xl font-bold font-['Cinzel'] tracking-widest text-sm uppercase hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-[0_5px_15px_rgba(212,175,55,0.3)] transition-all transform active:scale-95 disabled:opacity-70 border border-[#D4AF37]/50 relative overflow-hidden group"
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-[#C59D5F]/90 to-[#B0894C]/90 backdrop-blur-md text-white rounded-xl font-bold font-['Cinzel'] tracking-widest text-sm uppercase hover:from-[#D4AF37] hover:to-[#C59D5F] hover:shadow-[0_5px_15px_rgba(212,175,55,0.3)] transition-all transform active:scale-95 disabled:opacity-70 border border-[#D4AF37]/50 relative overflow-hidden group"
             >
               <span className="relative z-10">
-                {loading 
-                  ? "Processing..." 
-                  : mode === "login" 
-                      ? "Enter the Library" 
-                      : "Create Account"
+                {loading
+                  ? "Processing..."
+                  : mode === "login"
+                    ? "Enter the Library"
+                    : "Create Account"
                 }
               </span>
-               {/* Shine effect on hover */}
+              {/* Shine effect on hover */}
               <div className="absolute inset-0 h-full w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out z-0"></div>
             </button>
           </form>

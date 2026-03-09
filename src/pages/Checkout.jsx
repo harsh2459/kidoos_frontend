@@ -330,14 +330,29 @@ export default function Checkout() {
               } else {
                 console.warn("⚠️ Meta Pixel (window.fbq) not found! Ensure base pixel is installed in index.html");
               }
-              
+
+              if (window.gtag) {
+                window.gtag('event', 'purchase', {
+                  transaction_id: orderId,       // Uses the local order ID
+                  value: totals.payNow,          // Total amount paid now
+                  currency: 'INR',
+                  items: items.map(item => ({
+                    item_id: getBookIdFromCartItem(item),
+                    item_name: item.title,
+                    price: item.unitPriceSnapshot || item.price,
+                    quantity: item.qty
+                  }))
+                });
+                console.log("✅ GA4 'purchase' event fired for Order:", orderId);
+              }
+
               clear();
               localStorage.removeItem('puzzle_reward_claimed');
               t.success("Payment successful!");
               navigate("/order-confirmed", { state: { orderId } });
-            } else { 
+            } else {
               console.error("❌ Payment verification failed");
-              t.err("Payment verification failed"); 
+              t.err("Payment verification failed");
             }
           } catch (e) { t.err("Error verifying payment"); }
         },

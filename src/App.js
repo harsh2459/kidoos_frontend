@@ -10,8 +10,6 @@ import { SiteProvider } from './contexts/SiteConfig';
 import { AuthProvider } from './contexts/Auth';
 import CustomerProvider, { useCustomer } from "./contexts/CustomerAuth";
 import { useCartCleanup } from './hooks/useCartCleanup';
-
-// Components that are always needed (keep as static imports)
 import Navbar from './components/Navbar';
 import { AdminGuard, PageGate } from './components/RouteGuard';
 import LoadingFallback from './components/LoadingFallback';
@@ -27,7 +25,7 @@ const AdminLayout = lazy(() => import('./components/AdminLayout'));
 
 // Lazy load all other page components
 const Catalog = lazy(() => import('./pages/Catalog'));
-const BookDetail = lazy(() => import('./pages/bookdetail'));
+const BookDetail = lazy(() => import('./pages/BookDetail'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const CustomerAuth = lazy(() => import('./pages/CustomerAuth'));
@@ -99,7 +97,7 @@ function InnerApp() {
     const { isCustomer } = useCustomer();
     const here = useLocation();
     if (!isCustomer) return <Navigate to="/login" state={{ next: here.pathname }} replace />;
-    return children;  
+    return children;
   }
 
   return (

@@ -1,7 +1,6 @@
 // src/api/asset.js
 import { api } from "./client";
 
-/** Check if URL is already absolute (Cloudinary, external, etc.) */
 function isAbsoluteUrl(url) {
   if (!url) return false;
   const s = String(url).trim();
@@ -9,58 +8,38 @@ function isAbsoluteUrl(url) {
 }
 
 /**
- * Inject Cloudinary transformation params into a Cloudinary URL.
- * - "hero"  → w_1200, for full-width banners
- * - "thumb" → w_400,  for product cards / thumbnails (fits 375px mobile)
- * - default → w_1200  (safe for most uses)
- *
- * f_webp  = FORCE WebP format (not f_auto which may fall back to JPG)
- * q_auto  = smart quality compression (~70-80%)
- * c_limit = only shrink, never upscale
+ * If the stored value is an absolute URL (Cloudflare R2, or any CDN) return as-is.
+ * If it's a local relative path, extract the /public/... portion.
  */
-function optimizeCloudinaryUrl(url, size = "default") {
-  if (!url || !url.includes("res.cloudinary.com")) return url;
-
-  const w = size === "thumb" ? "w_300" : "w_1200";
-  const transforms = `f_webp,q_auto,${w},c_limit`;
-
-  // Avoid double-injecting transforms
-  if (url.includes("f_webp") || url.includes("f_auto") || url.includes("q_auto")) return url;
-
-  return url.replace("/upload/", `/upload/${transforms}/`);
-}
-
 export function toRelativeFromPublic(input) {
   if (!input) return "";
   const s = String(input).trim();
 
-  // If it's an absolute URL (Cloudinary), return as-is
+  // Absolute URL (R2, external CDN) → keep as-is
   if (isAbsoluteUrl(s)) return s;
 
-  // For local paths, extract relative portion
+  // Local paths → extract relative portion
   const idx = s.indexOf("/public");
   return idx >= 0 ? s.slice(idx) : s.startsWith("/") ? s : `/${s.replace(/^\/?/, "")}`;
 }
 
 /**
  * Build a full img URL from a stored path.
- * @param {string} relativePath - stored image path or absolute URL
- * @param {"default"|"thumb"|"hero"} size - controls Cloudinary resize width
+ * - Absolute URLs (Cloudflare R2 / CDN) are returned as-is.
+ * - Relative paths are resolved against the backend origin.
+ * `size` param is accepted for backwards compatibility but unused (R2 has no URL transforms).
  */
+// eslint-disable-next-line no-unused-vars
 export function assetUrl(relativePath, size = "default") {
   if (!relativePath) return "";
 
   const s = String(relativePath).trim();
 
-  // Cloudinary URL → inject optimization transforms
-  if (isAbsoluteUrl(s)) {
-    return optimizeCloudinaryUrl(s, size);
-  }
+  // R2 / CDN absolute URL → return directly
+  if (isAbsoluteUrl(s)) return s;
 
-  // For local relative paths, build full URL
+  // Local relative path → build full URL from backend origin
   const rel = toRelativeFromPublic(s);
-
-  // Derive origin from axios base (remove trailing "/api")
   let base = api.defaults.baseURL || "";
   base = String(base).replace(/\/+$/, "");
   const apiIdx = base.toLowerCase().lastIndexOf("/api");
