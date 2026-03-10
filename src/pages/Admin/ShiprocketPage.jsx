@@ -298,21 +298,10 @@ export default function ShiprocketPage() {
     }
   }
 
-  async function handleTrack(order) {
+  function handleTrack(order) {
     const awb = order.shipping?.shiprocket?.awb;
     if (!awb) return;
-    t.info("Fetching tracking…");
-    try {
-      const { data } = await ShipAPI.track(awb, auth);
-      if (data.ok) {
-        setTrackingModal({ order, data: data.data, carrier: "shiprocket" });
-        load();
-      } else {
-        t.error(data.error || "Failed to fetch tracking");
-      }
-    } catch (e) {
-      t.error(e.response?.data?.error || "Failed to fetch tracking");
-    }
+    window.open(`https://shiprocket.co/tracking/${awb}`, "_blank", "noopener,noreferrer");
   }
 
   // ── BlueDart one-click ship ────────────────────────────────────────────────

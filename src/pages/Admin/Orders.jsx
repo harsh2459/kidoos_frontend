@@ -650,6 +650,30 @@ export default function AdminOrders() {
       order.status !== 'refunded';
   };
 
+  async function generatePaymentLink(order) {
+    const dueAmount = Math.max(0, (order.amount || 0) - (order.payment?.paidAmount || 0));
+    if (dueAmount <= 0) { t.warn('No due amount to generate a link for'); return; }
+    try {
+      const { data } = await api.post('/payments/razorpay/payment-link', {
+        orderId: order._id,
+        amountInRupees: dueAmount,
+        customer: {
+          name: order.customer?.name || '',
+          email: order.customer?.email || '',
+          phone: order.customer?.phone || ''
+        }
+      }, auth);
+      if (data.ok) {
+        t.success('Payment link generated! Customer can now pay online.');
+        await load();
+      } else {
+        t.err(data.error || 'Failed to generate payment link');
+      }
+    } catch (e) {
+      t.err(e?.response?.data?.error || 'Failed to generate payment link');
+    }
+  }
+
   // ==================== OFFLINE ORDER ====================
   function resetOfflineForm() {
     setOfflineForm({
@@ -1278,8 +1302,19 @@ export default function AdminOrders() {
                             </button>
                           ) : null}
 
-                          {/* Check Payment button for pending offline online orders */}
-                          {o.source === 'offline' && o.offlinePaymentMethod === 'online' && o.payment?.status === 'pending' && (
+                          {/* Generate Payment Link for pending/partial orders without a link */}
+                          {['pending', 'partially_paid'].includes(o.payment?.status) && !o.payment?.paymentLinkId && (
+                            <button
+                              onClick={() => generatePaymentLink(o)}
+                              title="Generate a Razorpay payment link to share with the customer"
+                              className="px-3 py-1.5 bg-indigo-50 border border-indigo-300 text-indigo-700 text-xs font-medium rounded-lg hover:bg-indigo-100"
+                            >
+                              Generate Link
+                            </button>
+                          )}
+
+                          {/* Check Payment button for orders with a pending payment link */}
+                          {o.payment?.status === 'pending' && o.payment?.paymentLinkId && (
                             <button
                               onClick={async () => {
                                 try {
@@ -1723,7 +1758,7 @@ export default function AdminOrders() {
                       <table className="w-full text-sm">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Title</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">SKU</th>
                             <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 w-16">Qty</th>
                             <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 w-24">Price</th>
                             <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 w-24">Total</th>
@@ -1732,7 +1767,7 @@ export default function AdminOrders() {
                         <tbody className="divide-y divide-gray-100">
                           {(o.items || []).map((item, i) => (
                             <tr key={i}>
-                              <td className="px-3 py-2 text-gray-900">{item.title || item.bookId?.title || '—'}</td>
+                              <td className="px-3 py-2 text-gray-900">{item.bookId?.inventory?.sku || '—'}</td>
                               <td className="px-3 py-2 text-center text-gray-700">{item.qty}</td>
                               <td className="px-3 py-2 text-right text-gray-700">₹{(item.unitPrice || 0).toFixed(2)}</td>
                               <td className="px-3 py-2 text-right font-medium text-gray-900">₹{((item.unitPrice || 0) * (item.qty || 0)).toFixed(2)}</td>
@@ -1789,8 +1824,8 @@ export default function AdminOrders() {
                     </div>
                   </div>
 
-                  {/* Payment Link (for offline online orders) */}
-                  {o.source === 'offline' && o.offlinePaymentMethod === 'online' && o.payment?.paymentLinkUrl && (
+                  {/* Payment Link */}
+                  {o.payment?.paymentLinkUrl ? (
                     <div>
                       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment Link</h4>
                       <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-3">
@@ -1806,9 +1841,31 @@ export default function AdminOrders() {
                         >
                           Copy
                         </button>
+                        {o.payment.status !== 'paid' && (
+                          <button
+                            onClick={() => generatePaymentLink(o)}
+                            title="Generate a new payment link (old one will be replaced)"
+                            className="flex-shrink-0 px-3 py-1.5 bg-white border border-blue-300 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-50"
+                          >
+                            Regenerate
+                          </button>
+                        )}
                       </div>
                     </div>
-                  )}
+                  ) : ['pending', 'partially_paid'].includes(o.payment?.status) ? (
+                    <div>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment Link</h4>
+                      <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                        <p className="text-xs text-gray-500">No payment link generated yet. Click to create one for the customer.</p>
+                        <button
+                          onClick={() => generatePaymentLink(o)}
+                          className="flex-shrink-0 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700"
+                        >
+                          Generate Link
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {/* Admin Notes */}
                   {o.adminNotes && (

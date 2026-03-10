@@ -208,7 +208,7 @@ export default function Footer({ contact }) {
       {/* COPYRIGHT */}
       <div className="w-full border-t border-[#C89B3C]/30 bg-[#F4EFE7]">
         <div className="mx-auto max-w-7xl px-6 py-8 text-center text-[#8A7A5E]">
-          © {year} Kiddos Intellect. All Rights Reserved.
+          © {year} Kiddos Intellect Learning Innovation Private Limited. All Rights Reserved.
         </div>
       </div>
     </footer>
