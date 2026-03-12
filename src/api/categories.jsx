@@ -8,5 +8,9 @@ export const CategoriesAPI = {
 
   create(data) {
     return api.post("/books/categories", data, { meta: { auth: "admin" } });
+  },
+
+  remove(id) {
+    return api.delete(`/books/categories/${id}`, { meta: { auth: "admin" } });
   }
 };

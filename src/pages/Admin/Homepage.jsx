@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { toRelativeFromPublic, assetUrl } from "../../api/asset";
 import { t } from "../../lib/toast";
-import { 
-  Save, Upload, Trash2, ArrowUp, ArrowDown, 
+import {
+  Save, Upload, Trash2, ArrowUp, ArrowDown,
   Layout, Type, Image as ImageIcon, Grid,
   Images, Plus, Layers, LayoutTemplate, Monitor,
-  Puzzle, Gift 
+  Puzzle, Gift, ChevronDown
 } from "lucide-react";
 
 export default function HomepageAdmin() {
@@ -18,6 +18,13 @@ export default function HomepageAdmin() {
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(new Set()); // indices of open blocks
+
+  const toggleExpand = (i) => setExpanded(prev => {
+    const next = new Set(prev);
+    next.has(i) ? next.delete(i) : next.add(i);
+    return next;
+  });
 
   // Fetch Homepage Data & Categories
   useEffect(() => {
@@ -68,7 +75,13 @@ export default function HomepageAdmin() {
     })();
   }, [token]);
 
-  const addBlock = (type) => setBlocks(b => [...b, defaultBlock(type)]);
+  const addBlock = (type) => {
+    setBlocks(b => {
+      const next = [...b, defaultBlock(type)];
+      setExpanded(prev => new Set([...prev, next.length - 1]));
+      return next;
+    });
+  };
 
   const save = async () => {
     setSaving(true);
@@ -136,18 +149,13 @@ export default function HomepageAdmin() {
   if (loading) return <div className="h-screen flex items-center justify-center bg-[#F4F7F5]"><div className="w-12 h-12 border-4 border-[#384959] border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-20">
+    <div className="bg-[#F4F7F5] min-h-screen font-sans text-[#2C3E38] pb-28">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#384959]">Homepage Builder</h1>
-            <p className="text-[#5C756D] mt-1">Design your storefront layout.</p>
-          </div>
-          <button onClick={save} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#384959] text-white font-bold hover:bg-[#6A89A7] transition-all shadow-md active:scale-95 disabled:opacity-50">
-            <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}
-          </button>
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#384959]">Homepage Builder</h1>
+          <p className="text-[#5C756D] mt-1">Design your storefront layout.</p>
         </div>
 
         {/* Add Section Bar */}
@@ -165,52 +173,80 @@ export default function HomepageAdmin() {
         </div>
 
         {/* Blocks List */}
-        <div className="space-y-6">
-          {blocks.map((b, i) => (
-            <div key={i} className="bg-white border border-[#E3E8E5] rounded-2xl shadow-sm overflow-hidden transition-all hover:shadow-md group">
-              
-              <div className="bg-[#FAFBF9] border-b border-[#E3E8E5] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border ${
-                    b.type === 'hero' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                    b.type === 'hero-slider' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                    b.type === 'slider' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                    b.type === 'puzzle' ? 'bg-pink-50 text-pink-700 border-pink-200' : 
-                    b.type === 'html' ? 'bg-orange-50 text-orange-700 border-orange-200' : 
-                    'bg-gray-100 text-gray-700 border-gray-200'
-                  }`}>
-                    {b.type === 'html' ? 'Custom Code' : b.type === 'puzzle' ? 'Game' : b.type}
-                  </span>
-                  <span className="text-sm font-medium text-[#384959]">
-                    {b.title || (b.type === 'html' ? 'Untitled HTML Block' : b.type === 'puzzle' ? 'Puzzle Game' : 'Untitled Section')}
-                  </span>
-                </div>
+        {blocks.length > 0 && (
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-[#8BA699] uppercase tracking-wider">{blocks.length} section{blocks.length !== 1 ? 's' : ''}</span>
+            <button
+              onClick={() => setExpanded(expanded.size === blocks.length ? new Set() : new Set(blocks.map((_, i) => i)))}
+              className="text-xs font-semibold text-[#5C756D] hover:text-[#384959] transition-colors"
+            >
+              {expanded.size === blocks.length ? 'Collapse all' : 'Expand all'}
+            </button>
+          </div>
+        )}
+        <div className="space-y-3">
+          {blocks.map((b, i) => {
+            const isOpen = expanded.has(i);
+            const typeBadge =
+              b.type === 'hero'        ? 'bg-blue-50 text-blue-700 border-blue-200' :
+              b.type === 'hero-slider' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+              b.type === 'slider'      ? 'bg-purple-50 text-purple-700 border-purple-200' :
+              b.type === 'puzzle'      ? 'bg-pink-50 text-pink-700 border-pink-200' :
+              b.type === 'html'        ? 'bg-orange-50 text-orange-700 border-orange-200' :
+              'bg-gray-100 text-gray-700 border-gray-200';
+            const typeLabel =
+              b.type === 'html' ? 'Custom Code' : b.type === 'puzzle' ? 'Game' :
+              b.type === 'hero-slider' ? 'Hero Slider' : b.type === 'grid' ? 'Product Grid' :
+              b.type === 'hero' ? 'Hero' : b.type === 'slider' ? 'Image Slider' : b.type;
+            const blockTitle = b.title || (b.type === 'html' ? 'Untitled HTML Block' : b.type === 'puzzle' ? 'Puzzle Game' : 'Untitled Section');
 
-                <div className="flex items-center gap-2">
-                   <div className="flex items-center gap-2 bg-white border border-[#DCE4E0] rounded-lg px-2 py-1 mr-2">
-                    <span className="text-[10px] uppercase font-bold text-[#8BA699]">Pos</span>
-                    <select value={i} onChange={(e) => move(i, Number(e.target.value))} className="bg-transparent text-sm font-bold text-[#384959] outline-none cursor-pointer">
-                      {blocks.map((_, idx) => <option key={idx} value={idx}>{idx + 1}</option>)}
-                    </select>
+            return (
+              <div key={i} className={`bg-white border rounded-2xl shadow-sm overflow-hidden transition-all ${isOpen ? 'border-[#384959]/30' : 'border-[#E3E8E5] hover:border-[#C5D1CB]'}`}>
+
+                {/* ── Block header (always visible) ── */}
+                <div
+                  className="px-4 py-3 flex items-center justify-between gap-3 cursor-pointer select-none"
+                  onClick={() => toggleExpand(i)}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* drag number */}
+                    <span className="w-6 h-6 flex items-center justify-center rounded-md bg-[#F0F3F1] text-[11px] font-bold text-[#5C756D] shrink-0">{i + 1}</span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border shrink-0 ${typeBadge}`}>{typeLabel}</span>
+                    <span className="text-sm font-medium text-[#384959] truncate">{blockTitle}</span>
                   </div>
 
-                  <div className="flex items-center border-l border-[#DCE4E0] pl-2 gap-1">
-                    <button onClick={() => moveUp(i)} disabled={i === 0} className="p-1.5 text-[#5C756D] hover:text-[#384959] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowUp className="w-4 h-4" /></button>
-                    <button onClick={() => moveDown(i)} disabled={i === blocks.length - 1} className="p-1.5 text-[#5C756D] hover:text-[#384959] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowDown className="w-4 h-4" /></button>
-                    <button onClick={() => setBlocks(blocks.filter((_, x) => x !== i))} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded ml-1"><Trash2 className="w-4 h-4" /></button>
+                  <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                    {/* position select */}
+                    <div className="flex items-center gap-1 bg-[#F4F7F5] border border-[#DCE4E0] rounded-lg px-2 py-1">
+                      <span className="text-[9px] uppercase font-bold text-[#8BA699]">Pos</span>
+                      <select
+                        value={i}
+                        onChange={e => move(i, Number(e.target.value))}
+                        className="bg-transparent text-xs font-bold text-[#384959] outline-none cursor-pointer"
+                      >
+                        {blocks.map((_, idx) => <option key={idx} value={idx}>{idx + 1}</option>)}
+                      </select>
+                    </div>
+                    <button onClick={() => moveUp(i)} disabled={i === 0} className="p-1.5 text-[#5C756D] hover:text-[#384959] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowUp className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => moveDown(i)} disabled={i === blocks.length - 1} className="p-1.5 text-[#5C756D] hover:text-[#384959] disabled:opacity-30 rounded hover:bg-gray-100"><ArrowDown className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => { setBlocks(blocks.filter((_, x) => x !== i)); setExpanded(prev => { const s = new Set(prev); s.delete(i); return s; }); }} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <ChevronDown className={`w-4 h-4 text-[#8BA699] ml-1 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   </div>
                 </div>
-              </div>
 
-              <div className="p-6">
-                <BlockEditor 
-                  block={b} 
-                  categories={categories}
-                  onChange={(nb) => setBlocks(blocks.map((x, idx) => idx === i ? nb : x))} 
-                />
+                {/* ── Block editor (collapsed by default) ── */}
+                {isOpen && (
+                  <div className="border-t border-[#E3E8E5] p-6 bg-[#FAFBF9]">
+                    <BlockEditor
+                      block={b}
+                      categories={categories}
+                      onChange={nb => setBlocks(blocks.map((x, idx) => idx === i ? nb : x))}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {blocks.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-[#DCE4E0] rounded-2xl bg-[#FAFBF9] text-[#8BA699]">
@@ -220,6 +256,18 @@ export default function HomepageAdmin() {
           )}
         </div>
       </div>
+      {/* ── Floating save button ── */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#384959] text-white font-bold shadow-xl hover:bg-[#2a3a48] active:scale-95 transition-all disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+
       <style>{`
         .input-base { width: 100%; background-color: #FAFBF9; border: 1px solid #DCE4E0; border-radius: 0.75rem; padding: 0.75rem 1rem; outline: none; transition: all; }
         .input-base:focus { border-color: #384959; ring: 2px solid rgba(26,60,52,0.2); }

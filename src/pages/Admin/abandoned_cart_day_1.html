@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+</head>
+<body style="margin:0;padding:0;background:#f7f4f0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f4f0;padding:32px 16px;">
+  <tr><td align="center">
+  <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+    <!-- HEADER -->
+    <tr>
+      <td style="background:linear-gradient(135deg,#2d2926 0%,#4a3f35 100%);padding:32px 40px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">Kiddos Intellect</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;letter-spacing:2px;text-transform:uppercase;">Books for Growing Minds</div>
+      </td>
+    </tr>
+
+    <!-- URGENCY BADGE -->
+    <tr>
+      <td style="padding:20px 40px 0;text-align:center;">
+        <span style="display:inline-block;background:#fff3e0;color:#e65100;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 16px;border-radius:50px;border:1px solid #ffe0b2;">
+          {{day_label}} Reminder · Cart saved for {{expires_in_days}} more day{{expires_in_days == 1 ? '' : 's'}}
+        </span>
+      </td>
+    </tr>
+
+    <!-- HERO -->
+    <tr>
+      <td style="padding:28px 40px 20px;text-align:center;">
+        <div style="font-size:44px;margin-bottom:12px;">📚</div>
+        <h1 style="margin:0 0 10px;font-size:24px;font-weight:800;color:#2d2926;line-height:1.3;">
+          Hey {{name}}, you left {{items_count_label}} behind!
+        </h1>
+        <p style="margin:0;font-size:14px;color:#6b5e52;line-height:1.7;">
+          You added <strong>{{first_item_title}}</strong> and more to your cart
+          {{cart_age_days == 1 ? 'today' : cart_age_days + ' days ago'}}.<br/>
+          Your cart is saved — complete your order before it expires.
+        </p>
+      </td>
+    </tr>
+
+    <!-- ITEMS TABLE -->
+    <tr>
+      <td style="padding:0 40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #f0ede8;border-radius:10px;overflow:hidden;">
+          <thead>
+            <tr style="background:#f7f4f0;">
+              <th style="padding:10px 14px;text-align:left;font-size:11px;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Book</th>
+              <th style="padding:10px 14px;text-align:center;font-size:11px;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Qty</th>
+              <th style="padding:10px 14px;text-align:right;font-size:11px;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{items_html}}
+          </tbody>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ORDER SUMMARY -->
+    <tr>
+      <td style="padding:0 40px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5;border-radius:10px;overflow:hidden;">
+          <tr>
+            <td style="padding:10px 16px;font-size:13px;color:#6b5e52;">Subtotal</td>
+            <td style="padding:10px 16px;font-size:13px;color:#2d2926;font-weight:600;text-align:right;">{{subtotal_fmt}}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 16px;font-size:13px;color:#6b5e52;">Tax</td>
+            <td style="padding:6px 16px;font-size:13px;color:#2d2926;text-align:right;">{{tax_fmt}}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 16px;font-size:13px;color:#6b5e52;">Shipping</td>
+            <td style="padding:6px 16px;font-size:13px;color:#27ae60;font-weight:600;text-align:right;">{{shipping_fmt}}</td>
+          </tr>
+          <tr style="border-top:2px solid #f0ede8;">
+            <td style="padding:12px 16px;font-size:15px;font-weight:800;color:#2d2926;">Total</td>
+            <td style="padding:12px 16px;font-size:18px;font-weight:800;color:#2d2926;text-align:right;">{{grand_total_fmt}}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- CTA -->
+    <tr>
+      <td style="padding:4px 40px 36px;text-align:center;">
+        <a href="{{checkout_url}}" style="display:inline-block;background:linear-gradient(135deg,#c8873a 0%,#d4954a 100%);color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 52px;border-radius:50px;letter-spacing:0.3px;box-shadow:0 4px 14px rgba(200,135,58,0.35);">
+          Complete My Order →
+        </a>
+        <div style="margin-top:12px;">
+          <a href="{{cart_url}}" style="font-size:13px;color:#c8873a;text-decoration:underline;">View my cart</a>
+        </div>
+      </td>
+    </tr>
+
+    <!-- TRUST STRIP -->
+    <tr>
+      <td style="padding:0 40px 28px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7f4;border-radius:10px;padding:16px;">
+          <tr>
+            <td style="text-align:center;padding:0 10px;">
+              <div style="font-size:20px;">✅</div>
+              <div style="font-size:11px;font-weight:700;color:#2d6a4f;margin-top:4px;">Secure Payment</div>
+            </td>
+            <td style="text-align:center;padding:0 10px;">
+              <div style="font-size:20px;">📦</div>
+              <div style="font-size:11px;font-weight:700;color:#2d6a4f;margin-top:4px;">Fast Delivery</div>
+            </td>
+            <td style="text-align:center;padding:0 10px;">
+              <div style="font-size:20px;">↩️</div>
+              <div style="font-size:11px;font-weight:700;color:#2d6a4f;margin-top:4px;">Easy Returns</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- DIVIDER -->
+    <tr><td style="padding:0 40px;"><div style="height:1px;background:#f0ede8;"></div></td></tr>
+
+    <!-- FOOTER -->
+    <tr>
+      <td style="padding:24px 40px;text-align:center;">
+        <p style="margin:0 0 6px;font-size:12px;color:#aaa;line-height:1.7;">
+          You're receiving this because you have items saved in your cart on Kiddos Intellect.<br/>
+          If you've already placed your order, please ignore this email.
+        </p>
+        <p style="margin:0 0 10px;font-size:12px;color:#ccc;">
+          © 2026 Kiddos Intellect · 206 Sunrise Commercial Complex, Near Savjibhai Korat Bridge
+        </p>
+      </td>
+    </tr>
+
+  </table>
+  </td></tr>
+</table>
+
+</body>
+</html>

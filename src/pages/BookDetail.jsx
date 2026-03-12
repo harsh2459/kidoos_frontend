@@ -94,6 +94,8 @@ export default function BookDetail() {
     const thumbnailScrollRef = useRef(null);
     const [canScrollThumbnailLeft, setCanScrollThumbnailLeft] = useState(false);
     const [canScrollThumbnailRight, setCanScrollThumbnailRight] = useState(false);
+    const editionsMobileRef = useRef(null);
+    const editionsDesktopRef = useRef(null);
 
     // Cart & Auth
     const items = useCart((s) => s.items);
@@ -374,9 +376,10 @@ export default function BookDetail() {
     const cartItem = { ...book, price: d.price, qty: qty };
 
     if (!isCustomer) {
-        // Add to local storage cart (Non-BuyNow actions)
-        add(cartItem, qty);
-        t.success("Added to cart");
+        // Not logged in, redirect to login
+        t.info("Please login to add items to your cart");
+        navigate("/login");
+        return;
     } else {
         // Logged in user (Normal flow)
         try {
@@ -580,6 +583,36 @@ const mobileViewJSX = (
                     className="max-w-full max-h-full object-contain p-6 drop-shadow-xl transition-all duration-300"
                     alt={`${book.title} - Image ${activeImg + 1}`}
                 />
+                {/* Prev arrow */}
+                {images.length > 1 && activeImg > 0 && (
+                    <button
+                        onClick={() => setActiveImg(i => i - 1)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#D4AF37]/40 shadow-md flex items-center justify-center text-[#3E2723] active:scale-95 transition-all"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                )}
+                {/* Next arrow */}
+                {images.length > 1 && activeImg < images.length - 1 && (
+                    <button
+                        onClick={() => setActiveImg(i => i + 1)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#D4AF37]/40 shadow-md flex items-center justify-center text-[#3E2723] active:scale-95 transition-all"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                )}
+                {/* Dot indicators */}
+                {images.length > 1 && (
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        {images.map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setActiveImg(i)}
+                                className={`rounded-full transition-all ${activeImg === i ? 'w-4 h-1.5 bg-[#D4AF37]' : 'w-1.5 h-1.5 bg-[#D4AF37]/30'}`}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Thumbnails Strip with Navigation */}
@@ -678,7 +711,14 @@ const mobileViewJSX = (
                         <span className="ml-auto text-[10px] font-semibold text-[#D4AF37]">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
                     </div>
                     {/* Cards */}
-                    <div className="flex gap-3 p-3 overflow-x-auto scrollbar-hide bg-white">
+                    <div className="relative bg-white">
+                        <button
+                            onClick={() => editionsMobileRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}
+                            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#D4AF37]/40 shadow flex items-center justify-center text-[#3E2723] active:scale-95 transition-all"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <div ref={editionsMobileRef} className="flex gap-3 px-9 py-3 overflow-x-auto scrollbar-hide">
                         {editions.map(ed => {
                             const edDeal = dealFn(ed);
                             const skuTokens = (ed.inventory?.sku || '').split('_');
@@ -722,6 +762,13 @@ const mobileViewJSX = (
                                 </button>
                             );
                         })}
+                        </div>
+                        <button
+                            onClick={() => editionsMobileRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#D4AF37]/40 shadow flex items-center justify-center text-[#3E2723] active:scale-95 transition-all"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             )}
@@ -894,6 +941,35 @@ const desktopViewJSX = (
                                     className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105"
                                 />
                             </div>
+                            {/* Prev / Next arrows on main image */}
+                            {images.length > 1 && activeImg > 0 && (
+                                <button
+                                    onClick={() => setActiveImg(i => i - 1)}
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#D4AF37]/40 shadow-md flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                            )}
+                            {images.length > 1 && activeImg < images.length - 1 && (
+                                <button
+                                    onClick={() => setActiveImg(i => i + 1)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#D4AF37]/40 shadow-md flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            )}
+                            {/* Dot indicators */}
+                            {images.length > 1 && (
+                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                                    {images.map((_, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setActiveImg(i)}
+                                            className={`rounded-full transition-all ${activeImg === i ? 'w-4 h-1.5 bg-[#D4AF37]' : 'w-1.5 h-1.5 bg-[#D4AF37]/30 hover:bg-[#D4AF37]/60'}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                             <div className="hidden md:flex absolute inset-0 bg-[#3E2723]/5 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center">
                                 <button
                                     onClick={() => setShowFlipbook(true)}
@@ -911,17 +987,21 @@ const desktopViewJSX = (
                     </div>
 
                     {images.length > 1 && (
-                        <div className="relative w-full overflow-hidden">
-                            <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory px-0.5">
+                        <div className="relative w-full">
+                            {activeImg > 0 && (
+                                <button
+                                    onClick={() => setActiveImg(i => i - 1)}
+                                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#D4AF37]/40 shadow flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                            )}
+                            <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory px-6">
                                 {images.map((img, i) => (
                                     <button
                                         key={i}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            console.log('Desktop thumbnail clicked, index:', i, 'current activeImg:', activeImg);
-                                            setActiveImg(i);
-                                        }}
-                                        className={`w-14 h-16 sm:w-16 sm:h-20 md:w-18 md:h-22 lg:w-20 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-white snap-center cursor-pointer ${activeImg === i
+                                        onClick={(e) => { e.preventDefault(); setActiveImg(i); }}
+                                        className={`w-14 h-16 sm:w-16 sm:h-20 lg:w-20 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-white snap-center cursor-pointer ${activeImg === i
                                             ? 'border-[#D4AF37] shadow-md ring-2 ring-[#FFF9E6] scale-105'
                                             : 'border-[#D4AF37]/30 opacity-60 hover:opacity-100 hover:border-[#D4AF37] hover:scale-105'
                                             }`}
@@ -930,6 +1010,14 @@ const desktopViewJSX = (
                                     </button>
                                 ))}
                             </div>
+                            {activeImg < images.length - 1 && (
+                                <button
+                                    onClick={() => setActiveImg(i => i + 1)}
+                                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#D4AF37]/40 shadow flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -1021,51 +1109,64 @@ const desktopViewJSX = (
                             <span className="ml-auto text-[10px] font-semibold text-[#D4AF37]">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
                         </div>
                         {/* Cards */}
-                        <div className="flex gap-3 p-3 overflow-x-auto scrollbar-hide bg-white">
-                            {editions.map(ed => {
-                                const edDeal = dealFn(ed);
-                                const skuTokens = (ed.inventory?.sku || '').split('_');
-                                const lastToken = skuTokens[skuTokens.length - 1] || '';
-                                const skuLabel = /^\d+$/.test(lastToken) && skuTokens.length >= 2
-                                    ? `${skuTokens[skuTokens.length - 2]} ${lastToken}`
-                                    : lastToken;
-                                return (
-                                    <button
-                                        key={ed._id}
-                                        onClick={() => { navigate(`/book/${ed.slug}`); window.scrollTo(0, 0); }}
-                                        className="flex-shrink-0 w-[130px] bg-[#FAF7F2] rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-lg active:scale-[0.97] transition-all duration-200 text-left group overflow-hidden"
-                                    >
-                                        {/* Cover */}
-                                        <div className="relative w-full aspect-[3/4] bg-[#FFF9E6] overflow-hidden">
-                                            <img
-                                                src={assetUrl(ed.assets?.coverUrl?.[0])}
-                                                className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
-                                                alt={ed.title}
-                                            />
-                                            {/* Gradient + label overlay */}
-                                            {skuLabel && (
-                                                <div className="absolute bottom-0 inset-x-0 pt-5 pb-1.5 px-2 bg-gradient-to-t from-[#3E2723]/85 via-[#3E2723]/40 to-transparent">
-                                                    <span className="block text-center text-[10px] font-bold text-[#F3E5AB] tracking-wider uppercase">
-                                                        {skuLabel}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {/* Info */}
-                                        <div className="px-2.5 py-2">
-                                            <p className="text-[11px] font-bold text-[#3E2723] leading-tight line-clamp-2 group-hover:text-[#D4AF37] transition-colors min-h-[30px] mb-1.5">
-                                                {ed.title}
-                                            </p>
-                                            <div className="flex items-baseline gap-1 flex-wrap">
-                                                <span className="text-sm font-bold text-[#3E2723]">₹{edDeal.price.toLocaleString('en-IN')}</span>
-                                                {edDeal.mrp > edDeal.price && (
-                                                    <span className="text-[10px] text-[#8A7A5E] line-through">₹{edDeal.mrp.toLocaleString('en-IN')}</span>
+                        <div className="relative bg-white">
+                            <button
+                                onClick={() => editionsDesktopRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}
+                                className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#D4AF37]/40 shadow flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <div ref={editionsDesktopRef} className="flex gap-3 px-9 py-3 overflow-x-auto scrollbar-hide">
+                                {editions.map(ed => {
+                                    const edDeal = dealFn(ed);
+                                    const skuTokens = (ed.inventory?.sku || '').split('_');
+                                    const lastToken = skuTokens[skuTokens.length - 1] || '';
+                                    const skuLabel = /^\d+$/.test(lastToken) && skuTokens.length >= 2
+                                        ? `${skuTokens[skuTokens.length - 2]} ${lastToken}`
+                                        : lastToken;
+                                    return (
+                                        <button
+                                            key={ed._id}
+                                            onClick={() => { navigate(`/book/${ed.slug}`); window.scrollTo(0, 0); }}
+                                            className="flex-shrink-0 w-[130px] bg-[#FAF7F2] rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-lg active:scale-[0.97] transition-all duration-200 text-left group overflow-hidden"
+                                        >
+                                            {/* Cover */}
+                                            <div className="relative w-full aspect-[3/4] bg-[#FFF9E6] overflow-hidden">
+                                                <img
+                                                    src={assetUrl(ed.assets?.coverUrl?.[0])}
+                                                    className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                                                    alt={ed.title}
+                                                />
+                                                {skuLabel && (
+                                                    <div className="absolute bottom-0 inset-x-0 pt-5 pb-1.5 px-2 bg-gradient-to-t from-[#3E2723]/85 via-[#3E2723]/40 to-transparent">
+                                                        <span className="block text-center text-[10px] font-bold text-[#F3E5AB] tracking-wider uppercase">
+                                                            {skuLabel}
+                                                        </span>
+                                                    </div>
                                                 )}
                                             </div>
-                                        </div>
-                                    </button>
-                                );
-                            })}
+                                            {/* Info */}
+                                            <div className="px-2.5 py-2">
+                                                <p className="text-[11px] font-bold text-[#3E2723] leading-tight line-clamp-2 group-hover:text-[#D4AF37] transition-colors min-h-[30px] mb-1.5">
+                                                    {ed.title}
+                                                </p>
+                                                <div className="flex items-baseline gap-1 flex-wrap">
+                                                    <span className="text-sm font-bold text-[#3E2723]">₹{edDeal.price.toLocaleString('en-IN')}</span>
+                                                    {edDeal.mrp > edDeal.price && (
+                                                        <span className="text-[10px] text-[#8A7A5E] line-through">₹{edDeal.mrp.toLocaleString('en-IN')}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <button
+                                onClick={() => editionsDesktopRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#D4AF37]/40 shadow flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
                 )}

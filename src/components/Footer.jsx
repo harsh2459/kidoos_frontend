@@ -209,6 +209,7 @@ export default function Footer({ contact }) {
       <div className="w-full border-t border-[#C89B3C]/30 bg-[#F4EFE7]">
         <div className="mx-auto max-w-7xl px-6 py-8 text-center text-[#8A7A5E]">
           © {year} Kiddos Intellect Learning Innovation Private Limited. All Rights Reserved.
+          <span className="block mt-1 text-xs text-[#A8977A]">CIN: U58110GJ2026PTC173310</span>
         </div>
       </div>
     </footer>

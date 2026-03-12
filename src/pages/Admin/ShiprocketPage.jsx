@@ -1,12 +1,12 @@
 // src/pages/Admin/ShiprocketPage.jsx
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api } from "../../api/client";
-import { ShipAPI } from "../../api/shiprocket";
+import { ShipAPI } from "../../api/shiprocket"; 
 import { BlueDartAPI } from "../../api/bluedart";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
 import {
-  Rocket, Printer, RefreshCw, Clock, Search, User, X,
+  Rocket, Printer, RefreshCw, Clock,  User, X,
   ChevronLeft, ChevronRight, Phone, Mail, MapPin, Truck,
   AlertCircle, Eye, Navigation, Package, Zap,
 } from "lucide-react";
@@ -431,7 +431,7 @@ export default function ShiprocketPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5C756D] pointer-events-none" />
+
               <input
                 type="text"
                 value={search}
@@ -821,12 +821,10 @@ export default function ShiprocketPage() {
           srPending.length === 0 && bdPendingFiltered.length === 0 &&
           srShipped.length === 0 && bdShipped.length === 0 && (
           <div className="bg-white rounded-3xl border-2 border-[#E3E8E5] p-12 text-center shadow-lg">
-            <Search className="w-10 h-10 text-[#E3E8E5] mx-auto mb-3" />
             <p className="text-[#222831] font-semibold">No results for "{search}"</p>
             <p className="text-sm text-[#5C756D] mt-1">Try a different name, SKU, AWB, or order number</p>
           </div>
         )}
-
       </div>
 
       {/* ══════════════════════════════════════════════════════
@@ -884,7 +882,7 @@ export default function ShiprocketPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-[#F4F7F5]">
                       <tr>
-                        <th className="px-3 py-2 text-left text-[10px] font-bold text-[#5C756D] uppercase">Title</th>
+                        <th className="px-3 py-2 text-left text-[10px] font-bold text-[#5C756D] uppercase">SKU / Title</th>
                         <th className="px-3 py-2 text-center text-[10px] font-bold text-[#5C756D] uppercase w-14">Qty</th>
                         <th className="px-3 py-2 text-right text-[10px] font-bold text-[#5C756D] uppercase w-24">Price</th>
                         <th className="px-3 py-2 text-right text-[10px] font-bold text-[#5C756D] uppercase w-24">Total</th>
@@ -893,7 +891,14 @@ export default function ShiprocketPage() {
                     <tbody className="divide-y divide-[#E3E8E5]">
                       {(o.items || []).map((item, i) => (
                         <tr key={i} className="bg-white">
-                          <td className="px-3 py-2 text-[#222831]">{item.title || item.bookId?.title || '—'}</td>
+                          <td className="px-3 py-2 text-[#222831]">
+                            <span className="font-mono text-xs text-[#384959]">{item.bookId?.inventory?.sku || item.sku || item.isbn || '—'}</span>
+                            {(item.title || item.bookId?.title) && (
+                              <span className="block text-[11px] text-[#5C756D] truncate max-w-[220px]">
+                                {(item.title || item.bookId?.title || '').slice(0, 40)}{(item.title || item.bookId?.title || '').length > 40 ? '…' : ''}
+                              </span>
+                            )}
+                          </td>
                           <td className="px-3 py-2 text-center text-[#5C756D]">{item.qty}</td>
                           <td className="px-3 py-2 text-right text-[#5C756D]">₹{(item.unitPrice || 0).toFixed(2)}</td>
                           <td className="px-3 py-2 text-right font-semibold text-[#222831]">₹{((item.unitPrice || 0) * (item.qty || 0)).toFixed(2)}</td>

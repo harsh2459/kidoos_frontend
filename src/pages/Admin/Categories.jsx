@@ -4,14 +4,13 @@ import { CategoriesAPI } from "../../api/categories";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
 
-import { 
-  Layers, 
-  FolderPlus, 
-  BookOpen, 
-  Loader2, 
-  Search,
+import {
+  Layers,
+  FolderPlus,
+  BookOpen,
+  Loader2,
   Trash2,
-  Edit2
+  AlertTriangle
 } from "lucide-react";
 
 export default function AdminCategories() {
@@ -20,7 +19,8 @@ export default function AdminCategories() {
   const [saving, setSaving] = useState(false);
   const [list, setList] = useState([]);
   const [form, setForm] = useState({ name: "", description: "" });
-  const [q, setQ] = useState(""); // Search state for filtering list locally
+  const [q, setQ] = useState("");
+  const [confirm, setConfirm] = useState(null); // { id, name }
 
   async function load() {
     setLoading(true);
@@ -54,6 +54,18 @@ export default function AdminCategories() {
       t.err(err?.response?.data?.error || err?.message || "Unable to create category");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm) return;
+    try {
+      await CategoriesAPI.remove(confirm.id);
+      t.ok(`"${confirm.name}" deleted`);
+      setConfirm(null);
+      load();
+    } catch (err) {
+      t.err(err?.response?.data?.error || "Failed to delete category");
     }
   }
 
@@ -201,10 +213,13 @@ export default function AdminCategories() {
                                         {c.count || 0}
                                     </span>
                                     
-                                    {/* Actions (Future proofing for Edit/Delete) */}
-                                    {/* <button className="p-2 text-[#5C756D] hover:text-[#384959] hover:bg-white rounded-lg transition-colors">
-                                        <Edit2 className="w-4 h-4" />
-                                    </button> */}
+                                    <button
+                                        onClick={() => setConfirm({ id: c._id, name: c.name })}
+                                        className="p-2 text-[#8BA699] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Delete category"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -213,6 +228,40 @@ export default function AdminCategories() {
             </div>
         </div>
       </div>
+
+      {/* Confirm delete modal */}
+      {confirm && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-[#E3E8E5] w-full max-w-sm p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 bg-red-50 rounded-lg shrink-0 mt-0.5">
+                <Trash2 className="w-4 h-4 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-[#384959]">Delete category</h3>
+                <p className="text-xs text-[#5C756D] mt-1 leading-relaxed">
+                  Remove <span className="font-semibold text-[#384959]">"{confirm.name}"</span> permanently?
+                  Books in this category won't be deleted, but will lose this category tag.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                onClick={() => setConfirm(null)}
+                className="px-4 py-2 text-xs font-medium text-[#5C756D] bg-[#F4F7F5] hover:bg-[#E3E8E5] rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

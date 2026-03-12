@@ -50,7 +50,7 @@ export default function Navbar() {
   return (
     <header
       className={`
-        sticky top-0 z-[100] font-['Lato'] transition-all duration-500 ease-in-out
+        ${onAdminPage ? "relative" : "sticky top-0 z-[100]"} font-['Lato'] transition-all duration-500 ease-in-out
         ${isScrolled
           ? "bg-[#FAF7F2] sm:bg-[#FAF7F2]/90 sm:backdrop-blur-md border-b border-[#D4AF37]/30 shadow-md py-2"
           : "bg-transparent border-b border-transparent py-4"
@@ -65,21 +65,15 @@ export default function Navbar() {
         {/* LEFT: Brand */}
         {showBrand && (
           <Link to="/" className="flex items-center gap-3 shrink-0 z-50 relative group" onClick={closeMenu}>
-            {/* Mobile: always use local logo */}
-            <img
-              src="/images/logo.jpg"
-              alt="Kiddos Intellect"
-              className="block md:hidden h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
-            />
-            {/* Desktop: use CMS logo or fallback */}
+            {/* Logo: CMS url on all sizes, fallback to KI monogram */}
             {site?.logoUrl ? (
               <img
                 src={assetUrl(site.logoUrl)}
                 alt="Kiddos Intellect"
-                className="hidden md:block h-[5rem] w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
+                className="block h-12 md:h-[5rem] w-auto object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-sm"
               />
             ) : (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3E2723] to-[#2C1810] text-[#D4AF37] grid place-items-center font-['Cinzel'] font-bold text-xl shadow-[0_4px_10px_rgba(62,39,35,0.3)] border border-[#D4AF37]/50">
                   KI
                 </div>
@@ -153,7 +147,7 @@ export default function Navbar() {
           )}
 
           {/* ADMIN CHIP */}
-          {isAdmin && (
+          {isAdmin && !onAdminPage && (
             <div className="relative hidden sm:block">
               <details className="group relative mt-[9px]">
                 <summary className="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition-all text-sm font-medium text-[#3E2723]">
