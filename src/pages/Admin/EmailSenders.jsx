@@ -23,6 +23,7 @@ export default function EmailSenders() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null); // null | sender object
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testTo, setTestTo] = useState("");
@@ -75,11 +76,17 @@ export default function EmailSenders() {
     } finally { setSaving(false); }
   }
 
-  async function remove(id) {
-    if (!window.confirm("Delete this sender?")) return;
-    await EmailAPI.deleteSender(id);
-    await load();
-    t.ok("Sender deleted");
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    try {
+      await EmailAPI.deleteSender(deleteConfirm._id);
+      await load();
+      t.ok("Sender deleted");
+    } catch {
+      t.err("Failed to delete sender");
+    } finally {
+      setDeleteConfirm(null);
+    }
   }
 
   async function test(sender) {
@@ -205,7 +212,7 @@ export default function EmailSenders() {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => remove(s._id)}
+                        onClick={() => setDeleteConfirm(s)}
                         className="p-2 rounded-lg text-[#5C756D] hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-100 transition-all"
                         title="Delete"
                       >
@@ -221,6 +228,31 @@ export default function EmailSenders() {
       </div>
 
       {/* Edit/Add Modal */}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-center w-12 h-12 bg-red-50 rounded-full mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-1">Delete Sender?</h3>
+            <p className="text-sm text-gray-500 text-center mb-2">You are about to delete</p>
+            <p className="text-center font-bold text-[#384959] mb-1">{deleteConfirm.label}</p>
+            <p className="text-xs text-center text-[#5C756D] mb-4">{deleteConfirm.fromEmail}</p>
+            <p className="text-xs text-gray-400 text-center mb-6">This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={confirmDelete} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editing && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm grid place-items-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white border border-[#E3E8E5] rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">

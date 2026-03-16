@@ -1,5 +1,5 @@
 ﻿// src/pages/Home.jsx
-import { useEffect, useState, useRef, lazy, Suspense } from "react";
+import { useEffect, useState, useRef, lazy, Suspense, useCallback } from "react";
 import { useInView } from "../hooks/useInView";
 import { useSite } from "../contexts/SiteConfig";
 import { api } from "../api/client";
@@ -19,12 +19,14 @@ import {
 const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
 const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
+
 export default function Home() {
   const { homepage } = useSite();
   const isReady =
     Array.isArray(homepage?.blocks) && homepage.blocks.length > 0;
   return (
     <div className="bg-[#FAF7F2] min-h-screen text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-20 overflow-x-hidden" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+
       <SEO
         title="Kiddos Intellect - Premium Children's Books | Educational Learning Materials"
         description="Discover hand-picked children's books and educational materials. Healthy Minds Grow Beyond Screens. Shop premium learning resources for curious young minds in India."
@@ -80,7 +82,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* âœ… REAL CONTENT */}
+      {/* ✅ REAL CONTENT */}
       {isReady && (
         <div className="max-w-7xl 2xl:max-w-[1800px] mx-auto relative z-10">
           {homepage.blocks.map((b, i) => (
@@ -88,6 +90,7 @@ export default function Home() {
           ))}
         </div>
       )}
+
       <ScrollToTopButton />
     </div>
   );
@@ -97,6 +100,15 @@ export default function Home() {
 
 /* ----------------------------- Blocks Renderer ---------------------------- */
 function Block({ block }) {
+  // Must be at top level — used only when block.type === "puzzle"
+  const handlePuzzleWin = useCallback(async () => {
+    try {
+      await api.post("/customer/puzzle/claim");
+    } catch (_) {
+      // Silently fail — localStorage fallback still works for UI display
+    }
+  }, []);
+
   const spacing = block.spacing || {
     paddingTop: "normal",
     paddingBottom: "normal",
@@ -200,6 +212,7 @@ function Block({ block }) {
             levels={levels}
             grandWinMessage={block.winMessage}
             rewardImage={block.rewardImage}
+            onWin={handlePuzzleWin}
           />
         </Suspense>
       </div>
@@ -254,7 +267,7 @@ function Block({ block }) {
 }
 
 /* --------------------------------------------------------------------------
-   PUZZLE GAME COMPONENT â€” lazy-loaded so its JS is not in the initial bundle
+   PUZZLE GAME COMPONENT â€" lazy-loaded so its JS is not in the initial bundle
 --------------------------------------------------------------------------- */
 const ProgressivePuzzleGame = lazy(() => import("../components/ProgressivePuzzleGame"));
 
@@ -337,7 +350,7 @@ function HeroSlider({ slides }) {
   );
 }
 
-/* ------------------------- Standard Image Slider â€” 3D Coverflow ------------------------- */
+/* ------------------------- Standard Image Slider — 3D Coverflow ------------------------- */
 function HomepageSlider({ slides, height = "medium" }) {
   const [current, setCurrent] = useState(0);
   const timeoutRef = useRef(null);
@@ -361,7 +374,7 @@ function HomepageSlider({ slides, height = "medium" }) {
 
   const go = (dir) => setCurrent(c => ((c + dir) + length) % length);
 
-  // Track desktop breakpoint â€” mobile gets a simple crossfade, desktop keeps coverflow
+  // Track desktop breakpoint — mobile gets a simple crossfade, desktop keeps coverflow
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth >= 768 : true
   );
@@ -380,7 +393,7 @@ function HomepageSlider({ slides, height = "medium" }) {
     return d;
   };
 
-  // No height on slides â€” image's natural ratio drives everything
+  // No height on slides — image's natural ratio drives everything
   const CFGS2 = {
     '-2': { l: '3%',  rY:  50, op: 0.28, br: 0.48, sh: 8,  w: '18%', z: 3,  r: '0.6rem'  },
     '-1': { l: '18%', rY:  33, op: 0.82, br: 0.72, sh: 18, w: '32%', z: 10, r: '0.9rem'   },
@@ -389,7 +402,7 @@ function HomepageSlider({ slides, height = "medium" }) {
      '2': { l: '97%', rY: -50, op: 0.28, br: 0.48, sh: 8,  w: '18%', z: 3,  r: '0.6rem'   },
   };
 
-  /* â”€â”€ MOBILE: simple crossfade, full-width, no coverflow â”€â”€ */
+  /* ── MOBILE: simple crossfade, full-width, no coverflow ── */
   if (!isDesktop) {
     return (
       <div className="relative w-full">
@@ -444,10 +457,10 @@ function HomepageSlider({ slides, height = "medium" }) {
   return (
     <div className="relative w-full">
 
-      {/* â”€â”€ Stage: height driven by hidden reference image, no fixed px â”€â”€ */}
+      {/* ── Stage: height driven by hidden reference image, no fixed px ── */}
       <div className="relative" style={{ perspective: '1200px' }}>
 
-        {/* Invisible reference â€” same width as active slide, flows in DOM to set stage height */}
+        {/* Invisible reference — same width as active slide, flows in DOM to set stage height */}
         <img
           src={items[current].desktop}
           alt=""
@@ -459,7 +472,7 @@ function HomepageSlider({ slides, height = "medium" }) {
           draggable={false}
         />
 
-        {/* Coverflow slides â€” absolute, centered over the reference */}
+        {/* Coverflow slides — absolute, centered over the reference */}
         {items.map((slide, idx) => {
           const pos = getPos(idx);
           if (Math.abs(pos) > 2) return null;
@@ -503,7 +516,7 @@ function HomepageSlider({ slides, height = "medium" }) {
         })}
       </div>
 
-      {/* â”€â”€ Navigation â”€â”€ */}
+      {/* ── Navigation ── */}
       {length > 1 && (
         <>
           <button
@@ -531,7 +544,7 @@ function HomepageSlider({ slides, height = "medium" }) {
             <ChevronRight className="w-4 h-4" />
           </button>
 
-          {/* Counter + dots â€” below the stage, centered */}
+          {/* Counter + dots â€" below the stage, centered */}
           <div className="flex justify-center mt-4 z-30">
             <div className="flex items-center gap-3 bg-white/70 backdrop-blur-md px-5 py-2.5 rounded-full border border-[#D4AF37]/30 shadow-[0_4px_20px_rgba(62,39,35,0.1)]">
               <span className="text-[#3E2723]/50 text-[11px] font-['Cinzel'] leading-none select-none w-5 text-right">
@@ -759,4 +772,5 @@ function GridSectionSkeleton() {
     </section>
   );
 }
+
 

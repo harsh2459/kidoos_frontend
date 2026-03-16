@@ -7,8 +7,8 @@ import { useSite } from "../contexts/SiteConfig";
 import { t } from "../lib/toast";
 import { useCustomer } from "../contexts/CustomerAuth";
 import {
-  MapPin, CreditCard, ArrowLeft, ShieldCheck, Truck, Zap, PartyPopper, Gift,
-  ArrowRight, CheckCircle
+  MapPin, CreditCard, ArrowLeft, ShieldCheck, Truck, Zap, Gift,
+  ArrowRight, CheckCircle, Tag, X, ChevronRight, Sparkles, BookOpen, Star
 } from "lucide-react";
 
 function loadRzp() {
@@ -26,6 +26,8 @@ export default function Checkout() {
   const navigate = useNavigate();
   const items = useCart((s) => s.items);
   const clear = useCart((s) => s.clear);
+  const addToCart = useCart((s) => s.add);
+  const setQty = useCart((s) => s.setQty);
   const { payments } = useSite();
   const { customer, isCustomer } = useCustomer();
   const [paymentOption, setPaymentOption] = useState("full_online");
@@ -41,6 +43,14 @@ export default function Checkout() {
 
   // State for Puzzle Reward
   const [hasPuzzleReward, setHasPuzzleReward] = useState(false);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [couponApplied, setCouponApplied] = useState(null); // { code, discount, discountType, discountValue, couponId }
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [offersOpen, setOffersOpen] = useState(false);
+  const [offersFilter, setOffersFilter] = useState("all");
 
   useEffect(() => {
     if (customer) {
@@ -58,23 +68,32 @@ export default function Checkout() {
 
   const set = (k, v) => setCust((p) => ({ ...p, [k]: v }));
 
-  /* ------------ FEE LOGIC ------------ */
-  const getBaseZoneFee = (pincode) => {
-    if (!pincode || String(pincode).length < 6) return 0;
-    const pinStr = String(pincode);
-    if (pinStr.startsWith("394")) return 60; // Surat
-    const prefix = parseInt(pinStr.substring(0, 2));
-    if (prefix >= 36 && prefix <= 39) return 80; // Gujarat
-    return 100; // Rest of India
-  };
+  /* ------------ SHIPPING RULES ------------ */
+  const [shippingRules, setShippingRules] = useState([]);
 
-  const getBulkDiscount = (qty) => {
-    if (qty >= 20) return 50;
-    if (qty >= 15) return 40;
-    if (qty >= 10) return 30;
-    if (qty >= 5) return 20;
-    return 0;
-  };
+  useEffect(() => {
+    api.get("/shipping-rules").then(res => {
+      if (res.data?.ok) setShippingRules(res.data.rules);
+    }).catch(() => {});
+    api.get("/coupons/public").then(res => {
+      if (res.data?.ok) setAvailableCoupons(res.data.coupons || []);
+    }).catch(() => {});
+  }, []);
+
+  function getShippingFee(subtotal, paymentType) {
+    if (!shippingRules.length) return 0;
+    const sorted = [...shippingRules].sort((a, b) => a.orderValue - b.orderValue);
+    let matched = null;
+    for (const rule of sorted) {
+      if (subtotal >= rule.orderValue) matched = rule;
+    }
+    if (!matched) return 0;
+    const isOnline = paymentType === "full_online";
+    if (isOnline && matched.onlineCharge !== null && matched.onlineCharge !== undefined) {
+      return matched.onlineCharge;
+    }
+    return matched.charge;
+  }
 
   /* ------------ TOTALS CALCULATION ------------ */
   const totals = useMemo(() => {
@@ -101,31 +120,25 @@ export default function Checkout() {
       rewardDiscount = Math.round(maxPrice * 0.20);
     }
 
-    // Apply reward to subtotal before adding fees
     const subTotalAfterReward = Math.max(0, itemTotal - rewardDiscount);
+    const couponDiscount = couponApplied?.discount || 0;
+    const subTotalAfterCoupon = Math.max(0, subTotalAfterReward - couponDiscount);
+    const finalShippingFee = getShippingFee(subTotalAfterCoupon, paymentOption);
+    const grand = subTotalAfterCoupon + finalShippingFee;
 
-    let finalShippingFee = 0;
-    let finalServiceFee = 0;
-    let baseTotalFee = 0;
-    let discount = 0;
+    // Fixed per-option totals (independent of selection — used to display each card correctly)
+    const fullOnlineShipping = getShippingFee(subTotalAfterCoupon, "full_online");
+    const fullOnlineTotal = subTotalAfterCoupon + fullOnlineShipping;
+    const halfShipping = getShippingFee(subTotalAfterCoupon, "half_online_half_cod");
+    const halfNow = Math.round(subTotalAfterCoupon / 2) + halfShipping;
+    const halfLater = subTotalAfterCoupon - Math.round(subTotalAfterCoupon / 2);
 
-    if (paymentOption === "half_online_half_cod") {
-      baseTotalFee = getBaseZoneFee(cust.pin);
-      if (baseTotalFee > 0) {
-        discount = getBulkDiscount(totalQty);
-        let totalFeeAfterDiscount = Math.max(0, baseTotalFee - discount);
-        finalServiceFee = Math.min(30, totalFeeAfterDiscount);
-        finalShippingFee = Math.max(0, totalFeeAfterDiscount - finalServiceFee);
-      }
-    }
-
-    const grand = subTotalAfterReward + finalShippingFee + finalServiceFee;
     let payNow = 0;
     let payLater = 0;
 
     if (paymentOption === "half_online_half_cod") {
-      payLater = subTotalAfterReward / 2;
-      payNow = (subTotalAfterReward / 2) + finalShippingFee + finalServiceFee;
+      payNow = halfNow;
+      payLater = halfLater;
     } else {
       payNow = grand;
       payLater = 0;
@@ -134,30 +147,22 @@ export default function Checkout() {
     return {
       sub: itemTotal,
       totalQty,
-      baseTotalFee,
-      discount,
       finalShippingFee,
-      finalServiceFee,
+      finalServiceFee: 0,
       grand,
       payNow,
       payLater,
       rewardDiscount,
-      maxPriceItemId
+      couponDiscount,
+      maxPriceItemId,
+      fullOnlineShipping,
+      fullOnlineTotal,
+      halfShipping,
+      halfNow,
+      halfLater,
     };
-  }, [items, paymentOption, cust.pin, hasPuzzleReward]);
+  }, [items, paymentOption, hasPuzzleReward, shippingRules, couponApplied]);
 
-  /* ------------ NUDGE ------------ */
-  const savingsNudge = useMemo(() => {
-    const qty = totals.totalQty;
-    if (qty >= 20) return null;
-    let nextTier = 0;
-    let nextSave = 0;
-    if (qty < 5) { nextTier = 5; nextSave = 20; }
-    else if (qty < 10) { nextTier = 10; nextSave = 30; }
-    else if (qty < 15) { nextTier = 15; nextSave = 40; }
-    else if (qty < 20) { nextTier = 20; nextSave = 50; }
-    return { needed: nextTier - qty, nextSave };
-  }, [totals.totalQty]);
 
   const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
@@ -191,6 +196,135 @@ export default function Checkout() {
     clearTimeout(pinDebounce.current);
     if (/^\d{6}$/.test(onlyDigits)) { pinDebounce.current = setTimeout(() => lookupPin(onlyDigits), 250); }
     else { setPinStatus(""); setOffices([]); }
+  }
+
+  /* ------------ CART-COUPON SYNC ------------ */
+  // Auto-remove or update coupon when cart items change
+  useEffect(() => {
+    if (!couponApplied) return;
+
+    const currentSubtotal = Math.max(0, totals.sub - totals.rewardDiscount);
+
+    // Check min order value
+    if ((couponApplied.minOrderValue || 0) > 0 && currentSubtotal < couponApplied.minOrderValue) {
+      setCouponApplied(null);
+      setCouponInput("");
+      t.info("Coupon removed — order total dropped below the minimum");
+      return;
+    }
+
+    // Check required book still in cart
+    if (couponApplied.requiredBookId) {
+      const currentCartItems = items.map(i => ({ bookId: getBookIdFromCartItem(i), qty: i.qty }));
+      const matchingItem = currentCartItems.find(i => String(i.bookId) === String(couponApplied.requiredBookId));
+      const itemQty = matchingItem?.qty || 0;
+      const neededQty = (couponApplied.minQty || 0) > 0 ? couponApplied.minQty : 1;
+      if (itemQty < neededQty) {
+        setCouponApplied(null);
+        setCouponInput("");
+        t.info("Coupon removed — required book is no longer in your cart");
+        return;
+      }
+    } else if ((couponApplied.minQty || 0) > 0 && totals.totalQty < couponApplied.minQty) {
+      setCouponApplied(null);
+      setCouponInput("");
+      t.info(`Coupon removed — minimum ${couponApplied.minQty} books required`);
+      return;
+    }
+
+    // For % coupons, recalculate discount as subtotal changes
+    if (couponApplied.discountType === "percent") {
+      let base = currentSubtotal;
+      if (couponApplied.requiredBookId) {
+        // Discount only applies to the required book's subtotal
+        const bookItem = items.find(i => String(getBookIdFromCartItem(i)) === String(couponApplied.requiredBookId));
+        base = bookItem ? (bookItem.unitPriceSnapshot || bookItem.price || 0) * (bookItem.qty || 0) : 0;
+      }
+      const newDiscount = Math.round(base * couponApplied.discountValue / 100);
+      if (newDiscount !== couponApplied.discount) {
+        setCouponApplied(prev => ({ ...prev, discount: newDiscount }));
+      }
+    }
+  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ------------ COUPON ------------ */
+  async function applyCoupon() {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    try {
+      const res = await api.post("/coupons/validate", {
+        code: couponInput.trim().toUpperCase(),
+        orderTotal: Math.max(0, totals.sub - totals.rewardDiscount),
+        totalQty: totals.totalQty,
+        cartItems: items.map(i => ({ bookId: getBookIdFromCartItem(i), qty: i.qty })),
+        ...(isCustomer && customer?.id && { customerId: customer.id }),
+      });
+      if (res.data?.ok) {
+        setCouponApplied(res.data);
+        t.success(`Coupon applied! You save ${res.data.discountType === "percent" ? res.data.discountValue + "%" : "₹" + res.data.discount}`);
+      }
+    } catch (e) {
+      t.err(e?.response?.data?.error || "Invalid coupon code");
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  function removeCoupon() {
+    setCouponApplied(null);
+    setCouponInput("");
+  }
+
+  async function applyCouponFromCard(coupon) {
+    if (couponApplied) return;
+    let updatedItems = [...items];
+
+    // If coupon requires a specific book, add it at the required qty
+    if (coupon.requiredBookId) {
+      const book = coupon.requiredBookId;
+      const neededQty = (coupon.minQty || 0) > 0 ? coupon.minQty : 1;
+      const existingItem = items.find(i => String(getBookIdFromCartItem(i)) === String(book._id));
+      const currentQty = existingItem?.qty || 0;
+
+      if (currentQty < neededQty) {
+        if (existingItem) {
+          setQty(String(book._id), neededQty);
+          updatedItems = items.map(i =>
+            String(getBookIdFromCartItem(i)) === String(book._id) ? { ...i, qty: neededQty } : i
+          );
+        } else {
+          const bookForCart = { _id: book._id, title: book.title, price: book.price, assets: book.assets, inventory: book.inventory };
+          addToCart(bookForCart, neededQty);
+          updatedItems = [...items, { ...bookForCart, qty: neededQty }];
+        }
+        t.success(`Added "${book.title}" × ${neededQty} to cart`);
+      }
+    }
+
+    // Validate and apply coupon using the updated items list
+    setCouponLoading(true);
+    try {
+      const itemTotal = updatedItems.reduce((sum, i) => sum + Number(i.unitPriceSnapshot ?? i.price ?? 0) * (i.qty || 1), 0);
+      const totalQty = updatedItems.reduce((sum, i) => sum + (i.qty || 1), 0);
+      const cartItems = updatedItems.map(i => ({ bookId: getBookIdFromCartItem(i), qty: i.qty || 1 }));
+
+      const res = await api.post("/coupons/validate", {
+        code: coupon.code,
+        orderTotal: Math.max(0, itemTotal - totals.rewardDiscount),
+        totalQty,
+        cartItems,
+        ...(isCustomer && customer?.id && { customerId: customer.id }),
+      });
+      if (res.data?.ok) {
+        setCouponApplied(res.data);
+        setCouponInput(coupon.code);
+        t.success(`Coupon ${coupon.code} applied! You save ₹${res.data.discount}`);
+      }
+    } catch (e) {
+      t.err(e?.response?.data?.error || "Could not apply coupon");
+    } finally {
+      setCouponLoading(false);
+    }
   }
 
   /* ------------ ORDER CREATION ------------ */
@@ -237,15 +371,11 @@ export default function Checkout() {
       const bookId = getBookIdFromCartItem(item);
       if (!bookId || bookId.startsWith('local_')) throw new Error(`Invalid book ID for "${item.title}"`);
 
-      let finalPrice = item.unitPriceSnapshot || item.price;
-      if (hasPuzzleReward && (item._id === totals.maxPriceItemId || item.id === totals.maxPriceItemId)) {
-        finalPrice = Math.round(finalPrice * 0.8); // 20% Off
-      }
-
       return {
         bookId,
         title: item.title,
-        price: finalPrice,
+        // Always send original price — server recalculates everything
+        price: item.unitPriceSnapshot || item.price,
         qty: item.qty,
       };
     });
@@ -262,6 +392,8 @@ export default function Checkout() {
       currency: "INR",
       shippingFee: totals.finalShippingFee,
       serviceFee: totals.finalServiceFee,
+      applyPuzzleReward: hasPuzzleReward,
+      couponCode: couponApplied?.code || "",
       payment: { method: paymentMethod, status: paymentStatus, dueOnDeliveryAmount: totals.payLater },
     };
 
@@ -348,6 +480,7 @@ export default function Checkout() {
 
               clear();
               localStorage.removeItem('puzzle_reward_claimed');
+              setCouponApplied(null);
               t.success("Payment successful!");
               navigate("/order-confirmed", { state: { orderId } });
             } else {
@@ -368,6 +501,7 @@ export default function Checkout() {
   const labelStyle = "block text-xs font-bold text-[#8A7A5E] uppercase tracking-wider mb-2 ml-1";
 
   return (
+    <>
     <div className="bg-[#FAF7F2] min-h-screen font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-20">
 
       {/* Global Texture */}
@@ -454,22 +588,66 @@ export default function Checkout() {
               </div>
             </div>
 
-            {/* Smart Savings Nudge (Gold/Parchment Style) */}
-            {savingsNudge && (
-              <div className="bg-gradient-to-r from-[#FFF9E6] to-[#FFF5E0] border border-[#D4AF37]/40 rounded-2xl p-6 flex items-center justify-between shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 opacity-10 pointer-events-none"><PartyPopper className="w-24 h-24 text-[#D4AF37]" /></div>
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="bg-[#D4AF37]/20 p-3 rounded-full text-[#B0894C]"><Gift className="w-6 h-6" /></div>
-                  <div>
-                    <h4 className="text-[#3E2723] font-['Cinzel'] font-bold text-lg">Bulk Blessing Available!</h4>
-                    <p className="text-[#8A7A5E] text-sm mt-1">Add <strong>{savingsNudge.needed} more</strong> books to save <strong>₹{savingsNudge.nextSave}</strong> on fees!</p>
-                  </div>
-                </div>
-                <button onClick={() => navigate('/catalog')} className="relative z-10 flex items-center gap-2 bg-white border border-[#D4AF37] text-[#3E2723] text-xs font-bold px-5 py-3 rounded-full hover:bg-[#D4AF37] hover:text-white transition-all shadow-sm font-['Cinzel'] tracking-wide">
-                  Shop More <ArrowRight className="w-3 h-3" />
-                </button>
+
+            {/* Coupon Code */}
+            <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[2rem] border border-[#D4AF37]/20 shadow-[0_5px_20px_rgba(62,39,35,0.05)]">
+              <div className="flex items-center gap-4 mb-6 border-b border-[#D4AF37]/10 pb-6">
+                <div className="w-12 h-12 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shadow-inner"><Tag className="w-6 h-6" /></div>
+                <h2 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723]">Coupon Code</h2>
               </div>
-            )}
+
+              {couponApplied ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <div>
+                      <span className="font-mono font-bold text-green-700 tracking-widest text-sm">{couponApplied.code}</span>
+                      <p className="text-xs text-green-600 mt-0.5">
+                        {couponApplied.discountType === "percent"
+                          ? `${couponApplied.discountValue}% off`
+                          : `₹${couponApplied.discountValue} off`} applied — you save ₹{couponApplied.discount}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={removeCoupon} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <input
+                    value={couponInput}
+                    onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === "Enter" && applyCoupon()}
+                    className="flex-1 pl-4 pr-4 py-3 bg-white border border-[#D4AF37]/30 rounded-xl text-[#3E2723] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 outline-none uppercase font-mono tracking-widest placeholder-[#8A7A5E]/50"
+                    placeholder="ENTER CODE"
+                    maxLength={30}
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="px-6 py-3 bg-[#3E2723] text-[#F3E5AB] rounded-xl font-bold font-['Cinzel'] text-sm hover:bg-[#2C1810] transition-colors disabled:opacity-50"
+                  >
+                    {couponLoading ? "…" : "Apply"}
+                  </button>
+                </div>
+              )}
+
+              {/* View Available Offers button */}
+              {!couponApplied && availableCoupons.length > 0 && (
+                <button
+                  onClick={() => setOffersOpen(true)}
+                  className="mt-4 w-full flex items-center justify-between px-4 py-3 bg-[#FFFBF0] border border-[#D4AF37]/30 rounded-xl hover:border-[#D4AF37]/70 hover:bg-[#FFF9E6] transition-all group"
+                >
+                  <div className="flex items-center gap-2.5 text-[#3E2723]">
+                    <Gift className="w-4 h-4 text-[#D4AF37]" />
+                    <span className="text-sm font-bold font-['Cinzel']">View Available Offers</span>
+                    <span className="text-xs bg-[#D4AF37] text-white font-bold px-2 py-0.5 rounded-full">{availableCoupons.length}</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#D4AF37] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              )}
+            </div>
 
             {/* Payment Method */}
             {hasOnlinePay && (
@@ -489,9 +667,13 @@ export default function Checkout() {
                     <h4 className="font-bold text-[#3E2723] font-['Cinzel'] text-lg mb-1">Full Payment</h4>
                     <p className="text-xs text-[#8A7A5E] font-medium uppercase tracking-wide mb-6">Best Value. Instant Confirmation.</p>
                     <div className="flex justify-between items-center text-sm bg-white/60 p-3 rounded-lg border border-[#D4AF37]/20 mb-3">
-                      <span className="font-bold text-[#3E2723]">Shipping Fee</span><span className="font-bold text-[#D4AF37] flex items-center gap-1"><CheckCircle className="w-3 h-3" /> FREE</span>
+                      <span className="font-bold text-[#3E2723]">Delivery Charge</span>
+                      {totals.fullOnlineShipping === 0
+                        ? <span className="font-bold text-[#D4AF37] flex items-center gap-1"><CheckCircle className="w-3 h-3" /> FREE</span>
+                        : <span className="font-bold text-[#3E2723]">{fmt(totals.fullOnlineShipping)}</span>
+                      }
                     </div>
-                    <div className="text-2xl font-bold text-[#3E2723] text-right font-['Playfair_Display']">{fmt(totals.sub)}</div>
+                    <div className="text-2xl font-bold text-[#3E2723] text-right font-['Playfair_Display']">{fmt(totals.fullOnlineTotal)}</div>
                   </label>
 
                   {/* Half & Half (Bronze/Wood Option) */}
@@ -505,18 +687,14 @@ export default function Checkout() {
 
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between items-center text-sm bg-white/60 px-3 py-2 rounded-lg border border-[#3E2723]/10">
-                        <span className="text-[#5C4A2E] text-xs">Shipping</span>
-                        <span className="font-bold text-[#3E2723] text-xs">{totals.finalShippingFee > 0 ? `+ ${fmt(totals.finalShippingFee)}` : "-"}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm bg-white/60 px-3 py-2 rounded-lg border border-[#3E2723]/10">
-                        <span className="text-[#5C4A2E] text-xs">Service Fee</span>
-                        <span className="font-bold text-[#3E2723] text-xs">{totals.finalServiceFee > 0 ? `+ ${fmt(totals.finalServiceFee)}` : "-"}</span>
+                        <span className="text-[#5C4A2E] text-xs">Delivery Charge</span>
+                        <span className="font-bold text-[#3E2723] text-xs">{totals.halfShipping > 0 ? `+ ${fmt(totals.halfShipping)}` : "Free"}</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-end border-t border-[#3E2723]/10 pt-3">
                       <span className="text-xs font-bold uppercase tracking-wide text-[#8A7A5E]">Pay Now</span>
-                      <span className="text-xl font-bold text-[#3E2723] font-['Playfair_Display']">{fmt(totals.payNow)}</span>
+                      <span className="text-xl font-bold text-[#3E2723] font-['Playfair_Display']">{fmt(totals.halfNow)}</span>
                     </div>
                   </label>
                 </div>
@@ -576,25 +754,20 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {paymentOption === "full_online" ? (
-                  <div className="flex justify-between text-[#5C4A2E] text-sm">
-                    <span>Shipping</span><span className="font-bold text-[#D4AF37]">FREE</span>
+                {couponApplied && totals.couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-green-700 font-bold">
+                    <span className="flex items-center gap-1.5"><Tag className="w-3 h-3" />{couponApplied.code}</span>
+                    <span>-{fmt(totals.couponDiscount)}</span>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex justify-between text-[#5C4A2E] text-sm">
-                      <span>Shipping</span><span className="font-bold text-[#3E2723]">{fmt(totals.finalShippingFee)}</span>
-                    </div>
-                    <div className="flex justify-between text-[#5C4A2E] text-sm">
-                      <span>Service Fee</span><span className="font-bold text-[#3E2723]">{fmt(totals.finalServiceFee)}</span>
-                    </div>
-                    {totals.discount > 0 && (
-                      <div className="text-xs text-[#D4AF37] font-bold flex justify-end items-center gap-1">
-                        <PartyPopper className="w-3 h-3" /> Bulk Saving: -{fmt(totals.discount)}
-                      </div>
-                    )}
-                  </>
                 )}
+
+                <div className="flex justify-between text-[#5C4A2E] text-sm">
+                  <span>Delivery Charge</span>
+                  {totals.finalShippingFee === 0
+                    ? <span className="font-bold text-[#D4AF37]">FREE</span>
+                    : <span className="font-bold text-[#3E2723]">{fmt(totals.finalShippingFee)}</span>
+                  }
+                </div>
 
                 <div className="flex justify-between items-center pt-4 border-t border-[#D4AF37]/20">
                   <span className="font-bold text-[#3E2723] text-lg font-['Cinzel']">Total</span>
@@ -636,5 +809,166 @@ export default function Checkout() {
         </div>
       </div>
     </div>
+
+    {/* ── Available Offers Modal ── */}
+    {offersOpen && (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={() => setOffersOpen(false)}>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div
+          className="relative bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[#D4AF37]/15">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#FFF9E6] border border-[#D4AF37]/30 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold font-['Cinzel'] text-[#3E2723]">Available Offers</h3>
+                <p className="text-xs text-[#8A7A5E]">{availableCoupons.length} coupon{availableCoupons.length !== 1 ? "s" : ""} available</p>
+              </div>
+            </div>
+            <button onClick={() => setOffersOpen(false)} className="p-2 rounded-xl text-[#8A7A5E] hover:bg-[#FFF9E6] hover:text-[#3E2723] transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Category Filter Tabs */}
+          <div className="px-6 pt-4 pb-2 flex gap-2 overflow-x-auto scrollbar-none">
+            {[
+              { id: "all", label: "All", icon: <Tag className="w-3 h-3" /> },
+              { id: "general", label: "General", icon: <Gift className="w-3 h-3" /> },
+              { id: "book", label: "Book Specific", icon: <BookOpen className="w-3 h-3" /> },
+              { id: "firstorder", label: "First Order", icon: <Star className="w-3 h-3" /> },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setOffersFilter(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                  offersFilter === tab.id
+                    ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723]"
+                    : "bg-white text-[#5C4A2E] border-[#D4AF37]/30 hover:border-[#D4AF37]"
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Coupon List */}
+          <div className="flex-1 overflow-y-auto px-6 py-3 space-y-3">
+            {availableCoupons
+              .filter(c => {
+                if (offersFilter === "book") return !!c.requiredBookId;
+                if (offersFilter === "firstorder") return c.isFirstOrderOnly;
+                if (offersFilter === "general") return !c.requiredBookId && !c.isFirstOrderOnly;
+                return true;
+              })
+              .map(coupon => {
+                const book = coupon.requiredBookId;
+                const cover = book?.assets?.coverUrl?.[0];
+                const neededQty = (coupon.minQty || 0) > 0 ? coupon.minQty : (book ? 1 : 0);
+                const discountLabel = coupon.discountType === "percent" ? `${coupon.discountValue}% OFF` : `₹${coupon.discountValue} OFF`;
+                const shortTitle = book?.title ? (book.title.length > 25 ? book.title.slice(0, 25) + "…" : book.title) : null;
+                const inCartQty = book ? (items.find(i => String(getBookIdFromCartItem(i)) === String(book._id))?.qty || 0) : 0;
+                const needsAdd = book && inCartQty < (neededQty || 1);
+
+                // Category label
+                const categoryLabel = book ? "Book Specific" : coupon.isFirstOrderOnly ? "First Order" : "General";
+                const categoryColor = book ? "bg-blue-50 text-blue-700 border-blue-200" : coupon.isFirstOrderOnly ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-amber-50 text-amber-700 border-amber-200";
+
+                return (
+                  <div key={coupon._id} className="border border-[#D4AF37]/20 rounded-2xl overflow-hidden bg-[#FFFDF7] hover:border-[#D4AF37]/50 transition-all">
+                    {/* Top stripe */}
+                    <div className="flex items-center gap-3 p-4">
+                      {/* Thumbnail */}
+                      {book ? (
+                        <div className="w-14 h-18 flex-shrink-0 rounded-xl overflow-hidden border border-[#D4AF37]/20 bg-[#FAF7F2] shadow-sm" style={{height: '72px'}}>
+                          {cover
+                            ? <img src={assetUrl(cover)} alt={shortTitle} className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center text-[#D4AF37]"><BookOpen className="w-5 h-5" /></div>
+                          }
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-[#FFF9E6] border border-[#D4AF37]/20 flex items-center justify-center">
+                          {coupon.isFirstOrderOnly ? <Star className="w-6 h-6 text-purple-500" /> : <Gift className="w-6 h-6 text-[#D4AF37]" />}
+                        </div>
+                      )}
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-mono font-bold text-[#3E2723] tracking-widest bg-[#FFF3CD] px-2 py-0.5 rounded-lg border border-[#D4AF37]/30 text-sm">{coupon.code}</span>
+                          <span className="text-xs font-bold text-white bg-[#D4AF37] px-2 py-0.5 rounded-full">{discountLabel}</span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${categoryColor}`}>{categoryLabel}</span>
+                        </div>
+                        {shortTitle && <p className="text-sm font-semibold text-[#3E2723] mb-0.5">{shortTitle}</p>}
+                        {coupon.description && <p className="text-xs text-[#8A7A5E] leading-relaxed">{coupon.description}</p>}
+                      </div>
+                    </div>
+
+                    {/* Conditions row */}
+                    <div className="bg-[#FAF7F2] border-t border-[#D4AF37]/10 px-4 py-2.5 flex items-center justify-between gap-3">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {neededQty > 0 && (
+                          <span className="text-xs text-[#5C4A2E] flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-[#D4AF37]" />
+                            {book ? `Min ${neededQty} ${neededQty === 1 ? "copy" : "copies"} of this book` : `Min ${neededQty} books in cart`}
+                          </span>
+                        )}
+                        {(coupon.minOrderValue || 0) > 0 && (
+                          <span className="text-xs text-[#5C4A2E] flex items-center gap-1">
+                            <Tag className="w-3 h-3 text-[#D4AF37]" />
+                            Min order ₹{coupon.minOrderValue}
+                          </span>
+                        )}
+                        {coupon.isFirstOrderOnly && (
+                          <span className="text-xs text-purple-700 flex items-center gap-1">
+                            <Star className="w-3 h-3" /> Valid on first order only
+                          </span>
+                        )}
+                        {coupon.expiresAt && (
+                          <span className="text-xs text-red-500 flex items-center gap-1">
+                            Expires {new Date(coupon.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => { applyCouponFromCard(coupon); setOffersOpen(false); }}
+                        disabled={couponLoading}
+                        className={`flex-shrink-0 px-4 py-1.5 rounded-xl text-xs font-bold font-['Cinzel'] transition-all disabled:opacity-50 whitespace-nowrap ${
+                          needsAdd
+                            ? "bg-[#D4AF37] text-[#3E2723] hover:bg-[#C9A227]"
+                            : "bg-[#3E2723] text-[#F3E5AB] hover:bg-[#2C1810]"
+                        }`}
+                      >
+                        {needsAdd ? "Add & Apply" : "Use Coupon"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+            {/* Empty state for filter */}
+            {availableCoupons.filter(c => {
+              if (offersFilter === "book") return !!c.requiredBookId;
+              if (offersFilter === "firstorder") return c.isFirstOrderOnly;
+              if (offersFilter === "general") return !c.requiredBookId && !c.isFirstOrderOnly;
+              return true;
+            }).length === 0 && (
+              <div className="text-center py-12 text-[#8A7A5E]">
+                <Gift className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">No offers in this category</p>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom pad for mobile */}
+          <div className="h-safe-bottom pb-4" />
+        </div>
+      </div>
+    )}
+    </>
   );
 }

@@ -16,7 +16,9 @@ import {
   Milestone,
   Mail,
   Sparkles,
-  Rocket
+  Rocket,
+  Package,
+  Tag
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -99,6 +101,20 @@ export default function AdminSidebar() {
           icon={Target}
         >
           <WaveText text="PopUps" hoverColor="#000"  />
+        </Item>
+        <Item
+          to="/admin/shipping-rules"
+          active={loc.pathname.startsWith("/admin/shipping-rules")}
+          icon={Package}
+        >
+          <WaveText text="Shipping Charges" hoverColor="#000" />
+        </Item>
+        <Item
+          to="/admin/coupons"
+          active={loc.pathname.startsWith("/admin/coupons")}
+          icon={Tag}
+        >
+          <WaveText text="Coupons" hoverColor="#000" />
         </Item>
 
         <div className="my-4 border-t border-[#F4F7F5]"></div>

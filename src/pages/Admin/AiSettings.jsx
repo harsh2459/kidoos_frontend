@@ -27,6 +27,8 @@ export default function AiSettings() {
     const [prompt, setPrompt] = useState("");
     const [newKey, setNewKey] = useState("");
     const [newLabel, setNewLabel] = useState("");
+    const [removeKeyConfirm, setRemoveKeyConfirm] = useState(null); // index | null
+    const [resetPromptConfirm, setResetPromptConfirm] = useState(false);
 
     useEffect(() => { loadSettings(); }, []);
 
@@ -93,7 +95,8 @@ export default function AiSettings() {
     }
 
     function removeKey(index) {
-        if (window.confirm("Remove?")) setConfig(prev => ({ ...prev, keys: prev.keys.filter((_, i) => i !== index) }));
+        setConfig(prev => ({ ...prev, keys: prev.keys.filter((_, i) => i !== index) }));
+        setRemoveKeyConfirm(null);
     }
 
     function resetKeyStatus(index) {
@@ -179,7 +182,7 @@ export default function AiSettings() {
                                         </div>
                                         <div className="flex gap-2">
                                             <button onClick={() => resetKeyStatus(i)}><RefreshCw className="w-4 h-4 text-gray-500"/></button>
-                                            <button onClick={() => removeKey(i)}><Trash2 className="w-4 h-4 text-red-400"/></button>
+                                            <button onClick={() => setRemoveKeyConfirm(i)}><Trash2 className="w-4 h-4 text-red-400"/></button>
                                         </div>
                                     </div>
                                 ))}
@@ -204,9 +207,7 @@ export default function AiSettings() {
                         />
                         <div className="mt-4 flex gap-2">
                             <button
-                                onClick={() => {
-                                    if (window.confirm("Reset prompt to default?")) setPrompt(DEFAULT_PROMPT_BACKUP);
-                                }}
+                                onClick={() => setResetPromptConfirm(true)}
                                 className="text-xs font-bold text-[#5C756D] hover:text-[#384959] underline"
                             >
                                 Reset to Default
@@ -215,6 +216,54 @@ export default function AiSettings() {
                     </div>
                 )}
             </div>
+
+        {/* Remove API Key Modal */}
+        {removeKeyConfirm !== null && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setRemoveKeyConfirm(null)}>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-center w-12 h-12 bg-red-50 rounded-full mx-auto mb-4">
+                        <Trash2 className="w-6 h-6 text-red-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 text-center mb-1">Remove API Key?</h3>
+                    <p className="text-sm text-gray-500 text-center mb-2">You are about to remove</p>
+                    <p className="text-center font-bold text-[#384959] mb-1">{config.keys[removeKeyConfirm]?.label}</p>
+                    <p className="text-center mb-5">
+                        <span className="font-mono text-xs text-[#5C756D] bg-[#F4F7F5] px-2 py-1 rounded-lg">{config.keys[removeKeyConfirm]?.key?.slice(0, 8)}...</span>
+                    </p>
+                    <div className="flex gap-3">
+                        <button onClick={() => setRemoveKeyConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button onClick={() => removeKey(removeKeyConfirm)} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Reset Prompt Modal */}
+        {resetPromptConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setResetPromptConfirm(false)}>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-center w-12 h-12 bg-amber-50 rounded-full mx-auto mb-4">
+                        <RefreshCw className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 text-center mb-2">Reset to Default?</h3>
+                    <p className="text-sm text-gray-500 text-center mb-6">Your current prompt will be replaced with the default. This cannot be undone.</p>
+                    <div className="flex gap-3">
+                        <button onClick={() => setResetPromptConfirm(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button onClick={() => { setPrompt(DEFAULT_PROMPT_BACKUP); setResetPromptConfirm(false); }} className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     );
 }

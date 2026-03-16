@@ -39,6 +39,7 @@ export default function BooksAdmin() {
   const [limit] = useState(50);
   const totalPages = Math.ceil(total / limit);
   const fileInputRef = useRef(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -106,11 +107,18 @@ export default function BooksAdmin() {
     setItems(arr => arr.map(x => x._id === b._id ? { ...x, visibility: next } : x));
   }
 
-  async function remove(b) {
-    if (!window.confirm(`Delete "${b.title}"?`)) return;
-    await api.delete(`/books/${b._id}`, auth);
-    setItems(arr => arr.filter(x => x._id !== b._id));
-    setTotal(prev => prev - 1);
+  async function confirmDelete() {
+    if (!deleteConfirm) return;
+    try {
+      await api.delete(`/books/${deleteConfirm._id}`, auth);
+      setItems(arr => arr.filter(x => x._id !== deleteConfirm._id));
+      setTotal(prev => prev - 1);
+      t.success("Book deleted");
+    } catch {
+      t.err("Failed to delete book");
+    } finally {
+      setDeleteConfirm(null);
+    }
   }
 
   async function bulkUpdateVisibility(status) {
@@ -430,7 +438,7 @@ export default function BooksAdmin() {
                               {b.visibility === "public" ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                             <button
-                              onClick={() => remove(b)}
+                              onClick={() => setDeleteConfirm(b)}
                               className="p-2 rounded-lg text-[#5C756D] border border-transparent hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all"
                               title="Delete Book"
                             >
@@ -506,6 +514,31 @@ export default function BooksAdmin() {
             </div>
           )}
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-center w-12 h-12 bg-red-50 rounded-full mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-1">Delete Book?</h3>
+            <p className="text-sm text-gray-500 text-center mb-2">You are about to delete</p>
+            <p className="text-center font-bold text-[#222831] mb-1 px-2 line-clamp-2">{deleteConfirm.title}</p>
+            <p className="text-xs text-center font-mono text-[#5C756D] bg-[#F4F7F5] rounded-lg px-2 py-1 mx-auto w-fit mb-4">{deleteConfirm.inventory?.sku || "—"}</p>
+            <p className="text-xs text-gray-400 text-center mb-6">This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={confirmDelete} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -67,6 +67,7 @@ export default function AdminOrders() {
     shippingFee: '',
     serviceFee: '',
     taxAmount: '',
+    couponCode: '',
     status: 'confirmed',
     adminNotes: ''
   });
@@ -684,6 +685,7 @@ export default function AdminOrders() {
       shippingFee: '',
       serviceFee: '',
       taxAmount: '',
+      couponCode: '',
       status: 'confirmed',
       adminNotes: ''
     });
@@ -747,7 +749,7 @@ export default function AdminOrders() {
     (Number(offlineForm.taxAmount) || 0);
 
   async function submitOfflineOrder() {
-    const { customer, items, shipping, payment, shippingFee, serviceFee, taxAmount, status, adminNotes } = offlineForm;
+    const { customer, items, shipping, payment, shippingFee, serviceFee, taxAmount, couponCode, status, adminNotes } = offlineForm;
     if (!customer.email && !customer.phone) {
       t.warn('Customer email or phone is required');
       return;
@@ -774,7 +776,8 @@ export default function AdminOrders() {
         serviceFee: serviceFee !== '' ? Number(serviceFee) : 0,
         taxAmount: taxAmount !== '' ? Number(taxAmount) : 0,
         status: isOnline ? 'pending' : status,
-        adminNotes
+        adminNotes,
+        ...(couponCode.trim() && { couponCode: couponCode.trim().toUpperCase() }),
       };
 
       const { data } = await api.post('/orders/admin', payload, auth);
@@ -2174,6 +2177,16 @@ export default function AdminOrders() {
                         <option value="delivered">Delivered</option>
                       </select>
                     </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Coupon Code <span className="text-gray-400">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={offlineForm.couponCode}
+                      onChange={e => setOfflineForm(prev => ({ ...prev, couponCode: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. SAVE20 — applied by server"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono tracking-widest uppercase"
+                    />
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div>

@@ -71,6 +71,8 @@ const EmailTemplates = lazy(() => import('./pages/Admin/EmailTemplates'));
 const AdminCategories = lazy(() => import('./pages/Admin/Categories'));
 const PopupSettings = lazy(() => import('./pages/Admin/PopupSettings'));
 const AiSettings = lazy(() => import('./pages/Admin/AiSettings'));
+const ShippingRules = lazy(() => import('./pages/Admin/ShippingRules'));
+const Coupons = lazy(() => import('./pages/Admin/Coupons'));
 
 function InnerApp() {
   const loc = useLocation();
@@ -229,6 +231,14 @@ function InnerApp() {
             <Route
               path="/admin/ai-settings"
               element={<AdminGuard><AdminLayout><AiSettings /></AdminLayout></AdminGuard>}
+            />
+            <Route
+              path="/admin/shipping-rules"
+              element={<AdminGuard><AdminLayout><ShippingRules /></AdminLayout></AdminGuard>}
+            />
+            <Route
+              path="/admin/coupons"
+              element={<AdminGuard><AdminLayout><Coupons /></AdminLayout></AdminGuard>}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

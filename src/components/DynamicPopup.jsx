@@ -1,5 +1,5 @@
 // src/components/DynamicPopup.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import '../styles/DynamicPopup.css';
 import api from '../api/client';
@@ -8,6 +8,8 @@ const DynamicPopup = ({ page = 'all' }) => {
     const [popup, setPopup] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
     const [hasShown, setHasShown] = useState(false);
+    const imageReadyRef = useRef(false);
+    const triggerFiredRef = useRef(false);
 
     useEffect(() => {
         checkAndFetchPopup();
@@ -58,9 +60,37 @@ const DynamicPopup = ({ page = 'all' }) => {
 
             if (response.data.ok && response.data.popup) {
                 console.log('✅ Frontend: Popup found:', response.data.popup.title);
-                setPopup(response.data.popup);
-                setupTrigger(response.data.popup);
-                await trackImpression(response.data.popup._id);
+                const popupData = response.data.popup;
+                setPopup(popupData);
+
+                // Preload the image in parallel with the trigger timer
+                const imgUrl = popupData.designType === 'image'
+                    ? popupData.imageUrl
+                    : popupData.product?.assets?.coverUrl?.[0];
+
+                if (imgUrl) {
+                    const img = new window.Image();
+                    img.onload = () => {
+                        imageReadyRef.current = true;
+                        if (triggerFiredRef.current) {
+                            setIsVisible(true);
+                            setHasShown(true);
+                        }
+                    };
+                    img.onerror = () => {
+                        imageReadyRef.current = true; // show anyway if image fails
+                        if (triggerFiredRef.current) {
+                            setIsVisible(true);
+                            setHasShown(true);
+                        }
+                    };
+                    img.src = imgUrl;
+                } else {
+                    imageReadyRef.current = true;
+                }
+
+                setupTrigger(popupData);
+                await trackImpression(popupData._id);
             } else {
                 console.log('ℹ️ Frontend: No active popup found in response');
             }
@@ -70,45 +100,49 @@ const DynamicPopup = ({ page = 'all' }) => {
         }
     };
 
+    const showPopup = () => {
+        triggerFiredRef.current = true;
+        if (imageReadyRef.current) {
+            setIsVisible(true);
+            setHasShown(true);
+        }
+        // if image not ready yet, the img.onload handler above will call setIsVisible
+    };
+
     const setupTrigger = (popupData) => {
         if (hasShown) return;
 
         switch (popupData.triggerType) {
             case 'time':
-                setTimeout(() => {
-                    setIsVisible(true);
-                    setHasShown(true);
-                }, popupData.triggerValue * 1000);
+                setTimeout(() => showPopup(), popupData.triggerValue * 1000);
                 break;
 
-            case 'scroll':
+            case 'scroll': {
                 const handleScroll = () => {
                     const scrollPercent =
                         (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-
-                    if (scrollPercent >= popupData.triggerValue && !hasShown) {
-                        setIsVisible(true);
-                        setHasShown(true);
+                    if (scrollPercent >= popupData.triggerValue && !triggerFiredRef.current) {
                         window.removeEventListener('scroll', handleScroll);
+                        showPopup();
                     }
                 };
                 window.addEventListener('scroll', handleScroll);
                 break;
+            }
 
-            case 'exit':
+            case 'exit': {
                 const handleMouseLeave = (e) => {
-                    if (e.clientY <= 0 && !hasShown) {
-                        setIsVisible(true);
-                        setHasShown(true);
+                    if (e.clientY <= 0 && !triggerFiredRef.current) {
                         document.removeEventListener('mouseleave', handleMouseLeave);
+                        showPopup();
                     }
                 };
                 document.addEventListener('mouseleave', handleMouseLeave);
                 break;
+            }
 
             default:
-                setIsVisible(true);
-                setHasShown(true);
+                showPopup();
         }
     };
 
@@ -151,7 +185,7 @@ const DynamicPopup = ({ page = 'all' }) => {
             });
         }
 
-        const link = popup.ctaLink || (popup.product ? `/product/${popup.product.slug}` : '/catalog');
+        const link = popup.ctaLink || (popup.product ? `/book/${popup.product.slug}` : '/catalog');
         window.location.href = link;
     };
 
@@ -207,10 +241,16 @@ const DynamicPopup = ({ page = 'all' }) => {
     const product = popup.product;
     const design = popup.customDesign || {};
 
-    // Calculate discounted price
-    const originalPrice = product?.price || 0;
-    const discount = popup.discountPercentage || product?.discountPct || 0;
-    const finalPrice = originalPrice - (originalPrice * discount / 100);
+    // Use book's actual pricing — mrp (crossed out), price (current), discountPct (badge)
+    // If admin set a custom popup discount %, apply it on top of the book's price
+    const mrp = product?.mrp || product?.price || 0;
+    const basePrice = product?.price || 0;
+    const bookDiscount = product?.discountPct || 0;
+    const popupExtraDiscount = popup.discountPercentage > 0 ? popup.discountPercentage : 0;
+    const displayDiscount = popupExtraDiscount > 0 ? popupExtraDiscount : bookDiscount;
+    const finalPrice = popupExtraDiscount > 0
+        ? basePrice - (basePrice * popupExtraDiscount / 100)
+        : basePrice;
 
     return (
         <>
@@ -262,7 +302,7 @@ const DynamicPopup = ({ page = 'all' }) => {
 
                     <div className="popup-details" style={{ flex: 1 }}>
                         {/* Discount Badge */}
-                        {discount > 0 && (
+                        {displayDiscount > 0 && (
                             <div
                                 className="popup-badge"
                                 style={{
@@ -270,7 +310,7 @@ const DynamicPopup = ({ page = 'all' }) => {
                                     color: design.ctaTextColor || '#ffffff'
                                 }}
                             >
-                                {discount}% OFF
+                                {displayDiscount}% OFF
                             </div>
                         )}
 
@@ -304,14 +344,14 @@ const DynamicPopup = ({ page = 'all' }) => {
                             <div className="popup-product">
                                 <h3 style={{ color: design.textColor }}>{product.title}</h3>
                                 <div className="popup-pricing">
-                                    {discount > 0 ? (
+                                    {mrp > basePrice || popupExtraDiscount > 0 ? (
                                         <>
-                                            <span className="popup-original-price">₹{originalPrice}</span>
+                                            <span className="popup-original-price">₹{mrp}</span>
                                             <span
                                                 className="popup-discounted-price"
                                                 style={{ color: design.accentColor || '#48bb78' }}
                                             >
-                                                ₹{finalPrice.toFixed(2)}
+                                                ₹{finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)}
                                             </span>
                                         </>
                                     ) : (
@@ -319,7 +359,7 @@ const DynamicPopup = ({ page = 'all' }) => {
                                             className="popup-price"
                                             style={{ color: design.textColor }}
                                         >
-                                            ₹{originalPrice}
+                                            ₹{basePrice}
                                         </span>
                                     )}
                                 </div>

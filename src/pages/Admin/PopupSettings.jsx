@@ -393,7 +393,9 @@ export default function PopupSettings() {
                                                     >
                                                         <option value="">-- Choose a Book --</option>
                                                         {books.map(b => (
-                                                            <option key={b._id} value={b._id}>{b.title}</option>
+                                                            <option key={b._id} value={b._id}>
+                                                                {b.inventory?.sku ? `[${b.inventory.sku}] ${b.title}` : b.title}
+                                                            </option>
                                                         ))}
                                                     </select>
                                                 </div>
@@ -429,7 +431,12 @@ export default function PopupSettings() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-[#384959] line-clamp-1">{selectedBook.title}</p>
-                                                        <p className="text-xs text-[#5C756D]">₹{selectedBook.price}</p>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            {selectedBook.inventory?.sku && (
+                                                                <span className="text-xs font-mono bg-[#F4F7F5] text-[#5C756D] px-1.5 py-0.5 rounded">{selectedBook.inventory.sku}</span>
+                                                            )}
+                                                            <span className="text-xs text-[#5C756D]">₹{selectedBook.price}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}

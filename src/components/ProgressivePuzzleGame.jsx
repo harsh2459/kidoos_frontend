@@ -9,7 +9,7 @@ import {
 
 const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
-export default function ProgressivePuzzleGame({ levels, grandWinMessage = "A Royal Victory!", rewardImage }) {
+export default function ProgressivePuzzleGame({ levels, grandWinMessage = "A Royal Victory!", rewardImage, onWin }) {
   // ... [Puzzle Logic Unchanged] ...
   const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
   const [isLevelComplete, setIsLevelComplete] = useState(false);
@@ -98,6 +98,7 @@ export default function ProgressivePuzzleGame({ levels, grandWinMessage = "A Roy
 
     if (currentLevelIdx >= levels.length - 1) {
       localStorage.setItem("puzzle_reward_claimed", "true");
+      if (onWin) onWin();
       setTimeout(() => setIsGameComplete(true), 1200);
     }
   };
