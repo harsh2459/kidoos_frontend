@@ -150,7 +150,7 @@ export default function ShiprocketPage() {
         setDefaultProfile(profiles.find(p => p.isDefault) || profiles[0] || null);
       }
     } catch {
-      t.error("Failed to load shipping orders");
+      t.err({ title: "Load failed", sub: "Could not load shipping orders. Please refresh." });
     } finally {
       setLoading(false);
     }
@@ -230,20 +230,20 @@ export default function ShiprocketPage() {
     const sel = orderIds
       .filter(id => selections[id])
       .map(id => ({ orderId: id, courierId: Number(selections[id]) }));
-    if (!sel.length) { t.warn("Please select a courier first"); return; }
+    if (!sel.length) { t.warn({ title: "No courier selected", sub: "Please select a courier first." }); return; }
     setActionLoading(true);
     try {
       const { data } = await ShipAPI.assignCourier(sel, auth);
       if (data.ok) {
         const { success = [], failed = [] } = data.data;
-        if (success.length) t.success(`${success.length} shipment(s) dispatched!`);
-        failed.forEach(f => t.error(`Order ${String(f.id).slice(-6)}: ${f.error}`));
+        if (success.length) t.ok({ title: "Shipments dispatched", detail: `${success.length} shipment(s)`, sub: "Couriers assigned successfully." });
+        failed.forEach(f => t.err({ title: "Assignment failed", detail: `Order …${String(f.id).slice(-6)}`, sub: f.error }));
         await load();
       } else {
-        t.error(data.error || "Assignment failed");
+        t.err(data.error || "Could not assign couriers. Please try again.");
       }
     } catch (e) {
-      t.error(e.response?.data?.error || "Assignment failed");
+      t.err(e.response?.data?.error || "Could not assign couriers.");
     } finally {
       setActionLoading(false);
     }
@@ -252,16 +252,16 @@ export default function ShiprocketPage() {
   async function handlePrintLabel(order) {
     const labelUrl = order.shipping?.shiprocket?.labelUrl;
     if (labelUrl) { window.open(labelUrl, "_blank"); return; }
-    t.info("Fetching label…");
+    t.info({ title: "Fetching label", sub: "Retrieving Shiprocket label, please wait..." });
     try {
       const { data } = await ShipAPI.label([order._id], auth);
       if (data.ok && data.data?.label_url) {
         window.open(data.data.label_url, "_blank");
       } else {
-        t.error(data.error || "Label not available yet");
+        t.err(data.error || "Label is not available yet. Try again shortly.");
       }
     } catch (e) {
-      t.error(e.response?.data?.error || "Failed to fetch label");
+      t.err(e.response?.data?.error || "Could not fetch the label.");
     }
   }
 
@@ -287,12 +287,12 @@ export default function ShiprocketPage() {
         if (data.recommendedCourierId) {
           setSelections(prev => ({ ...prev, [orderId]: data.recommendedCourierId }));
         }
-        t.success("Courier options loaded");
+        t.ok({ title: "Couriers loaded", sub: "Courier options are ready to select." });
       } else {
-        t.error(data.error || "Could not fetch couriers");
+        t.err(data.error || "Could not fetch courier options.");
       }
     } catch (e) {
-      t.error(e.response?.data?.error || "Failed to fetch couriers");
+      t.err(e.response?.data?.error || "Could not load couriers.");
     } finally {
       setFetchingCouriers(prev => ({ ...prev, [orderId]: false }));
     }
@@ -307,7 +307,7 @@ export default function ShiprocketPage() {
   // ── BlueDart one-click ship ────────────────────────────────────────────────
   async function handleBlueDartShip(orderId) {
     if (!defaultProfile?._id) {
-      t.error("No BlueDart profile configured. Please set up a BlueDart profile first.");
+      t.err({ title: "No BlueDart profile", sub: "Please set up a BlueDart profile first." });
       return;
     }
     setBdShipping(prev => ({ ...prev, [orderId]: true }));
@@ -315,13 +315,13 @@ export default function ShiprocketPage() {
       const res = await BlueDartAPI.createShipment(orderId, defaultProfile._id, auth);
       const data = res?.data;
       if (data?.ok) {
-        t.success(`Shipment created! AWB: ${data.data?.awbNumber || "assigned"}`);
+        t.ok({ title: "Shipment created", detail: `AWB: ${data.data?.awbNumber || "assigned"}`, sub: "BlueDart shipment is ready." });
         await load();
       } else {
-        t.error(data?.error || "BlueDart shipment failed");
+        t.err({ title: "BlueDart shipment failed", sub: data?.error || "Could not create BlueDart shipment." });
       }
     } catch (e) {
-      t.error(e.message || "BlueDart shipment failed");
+      t.err(e.message || "Could not create BlueDart shipment.");
     } finally {
       setBdShipping(prev => ({ ...prev, [orderId]: false }));
     }
@@ -329,7 +329,7 @@ export default function ShiprocketPage() {
 
   async function handleBlueDartShipAll() {
     if (!defaultProfile?._id) {
-      t.error("No BlueDart profile configured.");
+      t.err({ title: "No BlueDart profile", sub: "Please set up a BlueDart profile first." });
       return;
     }
     const ids = bdPendingFiltered.map(o => String(o._id));
@@ -340,14 +340,14 @@ export default function ShiprocketPage() {
       const data = res?.data;
       if (data?.ok) {
         const { success = [], failed = [] } = data.data || {};
-        if (success.length) t.success(`${success.length} BlueDart shipment(s) created!`);
-        failed.forEach(f => t.error(`Order ${String(f.orderId).slice(-6)}: ${f.error}`));
+        if (success.length) t.ok({ title: "Shipments created", detail: `${success.length} shipment(s)`, sub: "BlueDart AWBs have been assigned." });
+        failed.forEach(f => t.err({ title: "Shipment failed", detail: `Order …${String(f.orderId).slice(-6)}`, sub: f.error }));
         await load();
       } else {
-        t.error(data?.error || "Bulk BlueDart failed");
+        t.err({ title: "Bulk shipment failed", sub: data?.error || "Could not create BlueDart shipments." });
       }
     } catch (e) {
-      t.error(e.message || "Bulk BlueDart failed");
+      t.err(e.message || "Could not create BlueDart shipments.");
     } finally {
       setActionLoading(false);
     }
@@ -356,24 +356,24 @@ export default function ShiprocketPage() {
   async function handleBlueDartTrack(order) {
     const awb = order.shipping?.bd?.awbNumber;
     if (!awb) return;
-    t.info("Fetching tracking…");
+    t.info({ title: "Fetching tracking", sub: "Retrieving BlueDart tracking data..." });
     try {
       const res = await BlueDartAPI.trackAwb(awb, auth);
       const data = res?.data;
       if (data?.ok || data?.tracking) {
         setTrackingModal({ order, data: data?.tracking || data?.data || data, carrier: "bluedart" });
       } else {
-        t.error(data?.error || "Failed to fetch tracking");
+        t.err({ title: "Tracking unavailable", sub: data?.error || "Could not fetch tracking information." });
       }
     } catch (e) {
-      t.error(e.message || "Failed to fetch tracking");
+      t.err(e.message || "Could not retrieve tracking data.");
     }
   }
 
   async function handleBlueDartLabel(order) {
     const stored = order.shipping?.bd?.labelUrl;
     if (stored) { window.open(stored, "_blank"); return; }
-    t.info("Generating label…");
+    t.info({ title: "Generating label", sub: "Creating BlueDart label, please wait..." });
     try {
       const res = await BlueDartAPI.generateLabelOnDemand(order._id, auth);
       const data = res?.data;
@@ -386,10 +386,10 @@ export default function ShiprocketPage() {
           window.open(URL.createObjectURL(blob), "_blank");
         }
       } else {
-        t.error(data?.error || "Label not available");
+        t.err({ title: "Label unavailable", sub: data?.error || "Label is not available yet." });
       }
     } catch (e) {
-      t.error(e.message || "Failed to generate label");
+      t.err(e.message || "Could not generate the label.");
     }
   }
 

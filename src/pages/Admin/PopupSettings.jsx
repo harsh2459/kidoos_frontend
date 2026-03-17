@@ -46,7 +46,7 @@ export default function PopupSettings() {
                 setConfigs(data.popup.configs || []);
             }
         } catch (error) {
-            t.err("Failed to load popup settings");
+            t.err({ title: "Load failed", sub: "Could not load popup settings. Please refresh." });
         } finally {
             setLoading(false);
         }
@@ -140,7 +140,7 @@ export default function PopupSettings() {
     async function handleImageUpload(configId, file) {
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
-            t.err("Image must be less than 5MB");
+            t.err({ title: "Image too large", sub: "Image must be less than 5MB." });
             return;
         }
 
@@ -154,12 +154,12 @@ export default function PopupSettings() {
             if (response.data.ok && response.data.images && response.data.images.length > 0) {
                 const imageUrl = response.data.images[0].path || response.data.images[0].previewUrl;
                 updateConfig(configId, 'imageUrl', imageUrl);
-                t.ok("Image uploaded successfully");
+                t.ok({ title: "Image uploaded", sub: "The popup image has been uploaded." });
             } else {
-                t.err("Upload failed - no image returned");
+                t.err({ title: "Upload failed", sub: "No image was returned. Please try again." });
             }
         } catch (error) {
-            t.err("Failed to upload image");
+            t.err({ title: "Upload failed", sub: "Could not upload image. Please try again." });
         } finally {
             setUploadingImage(null);
         }
@@ -176,7 +176,7 @@ export default function PopupSettings() {
         );
 
         if (invalidConfigs.length > 0) {
-            t.err("Please complete all required fields for active popups");
+            t.err({ title: "Incomplete configuration", sub: "Please complete all required fields for active popups." });
             return;
         }
 
@@ -191,14 +191,14 @@ export default function PopupSettings() {
             }, auth);
 
             if (response.data.ok) {
-                t.ok("Popup settings saved successfully");
+                t.ok({ title: "Popup settings saved", sub: "Your popup configuration has been updated." });
                 loadSettings();
             } else {
-                t.err("Failed to save popup settings");
+                t.err({ title: "Save failed", sub: "Could not save popup settings. Please try again." });
             }
         } catch (error) {
             console.error("Save error:", error);
-            t.err(error.response?.data?.error || "Error saving popup settings");
+            t.err({ title: "Save failed", sub: error.response?.data?.error || "Could not save popup settings." });
         } finally {
             setSaving(false);
         }

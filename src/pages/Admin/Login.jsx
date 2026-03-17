@@ -28,7 +28,7 @@ export default function AdminLogin() {
       const { data } = await api.post("/auth/login", { email, password });
       if (data.ok && data.token) {
         localStorage.setItem("admin_jwt", data.token);
-        t.ok("Logged in successfully");
+        t.ok({ title: "Welcome back", sub: "You are now signed in to the admin portal." });
         setAuth(data.token, data.role);
         window.location.href = "/admin/orders";
       } else {

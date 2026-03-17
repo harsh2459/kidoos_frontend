@@ -113,9 +113,9 @@ export default function BooksAdmin() {
       await api.delete(`/books/${deleteConfirm._id}`, auth);
       setItems(arr => arr.filter(x => x._id !== deleteConfirm._id));
       setTotal(prev => prev - 1);
-      t.success("Book deleted");
+      t.success({ title: "Book deleted", sub: "The book has been removed from the catalogue." });
     } catch {
-      t.err("Failed to delete book");
+      t.err({ title: "Delete failed", sub: "Could not delete the book. Please try again." });
     } finally {
       setDeleteConfirm(null);
     }
@@ -144,7 +144,7 @@ export default function BooksAdmin() {
     ];
 
     if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
-      t.err("Invalid file type. Please upload Excel or CSV.");
+      t.err({ title: "Invalid file type", sub: "Please upload an Excel or CSV file." });
       return;
     }
 
@@ -156,11 +156,11 @@ export default function BooksAdmin() {
     try {
       const response = await api.post("/books/import", formData);
       t.dismiss(toastId);
-      t.ok(`Success! ${response.data.count || 0} books imported.`);
+      t.ok({ title: "Import complete", detail: `${response.data.count || 0} books imported`, sub: "Your catalogue has been updated." });
       await load();
     } catch (error) {
       t.dismiss(toastId);
-      t.err(error?.response?.data?.error || "Error importing books");
+      t.err(error?.response?.data?.error || "Could not import books. Please try again.");
     } finally {
       e.target.value = null;
     }
@@ -178,11 +178,11 @@ export default function BooksAdmin() {
 
       t.dismiss(toastId);
       saveAs(response.data, `books_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-      t.ok("Export downloaded successfully!");
+      t.ok({ title: "Export complete", sub: "Your file has been downloaded." });
     } catch (error) {
       t.dismiss(toastId);
       console.error("Export error:", error);
-      t.err(error?.response?.data?.error || "Failed to export books");
+      t.err(error?.response?.data?.error || "Could not export books. Please try again.");
     }
   };
 

@@ -41,9 +41,9 @@ export default function PaymentsAdmin() {
         { providers: [{ id: "razorpay", enabled: razorpay.enabled, config: { keyId: razorpay.config.keyId, keySecret: razorpay.config.keySecret } }] },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      t.ok("Payment settings saved successfully");
+      t.ok({ title: "Settings saved", sub: "Payment settings have been updated." });
     } catch (error) {
-      t.err("Failed to save payment settings");
+      t.err({ title: "Save failed", sub: "Could not save payment settings. Please try again." });
     } finally {
       setSaving(false);
     }

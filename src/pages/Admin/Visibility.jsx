@@ -23,7 +23,7 @@ export default function VisibilityAdmin() {
 
   const save = async () => {
     await api.put("/settings/visibility", { publicNav, pages }, { headers: { Authorization: `Bearer ${token}` } });
-    t.ok("Saved");
+    t.ok({ title: "Visibility saved", sub: "Page visibility settings have been updated." });
   };
 
   return (

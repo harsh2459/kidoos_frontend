@@ -209,7 +209,7 @@ export default function Checkout() {
     if ((couponApplied.minOrderValue || 0) > 0 && currentSubtotal < couponApplied.minOrderValue) {
       setCouponApplied(null);
       setCouponInput("");
-      t.info("Coupon removed — order total dropped below the minimum");
+      t.info({ title: "Coupon removed", detail: `"${couponInput}"`, sub: `Minimum order ₹${couponApplied.minOrderValue} not met.` });
       return;
     }
 
@@ -222,13 +222,13 @@ export default function Checkout() {
       if (itemQty < neededQty) {
         setCouponApplied(null);
         setCouponInput("");
-        t.info("Coupon removed — required book is no longer in your cart");
+        t.info({ title: "Coupon removed", detail: `"${couponInput}"`, sub: "Required book is no longer in your cart." });
         return;
       }
     } else if ((couponApplied.minQty || 0) > 0 && totals.totalQty < couponApplied.minQty) {
       setCouponApplied(null);
       setCouponInput("");
-      t.info(`Coupon removed — minimum ${couponApplied.minQty} books required`);
+      t.info({ title: "Coupon removed", detail: `"${couponInput}"`, sub: `Minimum ${couponApplied.minQty} books required.` });
       return;
     }
 
@@ -261,7 +261,7 @@ export default function Checkout() {
       });
       if (res.data?.ok) {
         setCouponApplied(res.data);
-        t.success(`Coupon applied! You save ${res.data.discountType === "percent" ? res.data.discountValue + "%" : "₹" + res.data.discount}`);
+        t.success({ title: "Coupon applied!", detail: `"${couponInput}"`, sub: `You save ${res.data.discountType === "percent" ? res.data.discountValue + "%" : "₹" + res.data.discount}` });
       }
     } catch (e) {
       t.err(e?.response?.data?.error || "Invalid coupon code");
@@ -297,7 +297,7 @@ export default function Checkout() {
           addToCart(bookForCart, neededQty);
           updatedItems = [...items, { ...bookForCart, qty: neededQty }];
         }
-        t.success(`Added "${book.title}" × ${neededQty} to cart`);
+        t.success({ title: "Added to cart", detail: `${book.title} × ${neededQty}`, sub: "Now apply the coupon to save." });
       }
     }
 
@@ -318,7 +318,7 @@ export default function Checkout() {
       if (res.data?.ok) {
         setCouponApplied(res.data);
         setCouponInput(coupon.code);
-        t.success(`Coupon ${coupon.code} applied! You save ₹${res.data.discount}`);
+        t.success({ title: "Coupon applied!", detail: `"${coupon.code}"`, sub: `You save ₹${res.data.discount}` });
       }
     } catch (e) {
       t.err(e?.response?.data?.error || "Could not apply coupon");
@@ -334,27 +334,27 @@ export default function Checkout() {
   function validateShipping() {
     if (items.length === 0) { navigate("/cart"); return false; }
     if (!cust.name || !cust.phone || !cust.email || !cust.line1 || !cust.city || !cust.state || !cust.pin) {
-      t.info("Please fill all shipping details."); return false;
+      t.info({ title: "Missing details", sub: "Please fill all shipping fields before continuing." }); return false;
     }
     if (!/^[a-zA-Z\s]{2,}$/.test(cust.name)) {
-      t.info("Please enter a valid full name.");
+      t.info({ title: "Invalid name", sub: "Please enter a valid full name." });
       return false;
     }
 
     if (!/^\d{10}$/.test(cust.phone)) {
-      t.info("Please enter a valid 10-digit phone number.");
+      t.info({ title: "Invalid phone", sub: "Please enter a valid 10-digit phone number." });
       return false;
     }
 
     if (cust.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cust.email)) {
-      t.info("Please enter a valid email address.");
+      t.info({ title: "Invalid email", sub: "Please enter a valid email address." });
       return false;
     }
     if (pinStatus && pinStatus !== "OK") {
-      t.info("Please enter a valid PIN Code.");
+      t.info({ title: "Invalid PIN code", sub: "Please check your PIN code and try again." });
       return false;
     }
-    if (!/^\d{6}$/.test(cust.pin)) { t.info("Invalid PIN Code."); return false; }
+    if (!/^\d{6}$/.test(cust.pin)) { t.info({ title: "Invalid PIN code", sub: "PIN code must be 6 digits." }); return false; }
     return true;
   }
 
@@ -481,13 +481,13 @@ export default function Checkout() {
               clear();
               localStorage.removeItem('puzzle_reward_claimed');
               setCouponApplied(null);
-              t.success("Payment successful!");
+              t.success({ title: "Payment successful!", sub: "Your order is confirmed. Check your email." });
               navigate("/order-confirmed", { state: { orderId } });
             } else {
               console.error("❌ Payment verification failed");
-              t.err("Payment verification failed");
+              t.err({ title: "Payment verification failed", sub: "Contact support if amount was deducted." });
             }
-          } catch (e) { t.err("Error verifying payment"); }
+          } catch (e) { t.err({ title: "Payment error", sub: "Contact support if amount was deducted." }); }
         },
         theme: { color: "#3E2723" },
       });

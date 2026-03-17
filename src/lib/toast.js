@@ -1,70 +1,58 @@
 // src/lib/toast.js
 import { toast } from "react-toastify";
+import React from "react";
+import AlertToast from "../components/toasts/AlertToast";
+
+const DEFAULT_DURATION = 3000;
 
 const baseOpts = {
   position: "top-right",
-  autoClose: 3000,
-  hideProgressBar: false,
-  closeOnClick: true,
+  autoClose: DEFAULT_DURATION,
+  hideProgressBar: true,
+  closeOnClick: false,
   pauseOnHover: true,
   draggable: true,
+  closeButton: false,
+  style: { background: "transparent", boxShadow: "none", padding: 0, minHeight: "unset" },
+  bodyStyle: { padding: 0, margin: 0 },
 };
 
+/**
+ * Build the toast content renderer.
+ * msg can be a plain string (used as title) or an object:
+ *   { title, detail?, sub?, chip? }
+ */
+function render(type, msg, duration) {
+  const props = typeof msg === "string" ? { title: msg } : msg;
+  return ({ closeToast }) =>
+    React.createElement(AlertToast, { type, closeToast, duration, ...props });
+}
+
+function dur(opts) {
+  return opts?.autoClose ?? DEFAULT_DURATION;
+}
+
 export const t = {
-  /**
-   * Show success toast
-   */
-  success: (msg, opts) => toast.success(msg, { ...baseOpts, ...opts }),
-  
-  /**
-   * Show error toast
-   */
-  error: (msg, opts) => toast.error(msg, { ...baseOpts, ...opts }),
-  
-  /**
-   * Show info toast
-   */
-  info: (msg, opts) => toast.info(msg, { ...baseOpts, ...opts }),
-  
-  /**
-   * Show warning toast
-   */
-  warn: (msg, opts) => toast.warn(msg, { ...baseOpts, ...opts }),
-  
-  /**
-   * Show loading toast (persistent until dismissed)
-   * @returns {string|number} Toast ID to dismiss later
-   */
-  loading: (msg, opts) => {
-    return toast.info(msg, { 
-      ...baseOpts, 
-      autoClose: false, // Don't auto-close loading toasts
-      closeButton: false, // Hide close button for loading
-      ...opts 
-    });
-  },
-  
-  /**
-   * Dismiss a toast by ID or dismiss all
-   */
-  dismiss: (toastId) => {
-    if (toastId) {
-      toast.dismiss(toastId);
-    } else {
-      toast.dismiss();
-    }
-  },
-  
-  /**
-   * Update an existing toast
-   */
-  update: (toastId, options) => {
-    toast.update(toastId, options);
-  },
-  
-  // Legacy compatibility
-  ok: (msg, opts) => toast.success(msg, { ...baseOpts, ...opts }),
-  err: (msg, opts) => toast.error(msg, { ...baseOpts, ...opts }),
+  success: (msg, opts) => toast(render("success", msg, dur(opts)), { ...baseOpts, ...opts }),
+  error:   (msg, opts) => toast(render("error",   msg, dur(opts)), { ...baseOpts, ...opts }),
+  info:    (msg, opts) => toast(render("info",    msg, dur(opts)), { ...baseOpts, ...opts }),
+  warn:    (msg, opts) => toast(render("warn",    msg, dur(opts)), { ...baseOpts, ...opts }),
+
+  /** Loading toast — stays until manually dismissed. Returns toast ID. */
+  loading: (msg, opts) =>
+    toast(render("loading", msg, false), {
+      ...baseOpts,
+      autoClose: false,
+      closeButton: false,
+      ...opts,
+    }),
+
+  dismiss: (toastId) => (toastId ? toast.dismiss(toastId) : toast.dismiss()),
+  update:  (toastId, options) => toast.update(toastId, options),
+
+  // Legacy aliases
+  ok:  (msg, opts) => toast(render("success", msg, dur(opts)), { ...baseOpts, ...opts }),
+  err: (msg, opts) => toast(render("error",   msg, dur(opts)), { ...baseOpts, ...opts }),
 };
 
 export default t;

@@ -85,6 +85,7 @@ export default function BookDetail() {
     const [activeTab, setActiveTab] = useState("overview");
     const [qty, setQty] = useState(1);
     const [showFlipbook, setShowFlipbook] = useState(false);
+    const [showAllEditions, setShowAllEditions] = useState(false);
 
     // Flipbook Logic
     const flipBookRef = useRef(null);
@@ -102,6 +103,14 @@ export default function BookDetail() {
     const add = useCart((s) => s.add);
     const replaceAll = useCart((s) => s.replaceAll);
     const { isCustomer, token, loginAnonymously } = useCustomer();
+
+    // Reviews state
+    const [publicReviews, setPublicReviews] = useState([]);
+    const [myReview, setMyReview] = useState(null);
+    const [reviewForm, setReviewForm] = useState({ rating: 0, text: "" });
+    const [reviewHover, setReviewHover] = useState(0);
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [showReviewForm, setShowReviewForm] = useState(false);
 
     // --- ERROR SUPPRESSION & RESIZE FIX ---
     useEffect(() => {
@@ -180,7 +189,7 @@ export default function BookDetail() {
                 const { data } = await api.get(`/books/${slug}/suggestions?limit=25&_=${Date.now()}`);
                 if (cancelled) return; // ← ignore if a newer request already fired
 
-                if (!data?.book) { t.error("Book not found"); return; }
+                if (!data?.book) { t.error({ title: "Book not found", sub: "This title may no longer be available." }); return; }
 
                 setBook(data.book);
                 setSuggestions(data.suggestions || []);
@@ -223,6 +232,47 @@ export default function BookDetail() {
 
         return () => { cancelled = true; };  // ← cleanup cancels stale request
     }, [slug]);
+
+    // --- FETCH PUBLIC REVIEWS ---
+    useEffect(() => {
+        if (!book?._id) return;
+        api.get(`/reviews/book/${book._id}`, { meta: { auth: "none" } })
+            .then(({ data }) => setPublicReviews(data.reviews || []))
+            .catch(() => {});
+    }, [book?._id]);
+
+    // --- FETCH MY REVIEW (if logged in) ---
+    useEffect(() => {
+        if (!book?._id || !isCustomer) return;
+        api.get(`/reviews/my/${book._id}`, { meta: { auth: "customer" } })
+            .then(({ data }) => {
+                setMyReview(data.review || null);
+                if (data.review) setReviewForm({ rating: data.review.rating, text: data.review.text });
+            })
+            .catch(() => {});
+    }, [book?._id, isCustomer]);
+
+    // --- SUBMIT REVIEW ---
+    async function handleSubmitReview(e) {
+        e.preventDefault();
+        if (!reviewForm.rating) return t.error({ title: "Please select a star rating." });
+        if (!reviewForm.text.trim()) return t.error({ title: "Please write something about the book." });
+        setReviewSubmitting(true);
+        try {
+            const { data } = await api.post("/reviews", { bookId: book._id, rating: reviewForm.rating, text: reviewForm.text }, { meta: { auth: "customer" } });
+            if (!data.ok) throw new Error(data.error || "Failed to submit review.");
+            t.success({ title: data.message || "Review submitted!" });
+            setMyReview({ rating: reviewForm.rating, text: reviewForm.text, createdAt: new Date() });
+            setShowReviewForm(false);
+            // Refresh public reviews
+            const { data: rd } = await api.get(`/reviews/book/${book._id}`, { meta: { auth: "none" } });
+            setPublicReviews(rd.reviews || []);
+        } catch (err) {
+            t.error({ title: err?.response?.data?.error || "Failed to submit review." });
+        } finally {
+            setReviewSubmitting(false);
+        }
+    }
 
     // --- THUMBNAIL NAVIGATION HELPERS ---
     const updateThumbnailNavButtons = () => {
@@ -292,6 +342,19 @@ export default function BookDetail() {
     const isOutOfStock = book?.inventory?.stock === 0;
     const config = book?.layoutConfig || {};
 
+    // Merge admin-curated testimonials + customer public reviews into one list
+    const allReviews = useMemo(() => {
+        const adminOnes = (config.testimonials || []).map((t, i) => ({
+            _id: `admin-${i}`,
+            customerName: t.name,
+            role: t.role,
+            rating: Math.min(Math.max(parseInt(t.rating) || 5, 1), 5),
+            text: t.text,
+            isAdmin: true,
+        }));
+        return [...adminOnes, ...publicReviews];
+    }, [config.testimonials, publicReviews]);
+
     useEffect(() => { if (inCart) setQty(inCart.qty); }, [inCart]);
 
     // Debug: Log when activeImg changes
@@ -348,7 +411,7 @@ export default function BookDetail() {
     // 1. If user is NOT logged in and clicks BUY NOW -> Auto-Login Anonymously
     if (!isCustomer && buyNow) {
         try {
-            t.info("Preparing secure checkout...");
+            t.info({ title: "Preparing checkout", sub: "Setting up your secure session..." });
 
             // Trigger the anonymous login
             // Note: We assume loginAnonymously is now exposed from useCustomer()
@@ -361,7 +424,7 @@ export default function BookDetail() {
             // Update local cart state to match backend
             replaceAll(res?.data?.cart?.items || []);
 
-            t.success("Proceeding to checkout...");
+            t.success({ title: "Ready!", detail: book.title, sub: "Redirecting you to checkout..." });
             navigate("/checkout");
         } catch (e) {
             console.error("Auto-login failed:", e);
@@ -377,7 +440,7 @@ export default function BookDetail() {
 
     if (!isCustomer) {
         // Not logged in, redirect to login
-        t.info("Please login to add items to your cart");
+        t.info({ title: "Login required", sub: "Sign in to add items to your cart." });
         navigate("/login");
         return;
     } else {
@@ -385,10 +448,12 @@ export default function BookDetail() {
         try {
             const res = await CustomerAPI.addToCart(token, { bookId: book._id, qty: qty });
             replaceAll(res?.data?.cart?.items || []);
-            t.success(buyNow ? "Proceeding to checkout..." : "Added to cart");
+            t.success(buyNow
+                ? { title: "Proceeding to checkout", detail: book.title, sub: "Redirecting you now..." }
+                : { title: "Added to cart", detail: book.title, sub: "View cart to checkout." });
             if (buyNow) navigate("/checkout");
         } catch (e) {
-            t.error("Could not add to cart");
+            t.error({ title: "Could not add to cart", detail: book.title });
         }
     }
 }
@@ -574,132 +639,114 @@ const flipbookModalJSX = showFlipbook && (
 const mobileViewJSX = (
     <div className="bg-[#FAF7F2] min-h-screen pb-28">
 
+        {/* ── Hero Image with blurred backdrop ── */}
+        <div className="relative w-full overflow-hidden" style={{ background: 'linear-gradient(180deg,#FFF4E0 0%,#FAF7F2 100%)' }}>
+            {/* Blurred bg cover */}
+            <div className="absolute inset-0 scale-110 blur-2xl opacity-40 pointer-events-none"
+                style={{ backgroundImage: `url(${images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
 
-        {/* Main Image Display */}
-        <div className="relative w-full bg-[#FFF9E6] pt-[10px] pb-5">
-            <div className="aspect-[4/5] w-full overflow-hidden relative flex items-center justify-center">
+            {/* Discount ribbon */}
+            {d.off > 0 && (
+                <div className="absolute top-4 left-0 z-20 bg-[#D4AF37] text-white text-xs font-bold px-4 py-1 rounded-r-full shadow-md tracking-wide">
+                    {d.off}% OFF
+                </div>
+            )}
+
+            {/* Main image */}
+            <div className="relative flex items-center justify-center pt-10 pb-4" style={{ minHeight: 320 }}>
                 <img
                     src={images[activeImg] || "/placeholder.png"}
-                    className="max-w-full max-h-full object-contain p-6 drop-shadow-xl transition-all duration-300"
+                    className="max-h-[320px] w-auto object-contain drop-shadow-2xl transition-all duration-300 rounded-xl"
                     alt={`${book.title} - Image ${activeImg + 1}`}
+                    style={{ filter: 'drop-shadow(0 20px 30px rgba(62,39,35,0.25))' }}
                 />
-                {/* Prev arrow */}
                 {images.length > 1 && activeImg > 0 && (
-                    <button
-                        onClick={() => setActiveImg(i => i - 1)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#D4AF37]/40 shadow-md flex items-center justify-center text-[#3E2723] active:scale-95 transition-all"
-                    >
+                    <button onMouseDown={e => e.preventDefault()} onClick={() => setActiveImg(i => i - 1)}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-[#D4AF37]/30 shadow flex items-center justify-center text-[#3E2723] active:scale-90 transition-all">
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                 )}
-                {/* Next arrow */}
                 {images.length > 1 && activeImg < images.length - 1 && (
-                    <button
-                        onClick={() => setActiveImg(i => i + 1)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#D4AF37]/40 shadow-md flex items-center justify-center text-[#3E2723] active:scale-95 transition-all"
-                    >
+                    <button onMouseDown={e => e.preventDefault()} onClick={() => setActiveImg(i => i + 1)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm border border-[#D4AF37]/30 shadow flex items-center justify-center text-[#3E2723] active:scale-90 transition-all">
                         <ChevronRight className="w-5 h-5" />
                     </button>
                 )}
-                {/* Dot indicators */}
-                {images.length > 1 && (
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        {images.map((_, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setActiveImg(i)}
-                                className={`rounded-full transition-all ${activeImg === i ? 'w-4 h-1.5 bg-[#D4AF37]' : 'w-1.5 h-1.5 bg-[#D4AF37]/30'}`}
-                            />
-                        ))}
-                    </div>
-                )}
             </div>
 
-            {/* Thumbnails Strip with Navigation */}
-            <div className="relative px-5">
-                {/* Left Arrow */}
-                {images.length > 3 && canScrollThumbnailLeft && (
-                    <button
-                        onClick={() => scrollThumbnails('left')}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-[#D4AF37]/30 flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                )}
-
-                {/* Thumbnail Strip */}
-                <div
-                    ref={thumbnailScrollRef}
-                    className="flex gap-2.5 overflow-x-auto py-2 scrollbar-hide scroll-smooth"
-                    onScroll={updateThumbnailNavButtons}
-                >
+            {/* Thumbnail strip */}
+            {images.length > 1 && (
+                <div className="flex justify-center gap-2 pb-4 px-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                     {images.map((img, i) => (
-                        <button
-                            key={i}
-                            onClick={() => {
-                                console.log('Mobile thumbnail clicked, index:', i, 'current activeImg:', activeImg);
-                                setActiveImg(i);
-                            }}
-                            className={`w-14 h-16 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-white p-1 transition-all cursor-pointer ${activeImg === i ? 'border-[#D4AF37] ring-2 ring-[#FFF9E6] scale-105' : 'border-[#D4AF37]/30 opacity-70 hover:opacity-100 hover:scale-105'}`}
-                        >
-                            <img src={img} className="w-full h-full object-contain pointer-events-none" alt={`Thumbnail ${i + 1}`} />
+                        <button key={i} onMouseDown={e => e.preventDefault()} onClick={() => setActiveImg(i)}
+                            className={`w-12 h-14 flex-shrink-0 rounded-lg border-2 bg-white/70 backdrop-blur-sm p-0.5 transition-all ${activeImg === i ? 'border-[#D4AF37] shadow-md scale-110' : 'border-transparent opacity-60'}`}>
+                            <img src={img} className="w-full h-full object-contain pointer-events-none" alt="" />
                         </button>
                     ))}
                 </div>
+            )}
 
-                {/* Right Arrow */}
-                {images.length > 3 && canScrollThumbnailRight && (
-                    <button
-                        onClick={() => scrollThumbnails('right')}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-[#D4AF37]/30 flex items-center justify-center text-[#3E2723] hover:bg-[#FFF9E6] active:scale-95 transition-all"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                )}
-            </div>
-
-            {d.off > 0 && (
-                <div className="absolute top-20 left-0 z-20 bg-[#D4AF37] text-white text-xs font-bold px-3 py-1 rounded-r-full shadow-md">
-                    {d.off}% OFF
+            {/* Dot indicators */}
+            {images.length > 1 && (
+                <div className="flex justify-center gap-1.5 pb-3">
+                    {images.map((_, i) => (
+                        <button key={i} onMouseDown={e => e.preventDefault()} onClick={() => setActiveImg(i)}
+                            className={`rounded-full transition-all ${activeImg === i ? 'w-5 h-1.5 bg-[#D4AF37]' : 'w-1.5 h-1.5 bg-[#D4AF37]/30'}`} />
+                    ))}
                 </div>
             )}
         </div>
 
-        <div className="px-5 py-6">
-            {/* Title & Price */}
-            <div className="mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-bold text-[#D4AF37] bg-[#FFF9E6] border border-[#D4AF37]/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                        {book.categories?.[0] || 'Book'}
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                        <span className="text-sm font-bold text-[#5C4A2E]">4.8</span>
+        {/* ── Content card overlapping the hero ── */}
+        <div className="relative -mt-3 rounded-t-[2rem] bg-white shadow-[0_-8px_30px_rgba(62,39,35,0.1)] z-10">
+            <div className="px-5 pt-6 pb-4">
+
+                {/* Category + rating row */}
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    {book.categories?.[0] && (
+                        <span className="text-[10px] font-bold text-[#D4AF37] bg-[#FFF9E6] border border-[#D4AF37]/30 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            ✦ {book.categories[0]}
+                        </span>
+                    )}
+                    <div className="flex items-center gap-1 ml-auto">
+                        {[...Array(5)].map((_, i) => (
+                            <Star key={i} className={`w-3.5 h-3.5 ${i < Math.floor(bookRating(book._id)) ? 'fill-amber-400 text-amber-400' : (bookRating(book._id) % 1 >= 0.5 && i === Math.floor(bookRating(book._id))) ? 'fill-amber-200 text-amber-400' : 'fill-gray-200 text-gray-200'}`} />
+                        ))}
+                        <span className="text-sm font-bold text-[#5C4A2E] ml-1">{bookRating(book._id).toFixed(1)}</span>
+                        <span className="text-xs text-[#8A7A5E]">({bookReviews(book._id, book.inventory?.stock ?? 0)})</span>
                     </div>
                 </div>
-                <h1 className="text-2xl font-['Cinzel'] font-bold text-[#3E2723] leading-snug mb-2">{book.title}</h1>
-                {book.author && <p className="text-base text-[#8A7A5E] mb-4">by <span className="text-[#3E2723] font-medium">{book.author}</span></p>}
 
-                <div className="flex items-end gap-3 mt-2 pb-4 border-b border-[#D4AF37]/20">
-                    {/* Fixed Rupee Symbol Encoding */}
-                    <span className="text-4xl font-bold text-[#3E2723] tracking-tight">₹{d.price.toLocaleString('en-IN')}</span>
-                    {d.mrp > d.price && <span className="text-lg text-[#8A7A5E] line-through mb-1.5">₹{d.mrp.toLocaleString('en-IN')}</span>}
-                    {book.inventory?.stock > 0 ? (
-                        <span className="text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full mb-2">In Stock</span>
-                    ) : (
-                        <span className="text-xs font-semibold text-red-700 bg-red-50 px-2.5 py-1 rounded-full mb-2">Out of Stock</span>
-                    )}
+                {/* Title */}
+                <h1 className="text-xl font-['Cinzel'] font-bold text-[#3E2723] leading-snug mb-1">{book.title}</h1>
+                {book.author && <p className="text-sm text-[#8A7A5E] mb-4">by <span className="text-[#3E2723] font-semibold">{book.author}</span></p>}
+
+                {/* Price row */}
+                <div className="flex items-center gap-3 p-3.5 bg-[#FFF9E6] rounded-2xl border border-[#D4AF37]/20 mb-4">
+                    <div className="flex-1">
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-[#3E2723]">₹{d.price.toLocaleString('en-IN')}</span>
+                            {d.mrp > d.price && <span className="text-base text-[#8A7A5E] line-through">₹{d.mrp.toLocaleString('en-IN')}</span>}
+                        </div>
+                        {d.off > 0 && <span className="text-xs font-bold text-green-700">You save ₹{(d.mrp - d.price).toLocaleString('en-IN')} ({d.off}%)</span>}
+                    </div>
+                    {book.inventory?.stock > 0
+                        ? <span className="text-xs font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-full border border-green-200 whitespace-nowrap">✓ In Stock</span>
+                        : <span className="text-xs font-bold text-red-700 bg-red-50 px-3 py-1.5 rounded-full border border-red-200 whitespace-nowrap">Out of Stock</span>
+                    }
                 </div>
 
-                {/* Edition Badge */}
+                {/* Edition badge */}
                 {book.edition && (
-                    <div className="flex items-center gap-2 mt-3">
+                    <div className="flex items-center gap-2 mb-4">
                         <Book className="w-3.5 h-3.5 text-[#D4AF37]" />
                         <span className="text-xs font-semibold text-[#8A7A5E] uppercase tracking-wide">Edition</span>
                         <span className="text-xs font-bold text-[#3E2723] bg-[#FFF9E6] px-2.5 py-1 rounded-full border border-[#D4AF37]/30">{book.edition}</span>
                     </div>
                 )}
-            </div>
+            </div>{/* end px-5 pt-6 pb-4 */}
+
+            <div className="px-5 pb-6">
 
             {/* Editions Strip - Mobile */}
             {editions.length > 0 && (
@@ -708,7 +755,12 @@ const mobileViewJSX = (
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FFF9E6] border-b border-[#D4AF37]/20">
                         <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
                         <span className="text-[11px] font-bold text-[#8A7A5E] uppercase tracking-widest">Also Available In</span>
-                        <span className="ml-auto text-[10px] font-semibold text-[#D4AF37]">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
+                        <span className="text-[10px] font-semibold text-[#D4AF37] ml-2">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
+                        {editions.length > 3 && (
+                            <button onClick={() => setShowAllEditions(true)} className="ml-auto text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider hover:text-[#B0894C] transition-colors flex items-center gap-0.5">
+                                See All <ArrowRight className="w-3 h-3" />
+                            </button>
+                        )}
                     </div>
                     {/* Cards */}
                     <div className="relative bg-white">
@@ -820,25 +872,74 @@ const mobileViewJSX = (
                     </div>
                 </MobileAccordion>
 
-                <MobileAccordion icon={MessageSquarePlus} title="Reviews">
+                <MobileAccordion icon={MessageSquarePlus} title={`Reviews${allReviews.length ? ` (${allReviews.length})` : ""}`}>
                     <div className="space-y-4">
-                        {config.testimonials?.length > 0 ? config.testimonials.map((review, i) => (
-                            <div key={i} className="bg-[#FAF7F2] p-4 rounded-xl border border-[#D4AF37]/20">
+                        {/* Write a review button / form */}
+                        {isCustomer && !showReviewForm && (
+                            <button
+                                onClick={() => setShowReviewForm(true)}
+                                className="w-full py-2.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white rounded-xl text-sm font-semibold tracking-wide"
+                            >
+                                {myReview ? "Edit Your Review" : "Write a Review"}
+                            </button>
+                        )}
+                        {!isCustomer && (
+                            <p className="text-xs text-[#8A7A5E] italic px-1">
+                                <a href="/login" className="text-[#C59D5F] underline font-semibold">Login</a> to write a review.
+                            </p>
+                        )}
+                        {showReviewForm && isCustomer && (
+                            <form onSubmit={handleSubmitReview} className="bg-[#FFF9E6] p-4 rounded-xl border border-[#D4AF37]/30 space-y-3">
+                                <div className="flex gap-1">
+                                    {[1,2,3,4,5].map(s => (
+                                        <button key={s} type="button"
+                                            onClick={() => setReviewForm(f => ({ ...f, rating: s }))}
+                                            onMouseEnter={() => setReviewHover(s)}
+                                            onMouseLeave={() => setReviewHover(0)}
+                                        >
+                                            <Star className={`w-7 h-7 transition-colors ${s <= (reviewHover || reviewForm.rating) ? 'fill-amber-400 text-amber-400' : 'text-[#D4AF37]/30'}`} />
+                                        </button>
+                                    ))}
+                                </div>
+                                <textarea
+                                    value={reviewForm.text}
+                                    onChange={e => setReviewForm(f => ({ ...f, text: e.target.value }))}
+                                    placeholder="Share your thoughts about this book..."
+                                    rows={3}
+                                    maxLength={1000}
+                                    className="w-full text-sm border border-[#D4AF37]/30 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#3E2723] resize-none"
+                                />
+                                <div className="flex gap-2">
+                                    <button type="submit" disabled={reviewSubmitting}
+                                        className="flex-1 py-2 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white rounded-lg text-sm font-semibold disabled:opacity-60"
+                                    >{reviewSubmitting ? "Submitting..." : "Submit"}</button>
+                                    <button type="button" onClick={() => setShowReviewForm(false)}
+                                        className="px-4 py-2 border border-[#D4AF37]/30 rounded-lg text-sm text-[#8A7A5E]"
+                                    >Cancel</button>
+                                </div>
+                            </form>
+                        )}
+                        {/* Public reviews */}
+                        {allReviews.length > 0 ? allReviews.map((review, i) => (
+                            <div key={review._id || i} className="bg-[#FAF7F2] p-4 rounded-xl border border-[#D4AF37]/20">
                                 <div className="flex gap-0.5 mb-2">
                                     {[...Array(5)].map((_, idx) => (
-                                        <Star key={idx} className={`w-3.5 h-3.5 ${idx < (parseInt(review.rating) || 5) ? 'fill-amber-400 text-amber-400' : 'text-[#D4AF37]/30'}`} />
+                                        <Star key={idx} className={`w-3.5 h-3.5 ${idx < review.rating ? 'fill-amber-400 text-amber-400' : 'text-[#D4AF37]/30'}`} />
                                     ))}
                                 </div>
                                 <p className="text-sm text-[#5C4A2E] italic mb-3">"{review.text}"</p>
                                 <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 rounded-full bg-[#FFF9E6] flex items-center justify-center text-[10px] font-bold text-[#D4AF37] border border-[#D4AF37]/30">
-                                        {review.name.charAt(0)}
+                                        {review.customerName?.charAt(0) || "?"}
                                     </div>
-                                    <span className="text-xs font-bold text-[#3E2723]">{review.name}</span>
+                                    <div>
+                                        <span className="text-xs font-bold text-[#3E2723]">{review.customerName}</span>
+                                        {review.role && <span className="text-[10px] text-[#8A7A5E] ml-1">· {review.role}</span>}
+                                    </div>
                                 </div>
                             </div>
                         )) : (
-                            <p className="text-sm text-[#8A7A5E] italic px-2">No reviews yet.</p>
+                            <p className="text-sm text-[#8A7A5E] italic px-2">No reviews yet. Be the first!</p>
                         )}
                     </div>
                 </MobileAccordion>
@@ -854,50 +955,12 @@ const mobileViewJSX = (
                 )}
             </div>
 
-            {/* Suggestions */}
+            {/* Suggestions — mobile slider */}
             {suggestions.length > 0 && (
-                <div className="mt-12 pt-8 border-t border-[#D4AF37]/20">
-                    <h3 className="text-xl font-['Cinzel'] font-bold text-[#3E2723] mb-6 px-1 flex items-center gap-2">
-                        <span className="w-1 h-6 bg-[#D4AF37] rounded-full"></span>
-                        You Might Also Like
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        {suggestions.map((s) => {
-                            const sDeal = dealFn(s);
-                            return (
-                                <div key={s._id} className="bg-white rounded-xl border border-[#D4AF37]/20 overflow-hidden shadow-sm hover:shadow-md transition-all">
-                                    <div
-                                        onClick={() => { navigate(`/book/${s.slug}`); window.scrollTo(0, 0); }}
-                                        className="aspect-[3/4] bg-[#FAF7F2] overflow-hidden relative cursor-pointer"
-                                    >
-                                        <img src={assetUrl(s.assets?.coverUrl?.[0])} className="w-full h-full object-contain p-4" alt={s.title} />
-                                        {sDeal.off > 0 && <span className="absolute top-2 left-2 bg-[#D4AF37] text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">-{sDeal.off}%</span>}
-                                    </div>
-                                    <div className="p-3 space-y-2">
-                                        <h4
-                                            onClick={() => { navigate(`/book/${s.slug}`); window.scrollTo(0, 0); }}
-                                            className="font-bold text-sm text-[#3E2723] line-clamp-2 mb-1 min-h-[40px] cursor-pointer hover:text-[#D4AF37] transition-colors"
-                                        >
-                                            {s.title}
-                                        </h4>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-base text-[#3E2723]">₹{sDeal.price}</span>
-                                            {sDeal.off > 0 && <span className="text-xs text-[#8A7A5E] line-through">₹{sDeal.mrp}</span>}
-                                        </div>
-                                        <button
-                                            onClick={() => { navigate(`/book/${s.slug}`); window.scrollTo(0, 0); }}
-                                            className="w-full py-2 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-lg font-semibold text-xs uppercase tracking-wider active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5"
-                                        >
-                                            View Details
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                <MobileSuggestionsSlider suggestions={suggestions} navigate={navigate} />
             )}
-        </div>
+            </div>{/* end px-5 pb-6 */}
+        </div>{/* end white card */}
 
         {/* Sticky Mobile Footer */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#D4AF37]/20 p-3 px-4 shadow-[0_-4px_20px_rgba(62,39,35,0.1)] z-50 flex gap-3 safe-area-bottom">
@@ -1053,11 +1116,15 @@ const desktopViewJSX = (
                     <div className="flex items-center gap-1.5">
                         <div className="flex gap-0.5">
                             {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                <Star key={i} className={`w-4 h-4 ${
+                                    i < Math.floor(bookRating(book._id)) ? 'fill-amber-400 text-amber-400'
+                                    : (bookRating(book._id) % 1 >= 0.5 && i === Math.floor(bookRating(book._id))) ? 'fill-amber-200 text-amber-400'
+                                    : 'fill-gray-200 text-gray-300'
+                                }`} />
                             ))}
                         </div>
-                        <span className="text-sm font-semibold text-[#5C4A2E]">4.8</span>
-                        <span className="text-xs text-[#8A7A5E]">(124 reviews)</span>
+                        <span className="text-sm font-semibold text-[#5C4A2E]">{bookRating(book._id).toFixed(1)}</span>
+                        <span className="text-xs text-[#8A7A5E]">({bookReviews(book._id, book.inventory?.stock ?? 0)} reviews)</span>
                     </div>
                 </div>
 
@@ -1106,7 +1173,12 @@ const desktopViewJSX = (
                         <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FFF9E6] border-b border-[#D4AF37]/20">
                             <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
                             <span className="text-[11px] font-bold text-[#8A7A5E] uppercase tracking-widest">Also Available In</span>
-                            <span className="ml-auto text-[10px] font-semibold text-[#D4AF37]">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
+                            <span className="text-[10px] font-semibold text-[#D4AF37] ml-2">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
+                            {editions.length > 3 && (
+                                <button onClick={() => setShowAllEditions(true)} className="ml-auto text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider hover:text-[#B0894C] transition-colors flex items-center gap-0.5">
+                                    See All <ArrowRight className="w-3 h-3" />
+                                </button>
+                            )}
                         </div>
                         {/* Cards */}
                         <div className="relative bg-white">
@@ -1292,34 +1364,99 @@ const desktopViewJSX = (
                     </div>
                 )}
                 {activeTab === 'reviews' && (
-                    <div className="space-y-5">
-                        {config.testimonials?.length > 0 ? (
+                    <div className="space-y-6">
+                        {/* Write a review */}
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-base font-bold text-[#3E2723]">
+                                {allReviews.length > 0 ? `${allReviews.length} Review${allReviews.length !== 1 ? "s" : ""}` : "No Reviews Yet"}
+                            </h3>
+                            {isCustomer && !showReviewForm && (
+                                <button
+                                    onClick={() => setShowReviewForm(true)}
+                                    className="px-5 py-2 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-xl text-sm font-semibold uppercase tracking-wider transition-all shadow-sm"
+                                >
+                                    {myReview ? "Edit Review" : "Write a Review"}
+                                </button>
+                            )}
+                            {!isCustomer && (
+                                <a href="/login" className="text-sm text-[#C59D5F] underline font-semibold">Login to review</a>
+                            )}
+                        </div>
+
+                        {/* Review form */}
+                        {showReviewForm && isCustomer && (
+                            <form onSubmit={handleSubmitReview} className="bg-[#FFF9E6] p-5 rounded-xl border border-[#D4AF37]/30 space-y-4">
+                                <h4 className="font-semibold text-[#3E2723] text-sm">{myReview ? "Update your review" : "Share your experience"}</h4>
+                                <div>
+                                    <p className="text-xs text-[#8A7A5E] mb-1.5">Your rating</p>
+                                    <div className="flex gap-1">
+                                        {[1,2,3,4,5].map(s => (
+                                            <button key={s} type="button"
+                                                onClick={() => setReviewForm(f => ({ ...f, rating: s }))}
+                                                onMouseEnter={() => setReviewHover(s)}
+                                                onMouseLeave={() => setReviewHover(0)}
+                                            >
+                                                <Star className={`w-8 h-8 transition-colors ${s <= (reviewHover || reviewForm.rating) ? 'fill-amber-400 text-amber-400' : 'text-[#D4AF37]/30'}`} />
+                                            </button>
+                                        ))}
+                                        {reviewForm.rating > 0 && (
+                                            <span className="ml-2 text-sm font-bold text-[#D4AF37] self-center">{reviewForm.rating}.0</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-[#8A7A5E] mb-1.5">Your review</p>
+                                    <textarea
+                                        value={reviewForm.text}
+                                        onChange={e => setReviewForm(f => ({ ...f, text: e.target.value }))}
+                                        placeholder="Share your thoughts about this book..."
+                                        rows={4}
+                                        maxLength={1000}
+                                        className="w-full text-sm border border-[#D4AF37]/30 rounded-xl px-4 py-3 bg-white focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-[#3E2723] resize-none"
+                                    />
+                                    <p className="text-xs text-[#8A7A5E] text-right mt-0.5">{reviewForm.text.length}/1000</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button type="submit" disabled={reviewSubmitting}
+                                        className="px-6 py-2.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-xl text-sm font-semibold disabled:opacity-60 transition-all"
+                                    >{reviewSubmitting ? "Submitting..." : "Submit Review"}</button>
+                                    <button type="button" onClick={() => setShowReviewForm(false)}
+                                        className="px-5 py-2.5 border border-[#D4AF37]/30 rounded-xl text-sm text-[#8A7A5E] hover:bg-[#FAF7F2] transition-all"
+                                    >Cancel</button>
+                                </div>
+                            </form>
+                        )}
+
+                        {/* All reviews grid (admin testimonials + customer reviews) */}
+                        {allReviews.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {config.testimonials.map((review, i) => {
-                                    const validRating = Math.min(Math.max(parseInt(review.rating) || 5, 1), 5);
-                                    return (
-                                        <div key={i} className="bg-[#FAF7F2] p-4 sm:p-5 rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all relative overflow-hidden">
-                                            <Quote className="absolute top-3 right-3 w-10 h-10 text-[#D4AF37]/10" />
-                                            <div className="flex gap-0.5 mb-3 relative z-10">
-                                                {Array.from({ length: 5 }, (_, idx) => (
-                                                    <Star key={idx} className={`w-4 h-4 ${idx < validRating ? 'fill-amber-400 text-amber-400' : 'fill-none text-[#D4AF37]/20'}`} />
-                                                ))}
-                                            </div>
-                                            <p className="text-[#5C4A2E] text-sm leading-relaxed mb-4 relative z-10">"{review.text}"</p>
-                                            <div className="flex items-center gap-2.5 relative z-10">
-                                                <div className="w-9 h-9 rounded-full bg-[#FFF9E6] flex items-center justify-center text-[#D4AF37] font-bold text-sm border border-[#D4AF37]/30">{review.name.charAt(0)}</div>
-                                                <div><div className="text-sm font-semibold text-[#3E2723]">{review.name}</div><div className="text-xs text-[#8A7A5E]">{review.role}</div></div>
+                                {allReviews.map((review, i) => (
+                                    <div key={review._id || i} className="bg-[#FAF7F2] p-4 sm:p-5 rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all relative overflow-hidden">
+                                        <Quote className="absolute top-3 right-3 w-10 h-10 text-[#D4AF37]/10" />
+                                        <div className="flex gap-0.5 mb-3 relative z-10">
+                                            {Array.from({ length: 5 }, (_, idx) => (
+                                                <Star key={idx} className={`w-4 h-4 ${idx < review.rating ? 'fill-amber-400 text-amber-400' : 'fill-none text-[#D4AF37]/20'}`} />
+                                            ))}
+                                        </div>
+                                        <p className="text-[#5C4A2E] text-sm leading-relaxed mb-4 relative z-10">"{review.text}"</p>
+                                        <div className="flex items-center gap-2.5 relative z-10">
+                                            <div className="w-9 h-9 rounded-full bg-[#FFF9E6] flex items-center justify-center text-[#D4AF37] font-bold text-sm border border-[#D4AF37]/30">{review.customerName?.charAt(0) || "?"}</div>
+                                            <div>
+                                                <div className="text-sm font-semibold text-[#3E2723]">{review.customerName}</div>
+                                                {review.role && <div className="text-xs text-[#8A7A5E]">{review.role}</div>}
                                             </div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                ))}
                             </div>
                         ) : (
                             <div className="text-center py-12 bg-[#FAF7F2] rounded-xl border border-dashed border-[#D4AF37]/30">
                                 <MessageSquarePlus className="w-12 h-12 text-[#D4AF37]/20 mx-auto mb-4" />
                                 <h3 className="text-lg font-['Cinzel'] font-bold text-[#5C4A2E] mb-2">No Reviews Yet</h3>
                                 <p className="text-[#8A7A5E] text-sm mb-6 max-w-sm mx-auto px-4">Be the first to share your experience with this book.</p>
-                                <button className="px-6 py-2.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-xl text-sm font-semibold uppercase tracking-wider transition-all shadow-sm">Write a Review</button>
+                                {!isCustomer && (
+                                    <a href="/login" className="px-6 py-2.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-xl text-sm font-semibold uppercase tracking-wider transition-all shadow-sm inline-block">Login to Review</a>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1347,76 +1484,7 @@ const desktopViewJSX = (
 
         {/* --- SUGGESTIONS --- */}
         {suggestions.length > 0 && (
-            <section className="mt-8 sm:mt-12 md:mt-16 border-t border-[#D4AF37]/20 pt-6 sm:pt-8 md:pt-10 pb-20 md:pb-8">
-                <div className="flex items-center justify-between mb-6 sm:mb-8">
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-['Cinzel'] font-bold text-[#3E2723] flex items-center gap-2.5">
-                        <span className="w-1 h-6 bg-[#D4AF37] rounded-full"></span>
-                        You Might Also Like
-                    </h2>
-                    <button onClick={() => navigate('/catalog')} className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-wider hover:text-[#B0894C] transition-colors flex items-center gap-1 group">
-                        View All <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-                    {suggestions.map((s) => {
-                        const deal = dealFn(s);
-                        return (
-                            <div key={s._id} className="group bg-white rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden">
-                                <div
-                                    onClick={() => { navigate(`/book/${s.slug}`); window.scrollTo(0, 0); }}
-                                    className="aspect-[3/4] overflow-hidden relative bg-[#FAF7F2] cursor-pointer"
-                                >
-                                    <img
-                                        src={assetUrl(s.assets?.coverUrl?.[0])}
-                                        className="w-full h-full object-contain p-4 sm:p-5 transition-transform duration-500 group-hover:scale-110"
-                                        alt={s.title}
-                                    />
-                                    {deal.off > 0 && (
-                                        <div className="absolute top-2 left-2 bg-[#D4AF37] text-white px-2 py-0.5 text-[10px] font-bold rounded-md shadow">
-                                            -{deal.off}%
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-3 sm:p-3.5 space-y-2">
-                                    <h3
-                                        onClick={() => { navigate(`/book/${s.slug}`); window.scrollTo(0, 0); }}
-                                        className="font-bold text-[#3E2723] text-xs sm:text-sm leading-tight line-clamp-2 group-hover:text-[#D4AF37] transition-colors cursor-pointer min-h-[2rem] sm:min-h-[2.5rem]"
-                                    >
-                                        {s.title}
-                                    </h3>
-                                    <div className="flex items-end gap-1.5">
-                                        <span className="text-base sm:text-lg font-bold text-[#3E2723]">₹{deal.price}</span>
-                                        {deal.mrp > deal.price && (
-                                            <span className="text-[10px] sm:text-xs text-[#8A7A5E] line-through mb-0.5">₹{deal.mrp}</span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <div className="flex gap-0.5">
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-400" />
-                                            ))}
-                                        </div>
-                                        <span className="text-[10px] text-[#8A7A5E] ml-0.5">(4.8)</span>
-                                    </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/book/${s.slug}`);
-                                            window.scrollTo(0, 0);
-                                        }}
-                                        className="w-full py-2 sm:py-2.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-lg font-semibold text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1.5"
-                                    >
-                                        <span className="hidden sm:inline">View Details</span>
-                                        <span className="sm:hidden">View</span>
-                                        <ArrowRight className="w-3 h-3" />
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
+            <DesktopSuggestionsSlider suggestions={suggestions} navigate={navigate} />
         )}
     </div>
 );
@@ -1457,6 +1525,64 @@ return (
 
         {flipbookModalJSX}
 
+        {/* All Editions Modal */}
+        {showAllEditions && (
+            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowAllEditions(false)}>
+                {/* Backdrop */}
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+                {/* Sheet */}
+                <div
+                    className="relative w-full sm:max-w-lg bg-white rounded-t-[2rem] sm:rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Handle */}
+                    <div className="flex justify-center pt-3 pb-1 sm:hidden">
+                        <div className="w-10 h-1 rounded-full bg-[#D4AF37]/30" />
+                    </div>
+                    {/* Header */}
+                    <div className="flex items-center gap-2 px-5 py-3.5 bg-[#FFF9E6] border-b border-[#D4AF37]/20">
+                        <Globe className="w-4 h-4 text-[#D4AF37]" />
+                        <span className="font-['Cinzel'] font-bold text-[#3E2723] text-sm">All Editions</span>
+                        <span className="text-xs text-[#D4AF37] font-semibold ml-1">({editions.length})</span>
+                        <button onClick={() => setShowAllEditions(false)} className="ml-auto w-7 h-7 rounded-full bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 flex items-center justify-center text-[#3E2723] transition-colors">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    {/* Grid */}
+                    <div className="overflow-y-auto p-4 grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {editions.map(ed => {
+                            const edDeal = dealFn(ed);
+                            const skuTokens = (ed.inventory?.sku || '').split('_');
+                            const lastToken = skuTokens[skuTokens.length - 1] || '';
+                            const skuLabel = /^\d+$/.test(lastToken) && skuTokens.length >= 2
+                                ? `${skuTokens[skuTokens.length - 2]} ${lastToken}`
+                                : lastToken;
+                            return (
+                                <button
+                                    key={ed._id}
+                                    onClick={() => { setShowAllEditions(false); navigate(`/book/${ed.slug}`); window.scrollTo(0, 0); }}
+                                    className="bg-[#FAF7F2] rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-md active:scale-[0.97] transition-all text-left group overflow-hidden"
+                                >
+                                    <div className="relative w-full aspect-[3/4] bg-[#FFF9E6] overflow-hidden">
+                                        <img src={assetUrl(ed.assets?.coverUrl?.[0])} className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" alt={ed.title} />
+                                        {skuLabel && (
+                                            <div className="absolute bottom-0 inset-x-0 pt-4 pb-1 px-1.5 bg-gradient-to-t from-[#3E2723]/85 via-[#3E2723]/40 to-transparent">
+                                                <span className="block text-center text-[9px] font-bold text-[#F3E5AB] tracking-wider uppercase">{skuLabel}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="px-2 py-1.5">
+                                        <p className="text-[10px] font-bold text-[#3E2723] leading-tight line-clamp-2 mb-1 group-hover:text-[#D4AF37] transition-colors">{ed.title}</p>
+                                        <span className="text-xs font-bold text-[#3E2723]">₹{edDeal.price.toLocaleString('en-IN')}</span>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* DEDICATED MOBILE VIEW */}
         <div className="md:hidden">
             {mobileViewJSX}
@@ -1471,3 +1597,135 @@ return (
 
 );
     }
+
+/* ── Seeded rating: deterministic per book, range 4.5–5.0 ── */
+function bookRating(id = "") {
+    const seed = parseInt((id || "").slice(-6) || "0", 16);
+    const steps = [4.5, 4.6, 4.7, 4.8, 4.9, 5.0];
+    return steps[seed % steps.length];
+}
+function bookReviews(id = "", stock = 0) {
+    // XOR counter+machine bytes of ObjectID — unique per document
+    const s = id || "000000000000000000000000";
+    const a = parseInt(s.slice(-6), 16);
+    const b = parseInt(s.slice(12, 18), 16);
+    const seed = ((a ^ b) >>> 0) % 420;  // 0-419, unique per book
+    // Stock in log scale so even large stock values add at most ~60
+    const stockBonus = Math.min(Math.floor(Math.log10(stock + 1) * 20), 60);
+    return 42 + seed + stockBonus;  // range: 42-521
+}
+
+/* ── Shared suggestion card ── */
+function SuggestionCard({ s, navigate }) {
+    const deal = dealFn(s);
+    const rating = bookRating(s._id);
+    const reviews = bookReviews(s._id, s.inventory?.stock ?? 0);
+    const go = () => { navigate(`/book/${s.slug}`); window.scrollTo(0, 0); };
+    return (
+        <div className="group bg-white rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all duration-300 shadow-sm hover:shadow-md overflow-hidden flex flex-col h-full">
+            <div onClick={go} className="aspect-[3/4] overflow-hidden relative bg-[#FAF7F2] cursor-pointer flex-shrink-0">
+                <img
+                    src={assetUrl(s.assets?.coverUrl?.[0])}
+                    className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-110"
+                    alt={s.title}
+                    loading="lazy"
+                />
+                {deal.off > 0 && (
+                    <div className="absolute top-2 left-2 bg-[#D4AF37] text-white px-2 py-0.5 text-[10px] font-bold rounded-md shadow">
+                        -{deal.off}%
+                    </div>
+                )}
+            </div>
+            <div className="p-3 space-y-1.5 flex flex-col flex-grow">
+                <h3 onClick={go} className="font-bold text-[#3E2723] text-xs sm:text-sm leading-tight line-clamp-2 group-hover:text-[#D4AF37] transition-colors cursor-pointer min-h-[2rem]">
+                    {s.title}
+                </h3>
+                <div className="flex items-end gap-1.5">
+                    <span className="text-base font-bold text-[#3E2723]">₹{deal.price}</span>
+                    {deal.mrp > deal.price && <span className="text-[10px] text-[#8A7A5E] line-through mb-0.5">₹{deal.mrp}</span>}
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                            <Star key={i} className={`w-2.5 h-2.5 ${
+                                i < Math.floor(rating) ? 'fill-amber-400 text-amber-400'
+                                : (rating % 1 >= 0.5 && i === Math.floor(rating)) ? 'fill-amber-200 text-amber-400'
+                                : 'fill-gray-200 text-gray-300'
+                            }`} />
+                        ))}
+                    </div>
+                    <span className="text-[10px] text-[#8A7A5E] ml-0.5">({rating.toFixed(1)}) · {reviews}</span>
+                </div>
+                <button
+                    onClick={(e) => { e.stopPropagation(); go(); }}
+                    className="mt-auto w-full py-2 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] hover:from-[#D4AF37] hover:to-[#C59D5F] text-white rounded-lg font-semibold text-[10px] sm:text-xs uppercase tracking-wider active:scale-95 transition-all shadow-sm flex items-center justify-center gap-1"
+                >
+                    View Details <ArrowRight className="w-3 h-3" />
+                </button>
+            </div>
+        </div>
+    );
+}
+
+/* ── Mobile suggestions slider ── */
+function MobileSuggestionsSlider({ suggestions, navigate }) {
+    const ref = useRef(null);
+    const scroll = (dir) => ref.current?.scrollBy({ left: dir * 200, behavior: "smooth" });
+    return (
+        <div className="mt-12 pt-8 border-t border-[#D4AF37]/20 relative group/sugg">
+            <h3 className="text-xl font-['Cinzel'] font-bold text-[#3E2723] mb-5 flex items-center gap-2">
+                <span className="w-1 h-6 bg-[#D4AF37] rounded-full" />
+                You Might Also Like
+            </h3>
+            <button onMouseDown={e => e.preventDefault()} onClick={() => scroll(-1)}
+                className="absolute left-0 top-1/2 z-10 w-8 h-8 rounded-full bg-white/90 border border-[#D4AF37]/30 shadow flex items-center justify-center text-[#3E2723] opacity-0 group-hover/sugg:opacity-100 transition-all -translate-x-3">
+                <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button onMouseDown={e => e.preventDefault()} onClick={() => scroll(1)}
+                className="absolute right-0 top-1/2 z-10 w-8 h-8 rounded-full bg-white/90 border border-[#D4AF37]/30 shadow flex items-center justify-center text-[#3E2723] opacity-0 group-hover/sugg:opacity-100 transition-all translate-x-3">
+                <ChevronRight className="w-4 h-4" />
+            </button>
+            <div ref={ref} className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scroll-smooth" style={{ scrollbarWidth: 'none' }}>
+                {suggestions.map(s => (
+                    <div key={s._id} className="w-[160px] flex-shrink-0 snap-start">
+                        <SuggestionCard s={s} navigate={navigate} />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+/* ── Desktop suggestions slider ── */
+function DesktopSuggestionsSlider({ suggestions, navigate }) {
+    const ref = useRef(null);
+    const scroll = (dir) => ref.current?.scrollBy({ left: dir * 280, behavior: "smooth" });
+    return (
+        <section className="mt-8 sm:mt-12 md:mt-16 border-t border-[#D4AF37]/20 pt-6 sm:pt-8 md:pt-10 pb-20 md:pb-8 relative group/sugg">
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-['Cinzel'] font-bold text-[#3E2723] flex items-center gap-2.5">
+                    <span className="w-1 h-6 bg-[#D4AF37] rounded-full" />
+                    You Might Also Like
+                </h2>
+                <button onClick={() => navigate('/catalog')} className="text-[#D4AF37] text-xs sm:text-sm font-semibold uppercase tracking-wider hover:text-[#B0894C] transition-colors flex items-center gap-1 group">
+                    View All <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+            </div>
+            <button onMouseDown={e => e.preventDefault()} onClick={() => scroll(-1)}
+                className="absolute left-0 top-1/2 z-10 w-10 h-10 rounded-full bg-white/90 border border-[#D4AF37]/30 shadow-md flex items-center justify-center text-[#3E2723] opacity-0 group-hover/sugg:opacity-100 hover:bg-[#D4AF37] hover:text-white transition-all -translate-x-4">
+                <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button onMouseDown={e => e.preventDefault()} onClick={() => scroll(1)}
+                className="absolute right-0 top-1/2 z-10 w-10 h-10 rounded-full bg-white/90 border border-[#D4AF37]/30 shadow-md flex items-center justify-center text-[#3E2723] opacity-0 group-hover/sugg:opacity-100 hover:bg-[#D4AF37] hover:text-white transition-all translate-x-4">
+                <ChevronRight className="w-5 h-5" />
+            </button>
+            <div ref={ref} className="flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4 scroll-smooth" style={{ scrollbarWidth: 'none' }}>
+                {suggestions.map(s => (
+                    <div key={s._id} className="w-[200px] sm:w-[220px] md:w-[240px] flex-shrink-0 snap-start">
+                        <SuggestionCard s={s} navigate={navigate} />
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}

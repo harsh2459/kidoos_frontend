@@ -50,7 +50,7 @@ export default function SiteSettings() {
       });
       return { path: res.data.images[0].path, previewUrl: res.data.images[0].previewUrl };
     } catch (error) {
-      t.err("Error uploading image.");
+      t.err({ title: "Upload failed", sub: "Could not upload image. Please try again." });
       return {};
     }
   }
@@ -89,8 +89,8 @@ export default function SiteSettings() {
       const response = await api.put("/settings/site", payload, auth);
 
       if (response.data.ok) {
-        t.ok("Site settings updated successfully");
-        
+        t.ok({ title: "Settings saved", sub: "Site settings have been updated." });
+
         // Update browser tab immediately
         if (form.faviconUrl) {
           const absFavi = assetUrl(form.faviconUrl);
@@ -104,10 +104,10 @@ export default function SiteSettings() {
         }
         if (form.title) document.title = form.title;
       } else {
-        t.err("Failed to save settings");
+        t.err({ title: "Save failed", sub: "Could not save site settings. Please try again." });
       }
     } catch (error) {
-      t.err(error.response?.data?.error || "Error saving settings");
+      t.err(error.response?.data?.error || "Could not save site settings.");
     } finally {
       setSaving(false);
     }

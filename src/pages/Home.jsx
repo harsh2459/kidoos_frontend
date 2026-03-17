@@ -179,8 +179,10 @@ function Block({ block }) {
 
   // --- STANDARD SLIDER ---
   if (block.type === "slider") {
+    // Override bottom spacing to minimal — dots are now inside the image
+    const sliderClasses = containerClasses.replace(/pb-\S+/g, "pb-2 md:pb-3");
     return (
-      <div className={containerClasses} style={containerStyle}>
+      <div className={sliderClasses} style={containerStyle}>
         <HomepageSlider slides={block.slides} height={block.sliderHeight} />
       </div>
     );
@@ -253,6 +255,14 @@ function Block({ block }) {
     return (
       <div className={containerClasses} style={containerStyle}>
         <GridSection title={block.title} query={block.query} />
+      </div>
+    );
+  }
+
+  if (block.type === "category-browser") {
+    return (
+      <div className={containerClasses} style={containerStyle}>
+        <CategoryBrowser block={block} />
       </div>
     );
   }
@@ -339,10 +349,10 @@ function HeroSlider({ slides }) {
       ))}
       {length > 1 && (
         <>
-          <button onClick={prevSlide} className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-black/20 hover:bg-[#D4AF37] text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10 hover:border-[#D4AF37]"><ChevronLeft className="w-6 h-6" /></button>
-          <button onClick={nextSlide} className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-black/20 hover:bg-[#D4AF37] text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10 hover:border-[#D4AF37]"><ChevronRight className="w-6 h-6" /></button>
+          <button onMouseDown={e => e.preventDefault()} onClick={prevSlide} className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-black/20 hover:bg-[#D4AF37] text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10 hover:border-[#D4AF37]"><ChevronLeft className="w-6 h-6" /></button>
+          <button onMouseDown={e => e.preventDefault()} onClick={nextSlide} className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-black/20 hover:bg-[#D4AF37] text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all z-30 border border-white/10 hover:border-[#D4AF37]"><ChevronRight className="w-6 h-6" /></button>
           <div className="absolute bottom-8 left-10 md:left-20 flex gap-3 z-30">
-            {items.map((_, idx) => <button key={idx} onClick={() => setCurrent(idx)} className={`h-1.5 rounded-full transition-all duration-500 ${current === idx ? "w-8 bg-[#D4AF37]" : "w-2 bg-white/40 hover:bg-white/60"}`} />)}
+            {items.map((_, idx) => <button key={idx} onMouseDown={e => e.preventDefault()} onClick={() => setCurrent(idx)} className={`h-1.5 rounded-full transition-all duration-500 ${current === idx ? "w-8 bg-[#D4AF37]" : "w-2 bg-white/40 hover:bg-white/60"}`} />)}
           </div>
         </>
       )}
@@ -350,8 +360,8 @@ function HeroSlider({ slides }) {
   );
 }
 
-/* ------------------------- Standard Image Slider — 3D Coverflow ------------------------- */
-function HomepageSlider({ slides, height = "medium" }) {
+/* ------------------------- Standard Image Slider — Cinematic Fade ------------------------- */
+function HomepageSlider({ slides }) {
   const [current, setCurrent] = useState(0);
   const timeoutRef = useRef(null);
 
@@ -365,213 +375,290 @@ function HomepageSlider({ slides, height = "medium" }) {
 
   useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(
-      () => setCurrent(prev => prev === length - 1 ? 0 : prev + 1),
-      4500
-    );
+    timeoutRef.current = setTimeout(() => setCurrent(c => (c + 1) % length), 4800);
     return () => clearTimeout(timeoutRef.current);
   }, [current, length]);
 
   const go = (dir) => setCurrent(c => ((c + dir) + length) % length);
 
-  // Track desktop breakpoint — mobile gets a simple crossfade, desktop keeps coverflow
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
-  );
-  useEffect(() => {
-    const check = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-
   if (!length) return null;
 
-  const getPos = (idx) => {
-    let d = idx - current;
-    if (d > length / 2) d -= length;
-    if (d < -length / 2) d += length;
-    return d;
-  };
+  return (
+    <div className="relative w-full group/slider">
 
-  // No height on slides — image's natural ratio drives everything
-  const CFGS2 = {
-    '-2': { l: '3%',  rY:  50, op: 0.28, br: 0.48, sh: 8,  w: '18%', z: 3,  r: '0.6rem'  },
-    '-1': { l: '18%', rY:  33, op: 0.82, br: 0.72, sh: 18, w: '32%', z: 10, r: '0.9rem'   },
-     '0': { l: '50%', rY:   0, op: 1.00, br: 1.00, sh: 36, w: '78%', z: 20, r: '1.25rem'  },
-     '1': { l: '82%', rY: -33, op: 0.82, br: 0.72, sh: 18, w: '32%', z: 10, r: '0.9rem'   },
-     '2': { l: '97%', rY: -50, op: 0.28, br: 0.48, sh: 8,  w: '18%', z: 3,  r: '0.6rem'   },
-  };
+      {/* ── Slide images ── */}
+      <div className="relative rounded-2xl overflow-hidden ring-1 ring-[#D4AF37]/25 shadow-[0_20px_60px_rgba(62,39,35,0.25)]">
 
-  /* ── MOBILE: simple crossfade, full-width, no coverflow ── */
-  if (!isDesktop) {
-    return (
-      <div className="relative w-full">
-        {/* Slides stacked, crossfade — min-height reserves space before image loads (prevents CLS) */}
-        <div className="relative overflow-hidden rounded-xl" style={{ minHeight: '180px' }}>
-          {items.map((slide, idx) => (
-            <div
-              key={idx}
-              className="transition-opacity duration-700 ease-in-out"
-              style={idx !== current ? { position: 'absolute', inset: 0, opacity: 0, pointerEvents: 'none' } : { opacity: 1 }}
-            >
-              <Link to={slide.link}>
-                <picture className="block w-full">
-                  <source media="(max-width: 767px)" srcSet={slide.mobile} />
-                  <img
-                    src={slide.desktop}
-                    alt={slide.alt}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    fetchpriority={idx === 0 ? "high" : "auto"}
-                    decoding="async"
-                    className="w-full h-auto block select-none"
-                    draggable={false}
-                  />
-                </picture>
-              </Link>
-            </div>
-          ))}
-        </div>
+        {/* Hidden sizer — locks height, prevents CLS */}
+        <img
+          src={items[0].desktop}
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          decoding="async"
+          className="block w-full opacity-0 pointer-events-none select-none"
+          draggable={false}
+        />
 
-        {/* Mobile navigation */}
+        {items.map((slide, idx) => (
+          <div
+            key={idx}
+            className="transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            style={idx !== current ? {
+              position: 'absolute', inset: 0,
+              opacity: 0, transform: 'scale(0.98)',
+              pointerEvents: 'none',
+            } : {
+              position: 'absolute', inset: 0,
+              opacity: 1, transform: 'scale(1)',
+            }}
+          >
+            <Link to={slide.link} className="block w-full h-full">
+              <picture className="block w-full h-full">
+                <source media="(max-width: 767px)" srcSet={slide.mobile} />
+                <source media="(min-width: 768px)" srcSet={slide.desktop} />
+                <img
+                  src={slide.desktop}
+                  alt={slide.alt}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  fetchpriority={idx === 0 ? "high" : "auto"}
+                  decoding="async"
+                  className="w-full h-full object-cover block select-none"
+                  draggable={false}
+                />
+              </picture>
+            </Link>
+          </div>
+        ))}
+
+        {/* ── Arrows — inside, hidden until hover ── */}
         {length > 1 && (
           <>
-            <button onClick={() => go(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 border border-[#D4AF37]/40 text-[#3E2723] flex items-center justify-center shadow-md active:scale-95">
-              <ChevronLeft className="w-4 h-4" />
+            <button
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => go(-1)}
+              className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-20
+                w-11 h-11 rounded-full
+                bg-black/30 hover:bg-[#D4AF37]
+                border border-white/20 hover:border-[#D4AF37]
+                backdrop-blur-md text-white
+                flex items-center justify-center
+                transition-all duration-300
+                opacity-0 group-hover/slider:opacity-100
+                -translate-x-2 group-hover/slider:translate-x-0
+                active:scale-90"
+            >
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <button onClick={() => go(1)} className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/80 border border-[#D4AF37]/40 text-[#3E2723] flex items-center justify-center shadow-md active:scale-95">
-              <ChevronRight className="w-4 h-4" />
+            <button
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => go(1)}
+              className="absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-20
+                w-11 h-11 rounded-full
+                bg-black/30 hover:bg-[#D4AF37]
+                border border-white/20 hover:border-[#D4AF37]
+                backdrop-blur-md text-white
+                flex items-center justify-center
+                transition-all duration-300
+                opacity-0 group-hover/slider:opacity-100
+                translate-x-2 group-hover/slider:translate-x-0
+                active:scale-90"
+            >
+              <ChevronRight className="w-5 h-5" />
             </button>
-            <div className="flex justify-center mt-3">
-              <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md px-4 py-2 rounded-full border border-[#D4AF37]/30">
-                {items.map((_, idx) => (
-                  <button key={idx} onClick={() => setCurrent(idx)} className={`rounded-full transition-all duration-500 ${current === idx ? 'w-6 h-2 bg-[#D4AF37]' : 'w-2 h-2 bg-[#3E2723]/20'}`} />
-                ))}
-              </div>
+
+            {/* Dots — inside the image as overlay, zero extra space */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/20 backdrop-blur-sm">
+              {items.map((_, idx) => (
+                <button
+                  key={idx}
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => setCurrent(idx)}
+                  aria-label={`Go to slide ${idx + 1}`}
+                  className={`rounded-full transition-all duration-500 ease-out ${
+                    current === idx
+                      ? 'w-6 h-1.5 bg-[#D4AF37] shadow-[0_0_6px_rgba(212,175,55,0.8)]'
+                      : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+                  }`}
+                />
+              ))}
             </div>
           </>
         )}
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+/* ========================= CATEGORY BROWSER ========================= */
+function CategoryBrowser({ block = {} }) {
+  const {
+    title = "Browse by Category",
+    defaultCategory = "",
+    limit = 16,
+    sort = "new",
+    onlyCategories = "",
+  } = block;
+
+  const [categories, setCategories] = useState([]);
+  const [active, setActive] = useState(defaultCategory || "__all__");
+  const [books, setBooks] = useState([]);
+  const [catsLoading, setCatsLoading] = useState(true);
+  const [booksLoading, setBooksLoading] = useState(false);
+  const [fade, setFade] = useState(true);
+  const scrollRef = useRef(null);
+  const pillsRef = useRef(null);
+
+  const { ref: sectionRef, inView } = useInView({ rootMargin: "200px" });
+
+  // Fetch categories once when section enters viewport
+  useEffect(() => {
+    if (!inView) return;
+    setCatsLoading(true);
+    api.get("/books/categories")
+      .then(res => {
+        const raw = res.data;
+        let list = [];
+        if (Array.isArray(raw)) list = raw;
+        else if (Array.isArray(raw?.categories)) list = raw.categories;
+        else if (Array.isArray(raw?.items)) list = raw.items;
+
+        // Filter to only specified categories if admin configured it
+        if (onlyCategories) {
+          const allowed = onlyCategories.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+          list = list.filter(c => {
+            const name = (typeof c === "string" ? c : c?.name || c?.slug || "").toLowerCase();
+            return allowed.includes(name);
+          });
+        }
+        setCategories(list);
+      })
+      .catch(() => setCategories([]))
+      .finally(() => setCatsLoading(false));
+  }, [inView, onlyCategories]);
+
+  // Fetch books when active category changes
+  useEffect(() => {
+    if (!inView) return;
+    setBooksLoading(true);
+    setFade(false);
+    const params = { limit, sort };
+    if (active !== "__all__") params.category = active;
+    api.get("/books", { params })
+      .then(res => {
+        const list = Array.isArray(res.data?.items) ? res.data.items : [];
+        setBooks(list);
+        setTimeout(() => setFade(true), 60);
+      })
+      .catch(() => setBooks([]))
+      .finally(() => setBooksLoading(false));
+  }, [active, inView]);
+
+  const selectCategory = (key) => {
+    setActive(key);
+    if (pillsRef.current) {
+      const btn = pillsRef.current.querySelector(`[data-cat="${key}"]`);
+      if (btn) btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  };
+
+  const getCatName = (cat) => (typeof cat === "string" ? cat : cat?.name || cat?._id || "");
 
   return (
-    <div className="relative w-full">
+    <section
+      ref={sectionRef}
+      className="px-4 sm:px-6 lg:px-8 py-10 md:py-14"
+    >
 
-      {/* ── Stage: height driven by hidden reference image, no fixed px ── */}
-      <div className="relative" style={{ perspective: '1200px' }}>
-
-        {/* Invisible reference — same width as active slide, flows in DOM to set stage height */}
-        <img
-          src={items[current].desktop}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          decoding="async"
-          className="block mx-auto opacity-0 pointer-events-none select-none"
-          style={{ width: '78%' }}
-          draggable={false}
-        />
-
-        {/* Coverflow slides — absolute, centered over the reference */}
-        {items.map((slide, idx) => {
-          const pos = getPos(idx);
-          if (Math.abs(pos) > 2) return null;
-          const cfg = CFGS2[String(pos)];
-          const isActive = pos === 0;
-
-          return (
-            <div
-              key={idx}
-              className="absolute top-1/2 transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]"
-              style={{
-                left: cfg.l,
-                width: cfg.w,
-                transform: `translateX(-50%) translateY(-50%) rotateY(${cfg.rY}deg)`,
-                zIndex: cfg.z,
-                opacity: cfg.op,
-                filter: `brightness(${cfg.br}) drop-shadow(0 ${cfg.sh}px ${cfg.sh * 2}px rgba(62,39,35,0.28))`,
-                cursor: isActive ? 'default' : 'pointer',
-                borderRadius: cfg.r,
-                overflow: 'hidden',
-              }}
-              onClick={() => !isActive && setCurrent(idx)}
-            >
-              <Link to={slide.link} onClick={e => !isActive && e.preventDefault()} className="block w-full">
-                <picture className="block w-full">
-                  <source media="(max-width: 767px)" srcSet={slide.mobile} />
-                  <source media="(min-width: 768px)" srcSet={slide.desktop} />
-                  <img
-                    src={slide.desktop}
-                    alt={slide.alt}
-                    loading={isActive ? "eager" : "lazy"}
-                    fetchpriority={isActive ? "high" : "auto"}
-                    decoding="async"
-                    className="w-full h-auto block select-none"
-                    draggable={false}
-                  />
-                </picture>
-              </Link>
-            </div>
-          );
-        })}
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 border-b border-[#D4AF37]/20 pb-4">
+        <h2 className="text-3xl md:text-4xl font-['Cinzel'] font-bold text-[#3E2723] flex items-center gap-4">
+          <span className="w-1.5 h-8 bg-[#D4AF37] rounded-full inline-block" />
+          {title}
+        </h2>
+        <Link to="/catalog" className="text-[#D4AF37] hover:text-[#3E2723] font-bold text-sm flex items-center gap-1 transition-colors uppercase tracking-widest font-['Cinzel']">
+          View All <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
 
-      {/* ── Navigation ── */}
-      {length > 1 && (
-        <>
+      {/* Category Pills */}
+      {catsLoading ? (
+        <div className="flex gap-3 mb-8">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="h-10 w-28 rounded-full bg-[#3E2723]/10 animate-pulse flex-shrink-0" />
+          ))}
+        </div>
+      ) : (
+        <div
+          ref={pillsRef}
+          className="flex gap-3 overflow-x-auto pb-3 mb-8 no-scrollbar"
+        >
+          {/* ALL pill */}
           <button
-            onClick={() => go(-1)}
-            className="absolute left-1 md:left-2 top-1/2 -translate-y-1/2 z-30
-              w-8 h-8 rounded-full
-              bg-white/40 hover:bg-white/80
-              border border-[#3E2723]/10 hover:border-[#D4AF37]/50
-              backdrop-blur-sm text-[#3E2723]/60 hover:text-[#3E2723]
-              flex items-center justify-center
-              transition-all duration-200 active:scale-90"
+            data-cat="__all__"
+            onClick={() => selectCategory("__all__")}
+            className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-bold font-['Cinzel'] border transition-all duration-300 ${
+              active === "__all__"
+                ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-[0_4px_14px_rgba(62,39,35,0.3)]"
+                : "bg-white/70 text-[#3E2723]/70 border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#FFF9E6] hover:text-[#3E2723]"
+            }`}
           >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => go(1)}
-            className="absolute right-1 md:right-2 top-1/2 -translate-y-1/2 z-30
-              w-8 h-8 rounded-full
-              bg-white/40 hover:bg-white/80
-              border border-[#3E2723]/10 hover:border-[#D4AF37]/50
-              backdrop-blur-sm text-[#3E2723]/60 hover:text-[#3E2723]
-              flex items-center justify-center
-              transition-all duration-200 active:scale-90"
-          >
-            <ChevronRight className="w-4 h-4" />
+            All Books
           </button>
 
-          {/* Counter + dots â€" below the stage, centered */}
-          <div className="flex justify-center mt-4 z-30">
-            <div className="flex items-center gap-3 bg-white/70 backdrop-blur-md px-5 py-2.5 rounded-full border border-[#D4AF37]/30 shadow-[0_4px_20px_rgba(62,39,35,0.1)]">
-              <span className="text-[#3E2723]/50 text-[11px] font-['Cinzel'] leading-none select-none w-5 text-right">
-                {String(current + 1).padStart(2, '0')}
-              </span>
-              <div className="flex items-center gap-1.5">
-                {items.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrent(idx)}
-                    aria-label={`Go to slide ${idx + 1}`}
-                    className={`rounded-full transition-all duration-500 ease-out ${
-                      current === idx
-                        ? 'w-7 h-2 bg-[#D4AF37] shadow-[0_0_8px_rgba(212,175,55,0.6)]'
-                        : 'w-2 h-2 bg-[#3E2723]/20 hover:bg-[#3E2723]/40'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-[#3E2723]/30 text-[11px] font-['Cinzel'] leading-none select-none w-5">
-                {String(length).padStart(2, '0')}
-              </span>
-            </div>
-          </div>
-        </>
+          {categories.map((cat) => {
+            const name = getCatName(cat);
+            if (!name) return null;
+            return (
+              <button
+                key={name}
+                data-cat={name}
+                onClick={() => selectCategory(name)}
+                className={`flex-shrink-0 px-6 py-2.5 rounded-full text-sm font-bold font-['Cinzel'] border transition-all duration-300 whitespace-nowrap ${
+                  active === name
+                    ? "bg-[#3E2723] text-[#F3E5AB] border-[#3E2723] shadow-[0_4px_14px_rgba(62,39,35,0.3)]"
+                    : "bg-white/70 text-[#3E2723]/70 border-[#D4AF37]/30 hover:border-[#D4AF37] hover:bg-[#FFF9E6] hover:text-[#3E2723]"
+                }`}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
       )}
-    </div>
+
+      {/* Books */}
+      <div
+        className="transition-opacity duration-400"
+        style={{ opacity: fade && !booksLoading ? 1 : 0 }}
+      >
+        {booksLoading ? (
+          <div className="flex gap-6 overflow-hidden pb-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="w-[280px] flex-shrink-0 h-[380px] rounded-[1.5rem] bg-[#3E2723]/10 animate-pulse" />
+            ))}
+          </div>
+        ) : books.length === 0 ? (
+          <div className="rounded-[2rem] border border-[#D4AF37]/20 bg-white/50 p-12 text-center text-[#8A7A5E] italic font-['Cinzel']">
+            No books found in this category.
+          </div>
+        ) : (
+          <div
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 scroll-smooth no-scrollbar"
+          >
+            {books.map(b => (
+              <div
+                key={b._id || b.id}
+                className="w-[260px] md:w-[290px] flex-shrink-0 snap-start"
+              >
+                <ProductCard book={b} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

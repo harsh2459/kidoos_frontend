@@ -102,6 +102,23 @@ export default function CustomerAuth() {
     window.scrollTo(0, 0);
   }, []);
 
+  // Paint the body with the auth background so it shows behind the transparent navbar
+  useEffect(() => {
+    const prev = {
+      backgroundImage: document.body.style.backgroundImage,
+      backgroundSize: document.body.style.backgroundSize,
+      backgroundPosition: document.body.style.backgroundPosition,
+    };
+    document.body.style.backgroundImage = "url('/images-webp/auth-spiritual-bg.webp')";
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    return () => {
+      document.body.style.backgroundImage = prev.backgroundImage;
+      document.body.style.backgroundSize = prev.backgroundSize;
+      document.body.style.backgroundPosition = prev.backgroundPosition;
+    };
+  }, []);
+
   function resetOtpFlow() {
     setEmailOtpSent(false);
     setEmailVerified(false);
@@ -298,37 +315,33 @@ export default function CustomerAuth() {
   }
 
   // Reusable styles for the "Liquid Glass" inputs
-  const glassInputStyle = "w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/50 transition-all text-[#3E2723] placeholder-[#3E2723]/50 shadow-inner";
+  const glassInputStyle = "w-full pl-10 pr-4 py-3 bg-[#FFF8E7]/60 backdrop-blur-sm border border-[#D4AF37]/30 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 transition-all text-[#3E2723] placeholder-[#8A7A5E]/70";
 
   return (
     <div className="min-h-screen grid place-items-center px-4 py-12 relative overflow-hidden font-['Lato'] text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723]">
 
       {/* --- Background Layers --- */}
       <div
-        className="absolute inset-0 z-0 pointer-events-none opacity-100"
-        style={{
-          backgroundImage: authBg,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ backgroundImage: authBg, backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
-      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none"></div> {/* Slight dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
       <div
         className="absolute inset-0 opacity-10 pointer-events-none z-0 mix-blend-overlay"
         style={{ backgroundImage: mandalaBg, backgroundSize: '600px', backgroundRepeat: 'repeat' }}
-      ></div>
+      />
 
       <div className="w-full max-w-md relative z-10">
 
         {/* --- LIQUID GLASS AUTH CARD --- */}
-        <div className="bg-white/10 backdrop-blur-[20px] rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.2)] p-8 border border-white/20 ring-1 ring-[#D4AF37]/20 relative overflow-hidden">
+        <div className="bg-[#FDF6E3]/70 backdrop-blur-[24px] rounded-[2.5rem] shadow-[0_8px_40px_rgba(62,39,35,0.3),0_0_0_1px_rgba(212,175,55,0.3)] p-8 border border-[#D4AF37]/30 relative overflow-hidden">
 
           {/* Top Decoration (Shiny edge) */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-70"></div>
 
           {/* Header */}
           <div className="mb-8 text-center relative z-10">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-4 border border-white/30 shadow-sm ring-1 ring-[#D4AF37]/20">
+            <div className="w-12 h-12 bg-[#D4AF37]/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D4AF37]/40 shadow-sm">
               <KeyRound className="w-6 h-6 text-[#D4AF37] drop-shadow-sm" />
             </div>
             <h1 className="text-3xl font-['Cinzel'] font-bold text-[#3E2723] mb-2 drop-shadow-sm">
@@ -348,20 +361,20 @@ export default function CustomerAuth() {
 
           <div className="relative mb-6 z-10">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[#3E2723]/20"></div>
+              <div className="w-full border-t border-[#D4AF37]/30"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-transparent px-2 text-[#3E2723]/70 font-['Cinzel'] font-bold tracking-widest backdrop-blur-md rounded">Or Continue With</span>
+              <span className="bg-[#FDF6E3]/80 backdrop-blur-sm px-3 py-0.5 rounded-full text-[#8A7A5E] font-['Cinzel'] font-bold tracking-widest border border-[#D4AF37]/20">Or Continue With</span>
             </div>
           </div>
 
           {/* Tabs (Glassy) */}
-          <div className="flex p-1 bg-white/10 backdrop-blur-md rounded-xl mb-6 border border-white/20 relative z-10">
+          <div className="flex p-1 bg-[#D4AF37]/15 backdrop-blur-md rounded-xl mb-6 border border-[#D4AF37]/30 relative z-10">
             <button
               onClick={() => switchMode("login")}
               className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${mode === "login"
-                ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm"
-                : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
+                ? "bg-gradient-to-r from-[#C59D5F]/80 to-[#B0894C]/80 text-white shadow-md border border-[#D4AF37]/50"
+                : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-[#D4AF37]/10"
                 }`}
             >
               Login
@@ -369,8 +382,8 @@ export default function CustomerAuth() {
             <button
               onClick={() => switchMode("signup")}
               className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all font-['Cinzel'] ${mode === "signup"
-                ? "bg-white/40 text-[#3E2723] shadow-sm border border-white/30 backdrop-blur-sm"
-                : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-white/10"
+                ? "bg-gradient-to-r from-[#C59D5F]/80 to-[#B0894C]/80 text-white shadow-md border border-[#D4AF37]/50"
+                : "text-[#3E2723]/70 hover:text-[#3E2723] hover:bg-[#D4AF37]/10"
                 }`}
             >
               Sign Up
@@ -419,7 +432,7 @@ export default function CustomerAuth() {
                     type="button"
                     onClick={emailVerified ? undefined : sendEmailOtp}
                     disabled={otpSending || emailVerified || !emailValid || cooldown > 0}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold px-3 py-1.5 rounded-lg bg-white/20 border border-white/30 text-[#3E2723] hover:bg-white/40 disabled:opacity-50 transition-all uppercase tracking-wider backdrop-blur-sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold px-3 py-1.5 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#3E2723] hover:bg-[#D4AF37]/40 disabled:opacity-50 transition-all uppercase tracking-wider backdrop-blur-sm"
                   >
                     {emailVerified ? "Verified" : cooldown > 0 ? `${cooldown}s` : emailOtpSent ? "Resend" : "Verify"}
                   </button>
@@ -430,7 +443,7 @@ export default function CustomerAuth() {
               {mode === "signup" && emailOtpSent && !emailVerified && (
                 <div className="mt-3 flex gap-2 animate-fade-in-up">
                   <input
-                    className={`flex-1 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:border-[#D4AF37] text-center tracking-widest font-bold text-[#3E2723] shadow-inner`}
+                    className="flex-1 px-4 py-2.5 bg-[#FFF8E7]/60 backdrop-blur-sm border border-[#D4AF37]/30 rounded-xl focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 text-center tracking-widest font-bold text-[#3E2723]"
                     placeholder="ENTER OTP"
                     value={form.emailOtp}
                     onChange={(e) => set("emailOtp", e.target.value)}
@@ -439,7 +452,7 @@ export default function CustomerAuth() {
                     type="button"
                     onClick={verifyEmailOtp}
                     disabled={otpVerifying || !form.emailOtp.trim()}
-                    className="px-6 py-2.5 bg-[#3E2723]/90 text-[#F3E5AB] rounded-xl font-bold hover:bg-[#3E2723] disabled:opacity-50 transition-colors border border-[#D4AF37]/30 backdrop-blur-sm"
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#C59D5F] to-[#B0894C] text-white rounded-xl font-bold hover:from-[#D4AF37] hover:to-[#C59D5F] disabled:opacity-50 transition-all border border-[#D4AF37]/50"
                   >
                     {otpVerifying ? "..." : "Confirm"}
                   </button>

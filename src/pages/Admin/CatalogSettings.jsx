@@ -32,7 +32,7 @@ export default function CatalogSettings() {
         }
       } catch (e) {
         console.error(e);
-        t.err("Failed to load settings");
+        t.err({ title: "Load failed", sub: "Could not load catalog settings." });
       } finally {
         setLoading(false);
       }
@@ -47,9 +47,9 @@ export default function CatalogSettings() {
         image: toRelativeFromPublic(s.image)
       }));
       await api.put("/settings/catalog", { slider: cleaned }, auth);
-      t.ok("Catalog settings saved!");
+      t.ok({ title: "Settings saved", sub: "Catalog settings have been updated." });
     } catch (e) {
-      t.err("Failed to save");
+      t.err({ title: "Save failed", sub: "Could not save catalog settings. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -236,11 +236,11 @@ function ImageUpload({ label, value, onChange }) {
           const { path } = response.data.images[0];
           onChange(path); 
         } else {
-          t.err("Failed to upload image");
+          t.err({ title: "Upload failed", sub: "Could not upload image. Please try again." });
         }
       } catch (error) {
         console.error(error);
-        t.err("Error uploading image");
+        t.err({ title: "Upload error", sub: "An error occurred while uploading the image." });
       } finally {
         setUploading(false);
       }

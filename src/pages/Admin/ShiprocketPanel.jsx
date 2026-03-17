@@ -9,7 +9,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
 
   // 1. Auto-Ship Orders
   const handleCreate = async () => {
-    if (selected.size === 0) return t.error("Select orders first");
+    if (selected.size === 0) return t.err({ title: "No orders selected", sub: "Select orders first." });
     setLoading(true);
     try {
       const { data } = await ShipAPI.create(Array.from(selected), auth);
@@ -18,15 +18,15 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
         const results = data.data;
         const success = results.success?.length || 0;
         const failed = results.failed?.length || 0;
-        
-        if (success > 0) t.success(`${success} Orders Shipped!`);
-        if (failed > 0) t.error(`${failed} Failed. Check logs.`);
+
+        if (success > 0) t.ok({ title: "Orders shipped", detail: `${success} order(s)`, sub: "Shiprocket shipments created." });
+        if (failed > 0) t.err({ title: "Some shipments failed", detail: `${failed} failed`, sub: "Check logs for details." });
         if (onSuccess) onSuccess();
       } else {
-        t.error(data.error || "Shiprocket Creation Failed");
+        t.err({ title: "Shiprocket creation failed", sub: data.error || "Could not create Shiprocket shipments." });
       }
     } catch (e) {
-      t.error(e.response?.data?.error || "Shiprocket Creation Failed");
+      t.err(e.response?.data?.error || "Could not create shipments.");
     } finally {
       setLoading(false);
     }
@@ -46,16 +46,16 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
         const labelUrl = response.data?.label_url;
         if (labelUrl) {
           window.open(labelUrl, "_blank");
-          t.success("Label Generated!");
+          t.ok({ title: "Label generated", sub: "The shipping label has been opened." });
         } else {
-          t.error("Label URL not found in response");
+          t.err({ title: "Label not found", sub: "Label URL was not returned. Please try again." });
         }
       } else {
-        t.error(response.error || "Label generation failed");
+        t.err({ title: "Label generation failed", sub: response.error || "Could not generate the label." });
       }
     } catch (e) {
       console.error("Label Error:", e);
-      t.error(e.response?.data?.error || "Label Generation Failed");
+      t.err(e.response?.data?.error || "Could not generate the label.");
     } finally {
       setLoading(false);
     }
@@ -75,16 +75,16 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
         const manifestUrl = response.data?.manifest_url;
         if (manifestUrl) {
           window.open(manifestUrl, "_blank");
-          t.success("Manifest Generated!");
+          t.ok({ title: "Manifest generated", sub: "The shipment manifest has been opened." });
         } else {
-          t.error("Manifest URL not found in response");
+          t.err({ title: "Manifest not found", sub: "Manifest URL was not returned. Please try again." });
         }
       } else {
-        t.error(response.error || "Manifest generation failed");
+        t.err({ title: "Manifest generation failed", sub: response.error || "Could not generate the manifest." });
       }
     } catch (e) {
       console.error("Manifest Error:", e);
-      t.error(e.response?.data?.error || "Manifest Failed");
+      t.err(e.response?.data?.error || "Could not generate the manifest.");
     } finally {
       setLoading(false);
     }

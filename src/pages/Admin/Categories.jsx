@@ -28,7 +28,7 @@ export default function AdminCategories() {
       const res = await CategoriesAPI.list();
       setList(res?.data?.items || []);
     } catch (err) {
-      t.err(err?.message || "Failed to load categories");
+      t.err(err?.message || "Could not load categories.");
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,7 @@ export default function AdminCategories() {
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.name.trim()) return t.info("Name is required");
+    if (!form.name.trim()) return t.info({ title: "Name required", sub: "Please enter a category name." });
 
     setSaving(true);
     try {
@@ -47,11 +47,11 @@ export default function AdminCategories() {
         description: form.description.trim(),
       });
 
-      t.ok("Category added successfully!");
+      t.ok({ title: "Category added", sub: "The new category is now available." });
       setForm({ name: "", description: "" });
       load();
     } catch (err) {
-      t.err(err?.response?.data?.error || err?.message || "Unable to create category");
+      t.err(err?.response?.data?.error || err?.message || "Unable to create category.");
     } finally {
       setSaving(false);
     }
@@ -61,11 +61,11 @@ export default function AdminCategories() {
     if (!confirm) return;
     try {
       await CategoriesAPI.remove(confirm.id);
-      t.ok(`"${confirm.name}" deleted`);
+      t.ok({ title: "Category deleted", detail: confirm.name, sub: "The category has been removed." });
       setConfirm(null);
       load();
     } catch (err) {
-      t.err(err?.response?.data?.error || "Failed to delete category");
+      t.err(err?.response?.data?.error || "Could not delete category. Please try again.");
     }
   }
 

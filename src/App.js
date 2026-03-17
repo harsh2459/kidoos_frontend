@@ -42,15 +42,7 @@ const RefundPolicy = lazy(() => import('./pages/RefundPolicy'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const ContactUs = lazy(() => import('./pages/ContactUs'));
 const PreSchool = lazy(() => import('./pages/PreSchool'));
-
-// Experimental/Demo pages (lazy load to reduce main bundle)
-const GitaHome = lazy(() => import('./pages/Gita/GitaHome'));
-const GitaShowcase1 = lazy(() => import('./pages/gita-deepseek/GitaShowcase'));
 const Hero = lazy(() => import('./pages/parallax/Hero'));
-const HeroSection = lazy(() => import('./pages/gita_showcash/HeroSection'));
-const ScrollVideo = lazy(() => import('./pages/scroll_video/ScrollVideo'));
-const Portal = lazy(() => import('./pages/Vrindavan/Portal'));
-const UnderwaterVrindavan = lazy(() => import('./pages/Vrindavan/UnderwaterVrindavan'));
 
 // Admin pages (lazy load separately - rarely accessed)
 const AdminLogin = lazy(() => import('./pages/Admin/Login'));
@@ -73,6 +65,7 @@ const PopupSettings = lazy(() => import('./pages/Admin/PopupSettings'));
 const AiSettings = lazy(() => import('./pages/Admin/AiSettings'));
 const ShippingRules = lazy(() => import('./pages/Admin/ShippingRules'));
 const Coupons = lazy(() => import('./pages/Admin/Coupons'));
+const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
 
 function InnerApp() {
   const loc = useLocation();
@@ -121,13 +114,7 @@ function InnerApp() {
             <Route path="/aboutus" element={<PageGate page="aboutus"><AboutUs /></PageGate>} />
             <Route path="/preschool" element={<PageGate page="preschool"><PreSchool /></PageGate>} />
             <Route path="/invoice/:id" element={<Invoice />} />
-            <Route path="/gita1" element={<GitaHome />} />
-            <Route path="/1" element={<GitaShowcase1 />} />
             <Route path="/Sacred Stories" element={<Hero />} />
-            <Route path="/gita" element={<HeroSection />} />
-            <Route path="/scroll" element={<ScrollVideo />} />
-            <Route path="/j" element={<Portal />} />
-            <Route path="/water-1" element={<UnderwaterVrindavan />} />
             <Route path="/profile" element={<RequireCustomer><CustomerProfile /></RequireCustomer>} />
             <Route
               path="/profile/orders"
@@ -240,6 +227,10 @@ function InnerApp() {
               path="/admin/coupons"
               element={<AdminGuard><AdminLayout><Coupons /></AdminLayout></AdminGuard>}
             />
+            <Route
+              path="/admin/reviews"
+              element={<AdminGuard><AdminLayout><AdminReviews /></AdminLayout></AdminGuard>}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
@@ -279,10 +270,10 @@ export default function App() {
                 <InnerApp />
                 <ToastContainer
                   position="top-right"
-                  autoClose={2500}
+                  autoClose={3000}
                   hideProgressBar
                   newestOnTop
-                  closeOnClick
+                  closeOnClick={false}
                   draggable
                   pauseOnHover
                   closeButton={false}

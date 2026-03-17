@@ -42,7 +42,7 @@ function ProductCard({ book }) {
     e.stopPropagation();
 
     if (!isCustomer) {
-      t.info("Please login to shop");
+      t.info({ title: "Login required", sub: "Please sign in to add items to your cart." });
       navigate("/login", { state: { next: "/cart" } });
       return;
     }
@@ -51,16 +51,16 @@ function ProductCard({ book }) {
       if (!token) throw new Error("No token");
       const res = await CustomerAPI.addToCart(token, { bookId: id, qty: 1 });
       replaceAll(res?.data?.cart?.items || []);
-      t.ok("Added to cart");
+      t.ok({ title: "Added to cart", detail: book.title, sub: "View your cart to checkout." });
     } catch (err) {
       if (err?.response?.status === 401) {
-        t.err("Please login again");
+        t.err({ title: "Session expired", sub: "Please login again to continue." });
         navigate("/login");
         return;
       }
       // Offline/Local fallback
       addLocal({ ...book, price: d.price, mrp: d.mrp, qty: 1 });
-      t.warn("Added to local cart");
+      t.warn({ title: "Saved offline", detail: book.title, sub: "Sign in to sync your cart." });
     }
   }, [isCustomer, token, id, book, d, navigate, replaceAll, addLocal]);
 

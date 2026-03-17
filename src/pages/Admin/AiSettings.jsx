@@ -49,7 +49,7 @@ export default function AiSettings() {
 
     async function checkModels() {
         if (config.keys.length === 0) {
-            return t.err("Add a valid API Key first!");
+            return t.err({ title: "No API key", sub: "Add a valid API key first." });
         }
 
         const toastId = t.loading("Asking Google for available models...");
@@ -63,13 +63,13 @@ export default function AiSettings() {
                 }
 
                 t.dismiss(toastId);
-                t.ok(`Found ${data.models.length} models!`);
+                t.ok({ title: "Models loaded", detail: `${data.models.length} models found`, sub: "Select a model to use for AI features." });
             } else {
                 throw new Error("No models returned");
             }
         } catch (e) {
             t.dismiss(toastId);
-            t.err("Could not list models. Check Key or Backend logs.");
+            t.err({ title: "Could not load models", sub: "Check your API key or backend logs." });
         }
     }
 
@@ -77,16 +77,16 @@ export default function AiSettings() {
         setSaving(true);
         try {
             await api.put("/settings/ai", { config, prompt }, auth);
-            t.ok("Saved!");
+            t.ok({ title: "Settings saved", sub: "Your AI settings have been updated." });
         } catch (error) {
-            t.err("Failed to save");
+            t.err({ title: "Save failed", sub: "Could not save settings. Please try again." });
         } finally {
             setSaving(false);
         }
     }
 
     function addKey() {
-        if (!newKey.trim()) return t.err("Enter Key");
+        if (!newKey.trim()) return t.err({ title: "Key required", sub: "Please enter a valid API key." });
         setConfig(prev => ({
             ...prev,
             keys: [...(prev.keys || []), { key: newKey.trim(), label: newLabel.trim() || `Key ${prev.keys.length + 1}`, isExhausted: false }]
@@ -105,7 +105,7 @@ export default function AiSettings() {
             updated[index] = { ...updated[index], isExhausted: false };
             return { ...prev, keys: updated };
         });
-        t.ok("Reset");
+        t.ok({ title: "Key reset", sub: "The key status has been reset." });
     }
 
     if (loading) return <div className="p-10 text-center">Loading...</div>;

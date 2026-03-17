@@ -17,7 +17,7 @@ export default function ShippingRules() {
       if (res.data?.ok) {
         setRules(res.data.rules.map(r => ({ ...r, onlineCharge: r.onlineCharge ?? "" })));
       }
-    }).catch(() => t.err("Failed to load shipping rules"))
+    }).catch(() => t.err({ title: "Load failed", sub: "Could not load shipping rules. Please refresh." }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -36,11 +36,11 @@ export default function ShippingRules() {
   async function save() {
     for (const r of rules) {
       if (r.orderValue === "" || r.charge === "") {
-        t.info("Fill in Order Value and Charge for all rows.");
+        t.info({ title: "Incomplete rows", sub: "Fill in Order Value and Charge for all rows." });
         return;
       }
       if (isNaN(Number(r.orderValue)) || isNaN(Number(r.charge))) {
-        t.info("Order Value and Charge must be numbers.");
+        t.info({ title: "Invalid values", sub: "Order Value and Charge must be numbers." });
         return;
       }
     }
@@ -55,12 +55,12 @@ export default function ShippingRules() {
       const res = await api.put("/shipping-rules", { rules: payload }, auth);
       if (res.data?.ok) {
         setRules(res.data.rules.map(r => ({ ...r, onlineCharge: r.onlineCharge ?? "" })));
-        t.success("Shipping rules saved!");
+        t.ok({ title: "Rules saved", sub: "Shipping rules have been updated." });
       } else {
-        t.err(res.data?.error || "Failed to save");
+        t.err(res.data?.error || "Could not save shipping rules. Please try again.");
       }
     } catch (e) {
-      t.err(e?.response?.data?.error || "Failed to save");
+      t.err(e?.response?.data?.error || "Could not save shipping rules. Please try again.");
     } finally {
       setSaving(false);
     }

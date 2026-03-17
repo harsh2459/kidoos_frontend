@@ -70,9 +70,9 @@ export default function EmailSenders() {
       }
       setEditing(null);
       await load();
-      t.ok("Sender saved successfully");
+      t.ok({ title: "Sender saved", sub: "The email sender configuration has been updated." });
     } catch (e) {
-      t.err("Failed to save sender");
+      t.err({ title: "Save failed", sub: "Could not save sender configuration. Please try again." });
     } finally { setSaving(false); }
   }
 
@@ -81,9 +81,9 @@ export default function EmailSenders() {
     try {
       await EmailAPI.deleteSender(deleteConfirm._id);
       await load();
-      t.ok("Sender deleted");
+      t.ok({ title: "Sender deleted", detail: deleteConfirm.label, sub: "The email sender has been removed." });
     } catch {
-      t.err("Failed to delete sender");
+      t.err({ title: "Delete failed", sub: "Could not delete sender. Please try again." });
     } finally {
       setDeleteConfirm(null);
     }
@@ -91,16 +91,16 @@ export default function EmailSenders() {
 
   async function test(sender) {
     if (!testTo.trim()) {
-      t.info("Enter a test recipient (To)");
+      t.info({ title: "Recipient required", sub: "Enter a test email address to send to." });
       return;
     }
     setTesting(true);
     try {
       await EmailAPI.testSender(sender._id, { to: testTo, subject: `Test from ${sender.label}`, text: "Hello from Email Sender test." });
-      t.ok("Test email queued/sent (check inbox).");
+      t.ok({ title: "Test email sent", sub: "Check the recipient's inbox to confirm delivery." });
 
     } catch (e) {
-      t.err(e?.response?.data?.error || "Test failed");
+      t.err(e?.response?.data?.error || "Could not send test email. Check your configuration.");
     } finally { setTesting(false); }
   }
 

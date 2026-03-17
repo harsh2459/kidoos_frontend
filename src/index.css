@@ -39,3 +39,42 @@
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }
+
+/* ── Toast overrides ─────────────────────────────────────────────── */
+/* Strip react-toastify's default wrapper styles so AlertToast shows as-is */
+.Toastify__toast {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  min-height: unset !important;
+  border-radius: 0 !important;
+  margin-bottom: 8px;
+}
+.Toastify__toast-body {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Category browser auto-rotation progress bar */
+@keyframes catProgress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* no-scrollbar utility */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Keyframes used by AlertToast */
+@keyframes toast-drain {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+@keyframes toast-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

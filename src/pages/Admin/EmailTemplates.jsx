@@ -58,7 +58,7 @@ export default function EmailTemplates() {
             setTemplates(tArr);
             setSenders(sArr);
         } catch (err) {
-            t.err("Failed to load data");
+            t.err({ title: "Load failed", sub: "Could not load email templates. Please refresh." });
         } finally { setLoading(false); }
     }
 
@@ -89,9 +89,9 @@ export default function EmailTemplates() {
         try {
             await EmailAPI.deleteTemplate(deleteConfirm._id || deleteConfirm.slug);
             await load();
-            t.success("Template deleted");
+            t.ok({ title: "Template deleted", detail: deleteConfirm.title, sub: "The email template has been removed." });
         } catch {
-            t.err("Failed to delete template");
+            t.err({ title: "Delete failed", sub: "Could not delete template. Please try again." });
         } finally {
             setDeleteConfirm(null);
         }
@@ -296,9 +296,9 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
             if (payload.category !== "abandoned_cart") payload.abandonedDay = null;
 
             // Basic Validation
-            if (!payload.slug?.trim()) return t.err("Slug is required");
-            if (!payload.subject?.trim()) return t.err("Subject is required");
-            if (!payload.mailSender) return t.err("Please select a Sender");
+            if (!payload.slug?.trim()) return t.err({ title: "Slug required", sub: "Please enter a unique template slug." });
+            if (!payload.subject?.trim()) return t.err({ title: "Subject required", sub: "Please enter an email subject line." });
+            if (!payload.mailSender) return t.err({ title: "Sender required", sub: "Please select a sender configuration." });
 
             // Cleanup
             if (!payload.text) delete payload.text;
@@ -311,10 +311,10 @@ function TemplateEditor({ tpl: initialTpl, senders, onClose, onSave }) {
             } else {
                 await EmailAPI.createTemplate(payload);
             }
-            t.success("Template saved successfully");
+            t.ok({ title: "Template saved", sub: "The email template has been updated." });
             onSave();
         } catch (e) {
-            t.err(e?.response?.data?.error || "Save failed");
+            t.err(e?.response?.data?.error || "Could not save template. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -589,16 +589,16 @@ function TestLabModal({ tpl, onClose }) {
     const [sending, setSending] = useState(false);
 
     async function handleSend() {
-        if (!email) return t.err("Please enter an email address");
+        if (!email) return t.err({ title: "Recipient required", sub: "Please enter an email address to send the test to." });
         let ctx = {};
-        try { ctx = JSON.parse(jsonCtx); } catch { return t.err("Invalid JSON context"); }
+        try { ctx = JSON.parse(jsonCtx); } catch { return t.err({ title: "Invalid JSON", sub: "The context data is not valid JSON." }); }
 
         setSending(true);
         try {
             await EmailAPI.testTemplate(tpl.slug, { to: email, ctx });
-            t.success(`Test sent to ${email}`);
+            t.ok({ title: "Test email sent", detail: email, sub: "Check the inbox to confirm delivery." });
         } catch (e) {
-            t.err(e?.response?.data?.error || "Test failed");
+            t.err(e?.response?.data?.error || "Could not send test email. Check your configuration.");
         } finally {
             setSending(false);
         }

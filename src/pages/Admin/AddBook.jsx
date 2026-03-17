@@ -203,9 +203,9 @@ export default function AddBook() {
         .map(toRelativeFromPublic);
 
       setAssets("coverUrl", [...(book.assets?.coverUrl || []), ...paths]);
-      t.ok("Images uploaded! You can now use AI Auto-Fill.");
+      t.ok({ title: "Images uploaded", sub: "You can now use AI Auto-Fill." });
     } catch (e) {
-      t.err("Upload failed");
+      t.err({ title: "Upload failed", sub: "Could not upload images. Please try again." });
     } finally {
       setUploading(false);
     }
@@ -275,7 +275,7 @@ export default function AddBook() {
   // --- ASK AI HANDLER ---
   const handleAskAI = async () => {
     if (book.assets.coverUrl.length === 0) {
-      t.err("Please upload at least one image first!");
+      t.err({ title: "No image uploaded", sub: "Please upload at least one image before using AI Auto-Fill." });
       return;
     }
 
@@ -323,12 +323,12 @@ export default function AddBook() {
       if (result.whyChooseThis) setWhyChooseThisText(result.whyChooseThis.join("\n"));
 
       t.dismiss(toastId);
-      t.ok("✨ Book details, story & testimonials auto-filled!");
+      t.ok({ title: "Auto-fill complete", sub: "Book details, story & testimonials have been filled." });
 
     } catch (error) {
       console.error("AI Error:", error);
       t.dismiss(toastId);
-      t.err("AI Analysis failed. Check console or try again.");
+      t.err({ title: "AI analysis failed", sub: "Check console or try again." });
     } finally {
       setAnalyzing(false);
     }
@@ -368,11 +368,11 @@ export default function AddBook() {
 
       await api.post("/books", payload, auth);
     
-      t.ok("Book created successfully!");
+      t.ok({ title: "Book created", sub: "The new book is now live in your catalogue." });
       navigate("/admin/books");
     } catch (e) {
       console.error(e);
-      t.err(e.response?.data?.error || "Failed to create book");
+      t.err(e.response?.data?.error || "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }

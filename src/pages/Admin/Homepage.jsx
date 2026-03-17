@@ -7,7 +7,7 @@ import {
   Save, Upload, Trash2, ArrowUp, ArrowDown,
   Layout, Type, Image as ImageIcon, Grid,
   Images, Plus, Layers, LayoutTemplate, Monitor,
-  Puzzle, Gift, ChevronDown
+  Puzzle, Gift, ChevronDown, BookOpen
 } from "lucide-react";
 
 export default function HomepageAdmin() {
@@ -68,7 +68,7 @@ export default function HomepageAdmin() {
         setCategories(catsRes.data?.items || []);
       } catch (e) {
         console.error(e);
-        t.err("Failed to load data");
+        t.err({ title: "Load failed", sub: "Could not load homepage settings. Please refresh." });
       } finally {
         setLoading(false);
       }
@@ -120,9 +120,9 @@ export default function HomepageAdmin() {
         return nb;
       });
       await api.put("/settings/homepage", { blocks: cleaned }, auth);
-      t.ok("Homepage saved successfully!");
+      t.ok({ title: "Homepage saved", sub: "Your homepage layout has been updated." });
     } catch (e) {
-      t.err("Failed to save homepage");
+      t.err({ title: "Save failed", sub: "Could not save homepage settings. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -168,6 +168,7 @@ export default function HomepageAdmin() {
             <AddButton onClick={() => addBlock("puzzle")} icon={Puzzle} label="Puzzle Game" /> 
             <AddButton onClick={() => addBlock("banner")} icon={ImageIcon} label="Promo Banner" />
             <AddButton onClick={() => addBlock("grid")} icon={Grid} label="Product Grid" />
+            <AddButton onClick={() => addBlock("category-browser")} icon={BookOpen} label="Category Browser" />
             <AddButton onClick={() => addBlock("html")} icon={Type} label="Custom HTML" />
            </div>
         </div>
@@ -192,13 +193,15 @@ export default function HomepageAdmin() {
               b.type === 'hero-slider' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
               b.type === 'slider'      ? 'bg-purple-50 text-purple-700 border-purple-200' :
               b.type === 'puzzle'      ? 'bg-pink-50 text-pink-700 border-pink-200' :
-              b.type === 'html'        ? 'bg-orange-50 text-orange-700 border-orange-200' :
+              b.type === 'html'              ? 'bg-orange-50 text-orange-700 border-orange-200' :
+              b.type === 'category-browser' ? 'bg-teal-50 text-teal-700 border-teal-200' :
               'bg-gray-100 text-gray-700 border-gray-200';
             const typeLabel =
               b.type === 'html' ? 'Custom Code' : b.type === 'puzzle' ? 'Game' :
               b.type === 'hero-slider' ? 'Hero Slider' : b.type === 'grid' ? 'Product Grid' :
-              b.type === 'hero' ? 'Hero' : b.type === 'slider' ? 'Image Slider' : b.type;
-            const blockTitle = b.title || (b.type === 'html' ? 'Untitled HTML Block' : b.type === 'puzzle' ? 'Puzzle Game' : 'Untitled Section');
+              b.type === 'hero' ? 'Hero' : b.type === 'slider' ? 'Image Slider' :
+              b.type === 'category-browser' ? 'Category Browser' : b.type;
+            const blockTitle = b.title || (b.type === 'html' ? 'Untitled HTML Block' : b.type === 'puzzle' ? 'Puzzle Game' : b.type === 'category-browser' ? 'Category Browser' : 'Untitled Section');
 
             return (
               <div key={i} className={`bg-white border rounded-2xl shadow-sm overflow-hidden transition-all ${isOpen ? 'border-[#384959]/30' : 'border-[#E3E8E5] hover:border-[#C5D1CB]'}`}>
@@ -290,6 +293,14 @@ function defaultBlock(type) {
   if (type === "banner") return { type, image: "", ctaText: "", ctaLink: "/" };
   if (type === "grid") return { type, title: "Featured Books", query: { q: "", category: "", sort: "new", limit: 8 } };
   if (type === "html") return { type, title: "Custom Code Block", html: "<h2>Custom Section</h2><p>Edit me</p>" };
+  if (type === "category-browser") return {
+    type,
+    title: "Browse by Category",
+    defaultCategory: "",
+    limit: 16,
+    sort: "new",
+    onlyCategories: "",
+  };
   
   if (type === "slider") return { 
     type, 
@@ -593,6 +604,101 @@ function BlockEditor({ block, onChange, categories }) {
     );
     
     case "html": return (<div className="space-y-4"><Input label="Block Name" value={block.title} onChange={v => onChange({ ...block, title: v })} /><div><label className="text-sm font-bold text-[#2C3E38] block mb-2">HTML</label><textarea value={block.html} onChange={e => onChange({ ...block, html: e.target.value })} className="input-base h-40 font-mono text-sm" /></div></div>);
+
+    case "category-browser":
+      return (
+        <div className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <Input
+              label="Section Title"
+              value={block.title}
+              onChange={v => onChange({ ...block, title: v })}
+              placeholder="Browse by Category"
+            />
+
+            {/* Default Category */}
+            <div>
+              <label className="text-sm font-bold text-[#2C3E38] block mb-2">Default Category</label>
+              <select
+                className="input-base"
+                value={block.defaultCategory || ""}
+                onChange={e => onChange({ ...block, defaultCategory: e.target.value })}
+              >
+                <option value="">All Books (default)</option>
+                {categories.map(c => (
+                  <option key={c._id} value={c.slug || c.name}>{c.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-[#8BA699] mt-1">Which tab is pre-selected when the page loads.</p>
+            </div>
+
+            {/* Sort order */}
+            <div>
+              <label className="text-sm font-bold text-[#2C3E38] block mb-2">Sort Order</label>
+              <select
+                className="input-base"
+                value={block.sort || "new"}
+                onChange={e => onChange({ ...block, sort: e.target.value })}
+              >
+                <option value="new">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="priceAsc">Price: Low to High</option>
+                <option value="priceDesc">Price: High to Low</option>
+                <option value="a-z">Name: A to Z</option>
+              </select>
+            </div>
+
+            {/* Items per category */}
+            <Input
+              label="Books to Show per Category"
+              type="number"
+              value={block.limit}
+              onChange={v => onChange({ ...block, limit: Number(v) || 16 })}
+              placeholder="16"
+            />
+          </div>
+
+          {/* Only show specific categories */}
+          <div>
+            <label className="text-sm font-bold text-[#2C3E38] block mb-2">
+              Show Only These Categories (optional)
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+              {categories.map(c => {
+                const val = c.slug || c.name;
+                const selected = (block.onlyCategories || "").split(",").map(s => s.trim()).filter(Boolean);
+                const isChecked = selected.includes(val);
+                return (
+                  <label
+                    key={c._id}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm ${
+                      isChecked
+                        ? "border-[#384959] bg-[#384959]/5 text-[#384959] font-semibold"
+                        : "border-[#DCE4E0] bg-white text-[#5C756D] hover:border-[#384959]/40"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="accent-[#384959]"
+                      checked={isChecked}
+                      onChange={() => {
+                        const current = (block.onlyCategories || "").split(",").map(s => s.trim()).filter(Boolean);
+                        const next = isChecked ? current.filter(x => x !== val) : [...current, val];
+                        onChange({ ...block, onlyCategories: next.join(", ") });
+                      }}
+                    />
+                    {c.name}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-xs text-[#8BA699]">
+              Leave all unchecked to show every category. Check specific ones to limit the pills.
+            </p>
+          </div>
+        </div>
+      );
+
     default: return null;
   }
 }
@@ -612,7 +718,7 @@ function ImageUpload({ label, value, onChange }) {
       try {
         const response = await api.post("/uploads/image", formData, { headers: { "Content-Type": "multipart/form-data", "Authorization": `Bearer ${localStorage.getItem("admin_jwt")}` } });
         if (response.data.ok) onChange(response.data.images[0].path);
-      } catch (error) { t.err("Error uploading image"); } finally { setUploading(false); }
+      } catch (error) { t.err({ title: "Upload failed", sub: "Could not upload image. Please try again." }); } finally { setUploading(false); }
     }
   };
   return (<div><label className="text-sm font-bold text-[#2C3E38] block mb-2">{label}</label><div className="flex gap-4 items-start"><div className="flex-1"><label className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white border border-dashed border-[#384959] rounded-xl cursor-pointer hover:bg-[#F4F7F5] transition-colors text-[#384959] font-medium group">{uploading ? "Uploading..." : <><Upload className="w-4 h-4" /> Choose Image</>}<input type="file" accept="image/*" onChange={handleImageChange} className="hidden" /></label><input type="text" className="input-base mt-2 text-xs font-mono text-[#5C756D]" placeholder="Or paste URL" value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>{value && (<div className="w-24 h-24 border border-[#E3E8E5] rounded-lg bg-white p-1 shadow-sm flex-shrink-0"><img src={assetUrl(value)} alt="Preview" className="w-full h-full object-contain rounded" /></div>)}</div></div>);

@@ -19,7 +19,7 @@ export default function GoogleLoginButton({ onSuccess }) {
       const data = await googleLogin(); // Assumes this returns { token, customer }
       const newToken = data?.token;
 
-      t.success("Logged in with Google!");
+      t.success({ title: "Welcome!", sub: "You're now signed in with Google." });
 
       // 2. Check for Pending Item (Buy Now flow)
       if (pendingItem && newToken) {
@@ -29,14 +29,14 @@ export default function GoogleLoginButton({ onSuccess }) {
             bookId: pendingItem.bookId,
             qty: pendingItem.qty
           });
-          
+
           // Update local cart state
           if (res?.data?.cart?.items) {
             replaceAll(res.data.cart.items);
           }
         } catch (cartErr) {
           console.error("Failed to add pending item:", cartErr);
-          t.err("Could not add item to cart");
+          t.err({ title: "Cart sync failed", sub: "Could not add your item. Please try again." });
         }
       }
 
@@ -48,15 +48,20 @@ export default function GoogleLoginButton({ onSuccess }) {
       }
     } catch (error) {
       console.error("Google login failed:", error);
-      t.err("Google login failed");
+      t.err({ title: "Google login failed", sub: "Something went wrong. Please try again." });
     }
   };
 
   return (
-    <button 
+    <button
       onClick={handleClick}
       type="button"
-      className="w-full flex items-center justify-center gap-3 px-4 py-3.5 border border-gray-300 rounded-xl bg-white text-gray-700 font-medium hover:bg-gray-50 transition-all shadow-sm hover:shadow-md active:scale-[0.99] group"
+      className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl
+        bg-[#FFF8E7]/70 backdrop-blur-sm
+        border border-[#D4AF37]/40 hover:border-[#D4AF37]/80
+        text-[#3E2723] font-medium font-['Lato']
+        hover:bg-[#FFF8E7]/90 hover:shadow-[0_4px_16px_rgba(212,175,55,0.2)]
+        transition-all active:scale-[0.99] group"
     >
       <div className="flex items-center justify-center w-6 h-6 shrink-0">
         <svg className="w-5 h-5" viewBox="0 0 24 24">

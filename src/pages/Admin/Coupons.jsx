@@ -76,7 +76,7 @@ export default function Coupons() {
       const res = await api.get("/coupons", auth);
       if (res.data?.ok) setCoupons(res.data.coupons);
     } catch {
-      t.err("Failed to load coupons");
+      t.err({ title: "Load failed", sub: "Could not load coupons. Please refresh." });
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export default function Coupons() {
       const res = await api.get("/coupons/report", auth);
       if (res.data?.ok) setReport(res.data.report);
     } catch {
-      t.err("Failed to load report");
+      t.err({ title: "Load failed", sub: "Could not load usage report. Please try again." });
     } finally {
       setReportLoading(false);
     }
@@ -138,10 +138,10 @@ export default function Coupons() {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function save() {
-    if (!form.code.trim()) { t.info("Coupon code is required"); return; }
-    if (!form.discountValue || isNaN(Number(form.discountValue))) { t.info("Enter a valid discount value"); return; }
+    if (!form.code.trim()) { t.info({ title: "Code required", sub: "Please enter a coupon code." }); return; }
+    if (!form.discountValue || isNaN(Number(form.discountValue))) { t.info({ title: "Invalid discount", sub: "Enter a valid discount value." }); return; }
     if (form.discountType === "percent" && (Number(form.discountValue) <= 0 || Number(form.discountValue) > 100)) {
-      t.info("Percent discount must be between 1 and 100"); return;
+      t.info({ title: "Invalid percentage", sub: "Percent discount must be between 1 and 100." }); return;
     }
     setSaving(true);
     try {
@@ -160,15 +160,15 @@ export default function Coupons() {
       };
       if (editId) {
         await api.put(`/coupons/${editId}`, payload, auth);
-        t.success("Coupon updated");
+        t.ok({ title: "Coupon updated", sub: "The coupon has been saved." });
       } else {
         await api.post("/coupons", payload, auth);
-        t.success("Coupon created");
+        t.ok({ title: "Coupon created", sub: "The new coupon is now active." });
       }
       cancelForm();
       load();
     } catch (e) {
-      t.err(e?.response?.data?.error || "Failed to save coupon");
+      t.err(e?.response?.data?.error || "Could not save coupon. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -179,7 +179,7 @@ export default function Coupons() {
       await api.put(`/coupons/${c._id}`, { isActive: !c.isActive }, auth);
       setCoupons(prev => prev.map(x => x._id === c._id ? { ...x, isActive: !x.isActive } : x));
     } catch {
-      t.err("Failed to update coupon");
+      t.err({ title: "Update failed", sub: "Could not update coupon status. Please try again." });
     }
   }
 
@@ -188,9 +188,9 @@ export default function Coupons() {
     try {
       await api.delete(`/coupons/${deleteConfirm._id}`, auth);
       setCoupons(prev => prev.filter(c => c._id !== deleteConfirm._id));
-      t.success("Coupon deleted");
+      t.ok({ title: "Coupon deleted", detail: deleteConfirm.code, sub: "The coupon has been removed." });
     } catch {
-      t.err("Failed to delete coupon");
+      t.err({ title: "Delete failed", sub: "Could not delete coupon. Please try again." });
     } finally {
       setDeleteConfirm(null);
     }

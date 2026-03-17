@@ -18,7 +18,8 @@ import {
   Sparkles,
   Rocket,
   Package,
-  Tag
+  Tag,
+  MessageSquarePlus
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -115,6 +116,13 @@ export default function AdminSidebar() {
           icon={Tag}
         >
           <WaveText text="Coupons" hoverColor="#000" />
+        </Item>
+        <Item
+          to="/admin/reviews"
+          active={loc.pathname.startsWith("/admin/reviews")}
+          icon={MessageSquarePlus}
+        >
+          <WaveText text="Reviews" hoverColor="#000" />
         </Item>
 
         <div className="my-4 border-t border-[#F4F7F5]"></div>

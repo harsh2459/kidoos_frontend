@@ -47,9 +47,9 @@ export default function Cart() {
         try {
             const res = await CustomerAPI.setCartQty(token, { itemId: lineId, qty: nextQty });
             replaceAll(res?.data?.cart?.items || []);
-            t.ok("Quantity updated");
+            t.ok({ title: "Quantity updated", sub: "Your cart has been refreshed." });
         } catch (e) {
-            t.err("Failed to update quantity");
+            t.err({ title: "Update failed", sub: "Could not update quantity. Please try again." });
             try {
                 const fresh = await CustomerAPI.getCart(token);
                 replaceAll(fresh?.data?.cart?.items || []);
@@ -61,16 +61,16 @@ export default function Cart() {
     const removeItem = async (idForCurrentMode) => {
         if (!isCustomer) {
             removeLocal(idForCurrentMode);
-            t.ok("Item removed");
+            t.ok({ title: "Item removed", sub: "Your cart has been updated." });
             return;
         }
         try {
             await CustomerAPI.removeCartItem(token, idForCurrentMode);
             const res = await CustomerAPI.getCart(token);
             replaceAll(res?.data?.cart?.items || []);
-            t.ok("Item removed");
+            t.ok({ title: "Item removed", sub: "Your cart has been updated." });
         } catch (e) {
-            t.err("Failed to remove item");
+            t.err({ title: "Remove failed", sub: "Could not remove item. Please try again." });
         }
     };
 
@@ -78,15 +78,15 @@ export default function Cart() {
     const clearAll = async () => {
         if (!isCustomer) {
             clearLocal();
-            t.ok("Cart cleared");
+            t.ok({ title: "Cart cleared", sub: "All items have been removed." });
             return;
         }
         try {
             await CustomerAPI.clearCart(token);
             replaceAll([]);
-            t.ok("Cart cleared");
+            t.ok({ title: "Cart cleared", sub: "All items have been removed." });
         } catch (e) {
-            t.err("Failed to clear cart");
+            t.err({ title: "Clear failed", sub: "Could not clear your cart. Please try again." });
         }
     };
 

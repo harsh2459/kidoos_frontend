@@ -50,7 +50,7 @@ export default function ApiUsers() {
         
         BlueDartAPI.listProfiles(auth)
             .then(({ data }) => setBdList(data.profiles || []))
-            .catch(() => t.error("Failed to load BlueDart profiles"))
+            .catch(() => t.error({ title: "Load failed", sub: "Could not load BlueDart profiles." }))
             .finally(() => setBdLoading(false));
 
         ShiprocketProfileAPI.list(auth)
@@ -90,10 +90,10 @@ export default function ApiUsers() {
     async function handleSrActivate(id) {
         try {
             await ShiprocketProfileAPI.activate(id, auth);
-            t.success("Profile Activated");
+            t.success({ title: "Profile activated", sub: "Shiprocket profile is now active." });
             loadAll();
         } catch (e) {
-            t.error(e.response?.data?.error || "Activation failed");
+            t.error(e.response?.data?.error || "Could not activate profile.");
         }
     }
 
@@ -101,9 +101,9 @@ export default function ApiUsers() {
         setTestingConnection(id);
         try {
             await ShiprocketProfileAPI.test(id, auth);
-            t.success("Connection Successful! Credentials valid.");
+            t.success({ title: "Connection successful", sub: "Credentials are valid." });
         } catch (e) {
-            t.error(e.response?.data?.error || "Connection Failed");
+            t.error(e.response?.data?.error || "Please check your credentials.");
         } finally {
             setTestingConnection(null);
         }
@@ -117,10 +117,10 @@ export default function ApiUsers() {
             if (showConfirm.type === 'bd') await BlueDartAPI.deleteProfile(showConfirm.id, auth);
             else await ShiprocketProfileAPI.delete(showConfirm.id, auth);
             
-            t.success("Profile deleted successfully");
+            t.success({ title: "Profile deleted", sub: "The shipping profile has been removed." });
             await loadAll();
         } catch (error) {
-            t.error("Failed to delete profile");
+            t.error({ title: "Delete failed", sub: "Could not delete the profile. Please try again." });
         } finally {
             setShowConfirm(null);
         }
@@ -128,7 +128,7 @@ export default function ApiUsers() {
 
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
-        t.success("Copied to clipboard");
+        t.success({ title: "Copied", sub: "Client name copied to clipboard." });
     };
 
     return (
@@ -328,18 +328,18 @@ function ProfileEditor({ profile: initialProfile, auth, onClose, onSave }) {
     const [showSecrets, setShowSecrets] = useState(false);
 
     async function handleSave() {
-        if (!form.label?.trim()) return t.error("Label is required");
-        if (!form.clientName?.trim()) return t.error("Client Name is required");
-        if (!form.shippingKey?.trim()) return t.error("Shipping Key is required");
+        if (!form.label?.trim()) return t.error({ title: "Label required", sub: "Please enter a label for this profile." });
+        if (!form.clientName?.trim()) return t.error({ title: "Client name required", sub: "Please enter a client name." });
+        if (!form.shippingKey?.trim()) return t.error({ title: "Shipping key required", sub: "Please enter a shipping key." });
 
         setSaving(true);
         try {
             const payload = { ...form };
             if (form._id) payload._id = form._id;
             await BlueDartAPI.saveProfile(payload, auth);
-            t.success(`Profile ${form._id ? 'updated' : 'created'} successfully`);
+            t.success({ title: form._id ? "Profile updated" : "Profile created", sub: "Shipping profile has been saved." });
             onSave();
-        } catch (error) { t.error("Failed to save profile"); } finally { setSaving(false); }
+        } catch (error) { t.error({ title: "Save failed", sub: "Could not save the shipping profile." }); } finally { setSaving(false); }
     }
 
     const inputClass = "w-full bg-[#FAFBF9] border border-[#E3E8E5] rounded-xl px-4 py-2.5 text-sm text-[#384959] focus:outline-none focus:ring-2 focus:ring-[#384959]/20 focus:border-[#384959] transition-all placeholder:text-[#8BA699]";
@@ -434,17 +434,17 @@ function ShiprocketEditor({ profile: initialProfile, auth, onClose, onSave }) {
     const [showPassword, setShowPassword] = useState(false);
 
     async function handleSave() {
-        if (!form.label?.trim()) return t.error("Label is required");
-        if (!form.email?.trim()) return t.error("Email is required");
-        if (!form._id && !form.password?.trim()) return t.error("Password is required for new profiles");
+        if (!form.label?.trim()) return t.error({ title: "Label required", sub: "Please enter a label for this profile." });
+        if (!form.email?.trim()) return t.error({ title: "Email required", sub: "Please enter an email for this Shiprocket profile." });
+        if (!form._id && !form.password?.trim()) return t.error({ title: "Password required", sub: "Password is required when creating a new profile." });
 
         setSaving(true);
         try {
             await ShiprocketProfileAPI.save(form, auth);
-            t.success(`Profile ${form._id ? 'updated' : 'created'} successfully`);
+            t.success({ title: form._id ? "Profile updated" : "Profile created", sub: "Shiprocket profile has been saved." });
             onSave();
         } catch (error) {
-            t.error(error.response?.data?.error || "Failed to save profile");
+            t.error(error.response?.data?.error || "Could not save the Shiprocket profile.");
         } finally {
             setSaving(false);
         }

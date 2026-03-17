@@ -121,11 +121,11 @@ export default function AdminOrders() {
   function openRefundModal(order) {
     const maxRefundable = order.payment?.paidAmount || 0;
     if (maxRefundable <= 0) {
-      t.warn("No refundable amount available");
+      t.warn({ title: "Nothing to refund", sub: "No refundable amount is available for this order." });
       return;
     }
     if (order.payment?.status !== 'paid' && order.payment?.status !== 'partially_paid') {
-      t.warn("Only paid orders can be refunded");
+      t.warn({ title: "Cannot refund", sub: "Only paid orders can be refunded." });
       return;
     }
 
@@ -141,17 +141,17 @@ export default function AdminOrders() {
 
   async function processRefund() {
     if (!refundForm.orderId || !refundForm.amount) {
-      t.warn("Order ID and amount required");
+      t.warn({ title: "Missing details", sub: "Order ID and refund amount are required." });
       return;
     }
     if (!refundForm.reason || refundForm.reason.trim() === '') {
-      t.warn("Please provide refund reason");
+      t.warn({ title: "Reason required", sub: "Please provide a reason for the refund." });
       return;
     }
 
     const refundAmount = parseFloat(refundForm.amount);
     if (refundAmount <= 0) {
-      t.warn("Amount must be greater than 0");
+      t.warn({ title: "Invalid amount", sub: "Refund amount must be greater than 0." });
       return;
     }
 
@@ -167,20 +167,20 @@ export default function AdminOrders() {
       const { data } = await api.post("/payments/refund", payload, auth);
 
       if (data.ok) {
-        t.success(`Refund of ₹${refundAmount} processed!`);
+        t.ok({ title: "Refund processed", detail: `₹${refundAmount}`, sub: "The refund has been initiated." });
         setShowRefundModal(false);
         await load();
         setRefundForm({ orderId: '', orderDetails: null, amount: '', reason: '', speed: 'normal' });
       } else {
-        t.err(data.error || "Refund failed");
-        if (data.suggestion) t.info(data.suggestion);
+        t.err(data.error || "Could not process refund. Please try again.");
+        if (data.suggestion) t.info({ title: "Suggestion", sub: data.suggestion });
       }
     } catch (error) {
       console.error('Refund error:', error);
       const errorMsg = error?.response?.data?.error || error?.message || "Refund failed";
       t.err(errorMsg);
       const suggestion = error?.response?.data?.suggestion;
-      if (suggestion) setTimeout(() => t.info(suggestion), 1000);
+      if (suggestion) setTimeout(() => t.info({ title: "Suggestion", sub: suggestion }), 1000);
     } finally {
       setActionLoading(false);
     }
@@ -195,12 +195,12 @@ export default function AdminOrders() {
     const alreadyHasAwb = selectedOrders.some(o => o.shipping?.bd?.awbNumber);
 
     if (alreadyHasAwb) {
-      t.warn("Some selected orders already have shipments created.");
+      t.warn({ title: "Already shipped", sub: "Some selected orders already have shipments created." });
       return;
     }
 
     if (!selectedProfile) {
-      t.err("Please select a BlueDart profile first");
+      t.err({ title: "No profile selected", sub: "Please select a BlueDart profile first." });
       return;
     }
 
@@ -212,7 +212,7 @@ export default function AdminOrders() {
     if (!ids) return;
 
     if (!selectedProfile) {
-      t.err("Please select a BlueDart profile first");
+      t.err({ title: "No profile selected", sub: "Please select a BlueDart profile first." });
       return;
     }
 
@@ -240,25 +240,25 @@ export default function AdminOrders() {
         const failedCount = results.failed?.length || 0;
 
         if (successCount > 0) {
-          t.success(`✅ Created ${successCount} shipment${successCount > 1 ? 's' : ''}`);
+          t.ok({ title: "Shipments created", detail: `${successCount} shipment${successCount > 1 ? 's' : ''}`, sub: "AWB numbers have been assigned." });
         }
         if (failedCount > 0) {
           results.failed.forEach((f, idx) => {
             setTimeout(() => {
-              t.err(`Order ${f.orderId?.slice(-6)}: ${f.error}`);
+              t.err({ title: "Shipment failed", detail: `Order …${f.orderId?.slice(-6)}`, sub: f.error });
             }, idx * 500);
           });
         }
       } else {
-        t.err(data.error || "Failed to create shipments");
+        t.err(data.error || "Could not create shipments. Please try again.");
       }
     } catch (error) {
       console.error('❌ Shipment creation error:', error);
       const apiError = error?.response?.data?.error;
       const suggestion = error?.response?.data?.suggestion;
 
-      t.err(apiError || error?.message || "Failed to create shipments");
-      if (suggestion) setTimeout(() => t.info(suggestion), 800);
+      t.err(apiError || error?.message || "Could not create shipments.");
+      if (suggestion) setTimeout(() => t.info({ title: "Suggestion", sub: suggestion }), 800);
     } finally {
       setActionLoading(false);
     }
@@ -273,12 +273,12 @@ export default function AdminOrders() {
     );
 
     if (ordersWithAwb.length === 0) {
-      t.warn("No BlueDart shipments found in selection. Create Shipments first.");
+      t.warn({ title: "No shipments found", sub: "No BlueDart shipments found in selection. Create shipments first." });
       return;
     }
 
     const orderIds = ordersWithAwb.map(o => String(o._id));
-    t.info(`Generating ${orderIds.length} label(s)...`);
+    t.info({ title: "Generating labels", detail: `${orderIds.length} label(s)`, sub: "Please wait..." });
     setActionLoading(true);
 
     try {
@@ -294,13 +294,13 @@ export default function AdminOrders() {
           }
         }
 
-        if (labels.length > 0) t.success(`Opened ${labels.length} label(s)`);
-        if (failed.length > 0) t.warn(`${failed.length} label(s) failed`);
+        if (labels.length > 0) t.ok({ title: "Labels opened", detail: `${labels.length} label(s)`, sub: "Check your browser for the opened PDFs." });
+        if (failed.length > 0) t.warn({ title: "Some labels failed", detail: `${failed.length} label(s)`, sub: "Check individual orders for details." });
       } else {
-        t.err(data.error || "Bulk label generation failed");
+        t.err(data.error || "Could not generate labels. Please try again.");
       }
     } catch (e) {
-      t.err(e.message || "Failed to generate labels");
+      t.err(e.message || "Could not generate labels.");
     } finally {
       setActionLoading(false);
     }
@@ -333,7 +333,7 @@ export default function AdminOrders() {
       });
     } catch (error) {
       console.error("Load error:", error);
-      t.err("Failed to load orders");
+      t.err({ title: "Load failed", sub: "Could not load orders. Please refresh." });
     } finally {
       setLoading(false);
     }
@@ -353,7 +353,7 @@ export default function AdminOrders() {
       }
     } catch (error) {
       console.error("❌ Failed to load profiles:", error);
-      t.warn("Could not load BlueDart profiles");
+      t.warn({ title: "Profiles unavailable", sub: "Could not load BlueDart profiles." });
     }
   }
 
@@ -380,16 +380,16 @@ export default function AdminOrders() {
       if (sr.labelUrl) {
         window.open(sr.labelUrl, '_blank');
       } else {
-        t.info("Fetching Shiprocket Label...");
+        t.info({ title: "Fetching label", sub: "Retrieving Shiprocket label, please wait..." });
         try {
           const { data } = await ShipAPI.label([order._id], auth);
           if (data.ok && data.data?.label_url) {
             window.open(data.data.label_url, '_blank');
           } else {
-            t.err("Label not found");
+            t.err({ title: "Label not found", sub: "Could not retrieve the Shiprocket label." });
           }
         } catch (e) {
-          t.err("Failed to fetch Shiprocket label");
+          t.err({ title: "Label fetch failed", sub: "Could not fetch the Shiprocket label." });
         }
       }
       return;
@@ -397,16 +397,16 @@ export default function AdminOrders() {
 
     // 2. BLUEDART LABEL - Generate on demand
     if (bd.awbNumber) {
-      t.info("Generating BlueDart Label...");
+      t.info({ title: "Generating label", sub: "Creating BlueDart label, please wait..." });
       try {
         const { data } = await BlueDartAPI.generateLabelOnDemand(order._id, auth);
         if (data.ok && data.data?.pdf) {
           openBase64Pdf(data.data.pdf);
         } else {
-          t.err("Failed to generate label");
+          t.err({ title: "Label generation failed", sub: "Could not generate the BlueDart label." });
         }
       } catch (e) {
-        t.err(e.message || "Error printing label");
+        t.err(e.message || "Error generating label.");
       }
     }
   }
@@ -420,10 +420,10 @@ export default function AdminOrders() {
       try {
         // Calls the new ShipAPI.track function
         const { data } = await ShipAPI.track(sr.awb, auth);
-        t.success(`Status: ${data?.data?.tracking_data?.shipment_status_current || "Updated"}`);
+        t.ok({ title: "Tracking updated", detail: data?.data?.tracking_data?.shipment_status_current || "Updated", sub: "Shiprocket tracking status has been refreshed." });
         await load(); // Refresh to show new status in table
       } catch (error) {
-        t.err("Failed to update Shiprocket tracking");
+        t.err({ title: "Tracking update failed", sub: "Could not update Shiprocket tracking." });
       }
       return;
     }
@@ -431,16 +431,16 @@ export default function AdminOrders() {
     // 2. BlueDart Tracking
     const awb = bd.awbNumber;
     if (!awb) {
-      t.info("No AWB number found");
+      t.info({ title: "No AWB found", sub: "This order does not have a BlueDart AWB number." });
       return;
     }
 
     try {
       await BlueDartAPI.trackAwb(awb, auth);
-      t.success("Tracking information updated");
+      t.ok({ title: "Tracking updated", sub: "BlueDart tracking information has been refreshed." });
       await load();
     } catch (error) {
-      t.err("Failed to update tracking information");
+      t.err({ title: "Tracking update failed", sub: "Could not update BlueDart tracking information." });
     }
   }
 
@@ -492,7 +492,7 @@ export default function AdminOrders() {
 
   const ensureSome = () => {
     if (!selected.size) {
-      t.info("Select at least one order");
+      t.info({ title: "No orders selected", sub: "Select at least one order to continue." });
       return null;
     }
     return Array.from(selected);
@@ -582,15 +582,15 @@ export default function AdminOrders() {
     try {
       const { data } = await ShipAPI.create(orderIds, dimensions, auth);
       if (!data.ok) {
-        t.error(data.error || "Shiprocket creation failed");
+        t.err(data.error || "Could not create Shiprocket shipments.");
         return;
       }
       const results = data.data;
       if (results.failed?.length > 0) {
-        results.failed.forEach(f => t.error(`Order ${String(f.id).slice(-6)}: ${f.error}`));
+        results.failed.forEach(f => t.err({ title: "Shipment failed", detail: `Order …${String(f.id).slice(-6)}`, sub: f.error }));
       }
       if (results.noCourierAvailable?.length > 0) {
-        results.noCourierAvailable.forEach(f => t.warn(`No couriers: ${String(f.id).slice(-6)}`));
+        results.noCourierAvailable.forEach(f => t.warn({ title: "No couriers available", detail: `Order …${String(f.id).slice(-6)}`, sub: "No courier options found for this order." }));
       }
       if (results.ready?.length > 0) {
         // Pre-select recommended courier for each order
@@ -604,7 +604,7 @@ export default function AdminOrders() {
         await load(); // refresh orders (they now disappear from Orders page)
       }
     } catch (e) {
-      t.error(e.response?.data?.error || "Shiprocket creation failed");
+      t.err(e.response?.data?.error || "Could not create Shiprocket shipments.");
     } finally {
       setActionLoading(false);
     }
@@ -617,7 +617,7 @@ export default function AdminOrders() {
       .map(([orderId, courierId]) => ({ orderId, courierId: Number(courierId) }));
 
     if (selections.length === 0) {
-      t.warn("Please select a courier for each order");
+      t.warn({ title: "No courier selected", sub: "Please select a courier for each order." });
       return;
     }
 
@@ -626,17 +626,17 @@ export default function AdminOrders() {
       const { data } = await ShipAPI.assignCourier(selections, auth);
       if (data.ok) {
         const { success = [], failed = [] } = data.data;
-        if (success.length > 0) t.success(`${success.length} shipment(s) dispatched!`);
-        if (failed.length > 0) failed.forEach(f => t.error(`Order ${String(f.id).slice(-6)}: ${f.error}`));
+        if (success.length > 0) t.ok({ title: "Shipments dispatched", detail: `${success.length} shipment(s)`, sub: "Couriers have been assigned successfully." });
+        if (failed.length > 0) failed.forEach(f => t.err({ title: "Courier assignment failed", detail: `Order …${String(f.id).slice(-6)}`, sub: f.error }));
         setSrCourierModal(false);
         setSrCourierData([]);
         setSrSelections({});
         setSelected(new Set());
       } else {
-        t.error(data.error || "Courier assignment failed");
+        t.err(data.error || "Could not assign couriers. Please try again.");
       }
     } catch (e) {
-      t.error(e.response?.data?.error || "Courier assignment failed");
+      t.err(e.response?.data?.error || "Could not assign couriers.");
     } finally {
       setActionLoading(false);
     }
@@ -653,7 +653,7 @@ export default function AdminOrders() {
 
   async function generatePaymentLink(order) {
     const dueAmount = Math.max(0, (order.amount || 0) - (order.payment?.paidAmount || 0));
-    if (dueAmount <= 0) { t.warn('No due amount to generate a link for'); return; }
+    if (dueAmount <= 0) { t.warn({ title: "No due amount", sub: "There is no outstanding amount to generate a payment link for." }); return; }
     try {
       const { data } = await api.post('/payments/razorpay/payment-link', {
         orderId: order._id,
@@ -665,13 +665,13 @@ export default function AdminOrders() {
         }
       }, auth);
       if (data.ok) {
-        t.success('Payment link generated! Customer can now pay online.');
+        t.ok({ title: "Payment link generated", sub: "The customer can now pay online." });
         await load();
       } else {
-        t.err(data.error || 'Failed to generate payment link');
+        t.err(data.error || "Could not generate payment link.");
       }
     } catch (e) {
-      t.err(e?.response?.data?.error || 'Failed to generate payment link');
+      t.err(e?.response?.data?.error || "Could not generate payment link.");
     }
   }
 
@@ -751,11 +751,11 @@ export default function AdminOrders() {
   async function submitOfflineOrder() {
     const { customer, items, shipping, payment, shippingFee, serviceFee, taxAmount, couponCode, status, adminNotes } = offlineForm;
     if (!customer.email && !customer.phone) {
-      t.warn('Customer email or phone is required');
+      t.warn({ title: "Contact required", sub: "Customer email or phone number is required." });
       return;
     }
     if (!items.length) {
-      t.warn('Add at least one item');
+      t.warn({ title: "No items", sub: "Add at least one book to the order." });
       return;
     }
 
@@ -782,7 +782,7 @@ export default function AdminOrders() {
 
       const { data } = await api.post('/orders/admin', payload, auth);
       if (!data.ok) {
-        t.err(data.error || 'Failed to create order');
+        t.err(data.error || "Could not create the order. Please try again.");
         return;
       }
 
@@ -807,22 +807,22 @@ export default function AdminOrders() {
             orderId,
             orderRef
           });
-          t.success(`Order #${orderRef} created! Payment link ready.`);
+          t.ok({ title: "Order created", detail: `#${orderRef}`, sub: "Payment link is ready to share." });
           await load();
         } else {
-          t.warn(`Order #${orderRef} created but payment link failed: ${linkRes.data.error}`);
+          t.warn({ title: "Order created", detail: `#${orderRef}`, sub: `Payment link failed: ${linkRes.data.error}` });
           setShowOfflineOrderModal(false);
           resetOfflineForm();
           await load();
         }
       } else {
-        t.success(`Offline order created! #${orderRef}`);
+        t.ok({ title: "Order created", detail: `#${orderRef}`, sub: "The offline order has been recorded." });
         setShowOfflineOrderModal(false);
         resetOfflineForm();
         await load();
       }
     } catch (e) {
-      t.err(e?.response?.data?.error || e?.message || 'Failed to create order');
+      t.err(e?.response?.data?.error || e?.message || "Could not create the order.");
     } finally {
       setOfflineOrderSaving(false);
     }
@@ -1323,13 +1323,13 @@ export default function AdminOrders() {
                                 try {
                                   const { data } = await api.post(`/payments/razorpay/check-payment/${o._id}`, {}, auth);
                                   if (data.ok && data.updated) {
-                                    t.success('Payment confirmed! Order updated.');
+                                    t.ok({ title: "Payment confirmed", sub: "The order has been updated." });
                                     await load();
                                   } else {
-                                    t.warn(`Payment not received yet (status: ${data.status})`);
+                                    t.warn({ title: "Payment not received", detail: data.status, sub: "Payment has not been completed yet." });
                                   }
                                 } catch (e) {
-                                  t.err(e?.response?.data?.error || 'Failed to check payment');
+                                  t.err(e?.response?.data?.error || "Could not check payment status.");
                                 }
                               }}
                               title="Check if customer has paid"
@@ -1839,7 +1839,7 @@ export default function AdminOrders() {
                           </p>
                         </div>
                         <button
-                          onClick={() => { navigator.clipboard.writeText(o.payment.paymentLinkUrl); t.success('Link copied!'); }}
+                          onClick={() => { navigator.clipboard.writeText(o.payment.paymentLinkUrl); t.ok({ title: "Link copied", sub: "Payment link copied to clipboard." }); }}
                           className="flex-shrink-0 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
                         >
                           Copy
@@ -2263,7 +2263,7 @@ export default function AdminOrders() {
                           className="flex-1 px-2 py-1.5 text-xs bg-white border border-blue-300 rounded-lg font-mono text-blue-800 truncate"
                         />
                         <button
-                          onClick={() => { navigator.clipboard.writeText(offlinePaymentLink.url); t.success('Link copied!'); }}
+                          onClick={() => { navigator.clipboard.writeText(offlinePaymentLink.url); t.ok({ title: "Link copied", sub: "Payment link copied to clipboard." }); }}
                           className="flex-shrink-0 px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700"
                         >
                           Copy

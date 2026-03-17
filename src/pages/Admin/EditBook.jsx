@@ -142,7 +142,7 @@ export default function EditBook() {
         const b = data?.book || null;
 
         if (!b) {
-          t.err("Book not found");
+          t.err({ title: "Book not found", sub: "The requested book could not be loaded." });
           return;
         }
 
@@ -176,7 +176,7 @@ export default function EditBook() {
 
       } catch (error) {
         console.error("❌ Error loading book:", error);
-        t.err(error?.response?.data?.error || "Failed to load book");
+        t.err(error?.response?.data?.error || "Could not load book data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -264,7 +264,7 @@ export default function EditBook() {
       setAssets("coverUrl", [...(book.assets?.coverUrl || []), ...paths]);
       return paths;
     } catch (e) {
-      t.err(e?.response?.data?.error || "Upload failed");
+      t.err(e?.response?.data?.error || "Could not upload images. Please try again.");
       return [];
     } finally {
       setUploading(false);
@@ -392,9 +392,9 @@ export default function EditBook() {
       };
 
       await api.patch(`/books/${book._id}`, payload, auth);
-      t.ok("Saved successfully!");
+      t.ok({ title: "Book saved", sub: "All changes have been applied." });
     } catch (e) {
-      t.err(e.response?.data?.error || "Save failed");
+      t.err(e.response?.data?.error || "Could not save changes. Please try again.");
     } finally {
       setSaving(false);
     }

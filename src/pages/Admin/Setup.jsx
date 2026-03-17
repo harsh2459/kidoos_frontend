@@ -54,12 +54,12 @@ export default function AdminSetup() {
       const { data } = await api.post("/auth/register-first-admin", first);
       if (data.token) {
         setAuth(data.token, data.role);
-        t.success("System Secured! Welcome Admin.");
+        t.ok({ title: "System secured", sub: "Welcome, Admin! Your account is ready." });
         setHasAdmin(true);
       }
     } catch (err) {
       setError(err?.response?.data?.error || "Setup failed");
-      t.error("Setup failed");
+      t.err({ title: "Setup failed", sub: "Could not complete admin setup. Please try again." });
     } finally {
       setSaving(false);
     }
@@ -73,11 +73,11 @@ export default function AdminSetup() {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (data.ok) {
-        t.success("New Admin Created!");
+        t.ok({ title: "Admin created", sub: "The new admin account is ready." });
         setMore({ name: "", email: "", password: "" });
       }
     } catch (err) {
-      t.error(err?.response?.data?.error || "Failed to create admin");
+      t.err(err?.response?.data?.error || "Could not create admin account.");
     } finally {
       setSaving(false);
     }
