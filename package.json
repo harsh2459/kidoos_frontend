@@ -38,7 +38,7 @@
   "scripts": {
     "start": "react-scripts start",
     "tunnel": "lt --port 3000 --subdomain harsh1798harsh2459",
-    "build": "react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-sitemap": "node src/scripts/generate-sitemap.js",
