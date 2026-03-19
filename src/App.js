@@ -13,7 +13,6 @@ import { useCartCleanup } from './hooks/useCartCleanup';
 import Navbar from './components/Navbar';
 import { AdminGuard, PageGate } from './components/RouteGuard';
 import LoadingFallback from './components/LoadingFallback';
-// Home is eager — it's the landing page, lazy-loading it delays FCP
 import Home from './pages/Home';
 
 // Lazy — keeps these out of the main bundle (not needed for initial paint)
@@ -66,11 +65,12 @@ const AiSettings = lazy(() => import('./pages/Admin/AiSettings'));
 const ShippingRules = lazy(() => import('./pages/Admin/ShippingRules'));
 const Coupons = lazy(() => import('./pages/Admin/Coupons'));
 const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
+const DataBackup = lazy(() => import('./pages/Admin/DataBackup'));
 
 function InnerApp() {
   const loc = useLocation();
   const showFooter = loc.pathname === '/' || loc.pathname === '/catalog' || loc.pathname === '/aboutus' || loc.pathname === '/privacy' || loc.pathname === '/shipping' || loc.pathname === '/terms' || loc.pathname === '/refund' || loc.pathname === '/faq' || loc.pathname === '/contact' || loc.pathname === '/PreSchool';
-  const hideNavbarRoutes = ['/intro', '/gita', '/scroll', '/j', '/water-1'];
+  const hideNavbarRoutes = ['/intro', '/gita', '/scroll',];
   const showNavbar = !hideNavbarRoutes.includes(loc.pathname);
   const isAdminRoute = loc.pathname.startsWith('/admin');
 
@@ -82,7 +82,7 @@ function InnerApp() {
   }, []);
 
   const getPageName = () => {
-    if (loc.pathname === '/') return 'home';
+    if (loc.pathname === '/') return 'hom e';
     if (loc.pathname === '/catalog') return 'products';
     if (loc.pathname === '/cart') return 'cart';
     return 'all';
@@ -230,6 +230,10 @@ function InnerApp() {
             <Route
               path="/admin/reviews"
               element={<AdminGuard><AdminLayout><AdminReviews /></AdminLayout></AdminGuard>}
+            />
+            <Route
+              path="/admin/data-backup"
+              element={<AdminGuard><AdminLayout><DataBackup /></AdminLayout></AdminGuard>}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

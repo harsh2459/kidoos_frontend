@@ -53,6 +53,10 @@ export default function Checkout() {
   const [offersFilter, setOffersFilter] = useState("all");
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (customer) {
       setCust(prev => ({
         ...prev,

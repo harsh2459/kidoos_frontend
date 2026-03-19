@@ -19,7 +19,9 @@ import {
   Rocket,
   Package,
   Tag,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Library,
+  HardDrive
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -164,6 +166,13 @@ export default function AdminSidebar() {
           <WaveText text="Homepage" hoverColor="#000"  />
         </Item>
         <Item
+          to="/admin/catalog"
+          active={loc.pathname.startsWith("/admin/catalog")}
+          icon={Library}
+        >
+          <WaveText text="Catalog Header" hoverColor="#000" />
+        </Item>
+        <Item
           to="/admin/ai-settings"
           active={loc.pathname.startsWith("/admin/ai-settings")}
           icon={Sparkles}
@@ -183,6 +192,13 @@ export default function AdminSidebar() {
           icon={ShieldPlus}
         >
           <WaveText text="Add Admin" hoverColor="#000"  />
+        </Item>
+        <Item
+          to="/admin/data-backup"
+          active={loc.pathname.startsWith("/admin/data-backup")}
+          icon={HardDrive}
+        >
+          <WaveText text="Data Backup" hoverColor="#000"  />
         </Item>
       </nav>
 

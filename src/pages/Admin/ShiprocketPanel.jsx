@@ -30,7 +30,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
     } finally {
       setLoading(false);
     }
-  }; 
+  };
 
   // ✅ FIX: Download Labels
   const handleLabel = async () => {
@@ -39,9 +39,9 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
     try {
       // ✅ DON'T destructure - ShipAPI.label() returns response directly
       const response = await ShipAPI.label(Array.from(selected), auth);
-      
+
       console.log("Label Response:", response); // Debug log
-      
+
       if (response.ok) {
         const labelUrl = response.data?.label_url;
         if (labelUrl) {
@@ -59,7 +59,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
     } finally {
       setLoading(false);
     }
-  };    
+  };
 
   // ✅ FIX: Download Manifest
   const handleManifest = async () => {
@@ -68,9 +68,9 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
     try {
       // ✅ DON'T destructure - ShipAPI.manifest() returns response directly
       const response = await ShipAPI.manifest(Array.from(selected), auth);
-      
+
       console.log("Manifest Response:", response); // Debug log
-      
+
       if (response.ok) {
         const manifestUrl = response.data?.manifest_url;
         if (manifestUrl) {
@@ -93,7 +93,7 @@ export default function ShiprocketPanel({ selected, auth, onSuccess }) {
   return (
     <div className="flex items-center gap-2 animate-in fade-in">
       <div className="h-8 w-px bg-gray-300 mx-2"></div>
-      
+
       {/* Main Create Button */}
       <button
         onClick={handleCreate}

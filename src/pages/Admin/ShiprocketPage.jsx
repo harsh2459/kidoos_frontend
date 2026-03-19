@@ -1,12 +1,12 @@
 // src/pages/Admin/ShiprocketPage.jsx
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { api } from "../../api/client";
-import { ShipAPI } from "../../api/shiprocket"; 
+import { ShipAPI } from "../../api/shiprocket";
 import { BlueDartAPI } from "../../api/bluedart";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
 import {
-  Rocket, Printer, RefreshCw, Clock,  User, X,
+  Rocket, Printer, RefreshCw, Clock, User, X,
   ChevronLeft, ChevronRight, Phone, Mail, MapPin, Truck,
   AlertCircle, Eye, Navigation, Package, Zap,
 } from "lucide-react";
@@ -16,11 +16,11 @@ function cx(...arr) { return arr.filter(Boolean).join(" "); }
 const PAGE_SIZE = 25;
 
 const STATUS_COLORS = {
-  READY_TO_SHIP:   "bg-emerald-100 text-emerald-700",
-  AWB_ASSIGNED:    "bg-blue-100 text-blue-700",
+  READY_TO_SHIP: "bg-emerald-100 text-emerald-700",
+  AWB_ASSIGNED: "bg-blue-100 text-blue-700",
   LABEL_GENERATED: "bg-teal-100 text-teal-700",
-  SHIPPED:         "bg-violet-100 text-violet-700",
-  DELIVERED:       "bg-green-100 text-green-700",
+  SHIPPED: "bg-violet-100 text-violet-700",
+  DELIVERED: "bg-green-100 text-green-700",
 };
 
 // ── Tiny helpers ────────────────────────────────────────────────────────────
@@ -97,20 +97,20 @@ export default function ShiprocketPage() {
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
 
-  const [loading, setLoading]                   = useState(true);
-  const [orders, setOrders]                     = useState([]);
-  const [bdPending, setBdPending]               = useState([]);    // orders awaiting BlueDart shipment
-  const [defaultProfile, setDefaultProfile]     = useState(null); // BlueDart default profile
-  const [actionLoading, setActionLoading]       = useState(false);
-  const [bdShipping, setBdShipping]             = useState({});   // per-order loading state
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState([]);
+  const [bdPending, setBdPending] = useState([]);    // orders awaiting BlueDart shipment
+  const [defaultProfile, setDefaultProfile] = useState(null); // BlueDart default profile
+  const [actionLoading, setActionLoading] = useState(false);
+  const [bdShipping, setBdShipping] = useState({});   // per-order loading state
   const [fetchingCouriers, setFetchingCouriers] = useState({});
-  const [selections, setSelections]             = useState({});
+  const [selections, setSelections] = useState({});
 
   // Filter tabs
   const [activeTab, setActiveTab] = useState("all");
 
   // Search & pagination
-  const [search, setSearch]           = useState("");
+  const [search, setSearch] = useState("");
   const [srPendingPage, setSrPendingPage] = useState(1);
   const [bdPendingPage, setBdPendingPage] = useState(1);
   const [srShippedPage, setSrShippedPage] = useState(1);
@@ -132,7 +132,7 @@ export default function ShiprocketPage() {
       ]);
 
       // Merge SR + shipped orders (dedup by _id)
-      const srOrders      = srRes.status === "fulfilled" ? (srRes.value.data?.items || srRes.value.data?.orders || []) : [];
+      const srOrders = srRes.status === "fulfilled" ? (srRes.value.data?.items || srRes.value.data?.orders || []) : [];
       const shippedOrders = shippedRes.status === "fulfilled" ? (shippedRes.value.data?.items || shippedRes.value.data?.orders || []) : [];
       const map = new Map();
       [...srOrders, ...shippedOrders].forEach(o => map.set(String(o._id), o));
@@ -187,13 +187,13 @@ export default function ShiprocketPage() {
     const q = search.toLowerCase();
     return (
       String(o._id).toLowerCase().includes(q) ||
-      (o.shipping?.name    || "").toLowerCase().includes(q) ||
-      (o.shipping?.email   || "").toLowerCase().includes(q) ||
-      (o.shipping?.phone   || "").includes(q) ||
-      (o.shipping?.city    || "").toLowerCase().includes(q) ||
+      (o.shipping?.name || "").toLowerCase().includes(q) ||
+      (o.shipping?.email || "").toLowerCase().includes(q) ||
+      (o.shipping?.phone || "").includes(q) ||
+      (o.shipping?.city || "").toLowerCase().includes(q) ||
       (o.shipping?.pincode || "").includes(q) ||
       (o.shipping?.shiprocket?.awb || "").toLowerCase().includes(q) ||
-      (o.shipping?.bd?.awbNumber   || "").toLowerCase().includes(q) ||
+      (o.shipping?.bd?.awbNumber || "").toLowerCase().includes(q) ||
       (o.shipping?.shiprocket?.courierName || "").toLowerCase().includes(q) ||
       (o.items || []).some(i =>
         (i.sku || "").toLowerCase().includes(q) ||
@@ -220,10 +220,10 @@ export default function ShiprocketPage() {
   const pagedBdShipped = bdShipped.slice((bdShippedPage - 1) * PAGE_SIZE, bdShippedPage * PAGE_SIZE);
 
   // ── Tab visibility ─────────────────────────────────────────────────────────
-  const showSrPending  = activeTab === "all" || activeTab === "sr-pending";
-  const showBdPending  = activeTab === "all" || activeTab === "bd-pending";
-  const showSrShipped  = activeTab === "all" || activeTab === "sr-shipped";
-  const showBdShipped  = activeTab === "all" || activeTab === "bd-shipped";
+  const showSrPending = activeTab === "all" || activeTab === "sr-pending";
+  const showBdPending = activeTab === "all" || activeTab === "bd-pending";
+  const showSrShipped = activeTab === "all" || activeTab === "sr-shipped";
+  const showBdShipped = activeTab === "all" || activeTab === "bd-shipped";
 
   // ── Shiprocket actions ─────────────────────────────────────────────────────
   async function confirmCouriers(orderIds) {
@@ -400,11 +400,11 @@ export default function ShiprocketPage() {
 
   // ── Tab config ─────────────────────────────────────────────────────────────
   const TABS = [
-    { id: "all",        label: "All",              count: srPendingAll.length + bdPending.length + srShippedAll.length + bdShippedAll.length },
-    { id: "sr-pending", label: "Awaiting Courier",  count: srPendingAll.length, dot: "bg-orange-400" },
-    { id: "bd-pending", label: "Awaiting BlueDart", count: bdPending.length,    dot: "bg-blue-500" },
-    { id: "sr-shipped", label: "Shiprocket Shipped",count: srShippedAll.length, dot: "bg-purple-500" },
-    { id: "bd-shipped", label: "BlueDart Shipped",  count: bdShippedAll.length, dot: "bg-teal-500" },
+    { id: "all", label: "All", count: srPendingAll.length + bdPending.length + srShippedAll.length + bdShippedAll.length },
+    { id: "sr-pending", label: "Awaiting Courier", count: srPendingAll.length, dot: "bg-orange-400" },
+    { id: "bd-pending", label: "Awaiting BlueDart", count: bdPending.length, dot: "bg-blue-500" },
+    { id: "sr-shipped", label: "Shiprocket Shipped", count: srShippedAll.length, dot: "bg-purple-500" },
+    { id: "bd-shipped", label: "BlueDart Shipped", count: bdShippedAll.length, dot: "bg-teal-500" },
   ];
 
   const totalShipping = srPendingAll.length + bdPending.length + srShippedAll.length + bdShippedAll.length;
@@ -458,7 +458,7 @@ export default function ShiprocketPage() {
         {!loading && totalShipping > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             <StatCard value={srPendingAll.length} label="Awaiting Courier" color="orange" />
-            <StatCard value={bdPending.length}    label="Awaiting BlueDart" color="blue" />
+            <StatCard value={bdPending.length} label="Awaiting BlueDart" color="blue" />
             <StatCard value={srShippedAll.length} label="Shiprocket Shipped" color="purple" />
             <StatCard value={bdShippedAll.length} label="BlueDart Shipped" color="teal" />
           </div>
@@ -538,10 +538,10 @@ export default function ShiprocketPage() {
 
               <div className="p-4 space-y-4">
                 {pagedSrPending.map(o => {
-                  const id       = String(o._id);
-                  const sr       = o.shipping?.shiprocket || {};
+                  const id = String(o._id);
+                  const sr = o.shipping?.shiprocket || {};
                   const couriers = sr.availableCouriers || [];
-                  const dt       = o.createdAt ? new Date(o.createdAt) : null;
+                  const dt = o.createdAt ? new Date(o.createdAt) : null;
 
                   return (
                     <div key={id} className="bg-white rounded-2xl border-2 border-[#E3E8E5] p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -820,11 +820,11 @@ export default function ShiprocketPage() {
         {!loading && search && totalShipping > 0 &&
           srPending.length === 0 && bdPendingFiltered.length === 0 &&
           srShipped.length === 0 && bdShipped.length === 0 && (
-          <div className="bg-white rounded-3xl border-2 border-[#E3E8E5] p-12 text-center shadow-lg">
-            <p className="text-[#222831] font-semibold">No results for "{search}"</p>
-            <p className="text-sm text-[#5C756D] mt-1">Try a different name, SKU, AWB, or order number</p>
-          </div>
-        )}
+            <div className="bg-white rounded-3xl border-2 border-[#E3E8E5] p-12 text-center shadow-lg">
+              <p className="text-[#222831] font-semibold">No results for "{search}"</p>
+              <p className="text-sm text-[#5C756D] mt-1">Try a different name, SKU, AWB, or order number</p>
+            </div>
+          )}
       </div>
 
       {/* ══════════════════════════════════════════════════════
@@ -980,7 +980,7 @@ export default function ShiprocketPage() {
               <h3 className="font-bold text-[#222831]">Shipment Tracking</h3>
               <p className="text-xs text-[#5C756D] font-mono">
                 {trackingModal.order.shipping?.shiprocket?.awb ||
-                 trackingModal.order.shipping?.bd?.awbNumber}
+                  trackingModal.order.shipping?.bd?.awbNumber}
               </p>
             </div>
           </div>
@@ -994,7 +994,7 @@ export default function ShiprocketPage() {
                     <p className="text-[10px] text-[#5C756D] font-bold uppercase mb-0.5">Current Status</p>
                     <p className="font-bold text-[#222831]">
                       {trackingModal.data?.tracking_data?.shipment_status_current ||
-                       trackingModal.data?.status || "In Transit"}
+                        trackingModal.data?.status || "In Transit"}
                     </p>
                   </div>
                   <div className="text-right">
@@ -1077,9 +1077,9 @@ export default function ShiprocketPage() {
 function StatCard({ value, label, color }) {
   const styles = {
     orange: { card: "bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200", text: "text-orange-700", num: "text-orange-800" },
-    blue:   { card: "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200",        text: "text-blue-700",   num: "text-blue-800"   },
+    blue: { card: "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200", text: "text-blue-700", num: "text-blue-800" },
     purple: { card: "bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200", text: "text-purple-700", num: "text-purple-800" },
-    teal:   { card: "bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200",        text: "text-teal-700",   num: "text-teal-800"   },
+    teal: { card: "bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200", text: "text-teal-700", num: "text-teal-800" },
   };
   const s = styles[color] || styles.blue;
   return (

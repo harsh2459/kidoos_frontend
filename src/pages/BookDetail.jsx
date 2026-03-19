@@ -85,7 +85,6 @@ export default function BookDetail() {
     const [activeTab, setActiveTab] = useState("overview");
     const [qty, setQty] = useState(1);
     const [showFlipbook, setShowFlipbook] = useState(false);
-    const [showAllEditions, setShowAllEditions] = useState(false);
 
     // Flipbook Logic
     const flipBookRef = useRef(null);
@@ -756,11 +755,6 @@ const mobileViewJSX = (
                         <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
                         <span className="text-[11px] font-bold text-[#8A7A5E] uppercase tracking-widest">Also Available In</span>
                         <span className="text-[10px] font-semibold text-[#D4AF37] ml-2">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
-                        {editions.length > 3 && (
-                            <button onClick={() => setShowAllEditions(true)} className="ml-auto text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider hover:text-[#B0894C] transition-colors flex items-center gap-0.5">
-                                See All <ArrowRight className="w-3 h-3" />
-                            </button>
-                        )}
                     </div>
                     {/* Cards */}
                     <div className="relative bg-white">
@@ -1174,11 +1168,6 @@ const desktopViewJSX = (
                             <Globe className="w-3.5 h-3.5 text-[#D4AF37]" />
                             <span className="text-[11px] font-bold text-[#8A7A5E] uppercase tracking-widest">Also Available In</span>
                             <span className="text-[10px] font-semibold text-[#D4AF37] ml-2">{editions.length} edition{editions.length > 1 ? 's' : ''}</span>
-                            {editions.length > 3 && (
-                                <button onClick={() => setShowAllEditions(true)} className="ml-auto text-[10px] font-bold text-[#D4AF37] uppercase tracking-wider hover:text-[#B0894C] transition-colors flex items-center gap-0.5">
-                                    See All <ArrowRight className="w-3 h-3" />
-                                </button>
-                            )}
                         </div>
                         {/* Cards */}
                         <div className="relative bg-white">
@@ -1524,64 +1513,6 @@ return (
         />
 
         {flipbookModalJSX}
-
-        {/* All Editions Modal */}
-        {showAllEditions && (
-            <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowAllEditions(false)}>
-                {/* Backdrop */}
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-                {/* Sheet */}
-                <div
-                    className="relative w-full sm:max-w-lg bg-white rounded-t-[2rem] sm:rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
-                    onClick={e => e.stopPropagation()}
-                >
-                    {/* Handle */}
-                    <div className="flex justify-center pt-3 pb-1 sm:hidden">
-                        <div className="w-10 h-1 rounded-full bg-[#D4AF37]/30" />
-                    </div>
-                    {/* Header */}
-                    <div className="flex items-center gap-2 px-5 py-3.5 bg-[#FFF9E6] border-b border-[#D4AF37]/20">
-                        <Globe className="w-4 h-4 text-[#D4AF37]" />
-                        <span className="font-['Cinzel'] font-bold text-[#3E2723] text-sm">All Editions</span>
-                        <span className="text-xs text-[#D4AF37] font-semibold ml-1">({editions.length})</span>
-                        <button onClick={() => setShowAllEditions(false)} className="ml-auto w-7 h-7 rounded-full bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 flex items-center justify-center text-[#3E2723] transition-colors">
-                            <X className="w-4 h-4" />
-                        </button>
-                    </div>
-                    {/* Grid */}
-                    <div className="overflow-y-auto p-4 grid grid-cols-3 sm:grid-cols-4 gap-3">
-                        {editions.map(ed => {
-                            const edDeal = dealFn(ed);
-                            const skuTokens = (ed.inventory?.sku || '').split('_');
-                            const lastToken = skuTokens[skuTokens.length - 1] || '';
-                            const skuLabel = /^\d+$/.test(lastToken) && skuTokens.length >= 2
-                                ? `${skuTokens[skuTokens.length - 2]} ${lastToken}`
-                                : lastToken;
-                            return (
-                                <button
-                                    key={ed._id}
-                                    onClick={() => { setShowAllEditions(false); navigate(`/book/${ed.slug}`); window.scrollTo(0, 0); }}
-                                    className="bg-[#FAF7F2] rounded-xl border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:shadow-md active:scale-[0.97] transition-all text-left group overflow-hidden"
-                                >
-                                    <div className="relative w-full aspect-[3/4] bg-[#FFF9E6] overflow-hidden">
-                                        <img src={assetUrl(ed.assets?.coverUrl?.[0])} className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105" alt={ed.title} />
-                                        {skuLabel && (
-                                            <div className="absolute bottom-0 inset-x-0 pt-4 pb-1 px-1.5 bg-gradient-to-t from-[#3E2723]/85 via-[#3E2723]/40 to-transparent">
-                                                <span className="block text-center text-[9px] font-bold text-[#F3E5AB] tracking-wider uppercase">{skuLabel}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="px-2 py-1.5">
-                                        <p className="text-[10px] font-bold text-[#3E2723] leading-tight line-clamp-2 mb-1 group-hover:text-[#D4AF37] transition-colors">{ed.title}</p>
-                                        <span className="text-xs font-bold text-[#3E2723]">₹{edDeal.price.toLocaleString('en-IN')}</span>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-        )}
 
         {/* DEDICATED MOBILE VIEW */}
         <div className="md:hidden">

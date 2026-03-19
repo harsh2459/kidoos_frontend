@@ -390,15 +390,18 @@ function HomepageSlider({ slides }) {
       <div className="relative rounded-2xl overflow-hidden ring-1 ring-[#D4AF37]/25 shadow-[0_20px_60px_rgba(62,39,35,0.25)]">
 
         {/* Hidden sizer — locks height, prevents CLS */}
-        <img
-          src={items[0].desktop}
-          alt=""
-          aria-hidden="true"
-          loading="eager"
-          decoding="async"
-          className="block w-full opacity-0 pointer-events-none select-none"
-          draggable={false}
-        />
+        <picture className="block w-full opacity-0 pointer-events-none select-none" aria-hidden="true">
+          <source media="(max-width: 767px)" srcSet={items[0].mobile} />
+          <source media="(min-width: 768px)" srcSet={items[0].desktop} />
+          <img
+            src={items[0].desktop}
+            alt=""
+            loading="eager"
+            decoding="async"
+            className="block w-full"
+            draggable={false}
+          />
+        </picture>
 
         {items.map((slide, idx) => (
           <div
@@ -423,7 +426,7 @@ function HomepageSlider({ slides }) {
                   loading={idx === 0 ? "eager" : "lazy"}
                   fetchpriority={idx === 0 ? "high" : "auto"}
                   decoding="async"
-                  className="w-full h-full object-cover block select-none"
+                  className="w-full h-full object-contain md:object-cover block select-none"
                   draggable={false}
                 />
               </picture>
