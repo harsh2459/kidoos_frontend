@@ -6,7 +6,7 @@ import {
     BookOpen, Heart, Users, Truck, ShieldCheck,
     Sparkles, Target, Lightbulb, TrendingUp,
     Award, Mail, Phone, ArrowRight, Star
-} from 'lucide-react';
+} from 'lucide-react';  
 
 export default function AboutUs() {
     useEffect(() => {

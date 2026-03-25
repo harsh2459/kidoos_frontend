@@ -85,7 +85,7 @@ export default function Footer({ contact }) {
     email: contact?.email || "kiddosintellect.com",
     phone: contact?.phone || "+91 98798 57529",
     address:
-      "206 Sunrise Commercial Complex, Near Savjibhai okra Bridge, Mota Varachha, Surat, Gujarat 394101",
+      "206 Sunrise Commercial Complex, Near Savji Korat Bridge, Mota Varachha, Surat, Gujarat 394101",
   };
 
     const socialItems = [

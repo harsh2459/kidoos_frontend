@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { api } from "../api/client";
 import { CategoriesAPI } from "../api/categories";
 import { assetUrl } from "../api/asset";
@@ -37,6 +38,8 @@ const FilterSection = ({ title, children, onClear, hasActiveFilters }) => {
 };
 
 export default function Catalog() {
+  const location = useLocation();
+
   // --- STATE ---
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState([]);
@@ -45,8 +48,8 @@ export default function Catalog() {
   // Catalog Slider State
   const [catalogSlides, setCatalogSlides] = useState([]);
 
-  // Filters & Search
-  const [q, setQ] = useState("");
+  // Filters & Search — pre-fill from ?q= URL param
+  const [q, setQ] = useState(() => new URLSearchParams(location.search).get("q") || "");
   const [sort, setSort] = useState("oldest"); // Default to oldest
   const [selectedCats, setSelectedCats] = useState([]);
 

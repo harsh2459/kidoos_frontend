@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useSaleTimer } from "../hooks/useSaleTimer";
 import { useParams, useNavigate } from "react-router-dom";
 import HTMLFlipBook from "react-pageflip";
 import { api } from "../api/client";
@@ -110,6 +111,9 @@ export default function BookDetail() {
     const [reviewHover, setReviewHover] = useState(0);
     const [reviewSubmitting, setReviewSubmitting] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
+
+    // --- FLASH DEAL COUNTDOWN TIMER (persisted, 45 min, auto-restart) ---
+    const { saleMin, saleSec } = useSaleTimer();
 
     // --- ERROR SUPPRESSION & RESIZE FIX ---
     useEffect(() => {
@@ -735,6 +739,27 @@ const mobileViewJSX = (
                     }
                 </div>
 
+                {/* ⚡ Flash Deal Countdown - Mobile */}
+                <div className="flex items-center justify-between bg-gradient-to-r from-[#3E2723] via-[#4A2E1E] to-[#3E2723] rounded-2xl px-4 py-3 mb-4 shadow-lg border border-[#D4AF37]/20">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[#D4AF37] text-[11px] font-black uppercase tracking-[0.15em] font-['Cinzel']">⚡ Flash Deal</span>
+                        <span className="text-[#F3E5AB]/80 text-[9px] font-semibold tracking-widest uppercase">Offer ends in</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="bg-[#D4AF37] text-[#3E2723] font-black text-base rounded-lg px-2.5 py-1.5 min-w-[38px] text-center font-mono leading-none shadow-md">
+                            {saleMin}
+                        </div>
+                        <span className="text-[#D4AF37] font-black text-xl leading-none animate-pulse">:</span>
+                        <div className="bg-[#D4AF37] text-[#3E2723] font-black text-base rounded-lg px-2.5 py-1.5 min-w-[38px] text-center font-mono leading-none shadow-md">
+                            {saleSec}
+                        </div>
+                        <span className="text-[#F3E5AB]/60 text-[8px] font-bold uppercase ml-1 leading-none">
+                            <span className="block">MIN</span>
+                            <span className="block">SEC</span>
+                        </span>
+                    </div>
+                </div>
+
                 {/* Edition badge */}
                 {book.edition && (
                     <div className="flex items-center gap-2 mb-4">
@@ -1148,6 +1173,34 @@ const desktopViewJSX = (
                         <span className="hidden sm:inline-flex items-center gap-1 text-[#8A7A5E] bg-white px-2.5 py-1 rounded-full border border-[#D4AF37]/20">
                             <Shield className="w-3 h-3" /> Age appropriate
                         </span>
+                    </div>
+
+                    {/* ⚡ Flash Deal Countdown - Desktop */}
+                    <div className="flex items-center justify-between mt-3 sm:mt-4 bg-gradient-to-r from-[#3E2723] via-[#4A2E1E] to-[#3E2723] rounded-xl px-4 sm:px-5 py-3 border border-[#D4AF37]/20 shadow-md">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center shrink-0">
+                                <span className="text-base">⚡</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[#D4AF37] text-xs font-black uppercase tracking-widest font-['Cinzel']">Flash Deal</span>
+                                <span className="text-[#F3E5AB]/70 text-[10px] font-medium tracking-wide">This offer expires in</span>
+                            </div>
+                        </div>
+                        <div className="flex items-end gap-1.5">
+                            <div className="flex flex-col items-center">
+                                <div className="bg-[#D4AF37] text-[#3E2723] font-black text-lg sm:text-xl rounded-lg px-3 py-1.5 min-w-[46px] text-center font-mono leading-none shadow-md">
+                                    {saleMin}
+                                </div>
+                                <span className="text-[#F3E5AB]/60 text-[9px] font-bold uppercase tracking-widest mt-1">Min</span>
+                            </div>
+                            <span className="text-[#D4AF37] font-black text-2xl leading-none mb-4 animate-pulse">:</span>
+                            <div className="flex flex-col items-center">
+                                <div className="bg-[#D4AF37] text-[#3E2723] font-black text-lg sm:text-xl rounded-lg px-3 py-1.5 min-w-[46px] text-center font-mono leading-none shadow-md">
+                                    {saleSec}
+                                </div>
+                                <span className="text-[#F3E5AB]/60 text-[9px] font-bold uppercase tracking-widest mt-1">Sec</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
