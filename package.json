@@ -37,7 +37,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "tunnel": "lt --port 3000 --subdomain harsh1798harsh2459",
+    "tunnel": "lt --port 3000",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

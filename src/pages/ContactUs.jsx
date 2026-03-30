@@ -7,6 +7,7 @@ import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
 import { FaThreads } from 'react-icons/fa6';
 import ScrollToTopButton from '../components/ScrollToTopButton';
 import SEO from '../components/SEO';
+import { contact as siteContact, social as siteSocial } from '../config/siteConfig';
 
 const ContactUs = () => {
     useEffect(() => {

@@ -2,13 +2,13 @@
 // Lazy initialization to reduce initial bundle size
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBXx3VQAuOwUUogSgEZvC-mw2Td8-v6yPI",
-    authDomain: "kiddos-intellect.firebaseapp.com",
-    projectId: "kiddos-intellect",
-    storageBucket: "kiddos-intellect.firebasestorage.app",
-    messagingSenderId: "328198449550",
-    appId: "1:328198449550:web:d3b4749b949c8c0c219cdf",
-    measurementId: "G-ST1KYT0N4K"
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_FIREBASE_APP_ID,
+    measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 let authInstance = null;
@@ -34,4 +34,3 @@ export async function getGoogleProvider() {
     providerInstance = new GoogleAuthProvider();
     return providerInstance;
 }
-
