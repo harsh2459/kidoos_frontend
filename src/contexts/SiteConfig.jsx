@@ -3,13 +3,27 @@ import { api } from "../api/client";
 const SiteCtx = createContext(null);
 
 
+const DEFAULT_TICKER = {
+  enabled: true, speed: 30,
+  items: [
+    { id: "1", text: "⚡ Flash Deal", highlighted: true,  showTimer: false },
+    { id: "2", text: "Ultimate Discount on All Books Here", highlighted: false, showTimer: false },
+    { id: "3", text: "Purchase Now & Save Big", highlighted: true,  showTimer: false },
+    { id: "4", text: "Offer Ends In", highlighted: false, showTimer: true  },
+    { id: "5", text: "Kiddos Intellect Special Offer", highlighted: true,  showTimer: false },
+    { id: "6", text: "Shop Smart, Grow Bright", highlighted: false, showTimer: false },
+  ],
+};
+
 export function SiteProvider({ children }) {
   const [loaded, setLoaded] = useState(false);
   const [site, setSite] = useState({ title: "kiddos intellect", logoUrl: "", faviconUrl: "" });
   const [theme, setTheme] = useState({});
   const [homepage, setHomepage] = useState({ blocks: [] });
   const [payments, setPayments] = useState({ providers: [] });
-  const [visibility, setVisibility] = useState({             //  <-- NEW
+  const [ticker, setTicker] = useState(DEFAULT_TICKER);
+  const [seo, setSeo] = useState({ globalKeywords: "", homepageTitle: "", homepageDescription: "", defaultDescription: "", defaultOgImage: "", googleVerification: "", extraMeta: [] });
+  const [visibility, setVisibility] = useState({
     publicNav: ["kiddos intellect","theme","admin","cart"],
     pages: {}
   });
@@ -23,7 +37,9 @@ export function SiteProvider({ children }) {
           setTheme(data.theme || {});
           setHomepage(data.homepage || { blocks: [] });
           setPayments(data.payments || { providers: [] });
-          setVisibility(data.visibility || visibility);       // <-- NEW
+          setTicker(data.ticker || DEFAULT_TICKER);
+          setSeo(data.seo || {});
+          setVisibility(data.visibility || visibility);
 
           // apply theme tokens to CSS variables
           Object.entries(data.theme || {}).forEach(([k,v]) => {
@@ -43,9 +59,9 @@ export function SiteProvider({ children }) {
   }, []); // eslint-disable-line
 
   const value = useMemo(() => ({
-    loaded, site, theme, homepage, payments, visibility,
-    setSite, setTheme, setHomepage, setPayments, setVisibility
-  }), [loaded, site, theme, homepage, payments, visibility]); // setters are stable, excluded from deps
+    loaded, site, theme, homepage, payments, ticker, seo, visibility,
+    setSite, setTheme, setHomepage, setPayments, setTicker, setSeo, setVisibility
+  }), [loaded, site, theme, homepage, payments, ticker, seo, visibility]); // setters are stable, excluded from deps
 
   return (
     <SiteCtx.Provider value={value}>

@@ -33,7 +33,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const onAdminPage = loc.pathname.startsWith("/admin");
 
-  const { site, visibility } = useSite();
+  const { site, visibility, ticker } = useSite();
   const nav = useMemo(() => visibility?.publicNav || ["catalog", "cart"], [visibility]);
 
   const { isAdmin, admin, logout: logoutAdmin } = useAuth();
@@ -135,34 +135,34 @@ export default function Navbar() {
   return (
     <>
     {/* ===== SALE TICKER BANNER ===== */}
-    {showShopUI && !onAdminPage && (
+    {showShopUI && !onAdminPage && ticker?.enabled && (ticker?.items || []).length > 0 && (
       <div className="relative overflow-hidden bg-[#3E2723] py-1.5 z-[101]">
         <style>{`@keyframes ki-ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
         <div
-          style={{ animation: 'ki-ticker 30s linear infinite' }}
+          style={{ animation: `ki-ticker ${ticker.speed || 30}s linear infinite` }}
           className="flex whitespace-nowrap w-max will-change-transform"
         >
-          {[0, 1].map(i => (
-            <span key={i} className="inline-flex items-center gap-5 px-4 text-[11px] font-bold uppercase tracking-widest font-['Cinzel']">
-              <span className="text-[#D4AF37]">⚡ Flash Deal</span>
-              <span className="text-[#D4AF37]/40">◆</span>
-              <span className="text-[#F3E5AB]">Ultimate Discount on All Books Here</span>
-              <span className="text-[#D4AF37]/40">◆</span>
-              <span className="text-[#D4AF37]">Purchase Now &amp; Save Big</span>
-              <span className="text-[#D4AF37]/40">◆</span>
-              <span className="inline-flex items-center gap-2 text-[#F3E5AB]">
-                Offer Ends In
-                <span className="inline-flex items-center gap-1">
-                  <span className="bg-[#D4AF37] text-[#3E2723] font-black rounded px-1.5 py-0.5 text-[11px] font-mono leading-none">{saleMin}</span>
-                  <span className="text-[#D4AF37] font-black">:</span>
-                  <span className="bg-[#D4AF37] text-[#3E2723] font-black rounded px-1.5 py-0.5 text-[11px] font-mono leading-none">{saleSec}</span>
+          {[0, 1].map(copy => (
+            <span key={copy} className="inline-flex items-center gap-5 px-4 text-[11px] font-bold uppercase tracking-widest font-['Cinzel']">
+              {(ticker.items || []).map((item, idx) => (
+                <span key={idx} className="inline-flex items-center gap-5">
+                  {item.showTimer ? (
+                    <span className="inline-flex items-center gap-2 text-[#F3E5AB]">
+                      {item.text}
+                      <span className="inline-flex items-center gap-1">
+                        <span className="bg-[#D4AF37] text-[#3E2723] font-black rounded px-1.5 py-0.5 text-[11px] font-mono leading-none">{saleMin}</span>
+                        <span className="text-[#D4AF37] font-black">:</span>
+                        <span className="bg-[#D4AF37] text-[#3E2723] font-black rounded px-1.5 py-0.5 text-[11px] font-mono leading-none">{saleSec}</span>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className={item.highlighted ? "text-[#D4AF37]" : "text-[#F3E5AB]"}>
+                      {item.text}
+                    </span>
+                  )}
+                  <span className="text-[#D4AF37]/40">◆</span>
                 </span>
-              </span>
-              <span className="text-[#D4AF37]/40">◆</span>
-              <span className="text-[#D4AF37]">Kiddos Intellect Special Offer</span>
-              <span className="text-[#D4AF37]/40">◆</span>
-              <span className="text-[#F3E5AB]">Shop Smart, Grow Bright</span>
-              <span className="text-[#D4AF37]/40">◆</span>
+              ))}
             </span>
           ))}
         </div>

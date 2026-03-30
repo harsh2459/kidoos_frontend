@@ -75,6 +75,13 @@ export default function Checkout() {
   /* ------------ SHIPPING RULES ------------ */
   const [shippingRules, setShippingRules] = useState([]);
 
+  // Shiprocket live rate state
+  const [srRate, setSrRate] = useState(null);       // null = not yet fetched / unavailable
+  const [srCodExtra, setSrCodExtra] = useState(0);  // extra for half-COD only
+  const [srCourier, setSrCourier] = useState(null); // e.g. "DTDC"
+  const [srLoading, setSrLoading] = useState(false);
+  const srFetchRef = useRef(null); // tracks latest fetch to avoid stale updates
+
   useEffect(() => {
     api.get("/shipping-rules").then(res => {
       if (res.data?.ok) setShippingRules(res.data.rules);
@@ -85,6 +92,12 @@ export default function Checkout() {
   }, []);
 
   function getShippingFee(subtotal, paymentType) {
+    // Use live Shiprocket rate when available
+    if (srRate !== null) {
+      const codExtra = paymentType === "half_online_half_cod" ? srCodExtra : 0;
+      return srRate + codExtra;
+    }
+    // Fallback: tier-based rules
     if (!shippingRules.length) return 0;
     const sorted = [...shippingRules].sort((a, b) => a.orderValue - b.orderValue);
     let matched = null;
@@ -165,7 +178,7 @@ export default function Checkout() {
       halfNow,
       halfLater,
     };
-  }, [items, paymentOption, hasPuzzleReward, shippingRules, couponApplied]);
+  }, [items, paymentOption, hasPuzzleReward, shippingRules, couponApplied, srRate, srCodExtra]);
 
 
   const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -176,6 +189,44 @@ export default function Checkout() {
   const [locality, setLocality] = useState("");
   const pinDebounce = useRef(null);
 
+  async function fetchShippingRate(pin, state) {
+    if (!pin || !/^\d{6}$/.test(pin)) return;
+    const token = {};
+    srFetchRef.current = token;
+    setSrLoading(true);
+    try {
+      const cartItems = items.map(i => ({
+        bookId: getBookIdFromCartItem(i),
+        qty: i.qty || 1,
+      }));
+      const subtotal = Math.max(0, items.reduce((s, i) => s + Number(i.unitPriceSnapshot ?? i.price ?? 0) * (i.qty || 1), 0));
+      const res = await api.post("/shipping-rates/check", {
+        pincode: pin,
+        state,
+        items: cartItems,
+        paymentType: paymentOption,
+        orderTotal: subtotal,
+      });
+      if (srFetchRef.current !== token) return; // stale response
+      if (res.data?.ok) {
+        setSrRate(res.data.rate);
+        setSrCodExtra(res.data.codExtraAmount || 0);
+        setSrCourier(res.data.courierName || null);
+      } else {
+        setSrRate(null);
+        setSrCodExtra(0);
+        setSrCourier(null);
+      }
+    } catch {
+      if (srFetchRef.current !== token) return;
+      setSrRate(null);
+      setSrCodExtra(0);
+      setSrCourier(null);
+    } finally {
+      if (srFetchRef.current === token) setSrLoading(false);
+    }
+  }
+
   async function lookupPin(pin) {
     if (!/^\d{6}$/.test(pin)) { setPinStatus(""); setOffices([]); return; }
     try {
@@ -184,14 +235,17 @@ export default function Checkout() {
       const data = await res.json();
       const entry = Array.isArray(data) ? data[0] : null;
       if (!entry || entry.Status !== "Success" || !entry.PostOffice?.length) {
-        setPinStatus("Not found"); setOffices([]); return;
+        setPinStatus("Not found"); setOffices([]); setSrRate(null); setSrCodExtra(0); setSrCourier(null); return;
       }
       setOffices(entry.PostOffice);
       setLocality(entry.PostOffice[0]?.Name || "");
-      set("city", (entry.PostOffice[0]?.District || "").trim());
-      set("state", (entry.PostOffice[0]?.State || "").trim());
+      const resolvedCity = (entry.PostOffice[0]?.District || "").trim();
+      const resolvedState = (entry.PostOffice[0]?.State || "").trim();
+      set("city", resolvedCity);
+      set("state", resolvedState);
       setPinStatus("OK");
-    } catch { setPinStatus("Not found"); setOffices([]); }
+      fetchShippingRate(pin, resolvedState);
+    } catch { setPinStatus("Not found"); setOffices([]); setSrRate(null); setSrCodExtra(0); setSrCourier(null); }
   }
 
   function onPinChange(v) {
@@ -199,7 +253,7 @@ export default function Checkout() {
     set("pin", onlyDigits);
     clearTimeout(pinDebounce.current);
     if (/^\d{6}$/.test(onlyDigits)) { pinDebounce.current = setTimeout(() => lookupPin(onlyDigits), 250); }
-    else { setPinStatus(""); setOffices([]); }
+    else { setPinStatus(""); setOffices([]); setSrRate(null); setSrCourier(null); }
   }
 
   /* ------------ CART-COUPON SYNC ------------ */
@@ -766,7 +820,10 @@ export default function Checkout() {
                 )}
 
                 <div className="flex justify-between text-[#5C4A2E] text-sm">
-                  <span>Delivery Charge</span>
+                  <span>
+                    Delivery Charge
+                    {srLoading && <span className="ml-1 text-xs text-[#8B6914] animate-pulse">checking…</span>}
+                  </span>
                   {totals.finalShippingFee === 0
                     ? <span className="font-bold text-[#D4AF37]">FREE</span>
                     : <span className="font-bold text-[#3E2723]">{fmt(totals.finalShippingFee)}</span>

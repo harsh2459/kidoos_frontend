@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSite } from '../contexts/SiteConfig';
 
 /**
  * SEO Component - Dynamic Meta Tags and Structured Data
@@ -19,8 +20,8 @@ import { Helmet } from 'react-helmet-async';
  */
 export default function SEO({
   title = "Kiddos Intellect - Premium Children's Books",
-  description = "Discover hand-picked children's books and educational materials. Healthy Minds Grow Beyond Screens. Shop premium learning resources for curious young minds.",
-  image = "/favicon.jpg",
+  description,
+  image,
   url,
   type = "website",
   product,
@@ -30,10 +31,24 @@ export default function SEO({
   noindex = false,
   keywords = "",
 }) {
+  const { seo } = useSite() || {};
+
+  // Fall back to admin-configured defaults when not passed explicitly
+  const resolvedDescription = description
+    || seo?.defaultDescription
+    || "Discover hand-picked children's books and educational materials. Healthy Minds Grow Beyond Screens. Shop premium learning resources for curious young minds.";
+  const resolvedImage = image || seo?.defaultOgImage || "/favicon.jpg";
+
+  // Merge page-specific keywords with global keywords from admin settings
+  const allKeywords = [keywords, seo?.globalKeywords].filter(Boolean).join(", ");
+
+  // Use admin-configured description in place of prop when it's set
+  const finalDescription = resolvedDescription;
+
   // Get full URL
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.kiddosintellect.com';
   const fullUrl = url || (typeof window !== 'undefined' ? window.location.href : siteUrl);
-  const fullImageUrl = image?.startsWith('http') ? image : `${siteUrl}${image}`;
+  const fullImageUrl = resolvedImage?.startsWith('http') ? resolvedImage : `${siteUrl}${resolvedImage}`;
 
   // Build full title
   const fullTitle = title.includes('Kiddos Intellect') ? title : `${title} | Kiddos Intellect`;
@@ -146,7 +161,7 @@ export default function SEO({
     "@type": "Product",
     "name": product.name,
     "image": product.images?.length > 0 ? product.images : (product.image ? [product.image] : [fullImageUrl]),
-    "description": product.description || description,
+    "description": product.description || finalDescription,
     "sku": product.sku || product.id,
     "brand": { "@type": "Brand", "name": "Kiddos Intellect" },
     ...(product.isbn && { "isbn": product.isbn }),
@@ -181,9 +196,13 @@ export default function SEO({
     <Helmet>
       {/* Basic Meta Tags */}
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
-      {keywords && <meta name="keywords" content={keywords} />}
+      <meta name="description" content={finalDescription} />
+      {allKeywords && <meta name="keywords" content={allKeywords} />}
       {noindex && <meta name="robots" content="noindex, nofollow" />}
+      {seo?.googleVerification && <meta name="google-site-verification" content={seo.googleVerification} />}
+      {(seo?.extraMeta || []).map((m, i) => (
+        <meta key={`extra-${i}`} name={m.name} content={m.content} />
+      ))}
 
       {/* Canonical URL */}
       <link rel="canonical" href={fullUrl} />
@@ -191,7 +210,7 @@ export default function SEO({
       {/* Open Graph Tags */}
       <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={finalDescription} />
       <meta property="og:image" content={fullImageUrl} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
@@ -210,7 +229,7 @@ export default function SEO({
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:description" content={finalDescription} />
       <meta name="twitter:image" content={fullImageUrl} />
       <meta name="twitter:image:alt" content={fullTitle} />
 

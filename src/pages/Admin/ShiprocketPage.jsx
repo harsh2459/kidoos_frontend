@@ -109,6 +109,10 @@ export default function ShiprocketPage() {
   // Filter tabs
   const [activeTab, setActiveTab] = useState("all");
 
+  // Date filter
+  const [dateFilter, setDateFilter] = useState("today");
+  const [customDate, setCustomDate] = useState("");
+
   // Search & pagination
   const [search, setSearch] = useState("");
   const [srPendingPage, setSrPendingPage] = useState(1);
@@ -175,11 +179,11 @@ export default function ShiprocketPage() {
     setSelections(prev => ({ ...defaults, ...prev }));
   }, [orders]); // eslint-disable-line
 
-  // Reset pages when search / tab changes
+  // Reset pages when search / tab / date changes
   useEffect(() => {
     setSrPendingPage(1); setBdPendingPage(1);
     setSrShippedPage(1); setBdShippedPage(1);
-  }, [search, activeTab]);
+  }, [search, activeTab, dateFilter, customDate]);
 
   // ── Search ─────────────────────────────────────────────────────────────────
   function matchesSearch(o) {
@@ -203,10 +207,26 @@ export default function ShiprocketPage() {
     );
   }
 
-  const srPending = useMemo(() => srPendingAll.filter(matchesSearch), [srPendingAll, search]); // eslint-disable-line
-  const srShipped = useMemo(() => srShippedAll.filter(matchesSearch), [srShippedAll, search]); // eslint-disable-line
-  const bdShipped = useMemo(() => bdShippedAll.filter(matchesSearch), [bdShippedAll, search]); // eslint-disable-line
-  const bdPendingFiltered = useMemo(() => bdPending.filter(matchesSearch), [bdPending, search]); // eslint-disable-line
+  function matchesDate(o) {
+    if (dateFilter === "all") return true;
+    const created = o.createdAt ? new Date(o.createdAt) : null;
+    if (!created) return true;
+    const toDay = d => d.toISOString().slice(0, 10);
+    const orderDay = toDay(created);
+    const today = new Date();
+    if (dateFilter === "today") return orderDay === toDay(today);
+    if (dateFilter === "yesterday") {
+      const yd = new Date(today); yd.setDate(yd.getDate() - 1);
+      return orderDay === toDay(yd);
+    }
+    if (dateFilter === "custom" && customDate) return orderDay === customDate;
+    return true;
+  }
+
+  const srPending = useMemo(() => srPendingAll.filter(o => matchesSearch(o) && matchesDate(o)), [srPendingAll, search, dateFilter, customDate]); // eslint-disable-line
+  const srShipped = useMemo(() => srShippedAll.filter(o => matchesSearch(o) && matchesDate(o)), [srShippedAll, search, dateFilter, customDate]); // eslint-disable-line
+  const bdShipped = useMemo(() => bdShippedAll.filter(o => matchesSearch(o) && matchesDate(o)), [bdShippedAll, search, dateFilter, customDate]); // eslint-disable-line
+  const bdPendingFiltered = useMemo(() => bdPending.filter(o => matchesSearch(o) && matchesDate(o)), [bdPending, search, dateFilter, customDate]); // eslint-disable-line
 
   // Pagination
   const srPendingPages = Math.max(1, Math.ceil(srPending.length / PAGE_SIZE));
@@ -446,6 +466,37 @@ export default function ShiprocketPage() {
                 </button>
               )}
             </div>
+            {/* Date filter */}
+            <div className="flex items-center gap-1 bg-white border-2 border-[#E3E8E5] rounded-xl p-1 shadow-sm">
+              {[
+                { id: "today", label: "Today" },
+                { id: "yesterday", label: "Yesterday" },
+                { id: "all", label: "All" },
+                { id: "custom", label: "Custom" },
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setDateFilter(opt.id)}
+                  className={cx(
+                    "px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150",
+                    dateFilter === opt.id
+                      ? "bg-gradient-to-r from-[#222831] to-[#393E46] text-white shadow"
+                      : "text-[#5C756D] hover:bg-gray-50"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {dateFilter === "custom" && (
+              <input
+                type="date"
+                value={customDate}
+                onChange={e => setCustomDate(e.target.value)}
+                className="px-3 py-2 border-2 border-[#E3E8E5] rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#88BDF2] shadow-sm"
+              />
+            )}
+
             <button onClick={load} disabled={loading}
               className="flex items-center gap-2 px-3 py-2 border-2 border-[#E3E8E5] rounded-xl text-sm text-[#222831] bg-white hover:bg-gray-50 disabled:opacity-50 shadow-sm transition-all duration-200">
               <RefreshCw className={cx("w-4 h-4", loading && "animate-spin")} />

@@ -21,7 +21,9 @@ import {
   Tag,
   MessageSquarePlus,
   Library,
-  HardDrive
+  HardDrive,
+  Megaphone,
+  SearchCheck
 } from "lucide-react";
 import WaveText from "./WaveText";
 
@@ -166,11 +168,25 @@ export default function AdminSidebar() {
           <WaveText text="Homepage" hoverColor="#000"  />
         </Item>
         <Item
+          to="/admin/ticker"
+          active={loc.pathname.startsWith("/admin/ticker")}
+          icon={Megaphone}
+        >
+          <WaveText text="Ticker Bar" hoverColor="#000" />
+        </Item>
+        <Item
           to="/admin/catalog"
           active={loc.pathname.startsWith("/admin/catalog")}
           icon={Library}
         >
           <WaveText text="Catalog Header" hoverColor="#000" />
+        </Item>
+        <Item
+          to="/admin/seo"
+          active={loc.pathname.startsWith("/admin/seo")}
+          icon={SearchCheck}
+        >
+          SEO Settings
         </Item>
         <Item
           to="/admin/ai-settings"

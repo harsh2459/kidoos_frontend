@@ -20,16 +20,20 @@ const parchmentBg = "url('/images-webp/homepage/parchment-bg.webp')";
 const mandalaBg = "url('/images-webp/homepage/mandala-bg.webp')";
 
 
+const DEFAULT_HOME_TITLE = "Kiddos Intellect - Premium Children's Books | Educational Learning Materials";
+const DEFAULT_HOME_DESC = "Discover hand-picked children's books and educational materials. Healthy Minds Grow Beyond Screens. Shop premium learning resources for curious young minds in India.";
+
 export default function Home() {
-  const { homepage } = useSite();
+  const { homepage, seo } = useSite();
   const isReady =
     Array.isArray(homepage?.blocks) && homepage.blocks.length > 0;
+  const activeVariant = seo?.homepageVariants?.find(v => v.active);
   return (
     <div className="bg-[#FAF7F2] min-h-screen text-[#5C4A2E] selection:bg-[#F3E5AB] selection:text-[#3E2723] pb-20 overflow-x-hidden" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
 
       <SEO
-        title="Kiddos Intellect - Premium Children's Books | Educational Learning Materials"
-        description="Discover hand-picked children's books and educational materials. Healthy Minds Grow Beyond Screens. Shop premium learning resources for curious young minds in India."
+        title={activeVariant?.title || DEFAULT_HOME_TITLE}
+        description={activeVariant?.description || DEFAULT_HOME_DESC}
         image="/images/homepage/hero-banner.jpg"
         type="website"
         structuredData={{
@@ -179,11 +183,17 @@ function Block({ block }) {
 
   // --- STANDARD SLIDER ---
   if (block.type === "slider") {
-    // Override bottom spacing to minimal — dots are now inside the image
-    const sliderClasses = containerClasses.replace(/pb-\S+/g, "pb-2 md:pb-3");
+    // Break out of max-w container for full-viewport-width on desktop
     return (
-      <div className={sliderClasses} style={containerStyle}>
-        <HomepageSlider slides={block.slides} height={block.sliderHeight} />
+      <div
+        className="relative pb-2 md:pb-3"
+        style={{
+          width: '100vw',
+          marginLeft: 'calc(50% - 50vw)',
+          ...containerStyle,
+        }}
+      >
+        <HomepageSlider slides={block.slides} height={block.sliderHeight} fullWidth />
       </div>
     );
   }
@@ -387,7 +397,7 @@ function HomepageSlider({ slides }) {
     <div className="relative w-full group/slider">
 
       {/* ── Slide images ── */}
-      <div className="relative rounded-2xl overflow-hidden ring-1 ring-[#D4AF37]/25 shadow-[0_20px_60px_rgba(62,39,35,0.25)]">
+      <div className="relative overflow-hidden shadow-[0_8px_40px_rgba(62,39,35,0.2)]">
 
         {/* Hidden sizer — locks height, prevents CLS */}
         <picture className="block w-full opacity-0 pointer-events-none select-none" aria-hidden="true">

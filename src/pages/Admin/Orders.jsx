@@ -56,6 +56,9 @@ export default function AdminOrders() {
   // Order Detail Modal
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailOrder, setDetailOrder] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [editSaving, setEditSaving] = useState(false);
 
   // Offline Order Modal States
   const [showOfflineOrderModal, setShowOfflineOrderModal] = useState(false);
@@ -465,8 +468,7 @@ export default function AdminOrders() {
       if (o.status === 'shipped' || o.status === 'delivered') s.shipped++;
 
       const paymentStatus = o.payment?.status;
-      const isReadyPayment = paymentStatus === 'paid' ||
-        (paymentStatus === 'partially_paid' && o.payment?.mode === 'half');
+      const isReadyPayment = paymentStatus === 'paid' || paymentStatus === 'partially_paid';
       if (o.status === 'confirmed' && !bd.awbNumber && isReadyPayment) {
         s.ready++;
       }
@@ -540,11 +542,57 @@ export default function AdminOrders() {
     return <div className="flex flex-wrap gap-1">{badges}</div>;
   };
 
+  function openEditMode(order) {
+    setEditForm({
+      name: order.shipping?.name || order.userId?.name || "",
+      email: order.email || order.shipping?.email || order.userId?.email || "",
+      phone: order.phone || order.shipping?.phone || order.userId?.phone || "",
+      address: order.shipping?.address || "",
+      city: order.shipping?.city || "",
+      state: order.shipping?.state || "",
+      pincode: order.shipping?.pincode || "",
+      country: order.shipping?.country || "India",
+      adminNotes: order.adminNotes || "",
+    });
+    setEditMode(true);
+  }
+
+  async function saveOrderDetails() {
+    if (!detailOrder) return;
+    setEditSaving(true);
+    try {
+      const res = await api.patch(`/orders/${detailOrder._id}/details`, {
+        shipping: {
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          address: editForm.address,
+          city: editForm.city,
+          state: editForm.state,
+          pincode: editForm.pincode,
+          country: editForm.country,
+        },
+        adminNotes: editForm.adminNotes,
+      });
+      if (res.data?.ok) {
+        setDetailOrder(res.data.order);
+        setItems(prev => prev.map(o => o._id === res.data.order._id ? res.data.order : o));
+        setEditMode(false);
+        t.ok({ title: "Saved", sub: "Order details updated." });
+      } else {
+        t.err({ title: "Error", sub: res.data?.error || "Failed to save." });
+      }
+    } catch (e) {
+      t.err({ title: "Error", sub: e.message || "Failed to save." });
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
   const canCreateShipment = (order) => {
     const paymentStatus = order.payment?.status;
     const hasAwb = order.shipping?.bd?.awbNumber || order.shipping?.shiprocket?.awb;
-    const isPaymentComplete = paymentStatus === 'paid' ||
-      (paymentStatus === 'partially_paid' && order.payment?.mode === 'half');
+    const isPaymentComplete = paymentStatus === 'paid' || paymentStatus === 'partially_paid';
 
     return order.status === 'confirmed' && !hasAwb && isPaymentComplete;
   };
@@ -1728,9 +1776,16 @@ export default function AdminOrders() {
                       <p className="text-xs text-gray-500">{o.createdAt ? new Date(o.createdAt).toLocaleString('en-IN') : ''}</p>
                     </div>
                   </div>
-                  <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!editMode && (
+                      <button onClick={() => openEditMode(o)} className="px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 border border-indigo-200">
+                        Edit
+                      </button>
+                    )}
+                    <button onClick={() => { setShowDetailModal(false); setEditMode(false); }} className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="px-6 py-5 space-y-5 max-h-[75vh] overflow-y-auto">
@@ -1738,20 +1793,35 @@ export default function AdminOrders() {
                   {/* Customer */}
                   <div>
                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Customer</h4>
-                    <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-500">Name</p>
-                        <p className="font-medium text-gray-900">{o.shipping?.name || o.userId?.name || '—'}</p>
+                    {editMode ? (
+                      <div className="grid grid-cols-3 gap-3">
+                        {[["Name", "name"], ["Email", "email"], ["Phone", "phone"]].map(([label, key]) => (
+                          <div key={key}>
+                            <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                            <input
+                              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                              value={editForm[key] || ""}
+                              onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
+                            />
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Email</p>
-                        <p className="font-medium text-gray-900 break-all">{o.email || o.shipping?.email || o.userId?.email || '—'}</p>
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-500">Name</p>
+                          <p className="font-medium text-gray-900">{o.shipping?.name || o.userId?.name || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Email</p>
+                          <p className="font-medium text-gray-900 break-all">{o.email || o.shipping?.email || o.userId?.email || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Phone</p>
+                          <p className="font-medium text-gray-900">{o.phone || o.shipping?.phone || o.userId?.phone || '—'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Phone</p>
-                        <p className="font-medium text-gray-900">{o.phone || o.shipping?.phone || o.userId?.phone || '—'}</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Items */}
@@ -1791,10 +1861,33 @@ export default function AdminOrders() {
                   {/* Shipping Address */}
                   <div>
                     <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Shipping Address</h4>
-                    <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-800">
-                      {[o.shipping?.address, o.shipping?.city, o.shipping?.state, o.shipping?.pincode, o.shipping?.country]
-                        .filter(Boolean).join(', ') || '—'}
-                    </div>
+                    {editMode ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="col-span-2">
+                          <label className="text-xs text-gray-500 block mb-1">Address</label>
+                          <input
+                            className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                            value={editForm.address || ""}
+                            onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))}
+                          />
+                        </div>
+                        {[["City", "city"], ["State", "state"], ["Pincode", "pincode"], ["Country", "country"]].map(([label, key]) => (
+                          <div key={key}>
+                            <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                            <input
+                              className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                              value={editForm[key] || ""}
+                              onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-800">
+                        {[o.shipping?.address, o.shipping?.city, o.shipping?.state, o.shipping?.pincode, o.shipping?.country]
+                          .filter(Boolean).join(', ') || '—'}
+                      </div>
+                    )}
                   </div>
 
                   {/* Payment */}
@@ -1871,22 +1964,51 @@ export default function AdminOrders() {
                   ) : null}
 
                   {/* Admin Notes */}
-                  {o.adminNotes && (
+                  {(editMode || o.adminNotes) && (
                     <div>
                       <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Admin Notes</h4>
-                      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-900 whitespace-pre-wrap">
-                        {o.adminNotes}
-                      </div>
+                      {editMode ? (
+                        <textarea
+                          rows={3}
+                          className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          placeholder="Internal notes (not visible to customer)..."
+                          value={editForm.adminNotes || ""}
+                          onChange={e => setEditForm(f => ({ ...f, adminNotes: e.target.value }))}
+                        />
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-900 whitespace-pre-wrap">
+                          {o.adminNotes}
+                        </div>
+                      )}
                     </div>
                   )}
 
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end">
-                  <button onClick={() => setShowDetailModal(false)} className="px-5 py-2 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900">
-                    Close
-                  </button>
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-2">
+                  {editMode ? (
+                    <>
+                      <button
+                        onClick={() => setEditMode(false)}
+                        disabled={editSaving}
+                        className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={saveOrderDetails}
+                        disabled={editSaving}
+                        className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        {editSaving ? "Saving…" : "Save Changes"}
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => { setShowDetailModal(false); setEditMode(false); }} className="px-5 py-2 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900">
+                      Close
+                    </button>
+                  )}
                 </div>
 
               </div>

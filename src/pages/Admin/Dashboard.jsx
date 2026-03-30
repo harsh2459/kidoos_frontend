@@ -124,6 +124,20 @@ export default function Dashboard() {
     );
   }
 
+  function handleClearAllCarts() {
+    askConfirm(
+      "Clear all carts",
+      "Remove all items from every customer's cart? This cannot be undone.",
+      async () => {
+        try {
+          const res = await api.delete("/auth/carts/all", auth);
+          t.success(`Cleared ${res.data.cleared} cart(s)`);
+          loadStats();
+        } catch (e) { t.error(e?.response?.data?.error || "Failed"); }
+      }
+    );
+  }
+
   function handlePurgeExpiredOTPs() {
     askConfirm(
       "Clear expired OTPs",
@@ -530,7 +544,15 @@ export default function Dashboard() {
                   <ShoppingCart className="w-5 h-5 text-teal-600" />
                 </div>
               </div>
-              <p className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">Tap to view cart contents →</p>
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-400">Tap to view cart contents →</p>
+                <button
+                  onClick={e => { e.stopPropagation(); handleClearAllCarts(); }}
+                  className="flex items-center gap-1.5 text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Clear all carts
+                </button>
+              </div>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { api } from "../../api/client";
 import { useAuth } from "../../contexts/Auth";
 import { t } from "../../lib/toast";
@@ -12,44 +12,16 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const ALL_MODELS = [
-  "books",
-  "orders",
-  "customers",
-  "payments",
-  "users",
-  "categories",
-  "coupons",
-  "reviews",
-  "bluedartProfiles",
-  "emailTemplates",
-  "mailSenders",
-  "shippingRules",
-  "settings",
-];
-
-const MODEL_LABELS = {
-  books:           "Books",
-  orders:          "Orders",
-  customers:       "Customers",
-  payments:        "Payments",
-  users:           "Admin Users",
-  categories:      "Categories",
-  coupons:         "Coupons",
-  reviews:         "Reviews",
-  bluedartProfiles:"BlueDart Profiles",
-  emailTemplates:  "Email Templates",
-  mailSenders:     "Mail Senders",
-  shippingRules:   "Shipping Rules",
-  settings:        "Settings",
-};
-
 export default function DataBackup() {
   const { token } = useAuth();
   const auth = { headers: { Authorization: `Bearer ${token || localStorage.getItem("admin_jwt")}` } };
 
+  // Live collection list from backend
+  const [models, setModels] = useState([]);        // [{ key, label }]
+  const [modelsLoading, setModelsLoading] = useState(true);
+
   // Export state
-  const [selectedModels, setSelectedModels] = useState(new Set(ALL_MODELS));
+  const [selectedModels, setSelectedModels] = useState(new Set());
   const [exporting, setExporting] = useState(false);
 
   // Import state
@@ -58,9 +30,22 @@ export default function DataBackup() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
+  // Load collection list from backend on mount
+  useEffect(() => {
+    api.get("/data-backup/models", auth)
+      .then(res => {
+        if (res.data?.ok) {
+          setModels(res.data.models);
+          setSelectedModels(new Set(res.data.models.map(m => m.key)));
+        }
+      })
+      .catch(() => t.error("Failed to load collections"))
+      .finally(() => setModelsLoading(false));
+  }, []); // eslint-disable-line
+
   // ── Export ────────────────────────────────────────────────────────────────
   function toggleModel(key) {
-    setSelectedModels((prev) => {
+    setSelectedModels(prev => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
@@ -68,8 +53,8 @@ export default function DataBackup() {
   }
 
   function toggleAll() {
-    setSelectedModels((prev) =>
-      prev.size === ALL_MODELS.length ? new Set() : new Set(ALL_MODELS)
+    setSelectedModels(prev =>
+      prev.size === models.length ? new Set() : new Set(models.map(m => m.key))
     );
   }
 
@@ -80,14 +65,14 @@ export default function DataBackup() {
     }
     setExporting(true);
     try {
-      const params = selectedModels.size < ALL_MODELS.length
+      const params = selectedModels.size < models.length
         ? `?models=${[...selectedModels].join(",")}`
         : "";
 
       const res = await api.get(`/data-backup/export${params}`, {
         ...auth,
         responseType: "blob",
-        timeout: 120000, // 2 min for large DBs
+        timeout: 120000,
       });
 
       const blob = new Blob([res.data], { type: "application/json" });
@@ -99,7 +84,6 @@ export default function DataBackup() {
       URL.revokeObjectURL(url);
       t.success("Backup downloaded successfully");
     } catch (err) {
-      console.error(err);
       t.error(err?.response?.data?.error || "Export failed");
     } finally {
       setExporting(false);
@@ -123,7 +107,6 @@ export default function DataBackup() {
       t.error("Select a backup file first");
       return;
     }
-
     const confirmed = window.confirm(
       "This will OVERWRITE existing documents by _id. Are you sure you want to restore this backup?"
     );
@@ -137,7 +120,7 @@ export default function DataBackup() {
 
       const { data } = await api.post("/data-backup/import", form, {
         ...auth,
-        timeout: 180000, // 3 min
+        timeout: 180000,
       });
 
       setImportResult(data);
@@ -147,7 +130,6 @@ export default function DataBackup() {
         t.error(data.error || "Import failed");
       }
     } catch (err) {
-      console.error(err);
       t.error(err?.response?.data?.error || "Import failed");
     } finally {
       setImporting(false);
@@ -175,43 +157,53 @@ export default function DataBackup() {
             <Download className="w-5 h-5" />
             Export Data
           </h2>
-          <button
-            onClick={toggleAll}
-            className="text-xs font-semibold text-[#384959] hover:underline"
-          >
-            {selectedModels.size === ALL_MODELS.length ? "Deselect All" : "Select All"}
-          </button>
+          {!modelsLoading && models.length > 0 && (
+            <button onClick={toggleAll} className="text-xs font-semibold text-[#384959] hover:underline">
+              {selectedModels.size === models.length ? "Deselect All" : "Select All"}
+            </button>
+          )}
         </div>
 
         <p className="text-sm text-[#5C756D]">
           Choose which collections to include in the backup JSON file.
+          {!modelsLoading && (
+            <span className="ml-1 text-[#8BA699]">
+              ({models.length} collections found in database — auto-detected, always up to date)
+            </span>
+          )}
         </p>
 
         {/* Collection checkboxes */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {ALL_MODELS.map((key) => (
-            <label
-              key={key}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm font-medium transition-all
-                ${selectedModels.has(key)
-                  ? "border-[#384959] bg-[#384959]/5 text-[#384959]"
-                  : "border-[#E3E8E5] text-[#8BA699] hover:border-[#384959]/40"
-                }`}
-            >
-              <input
-                type="checkbox"
-                checked={selectedModels.has(key)}
-                onChange={() => toggleModel(key)}
-                className="accent-[#384959]"
-              />
-              {MODEL_LABELS[key]}
-            </label>
-          ))}
-        </div>
+        {modelsLoading ? (
+          <div className="flex items-center gap-2 text-sm text-[#5C756D] py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Detecting collections…
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {models.map(({ key, label }) => (
+              <label
+                key={key}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm font-medium transition-all
+                  ${selectedModels.has(key)
+                    ? "border-[#384959] bg-[#384959]/5 text-[#384959]"
+                    : "border-[#E3E8E5] text-[#8BA699] hover:border-[#384959]/40"
+                  }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedModels.has(key)}
+                  onChange={() => toggleModel(key)}
+                  className="accent-[#384959]"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        )}
 
         <button
           onClick={handleExport}
-          disabled={exporting || selectedModels.size === 0}
+          disabled={exporting || selectedModels.size === 0 || modelsLoading}
           className="flex items-center gap-2 px-6 py-3 bg-[#384959] text-white font-bold rounded-xl hover:bg-[#2d3a47] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {exporting ? (
@@ -233,7 +225,8 @@ export default function DataBackup() {
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <span>
             Import will <strong>upsert</strong> documents by their <code>_id</code>. Existing records
-            with matching IDs will be overwritten. This cannot be undone.
+            with matching IDs will be overwritten. Works with any backup version — new collections
+            in the backup file are automatically created.
           </span>
         </div>
 
@@ -304,15 +297,16 @@ export default function DataBackup() {
               <tbody>
                 {Object.entries(importResult.results || {}).map(([key, res]) => (
                   <tr key={key} className="border-t border-[#F4F7F5]">
-                    <td className="px-4 py-2 text-[#384959] font-medium">{MODEL_LABELS[key] || key}</td>
+                    <td className="px-4 py-2 text-[#384959] font-medium capitalize">
+                      {key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ")}
+                    </td>
                     <td className="px-4 py-2 text-right text-green-700 font-mono">
                       {res.skipped ? <span className="text-[#8BA699]">—</span> : res.upserted}
                     </td>
                     <td className="px-4 py-2 text-right font-mono">
                       {res.failed > 0
                         ? <span className="text-red-600">{res.failed}</span>
-                        : <span className="text-[#8BA699]">0</span>
-                      }
+                        : <span className="text-[#8BA699]">0</span>}
                     </td>
                   </tr>
                 ))}

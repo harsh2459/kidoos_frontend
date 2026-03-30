@@ -62,10 +62,12 @@ const EmailTemplates = lazy(() => import('./pages/Admin/EmailTemplates'));
 const AdminCategories = lazy(() => import('./pages/Admin/Categories'));
 const PopupSettings = lazy(() => import('./pages/Admin/PopupSettings'));
 const AiSettings = lazy(() => import('./pages/Admin/AiSettings'));
+const SeoSettings = lazy(() => import('./pages/Admin/SeoSettings'));
 const ShippingRules = lazy(() => import('./pages/Admin/ShippingRules'));
 const Coupons = lazy(() => import('./pages/Admin/Coupons'));
 const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
 const DataBackup = lazy(() => import('./pages/Admin/DataBackup'));
+const TickerSettings = lazy(() => import('./pages/Admin/TickerSettings'));
 
 function InnerApp() {
   const loc = useLocation();
@@ -220,6 +222,10 @@ function InnerApp() {
               element={<AdminGuard><AdminLayout><AiSettings /></AdminLayout></AdminGuard>}
             />
             <Route
+              path="/admin/seo"
+              element={<AdminGuard><AdminLayout><SeoSettings /></AdminLayout></AdminGuard>}
+            />
+            <Route
               path="/admin/shipping-rules"
               element={<AdminGuard><AdminLayout><ShippingRules /></AdminLayout></AdminGuard>}
             />
@@ -234,6 +240,10 @@ function InnerApp() {
             <Route
               path="/admin/data-backup"
               element={<AdminGuard><AdminLayout><DataBackup /></AdminLayout></AdminGuard>}
+            />
+            <Route
+              path="/admin/ticker"
+              element={<AdminGuard><AdminLayout><TickerSettings /></AdminLayout></AdminGuard>}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
